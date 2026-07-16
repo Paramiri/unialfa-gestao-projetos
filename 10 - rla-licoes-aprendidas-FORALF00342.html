@@ -1,0 +1,628 @@
+<!-- RLA — Registro de Lições Aprendidas / UNIALFA -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#B91D2E;--red-deep:#8E1322;--ink:#1A1A1A;--muted:#6A6A70;
+  --paper:#FFFFFF;--surface:#F6F6F7;--surface-2:#FAFAFB;
+  --line:#E4E4E7;--line-strong:#D4D4D8;
+  --ok:#1B7F4B;--ok-soft:#E6F4EC;--warn:#B45309;--warn-soft:#FBF1E3;--bad:#9F1239;--bad-soft:#FBE7EC;
+  --radius:10px;--shadow:0 1px 2px rgba(20,20,20,.04),0 8px 28px rgba(20,20,20,.06);
+  --font:'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font);color:var(--ink);background:var(--surface);-webkit-font-smoothing:antialiased;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding:28px 20px 64px}
+.doc-head{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.doc-band{background:var(--red);color:#fff;padding:18px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.doc-logo{font-weight:800;font-size:22px;letter-spacing:.04em;line-height:1;padding-right:18px;border-right:2px solid rgba(255,255,255,.35)}
+.doc-logo small{display:block;font-weight:600;font-size:10px;letter-spacing:.22em;margin-top:5px;opacity:.85}
+.doc-title h1{margin:0;font-size:17px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.doc-title p{margin:3px 0 0;font-size:12px;font-weight:500;opacity:.9}
+.doc-meta{display:flex;gap:0;border-top:1px solid var(--line);background:var(--surface-2);font-size:11px;flex-wrap:wrap}
+.doc-meta div{padding:9px 24px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:1px}
+.doc-meta div:last-child{border-right:none}
+.doc-meta span{color:var(--muted);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:9.5px}
+.doc-meta b{font-weight:700;font-size:12px}
+.tabs{display:flex;gap:8px;margin:22px 0 16px}
+.tab{appearance:none;border:1px solid var(--line);background:var(--paper);color:var(--muted);font-family:var(--font);font-weight:600;font-size:13px;padding:10px 18px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .15s}
+.tab:hover{border-color:var(--line-strong);color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.tab .count{background:var(--red);color:#fff;font-size:11px;font-weight:700;min-width:20px;height:20px;padding:0 6px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center}
+.tab[aria-selected="true"] .count{background:#fff;color:var(--ink)}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-top:18px}
+.section-h{display:flex;align-items:center;gap:12px;padding:16px 24px 13px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.section-h .n{padding:0 9px;height:26px;min-width:26px;border-radius:7px;background:var(--red);color:#fff;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;flex:none}
+.section-h h2{margin:0;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.section-h p{margin:0 0 0 auto;font-size:11px;color:var(--muted);font-weight:500}
+.grid{padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:16px 20px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1/-1}
+label{font-size:12px;font-weight:700;letter-spacing:.02em;color:var(--ink)}
+label .req{color:var(--red);margin-left:2px}
+label .ref{color:var(--muted);font-weight:600;margin-right:5px;font-size:11px}
+.hint{font-size:11px;color:var(--muted);font-weight:500;margin-top:-2px}
+input,select,textarea{font-family:var(--font);font-size:13.5px;color:var(--ink);border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;background:var(--paper);width:100%;transition:border-color .15s,box-shadow .15s}
+input::placeholder,textarea::placeholder{color:#A8A8AE}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(185,29,46,.12)}
+textarea{resize:vertical;min-height:72px}
+.field.error input,.field.error select,.field.error textarea{border-color:var(--bad);box-shadow:0 0 0 3px rgba(159,18,57,.10)}
+.err-msg{font-size:11px;color:var(--bad);font-weight:600;display:none}
+.field.error .err-msg{display:block}
+/* lições table */
+.licoes-wrap{padding:16px 24px 22px}
+.licoes-table{width:100%;border-collapse:collapse;border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:13px}
+.licoes-table thead th{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:10px 14px;background:var(--surface-2);border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.licoes-table thead th:first-child{width:54%}
+.licoes-table thead th:nth-child(2){width:20%}
+.licoes-table thead th:nth-child(3){width:26%}
+.licoes-table tbody tr{border-bottom:1px solid var(--surface)}
+.licoes-table tbody tr:last-child{border-bottom:none}
+.licoes-table td{padding:10px 14px;vertical-align:middle}
+.licoes-table td:first-child{font-weight:600;font-size:12.5px;line-height:1.45}
+.licoes-table td.comment-cell{padding:6px 8px}
+.lic-radio{display:flex;gap:6px;flex-wrap:wrap}
+.lic-opt{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:6px;border:1.5px solid var(--line);cursor:pointer;transition:all .12s;white-space:nowrap}
+.lic-opt input{width:13px;height:13px;margin:0;cursor:pointer;accent-color:var(--red)}
+.lic-opt:hover{border-color:var(--line-strong)}
+.lic-opt.sel-sim{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.lic-opt.sel-nao{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.lic-opt.sel-parc{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.lic-opt.sel-na{background:var(--surface-2);border-color:var(--line-strong);color:var(--muted)}
+.lic-comment{width:100%;font-size:12px;border:1px solid transparent;border-radius:6px;padding:7px 9px;background:var(--surface-2);resize:none;min-height:0;height:34px;font-family:var(--font);color:var(--ink)}
+.lic-comment:focus{background:#fff;border-color:var(--red);box-shadow:none;outline:none}
+/* score bar */
+.score-row{display:flex;align-items:center;gap:16px;padding:12px 24px;border-top:1px solid var(--line);background:var(--surface-2);flex-wrap:wrap}
+.score-label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.score-bar{flex:1;min-width:120px;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.score-fill{height:100%;border-radius:99px;background:var(--ok);transition:width .4s ease}
+.score-pct{font-size:13px;font-weight:800;color:var(--ok)}
+.actions{display:flex;align-items:center;gap:12px;padding:18px 24px;border-top:1px solid var(--line);background:var(--surface-2)}
+.btn{appearance:none;font-family:var(--font);font-weight:700;font-size:13px;border-radius:8px;padding:11px 22px;cursor:pointer;border:1px solid transparent;transition:all .15s;display:inline-flex;align-items:center;gap:8px}
+.btn-primary{background:var(--red);color:#fff}.btn-primary:hover{background:var(--red-deep)}
+.btn-ghost{background:var(--paper);color:var(--ink);border-color:var(--line-strong)}.btn-ghost:hover{border-color:var(--ink)}
+.btn-sm{padding:8px 14px;font-size:12px}
+.btn-danger{background:var(--paper);color:var(--bad);border-color:var(--bad-soft)}.btn-danger:hover{background:var(--bad-soft)}
+.actions .spacer{margin-left:auto;font-size:11px;color:var(--muted);font-weight:500}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:13px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 12px 40px rgba(0,0,0,.25);display:flex;align-items:center;gap:10px;opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.2,.8,.2,1);z-index:50;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast .dot{width:8px;height:8px;border-radius:50%;background:#fff;flex:none}
+.toast.ok .dot{background:#5BE49B}
+.list-head{display:flex;align-items:center;gap:14px;padding:16px 24px;border-bottom:1px solid var(--line);background:var(--surface-2);flex-wrap:wrap}
+.list-head input[type=search]{max-width:300px}
+.list-head .ttl{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.list-head .ml{margin-left:auto;display:flex;gap:8px}
+table.list{width:100%;border-collapse:collapse;font-size:13px}
+table.list thead th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:12px 16px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.list tbody td{padding:13px 16px;border-bottom:1px solid var(--surface);vertical-align:top}
+table.list tbody tr{cursor:pointer;transition:background .12s}
+table.list tbody tr:hover{background:var(--surface-2)}
+.proto{font-weight:700;font-size:12px;white-space:nowrap}
+.proto small{display:block;color:var(--muted);font-weight:500;font-size:10.5px;margin-top:2px}
+.proj{font-weight:600}
+.proj small{display:block;color:var(--muted);font-weight:500;font-size:11.5px;margin-top:2px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.b-pend{background:var(--warn-soft);color:var(--warn)}
+.b-ok{background:var(--ok-soft);color:var(--ok)}
+.b-bad{background:var(--bad-soft);color:var(--bad)}
+.empty{padding:56px 24px;text-align:center;color:var(--muted)}
+.empty h3{margin:0 0 4px;font-size:15px;color:var(--ink);font-weight:700}
+.empty p{margin:0;font-size:13px}
+.overlay{position:fixed;inset:0;background:rgba(20,20,22,.45);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.overlay.show{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(620px,97vw);background:var(--paper);box-shadow:-16px 0 50px rgba(0,0,0,.18);transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);z-index:45;display:flex;flex-direction:column}
+.drawer.show{transform:translateX(0)}
+.drawer-top{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:12px}
+.drawer-top h2{margin:0;font-size:16px;font-weight:700}
+.drawer-top .proto-lg{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:3px}
+.xbtn{margin-left:auto;appearance:none;border:1px solid var(--line);background:var(--paper);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:18px;color:var(--muted);flex:none}
+.xbtn:hover{border-color:var(--ink);color:var(--ink)}
+.drawer-body{padding:8px 24px 24px;overflow-y:auto;flex:1}
+.dl .grp{margin:18px 0 6px;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
+.dl .row{padding:11px 0;border-bottom:1px solid var(--surface)}
+.dl dt{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.dl dd{margin:0;font-size:13px;white-space:pre-wrap;word-break:break-word}
+.lic-ro{font-size:12.5px;padding:4px 0}
+.lic-ro .lic-resp{display:inline-block;font-weight:700;padding:2px 8px;border-radius:5px;font-size:11px;margin-right:6px}
+.lic-ro .lic-resp.sim{background:var(--ok-soft);color:var(--ok)}
+.lic-ro .lic-resp.nao{background:var(--bad-soft);color:var(--bad)}
+.lic-ro .lic-resp.parc{background:var(--warn-soft);color:var(--warn)}
+.lic-ro .lic-resp.na{background:var(--surface-2);color:var(--muted)}
+.drawer-foot{padding:16px 24px;border-top:1px solid var(--line);background:var(--surface-2);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.status-row{display:flex;align-items:center;gap:8px;margin-right:auto}
+.status-row label{font-size:11px;color:var(--muted)}
+.status-row select{width:auto;padding:8px 12px;font-size:12px;font-weight:600}
+@media(max-width:680px){.grid{grid-template-columns:1fr}.licoes-table thead th:nth-child(2){display:none}.licoes-table td:nth-child(2){display:none}.doc-meta{flex-wrap:wrap}.doc-meta div{flex:1 1 40%}.hide-sm{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div class="doc-head">
+    <div class="doc-band">
+      <div class="doc-logo">UNIALFA<small>GRUPO JOSÉ ALVES</small></div>
+      <div class="doc-title">
+        <h1>Registro de Lições Aprendidas — RLA</h1>
+        <p>Aprendizado organizacional · Escritório de Projetos</p>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <div><span>Código</span><b>FORALF00342</b></div>
+      <div><span>Revisão</span><b>00</b></div>
+      <div><span>Homologação</span><b>07/05/2026</b></div>
+      <div class="hide-sm"><span>Aprovação</span><b>Via status do registro</b></div>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" id="tab-new" onclick="showView('new')">＋ Novo RLA</button>
+    <button class="tab" role="tab" aria-selected="false" id="tab-list" onclick="showView('list')">
+      RLAs cadastrados <span class="count" id="count">0</span>
+    </button>
+  </div>
+
+  <div id="view-new">
+
+    <!-- 1 Identificação -->
+    <div class="card">
+      <div class="section-h"><div class="n">1</div><h2>Identificação</h2></div>
+      <div class="grid">
+        <div class="field full" data-for="nomeProjeto"><label>Nome do projeto<span class="req">*</span></label><input id="nomeProjeto" type="text" placeholder="Nome do projeto"><div class="err-msg">Informe o nome do projeto.</div></div>
+        <div class="field" data-for="unidade"><label>Unidade responsável<span class="req">*</span></label><select id="unidade"><option value="">Selecione…</option><option>Superintendência Reitoria</option><option>Ouvidoria</option><option>CPA</option><option>Comitê da Qualidade</option><option>Diretoria Educação Executiva</option><option>Diretoria de Escola Business</option><option>Diretoria de Escola de Direito</option><option>Diretoria de Operações EAD</option><option>Diretoria de Marketing e Vendas</option><option>Coord. Curso Lato Sensu</option><option>Coord. Pós-Graduação Stricto Sensu</option><option>Coord. Curso Graduação, Técnico e Ensino Médio</option><option>Coord. Curso Graduação</option><option>Coord. Operações Acadêmicas EAD</option><option>Coord. Gestão de Polos</option><option>Corpo Docente</option><option>Corpo Docente (PJ)</option><option>Marketing</option><option>Vendas</option><option>Relacionamento</option><option>Planej. e Operações</option><option>RH</option><option>Secretaria Geral</option><option>Asseg. Qualidade</option><option>Segurança</option><option>ADM e Infraestrutura</option><option>GPTI</option><option>Controladoria</option><option>Gerência de Controladoria</option></select><div class="err-msg">Selecione a unidade.</div></div>
+        <div class="field" data-for="gerente"><label>Gerente de projeto<span class="req">*</span></label><input id="gerente" type="text" placeholder="Nome do GP"><div class="err-msg">Informe o gerente.</div></div>
+        <div class="field"><label>Data de elaboração</label><input id="dataElab" type="date"></div>
+      </div>
+    </div>
+
+    <!-- 2 Visão geral -->
+    <div class="card">
+      <div class="section-h"><div class="n">2</div><h2>Visão geral do projeto</h2></div>
+      <div class="grid">
+        <div class="field full"><label><span class="ref">2.1</span>Quais eram as metas e objetivos do projeto?</label><textarea id="q21" placeholder="Descreva as metas e objetivos originais"></textarea></div>
+        <div class="field full"><label><span class="ref">2.2</span>Quais foram os critérios originais para o sucesso?</label><textarea id="q22" placeholder="Descreva os critérios de sucesso definidos no início"></textarea></div>
+        <div class="field full"><label><span class="ref">2.3</span>O projeto foi concluído de acordo com a expectativa original?</label><textarea id="q23" placeholder="Avalie se o resultado atendeu ao planejado"></textarea></div>
+        <div class="field full"><label><span class="ref">2.4</span>Comentários adicionais</label><textarea id="q24" placeholder="Observações gerais sobre a visão do projeto"></textarea></div>
+      </div>
+    </div>
+
+    <!-- 3 Destaques -->
+    <div class="card">
+      <div class="section-h"><div class="n">3</div><h2>Destaques do projeto</h2><p>O que funcionou bem</p></div>
+      <div class="grid">
+        <div class="field full"><label><span class="ref">3.1</span>Quais foram as principais realizações?</label><textarea id="q31" placeholder="Liste as maiores conquistas do projeto"></textarea></div>
+        <div class="field full"><label><span class="ref">3.2</span>Quais métodos deram certo?</label><textarea id="q32" placeholder="Metodologias, ferramentas ou práticas que funcionaram bem"></textarea></div>
+        <div class="field full"><label><span class="ref">3.3</span>O que foi particularmente útil para realizar o projeto?</label><textarea id="q33" placeholder="Recursos, apoios ou condições que facilitaram o sucesso"></textarea></div>
+        <div class="field full"><label><span class="ref">3.4</span>Comentários adicionais</label><textarea id="q34" placeholder="Outras observações sobre os destaques"></textarea></div>
+      </div>
+    </div>
+
+    <!-- 4 Desafios -->
+    <div class="card">
+      <div class="section-h"><div class="n">4</div><h2>Desafios do projeto</h2><p>O que pode melhorar</p></div>
+      <div class="grid">
+        <div class="field full"><label><span class="ref">4.1</span>Que elementos do projeto deram errado?</label><textarea id="q41" placeholder="Descreva os problemas ou falhas ocorridos"></textarea></div>
+        <div class="field full"><label><span class="ref">4.2</span>Quais processos específicos precisam ser melhorados?</label><textarea id="q42" placeholder="Identifique os processos com maior espaço de melhoria"></textarea></div>
+        <div class="field full"><label><span class="ref">4.3</span>Como esses processos podem ser melhorados no futuro?</label><textarea id="q43" placeholder="Proponha ações concretas de melhoria"></textarea></div>
+        <div class="field full"><label><span class="ref">4.4</span>Principais áreas de problemas (orçamento, cronograma etc.)</label><textarea id="q44" placeholder="Classifique as áreas de maior dificuldade"></textarea></div>
+        <div class="field full"><label><span class="ref">4.5</span>Lista dos desafios técnicos</label><textarea id="q45" placeholder="Desafios de tecnologia, integração, infraestrutura etc."></textarea></div>
+        <div class="field full"><label><span class="ref">4.6</span>Comentários adicionais</label><textarea id="q46" placeholder="Outras observações sobre os desafios"></textarea></div>
+      </div>
+    </div>
+
+    <!-- 5 Pós-projeto -->
+    <div class="card">
+      <div class="section-h"><div class="n">5</div><h2>Tarefas pós-projeto / considerações futuras</h2></div>
+      <div class="grid">
+        <div class="field full"><label><span class="ref">5.1</span>Objetivos contínuos de desenvolvimento e manutenção</label><textarea id="q51" placeholder="O que precisa ser mantido ou evoluído após o encerramento"></textarea></div>
+        <div class="field full"><label><span class="ref">5.2</span>Ações pendentes e responsáveis</label><textarea id="q52" placeholder="Liste ações em aberto e quem deve concluí-las"></textarea></div>
+        <div class="field full"><label><span class="ref">5.3</span>Itens adicionais de projeto pendentes</label><textarea id="q53" placeholder="Outros itens não concluídos ou em andamento"></textarea></div>
+        <div class="field full"><label><span class="ref">5.4</span>Comentários adicionais</label><textarea id="q54" placeholder="Outras observações sobre o pós-projeto"></textarea></div>
+      </div>
+    </div>
+
+    <!-- 6–9 Avaliações estruturadas -->
+    <div class="card" id="card-lic6">
+      <div class="section-h"><div class="n">6</div><h2>Fase de planejamento</h2><p>Avalie cada item</p></div>
+      <div class="licoes-wrap"><div class="overflow-x:auto"><table class="licoes-table" id="tbl-6"><thead><tr><th>Lição aprendida</th><th>Alcançada?</th><th>Comentários</th></tr></thead><tbody id="tbody-6"></tbody></table></div></div>
+      <div class="score-row"><span class="score-label">Score de planejamento</span><div class="score-bar"><div class="score-fill" id="fill-6" style="width:0%"></div></div><span class="score-pct" id="pct-6">—</span></div>
+    </div>
+
+    <div class="card" id="card-lic7">
+      <div class="section-h"><div class="n">7</div><h2>Execução</h2><p>Avalie cada item</p></div>
+      <div class="licoes-wrap"><table class="licoes-table" id="tbl-7"><thead><tr><th>Lição aprendida</th><th>Alcançada?</th><th>Comentários</th></tr></thead><tbody id="tbody-7"></tbody></table></div>
+      <div class="score-row"><span class="score-label">Score de execução</span><div class="score-bar"><div class="score-fill" id="fill-7" style="width:0%"></div></div><span class="score-pct" id="pct-7">—</span></div>
+    </div>
+
+    <div class="card" id="card-lic8">
+      <div class="section-h"><div class="n">8</div><h2>Fatores humanos</h2><p>Avalie cada item</p></div>
+      <div class="licoes-wrap"><table class="licoes-table" id="tbl-8"><thead><tr><th>Lição aprendida</th><th>Alcançada?</th><th>Comentários</th></tr></thead><tbody id="tbody-8"></tbody></table></div>
+      <div class="score-row"><span class="score-label">Score de fatores humanos</span><div class="score-bar"><div class="score-fill" id="fill-8" style="width:0%"></div></div><span class="score-pct" id="pct-8">—</span></div>
+    </div>
+
+    <div class="card" id="card-lic9">
+      <div class="section-h"><div class="n">9</div><h2>Geral</h2><p>Avalie cada item</p></div>
+      <div class="licoes-wrap"><table class="licoes-table" id="tbl-9"><thead><tr><th>Lição aprendida</th><th>Alcançada?</th><th>Comentários</th></tr></thead><tbody id="tbody-9"></tbody></table></div>
+      <div class="score-row"><span class="score-label">Score geral</span><div class="score-bar"><div class="score-fill" id="fill-9" style="width:0%"></div></div><span class="score-pct" id="pct-9">—</span></div>
+      <div class="actions">
+        <button class="btn btn-primary" id="submitBtn" onclick="submitForm()">Registrar RLA</button>
+        <button class="btn btn-ghost" onclick="clearForm()">Limpar campos</button>
+        <span class="spacer">Campos com <b style="color:var(--red)">*</b> são obrigatórios</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div id="view-list" style="display:none">
+    <div class="card">
+      <div class="list-head">
+        <span class="ttl">RLAs cadastrados</span>
+        <input type="search" id="search" placeholder="Buscar por projeto, gerente…" oninput="renderList()">
+        <div class="ml">
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Exportar CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.print()">Imprimir</button>
+        </div>
+      </div>
+      <div id="list-body"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-top">
+    <div><h2 id="d-proj">—</h2><div class="proto-lg" id="d-proto">—</div></div>
+    <button class="xbtn" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="drawer-body"><dl class="dl" id="d-body"></dl></div>
+  <div class="drawer-foot">
+    <div class="status-row">
+      <label for="d-status">Status</label>
+      <select id="d-status" onchange="changeStatus()">
+        <option value="Pendente de aprovação">Pendente de aprovação</option>
+        <option value="Aprovado">Aprovado</option>
+        <option value="Reprovado">Reprovado</option>
+      </select>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="editCurrent()">Editar dados</button>
+    <button class="btn btn-danger btn-sm" onclick="deleteCurrent()">Excluir</button>
+  </div>
+</aside>
+<div class="toast" id="toast"><span class="dot"></span><span id="toast-msg"></span></div>
+
+<script>
+/* ---- Armazenamento persistente via Supabase (substitui window.storage) ---- */
+(function(){
+  var SUPABASE_URL = 'https://fiarntunpqteopwjkhjg.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+  var TABLE = 'kv_store';
+  var base = SUPABASE_URL + '/rest/v1/' + TABLE;
+  function headers(extra){
+    var h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+    if (extra) { for (var k in extra) h[k] = extra[k]; }
+    return h;
+  }
+  window.storage = {
+    get: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key) + '&select=value', { headers: headers() });
+      if(!r.ok) return null;
+      var rows = await r.json();
+      return rows.length ? { value: rows[0].value } : null;
+    },
+    set: async function(key, value){
+      var r = await fetch(base + '?on_conflict=key', { method: 'POST', headers: headers({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }) });
+      return r.ok;
+    },
+    delete: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key), { method: 'DELETE', headers: headers() });
+      return r.ok;
+    },
+    list: async function(prefix){
+      var r = await fetch(base + '?key=like.' + encodeURIComponent(prefix) + '*&select=key', { headers: headers() });
+      if(!r.ok) return { keys: [] };
+      var rows = await r.json();
+      return { keys: rows.map(function(x){ return x.key; }) };
+    },
+  };
+})();
+</script>
+<script>
+const KEY_PREFIX='rla:';
+let cache=[], currentId=null, editId=null;
+const REQUIRED=['nomeProjeto','unidade','gerente'];
+const SIMPLE_FIELDS=['nomeProjeto','unidade','gerente','dataElab','q21','q22','q23','q24','q31','q32','q33','q34','q41','q42','q43','q44','q45','q46','q51','q52','q53','q54'];
+
+const LICOES={
+  6:[
+    'Os planejamentos e o cronograma do projeto foram bem documentados, com estrutura e detalhes adequados.',
+    'O cronograma continha todos os elementos do projeto.',
+    'As tarefas foram claramente definidas.',
+    'As partes interessadas tiveram uma contribuição adequada no processo de planejamento.',
+    'Os requisitos foram coletados e claramente documentados.',
+    'Os critérios eram claros para todas as fases do projeto.',
+    'Comentários adicionais',
+  ],
+  7:[
+    'O projeto atingiu suas metas originais.',
+    'As mudanças inesperadas que ocorreram foram de frequência e intensidade controláveis.',
+    'As referências iniciais do projeto (tempo, escopo, custo) foram cuidadosamente gerenciadas.',
+    'Os processos fundamentais de gerenciamento de projetos (riscos e problemas) foram eficientes.',
+    'O progresso do projeto foi monitorado e relatado de forma precisa e organizada.',
+    'Comentários adicionais',
+  ],
+  8:[
+    'O gerente de projeto enviou relatórios às partes apropriadas.',
+    'O gerenciamento de projetos foi eficaz.',
+    'A equipe do projeto foi organizada e adequadamente equipada.',
+    'O gerente do projeto e a equipe receberam treinamento adequado.',
+    'Houve uma comunicação eficiente entre os membros da equipe do projeto.',
+    'As áreas funcionais colaboraram com eficácia.',
+    'Metas conflitantes não causaram problemas interdepartamentais.',
+    'Comentários adicionais',
+  ],
+  9:[
+    'As projeções originais de custo e cronograma estavam corretas.',
+    'Os produtos a serem entregues foram apresentados dentro do prazo com o cronograma alterado.',
+    'O projeto foi concluído dentro do orçamento alterado.',
+    'O controle de mudanças foi construtivo.',
+    'As dependências externas eram conhecidas e foram tratadas com eficácia.',
+    'As necessidades do cliente foram atendidas.',
+    'Os objetivos do projeto foram cumpridos.',
+    'Os objetivos do negócio foram cumpridos.',
+    'Comentários adicionais',
+  ],
+};
+
+function toast(msg,ok=true){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.toggle('ok',ok);t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3200);}
+function fmtDate(iso){if(!iso)return '—';const p=iso.split('-');return `${p[2]}/${p[1]}/${p[0]}`;}
+function fmtStamp(ms){const dt=new Date(ms);return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function badgeClass(s){return s==='Aprovado'?'b-ok':s==='Reprovado'?'b-bad':'b-pend';}
+
+/* ---- build lição tables ---- */
+function buildLicoes(){
+  [6,7,8,9].forEach(sec=>{
+    const tbody=document.getElementById('tbody-'+sec);
+    LICOES[sec].forEach((lic,i)=>{
+      const id=`lic_${sec}_${i}`;
+      const isComment=lic==='Comentários adicionais';
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${lic}</td>
+        <td>${isComment?'<span style="color:var(--muted);font-size:11px">—</span>':`
+          <div class="lic-radio">
+            <label class="lic-opt" onclick="selectLic(this,'sim')"><input type="radio" name="${id}" value="Sim"> Sim</label>
+            <label class="lic-opt" onclick="selectLic(this,'nao')"><input type="radio" name="${id}" value="Não"> Não</label>
+            <label class="lic-opt" onclick="selectLic(this,'parc')"><input type="radio" name="${id}" value="Parcial"> Parcial</label>
+            <label class="lic-opt" onclick="selectLic(this,'na')"><input type="radio" name="${id}" value="N/A"> N/A</label>
+          </div>`}
+        </td>
+        <td class="comment-cell"><textarea class="lic-comment" data-sec="${sec}" data-idx="${i}" placeholder="Comentário…" oninput="autoResize(this)"></textarea></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+function autoResize(el){el.style.height='auto';el.style.height=Math.max(34,el.scrollHeight)+'px';}
+function selectLic(lbl,cls){
+  const radio=lbl.querySelector('input');
+  setTimeout(()=>{
+    if(!radio.checked) return;
+    const name=radio.name;
+    document.querySelectorAll(`input[name="${name}"]`).forEach(r=>{r.closest('.lic-opt').className='lic-opt';});
+    lbl.classList.add('sel-'+cls);
+    updateScore(lbl.closest('tbody').id.replace('tbody-',''));
+  },0);
+}
+function updateScore(sec){
+  const items=LICOES[sec].filter(l=>l!=='Comentários adicionais');
+  let sim=0,counted=0;
+  items.forEach((_,i)=>{
+    const checked=document.querySelector(`input[name="lic_${sec}_${i}"]:checked`);
+    if(checked){counted++;if(checked.value==='Sim')sim++;else if(checked.value==='Parcial')sim+=0.5;}
+  });
+  const pct=counted?Math.round((sim/counted)*100):0;
+  const fill=document.getElementById('fill-'+sec);
+  const pctEl=document.getElementById('pct-'+sec);
+  fill.style.width=pct+'%';
+  fill.style.background=pct>=75?'var(--ok)':pct>=40?'var(--warn)':'var(--bad)';
+  pctEl.style.color=pct>=75?'var(--ok)':pct>=40?'var(--warn)':'var(--bad)';
+  pctEl.textContent=counted?pct+'%':'—';
+}
+
+function readLicoes(){
+  const result={};
+  [6,7,8,9].forEach(sec=>{
+    result[sec]=LICOES[sec].map((lic,i)=>{
+      const checked=document.querySelector(`input[name="lic_${sec}_${i}"]:checked`);
+      const comment=document.querySelector(`.lic-comment[data-sec="${sec}"][data-idx="${i}"]`);
+      return {licao:lic, resp:checked?checked.value:'', comentario:comment?comment.value.trim():''};
+    });
+  });
+  return result;
+}
+
+function fillLicoes(data){
+  [6,7,8,9].forEach(sec=>{
+    if(!data[sec]) return;
+    data[sec].forEach((item,i)=>{
+      if(item.resp){
+        const cls=item.resp==='Sim'?'sim':item.resp==='Não'?'nao':item.resp==='Parcial'?'parc':'na';
+        const radio=document.querySelector(`input[name="lic_${sec}_${i}"][value="${item.resp}"]`);
+        if(radio){radio.checked=true; radio.closest('.lic-opt').className='lic-opt sel-'+cls;}
+      }
+      if(item.comentario){
+        const ta=document.querySelector(`.lic-comment[data-sec="${sec}"][data-idx="${i}"]`);
+        if(ta){ta.value=item.comentario;autoResize(ta);}
+      }
+    });
+    updateScore(sec);
+  });
+}
+
+/* ---- storage ---- */
+async function loadAll(){
+  cache=[];
+  try{const res=await window.storage.list(KEY_PREFIX);const keys=(res&&res.keys)?res.keys:[];for(const k of keys){try{const r=await window.storage.get(k);if(r&&r.value)cache.push(JSON.parse(r.value));}catch(e){}}}catch(e){console.warn(e);}
+  cache.sort((a,b)=>b.createdAt-a.createdAt);
+  document.getElementById('count').textContent=cache.length;
+}
+
+/* ---- validate / submit ---- */
+function clearError(id){const f=document.querySelector(`.field[data-for="${id}"]`);if(f)f.classList.remove('error');}
+REQUIRED.forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',()=>clearError(id));});
+function validate(){
+  let firstBad=null;
+  REQUIRED.forEach(id=>{const el=document.getElementById(id);const f=document.querySelector(`.field[data-for="${id}"]`);if(!el.value.trim()){f.classList.add('error');if(!firstBad)firstBad=f;}else f.classList.remove('error');});
+  if(firstBad)firstBad.scrollIntoView({behavior:'smooth',block:'center'});
+  return !firstBad;
+}
+
+async function submitForm(){
+  if(!validate()){toast('Revise os campos obrigatórios',false);return;}
+  let rec;
+  if(editId){
+    rec = Object.assign({}, cache.find(x=>x.id===editId));
+  } else {
+    const year=new Date().getFullYear();const seq=String(cache.length+1).padStart(3,'0');
+    rec={id:'rla_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),protocolo:`FORALF00342-${year}-${seq}`,status:'Pendente de aprovação',createdAt:Date.now()};
+  }
+  SIMPLE_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)rec[id]=(el.value||'').trim();});
+  rec.licoes=readLicoes();
+  // compute global score
+  let totalSim=0,totalCount=0;
+  [6,7,8,9].forEach(sec=>{LICOES[sec].filter(l=>l!=='Comentários adicionais').forEach((_,i)=>{const ch=document.querySelector(`input[name="lic_${sec}_${i}"]:checked`);if(ch){totalCount++;if(ch.value==='Sim')totalSim++;else if(ch.value==='Parcial')totalSim+=0.5;}});});
+  rec.scoreGlobal=totalCount?Math.round((totalSim/totalCount)*100):null;
+  try{
+    const r=await window.storage.set(KEY_PREFIX+rec.id,JSON.stringify(rec));if(!r)throw new Error();
+    if(editId){
+      const idx=cache.findIndex(x=>x.id===rec.id);
+      if(idx>-1) cache[idx]=rec; else cache.unshift(rec);
+      toast('RLA '+rec.protocolo+' atualizado');
+    } else {
+      cache.unshift(rec);
+      toast('RLA '+rec.protocolo+' registrado');
+    }
+    document.getElementById('count').textContent=cache.length;
+    editId=null;
+    clearForm();showView('list');
+  }catch(e){toast('Não foi possível salvar.',false);}
+}
+function editCurrent(){
+  const r=cache.find(x=>x.id===currentId); if(!r) return;
+  clearForm();
+  editId=r.id;
+  SIMPLE_FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=r[id]||''; });
+  fillLicoes(r.licoes||{});
+  document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
+  closeDrawer();
+  showView('new');
+  updateEditBanner();
+}
+function updateEditBanner(){
+  document.getElementById('submitBtn').textContent = editId ? 'Salvar alterações' : 'Registrar RLA';
+}
+
+function clearForm(){
+  SIMPLE_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
+  document.querySelectorAll('.lic-opt').forEach(o=>o.className='lic-opt');
+  document.querySelectorAll('.lic-comment').forEach(ta=>{ta.value='';ta.style.height='34px';});
+  [6,7,8,9].forEach(sec=>{document.getElementById('fill-'+sec).style.width='0%';document.getElementById('pct-'+sec).textContent='—';});
+  document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
+  editId=null;
+  updateEditBanner();
+}
+
+/* ---- views / list ---- */
+function showView(v){
+  document.getElementById('view-new').style.display=v==='new'?'block':'none';
+  document.getElementById('view-list').style.display=v==='list'?'block':'none';
+  document.getElementById('tab-new').setAttribute('aria-selected',v==='new');
+  document.getElementById('tab-list').setAttribute('aria-selected',v==='list');
+  if(v==='list')renderList();
+}
+function renderList(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const rows=cache.filter(r=>!q||((r.nomeProjeto+r.gerente+r.protocolo).toLowerCase().includes(q)));
+  const body=document.getElementById('list-body');
+  if(!cache.length){body.innerHTML='<div class="empty"><h3>Nenhum RLA cadastrado</h3><p>Os registros de lições aprendidas aparecem aqui.</p></div>';return;}
+  if(!rows.length){body.innerHTML='<div class="empty"><h3>Nenhum resultado</h3><p>Ajuste a busca.</p></div>';return;}
+  let html='<table class="list"><thead><tr><th>Protocolo</th><th>Projeto</th><th class="hide-sm">Unidade</th><th class="hide-sm">Score global</th><th>Status</th></tr></thead><tbody>';
+  for(const r of rows){
+    const score=r.scoreGlobal!=null?r.scoreGlobal+'%':'—';
+    const scoreColor=r.scoreGlobal>=75?'var(--ok)':r.scoreGlobal>=40?'var(--warn)':'var(--bad)';
+    html+=`<tr onclick="openDrawer('${r.id}')">
+      <td><div class="proto">${esc(r.protocolo)}<small>${fmtStamp(r.createdAt)}</small></div></td>
+      <td><div class="proj">${esc(r.nomeProjeto)}<small>GP: ${esc(r.gerente||'—')}</small></div></td>
+      <td class="hide-sm">${esc(r.unidade||'—')}</td>
+      <td class="hide-sm" style="font-weight:800;color:${r.scoreGlobal!=null?scoreColor:'var(--muted)'}">${score}</td>
+      <td><span class="badge ${badgeClass(r.status)}">${esc(r.status)}</span></td>
+    </tr>`;
+  }
+  html+='</tbody></table>';body.innerHTML=html;
+}
+
+const SEC_LABELS={6:'Planejamento',7:'Execução',8:'Fatores Humanos',9:'Geral'};
+function openDrawer(id){
+  const r=cache.find(x=>x.id===id);if(!r)return;currentId=id;
+  document.getElementById('d-proj').textContent=r.nomeProjeto;
+  document.getElementById('d-proto').textContent=r.protocolo+' · Elaborado em '+fmtDate(r.dataElab)+' · Score: '+(r.scoreGlobal!=null?r.scoreGlobal+'%':'—');
+  document.getElementById('d-status').value=r.status;
+  let html='';
+  html+=`<div class="grp">Identificação</div>`;
+  html+=`<div class="row"><dt>Gerente</dt><dd>${esc(r.gerente||'—')}</dd></div>`;
+  html+=`<div class="row"><dt>Unidade</dt><dd>${esc(r.unidade||'—')}</dd></div>`;
+  const sections=[
+    {grp:'Visão geral',fields:[{k:'q21',l:'2.1 Metas e objetivos'},{k:'q22',l:'2.2 Critérios de sucesso'},{k:'q23',l:'2.3 Conclusão vs. expectativa'},{k:'q24',l:'2.4 Comentários'}]},
+    {grp:'Destaques',fields:[{k:'q31',l:'3.1 Principais realizações'},{k:'q32',l:'3.2 Métodos que deram certo'},{k:'q33',l:'3.3 O que foi útil'},{k:'q34',l:'3.4 Comentários'}]},
+    {grp:'Desafios',fields:[{k:'q41',l:'4.1 O que deu errado'},{k:'q42',l:'4.2 Processos a melhorar'},{k:'q43',l:'4.3 Como melhorar'},{k:'q44',l:'4.4 Áreas de problemas'},{k:'q45',l:'4.5 Desafios técnicos'},{k:'q46',l:'4.6 Comentários'}]},
+    {grp:'Pós-projeto',fields:[{k:'q51',l:'5.1 Objetivos contínuos'},{k:'q52',l:'5.2 Ações pendentes'},{k:'q53',l:'5.3 Itens pendentes'},{k:'q54',l:'5.4 Comentários'}]},
+  ];
+  sections.forEach(sec=>{
+    html+=`<div class="grp">${sec.grp}</div>`;
+    sec.fields.forEach(f=>{html+=`<div class="row"><dt>${f.l}</dt><dd>${esc(r[f.k]||'—')}</dd></div>`;});
+  });
+  if(r.licoes){
+    [6,7,8,9].forEach(sec=>{
+      html+=`<div class="grp">${SEC_LABELS[sec]}</div>`;
+      (r.licoes[sec]||[]).forEach(item=>{
+        const cls=item.resp==='Sim'?'sim':item.resp==='Não'?'nao':item.resp==='Parcial'?'parc':'na';
+        html+=`<div class="lic-ro"><span class="lic-resp ${cls}">${esc(item.resp||'—')}</span>${esc(item.licao)}${item.comentario?`<br><span style="color:var(--muted);font-size:11.5px">💬 ${esc(item.comentario)}</span>`:''}` + `</div>`;
+      });
+    });
+  }
+  document.getElementById('d-body').innerHTML=html;
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
+}
+function closeDrawer(){document.getElementById('overlay').classList.remove('show');document.getElementById('drawer').classList.remove('show');currentId=null;}
+async function changeStatus(){
+  const r=cache.find(x=>x.id===currentId);if(!r)return;
+  r.status=document.getElementById('d-status').value;
+  try{await window.storage.set(KEY_PREFIX+r.id,JSON.stringify(r));renderList();toast('Status atualizado para "'+r.status+'"');}
+  catch(e){toast('Erro ao atualizar',false);}
+}
+async function deleteCurrent(){
+  const r=cache.find(x=>x.id===currentId);if(!r)return;
+  if(!confirm('Excluir o RLA '+r.protocolo+'?'))return;
+  try{await window.storage.delete(KEY_PREFIX+r.id);cache=cache.filter(x=>x.id!==currentId);document.getElementById('count').textContent=cache.length;closeDrawer();renderList();toast('RLA excluído');}
+  catch(e){toast('Erro ao excluir',false);}
+}
+function exportCSV(){
+  if(!cache.length){toast('Nenhum RLA para exportar',false);return;}
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const cols=[['protocolo','Protocolo'],['nomeProjeto','Projeto'],['unidade','Unidade'],['gerente','Gerente'],['dataElab','Data elaboração'],['scoreGlobal','Score global (%)'],['q21','2.1'],['q22','2.2'],['q23','2.3'],['q31','3.1'],['q32','3.2'],['q33','3.3'],['q41','4.1'],['q42','4.2'],['q43','4.3'],['q51','5.1'],['q52','5.2'],['status','Status']];
+  let csv=cols.map(c=>q(c[1])).join(';')+'\r\n';
+  for(const r of cache){
+    const row={...r,dataElab:fmtDate(r.dataElab)};
+    csv+=cols.map(c=>q(row[c[0]])).join(';')+'\r\n';
+  }
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='rla_FORALF00342.csv';a.click();URL.revokeObjectURL(url);
+  toast('CSV exportado ('+cache.length+' RLAs)');
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+buildLicoes();
+(async()=>{await loadAll();renderList();})();
+</script>

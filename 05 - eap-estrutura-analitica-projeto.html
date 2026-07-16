@@ -1,0 +1,606 @@
+<!-- EAP — Estrutura Analítica de Projeto / UNIALFA -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --red:#B91D2E; --red-deep:#8E1322; --ink:#1A1A1A; --muted:#6A6A70;
+  --paper:#FFFFFF; --surface:#F6F6F7; --surface-2:#FAFAFB;
+  --line:#E4E4E7; --line-strong:#D4D4D8;
+  --ok:#1B7F4B; --ok-soft:#E6F4EC; --warn:#B45309; --warn-soft:#FBF1E3; --bad:#9F1239; --bad-soft:#FBE7EC;
+  --n1:#B91D2E; --n2:#1D4ED8; --n3:#0F766E;
+  --radius:10px; --shadow:0 1px 2px rgba(20,20,20,.04), 0 8px 28px rgba(20,20,20,.06);
+  --font:'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0; font-family:var(--font); color:var(--ink); background:var(--surface); -webkit-font-smoothing:antialiased; line-height:1.5;}
+.wrap{max-width:1020px; margin:0 auto; padding:28px 20px 64px}
+.doc-head{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);}
+.doc-band{background:var(--red); color:#fff; padding:18px 24px; display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+.doc-logo{font-weight:800; font-size:22px; letter-spacing:.04em; line-height:1; padding-right:18px; border-right:2px solid rgba(255,255,255,.35);}
+.doc-logo small{display:block; font-weight:600; font-size:10px; letter-spacing:.22em; margin-top:5px; opacity:.85}
+.doc-title h1{margin:0; font-size:17px; font-weight:700; letter-spacing:.05em; text-transform:uppercase}
+.doc-title p{margin:3px 0 0; font-size:12px; font-weight:500; opacity:.9}
+.doc-meta{display:flex; gap:0; border-top:1px solid var(--line); background:var(--surface-2); font-size:11px; flex-wrap:wrap;}
+.doc-meta div{padding:9px 24px; border-right:1px solid var(--line); display:flex; flex-direction:column; gap:1px;}
+.doc-meta div:last-child{border-right:none}
+.doc-meta span{color:var(--muted); font-weight:600; letter-spacing:.12em; text-transform:uppercase; font-size:9.5px}
+.doc-meta b{font-weight:700; font-size:12px}
+.tabs{display:flex; gap:8px; margin:22px 0 16px}
+.tab{appearance:none; border:1px solid var(--line); background:var(--paper); color:var(--muted); font-family:var(--font); font-weight:600; font-size:13px; padding:10px 18px; border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:all .15s;}
+.tab:hover{border-color:var(--line-strong); color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--ink); border-color:var(--ink); color:#fff}
+.tab .count{background:var(--red); color:#fff; font-size:11px; font-weight:700; min-width:20px; height:20px; padding:0 6px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center;}
+.tab[aria-selected="true"] .count{background:#fff; color:var(--ink)}
+.card{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-top:18px;}
+.section-h{display:flex; align-items:center; gap:12px; padding:16px 24px 13px; border-bottom:1px solid var(--line); background:var(--surface-2);}
+.section-h .n{padding:0 9px; height:26px; min-width:26px; border-radius:7px; background:var(--red); color:#fff; font-weight:800; font-size:11px; display:flex; align-items:center; justify-content:center; flex:none;}
+.section-h h2{margin:0; font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase}
+.section-h p{margin:0 0 0 auto; font-size:11px; color:var(--muted); font-weight:500}
+.legend{display:flex; gap:16px; padding:12px 24px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
+.leg{display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600}
+.leg .dot{width:12px; height:12px; border-radius:3px; flex:none}
+.l1{background:var(--n1)} .l2{background:var(--n2)} .l3{background:var(--n3)}
+.proj-row{padding:20px 24px; border-bottom:1px solid var(--line); display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap;}
+.proj-row .field{flex:1; min-width:200px; display:flex; flex-direction:column; gap:6px;}
+label{font-size:12px; font-weight:700; letter-spacing:.02em}
+label .req{color:var(--red); margin-left:2px}
+input, select{font-family:var(--font); font-size:13.5px; color:var(--ink); border:1px solid var(--line-strong); border-radius:8px; padding:10px 12px; background:var(--paper); width:100%; transition:border-color .15s, box-shadow .15s;}
+input::placeholder{color:#A8A8AE}
+input:focus, select:focus{outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(185,29,46,.12);}
+.field.error input{border-color:var(--bad); box-shadow:0 0 0 3px rgba(159,18,57,.10);}
+.err-msg{font-size:11px; color:var(--bad); font-weight:600; display:none}
+.field.error .err-msg{display:block}
+.builder{padding:20px 24px;}
+.n1-block{margin-bottom:20px; border:1.5px solid #FCA5A530; border-radius:10px; overflow:hidden;}
+.n1-head{display:flex; align-items:center; gap:10px; padding:10px 14px; background:#FEF2F2;}
+.n1-badge{background:var(--n1); color:#fff; font-size:10px; font-weight:800; letter-spacing:.08em; padding:3px 9px; border-radius:5px; white-space:nowrap; flex:none}
+.n1-head input{flex:1; background:transparent; border:1px solid transparent; font-size:14px; font-weight:700; color:var(--ink); padding:5px 7px; border-radius:6px; width:auto;}
+.n1-head input:focus{background:#fff; border-color:var(--n1); outline:none;}
+.n1-del{appearance:none; border:none; background:transparent; color:#DC2626; font-size:20px; cursor:pointer; width:30px; height:30px; border-radius:6px; flex:none; display:flex; align-items:center; justify-content:center; font-weight:700; line-height:1}
+.n1-del:hover{background:var(--bad-soft)}
+.n1-body{padding:10px 14px 14px; background:#FFF8F8;}
+.n2-block{margin:8px 0; border:1.5px solid #BFDBFE; border-radius:8px; overflow:hidden;}
+.n2-head{display:flex; align-items:center; gap:8px; padding:8px 12px; background:#EFF6FF;}
+.n2-badge{background:var(--n2); color:#fff; font-size:9.5px; font-weight:800; letter-spacing:.06em; padding:2px 8px; border-radius:4px; white-space:nowrap; flex:none}
+.n2-head input{flex:1; background:transparent; border:1px solid transparent; font-size:13px; font-weight:600; color:var(--ink); padding:4px 6px; border-radius:5px; width:auto;}
+.n2-head input:focus{background:#fff; border-color:var(--n2); outline:none;}
+.n2-del{appearance:none; border:none; background:transparent; color:var(--n2); font-size:17px; cursor:pointer; width:26px; height:26px; border-radius:5px; flex:none; display:flex; align-items:center; justify-content:center; font-weight:700}
+.n2-del:hover{background:#DBEAFE}
+.n2-body{padding:8px 12px 10px; background:#F0F7FF;}
+.n3-row{display:flex; align-items:center; gap:8px; padding:4px 0;}
+.n3-badge{background:var(--n3); color:#fff; font-size:9px; font-weight:800; letter-spacing:.04em; padding:2px 7px; border-radius:4px; white-space:nowrap; flex:none}
+.n3-row input{flex:1; background:transparent; border:1px solid transparent; font-size:12.5px; color:var(--ink); padding:5px 7px; border-radius:5px; width:auto;}
+.n3-row input:focus{background:#fff; border-color:var(--n3); outline:none;}
+.n3-del{appearance:none; border:none; background:transparent; color:var(--n3); font-size:15px; cursor:pointer; width:24px; height:24px; border-radius:4px; flex:none; display:flex; align-items:center; justify-content:center;}
+.n3-del:hover{background:#CCFBF1}
+.add-btn{appearance:none; border:1.5px dashed; border-radius:7px; background:transparent; font-family:var(--font); font-weight:600; font-size:12px; cursor:pointer; padding:7px 14px; transition:all .15s; margin-top:6px; display:inline-flex; align-items:center; gap:6px;}
+.add-n2{border-color:#93C5FD; color:var(--n2)} .add-n2:hover{background:#EFF6FF}
+.add-n3{border-color:#5EEAD4; color:var(--n3)} .add-n3:hover{background:#F0FDFA}
+.add-n1{border-color:#FCA5A5; color:var(--n1)} .add-n1:hover{background:#FEF2F2}
+.add-n1-wrap{margin-top:4px}
+.actions{display:flex; align-items:center; gap:12px; padding:18px 24px; border-top:1px solid var(--line); background:var(--surface-2);}
+.btn{appearance:none; font-family:var(--font); font-weight:700; font-size:13px; border-radius:8px; padding:11px 22px; cursor:pointer; border:1px solid transparent; transition:all .15s; display:inline-flex; align-items:center; gap:8px;}
+.btn-primary{background:var(--red); color:#fff} .btn-primary:hover{background:var(--red-deep)}
+.btn-ghost{background:var(--paper); color:var(--ink); border-color:var(--line-strong)} .btn-ghost:hover{border-color:var(--ink)}
+.btn-sm{padding:8px 14px; font-size:12px}
+.btn-blue{background:#1D4ED8; color:#fff} .btn-blue:hover{background:#1E40AF}
+.actions .spacer{margin-left:auto; font-size:11px; color:var(--muted); font-weight:500}
+/* tree */
+.tree-card{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-top:18px;}
+.tree-head{display:flex; align-items:center; gap:12px; padding:16px 24px; border-bottom:1px solid var(--line); background:var(--surface-2);}
+.tree-head h3{margin:0; font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase}
+.tree-area{padding:32px 24px; overflow-x:auto; min-height:120px;}
+.t-root{display:flex; flex-direction:column; align-items:center;}
+.t-root-box{background:var(--red); color:#fff; padding:10px 24px; border-radius:8px; font-weight:800; font-size:14px; text-align:center; max-width:320px; word-break:break-word;}
+.t-vline{width:2px; height:22px; background:var(--line-strong); margin:0 auto;}
+.t-hrow{display:flex; justify-content:center; position:relative;}
+.t-hrow::before{content:''; position:absolute; top:0; left:50px; right:50px; height:2px; background:var(--line-strong);}
+.t-col{display:flex; flex-direction:column; align-items:center; padding:0 10px; position:relative; min-width:150px;}
+.t-col::before{content:''; position:absolute; top:0; left:50%; width:2px; height:18px; background:var(--line-strong);}
+.t-n1{background:#FEF2F2; border:2px solid var(--n1); color:var(--n1); padding:8px 14px; border-radius:7px; font-weight:700; font-size:13px; text-align:center; min-width:130px; max-width:200px; word-break:break-word; margin-top:18px;}
+.t-code{font-size:9px; font-weight:800; opacity:.65; margin-top:2px;}
+.t-vline2{width:2px; height:16px; background:#93C5FD; margin:0 auto;}
+.t-hrow2{display:flex; justify-content:center; position:relative;}
+.t-hrow2::before{content:''; position:absolute; top:0; left:30px; right:30px; height:2px; background:#93C5FD;}
+.t-col2{display:flex; flex-direction:column; align-items:center; padding:0 6px; position:relative; min-width:120px;}
+.t-col2::before{content:''; position:absolute; top:0; left:50%; width:2px; height:16px; background:#93C5FD;}
+.t-n2{background:#EFF6FF; border:2px solid var(--n2); color:var(--n2); padding:6px 12px; border-radius:6px; font-weight:600; font-size:12px; text-align:center; min-width:110px; max-width:170px; word-break:break-word; margin-top:16px;}
+.t-n3list{margin-top:8px; display:flex; flex-direction:column; align-items:center; gap:4px;}
+.t-n3{background:#F0FDFA; border:1.5px solid var(--n3); color:var(--n3); padding:5px 10px; border-radius:5px; font-size:11px; font-weight:600; text-align:center; min-width:100px; max-width:160px; word-break:break-word; position:relative;}
+.t-n3::before{content:''; position:absolute; top:-5px; left:50%; width:1.5px; height:5px; background:#5EEAD4;}
+/* list */
+.list-head{display:flex; align-items:center; gap:14px; padding:16px 24px; border-bottom:1px solid var(--line); background:var(--surface-2); flex-wrap:wrap;}
+.list-head input[type=search]{max-width:300px}
+.list-head .ttl{font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase}
+.list-head .ml{margin-left:auto; display:flex; gap:8px}
+table.list{width:100%; border-collapse:collapse; font-size:13px}
+table.list thead th{text-align:left; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding:12px 16px; border-bottom:1px solid var(--line); white-space:nowrap;}
+table.list tbody td{padding:13px 16px; border-bottom:1px solid var(--surface); vertical-align:top}
+table.list tbody tr{cursor:pointer; transition:background .12s}
+table.list tbody tr:hover{background:var(--surface-2)}
+.proto{font-weight:700; font-size:12px}
+.proto small{display:block; color:var(--muted); font-weight:500; font-size:10.5px; margin-top:2px}
+.proj{font-weight:600}
+.proj small{display:block; color:var(--muted); font-weight:500; font-size:11.5px; margin-top:2px}
+.badge{display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px; white-space:nowrap;}
+.badge::before{content:''; width:6px; height:6px; border-radius:50%; background:currentColor}
+.b-pend{background:var(--warn-soft); color:var(--warn)} .b-apr{background:var(--ok-soft); color:var(--ok)} .b-rep{background:var(--bad-soft); color:var(--bad)}
+.empty{padding:56px 24px; text-align:center; color:var(--muted)}
+.empty h3{margin:0 0 4px; font-size:15px; color:var(--ink); font-weight:700} .empty p{margin:0; font-size:13px}
+/* drawer */
+.overlay{position:fixed; inset:0; background:rgba(20,20,22,.45); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity .2s; z-index:40;}
+.overlay.show{opacity:1; pointer-events:auto}
+.drawer{position:fixed; top:0; right:0; height:100%; width:min(720px,97vw); background:var(--paper); box-shadow:-16px 0 50px rgba(0,0,0,.18); transform:translateX(100%); transition:transform .28s cubic-bezier(.2,.8,.2,1); z-index:45; display:flex; flex-direction:column;}
+.drawer.show{transform:translateX(0)}
+.drawer-top{padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:flex-start; gap:12px}
+.drawer-top h2{margin:0; font-size:16px; font-weight:700}
+.drawer-top .proto-lg{font-size:11.5px; color:var(--muted); font-weight:600; margin-top:3px}
+.xbtn{margin-left:auto; appearance:none; border:1px solid var(--line); background:var(--paper); width:34px; height:34px; border-radius:8px; cursor:pointer; font-size:18px; color:var(--muted); flex:none}
+.xbtn:hover{border-color:var(--ink); color:var(--ink)}
+.drawer-body{padding:16px 24px 24px; overflow-y:auto; flex:1; overflow-x:hidden;}
+.drawer-foot{padding:16px 24px; border-top:1px solid var(--line); background:var(--surface-2); display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.status-row{display:flex; align-items:center; gap:8px; margin-right:auto}
+.status-row label{font-size:11px; color:var(--muted)}
+.status-row select{width:auto; padding:8px 12px; font-size:12px; font-weight:600}
+.btn-danger{background:var(--paper); color:var(--bad); border-color:var(--bad-soft)} .btn-danger:hover{background:var(--bad-soft)}
+.toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:13px 20px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:0 12px 40px rgba(0,0,0,.25); display:flex; align-items:center; gap:10px; opacity:0; pointer-events:none; transition:all .3s cubic-bezier(.2,.8,.2,1); z-index:50; max-width:90vw;}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+.toast .dot{width:8px; height:8px; border-radius:50%; background:#fff; flex:none}
+.toast.ok .dot{background:#5BE49B}
+@media(max-width:680px){.doc-meta{flex-wrap:wrap} .doc-meta div{flex:1 1 40%} .hide-sm{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div class="doc-head">
+    <div class="doc-band">
+      <div class="doc-logo">UNIALFA<small>GRUPO JOSÉ ALVES</small></div>
+      <div class="doc-title">
+        <h1>Estrutura Analítica de Projeto — EAP</h1>
+        <p>Work Breakdown Structure (WBS) · Escritório de Projetos</p>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <div><span>Referência</span><b>EAP / WBS</b></div>
+      <div><span>Níveis</span><b>0 · 1 · 2 · 3</b></div>
+      <div class="hide-sm"><span>Aprovação</span><b>Via status do registro</b></div>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" id="tab-new" onclick="showView('new')">＋ Nova EAP</button>
+    <button class="tab" role="tab" aria-selected="false" id="tab-list" onclick="showView('list')">
+      EAPs cadastradas <span class="count" id="count">0</span>
+    </button>
+  </div>
+
+  <div id="view-new">
+    <div class="card">
+      <div class="section-h"><div class="n">0</div><h2>Raiz do projeto</h2><p>Nível 0 — nome do projeto</p></div>
+      <div class="proj-row">
+        <div class="field" id="field-nomeProjeto">
+          <label>Nome do projeto<span class="req">*</span></label>
+          <input id="nomeProjeto" type="text" placeholder="Ex: Implantação do CRM">
+          <div class="err-msg">Informe o nome do projeto.</div>
+        </div>
+        <div class="field" style="max-width:210px">
+          <label>Unidade responsável</label>
+          <select id="unidade">
+            <option value="">Selecione…</option>
+            <option>Superintendência Reitoria</option><option>Ouvidoria</option><option>CPA</option><option>Comitê da Qualidade</option>
+            <option>Diretoria Educação Executiva</option><option>Diretoria de Escola Business</option><option>Diretoria de Escola de Direito</option><option>Diretoria de Operações EAD</option><option>Diretoria de Marketing e Vendas</option>
+            <option>Coord. Curso Lato Sensu</option><option>Coord. Pós-Graduação Stricto Sensu</option><option>Coord. Curso Graduação, Técnico e Ensino Médio</option><option>Coord. Curso Graduação</option>
+            <option>Coord. Operações Acadêmicas EAD</option><option>Coord. Gestão de Polos</option><option>Corpo Docente</option><option>Corpo Docente (PJ)</option>
+            <option>Marketing</option><option>Vendas</option><option>Relacionamento</option><option>Planej. e Operações</option><option>RH</option>
+            <option>Secretaria Geral</option><option>Asseg. Qualidade</option><option>Segurança</option><option>ADM e Infraestrutura</option><option>GPTI</option>
+            <option>Controladoria</option><option>Gerência de Controladoria</option>
+          </select>
+        </div>
+        <div class="field" style="max-width:200px">
+          <label>Gerente de projeto</label>
+          <input id="gerente" type="text" placeholder="Nome do GP">
+        </div>
+      </div>
+      <div class="section-h" style="border-top:1px solid var(--line); border-radius:0">
+        <div class="n" style="background:var(--n1)">1</div><h2>Pacotes</h2>
+        <div class="n" style="background:var(--n2); margin-left:8px">2</div><h2 style="margin-left:4px">Entregas</h2>
+        <div class="n" style="background:var(--n3); margin-left:8px">3</div><h2 style="margin-left:4px">Atividades</h2>
+        <p>Decomposição hierárquica do escopo</p>
+      </div>
+      <div class="legend">
+        <div class="leg"><div class="dot l1"></div>Nível 1 — Pacote de trabalho</div>
+        <div class="leg"><div class="dot l2"></div>Nível 2 — Entrega</div>
+        <div class="leg"><div class="dot l3"></div>Nível 3 — Atividade</div>
+      </div>
+      <div class="builder" id="builder">
+        <div class="add-n1-wrap"><button class="add-btn add-n1" id="btn-add-n1" onclick="addN1Block()">+ Adicionar pacote de trabalho (nível 1)</button></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="submitBtn" onclick="submitForm()">Registrar EAP</button>
+        <button class="btn btn-blue" onclick="previewTree()">Visualizar árvore</button>
+        <button class="btn btn-ghost" onclick="clearForm()">Limpar</button>
+        <span class="spacer">Adicione quantos pacotes, entregas e atividades precisar</span>
+      </div>
+    </div>
+
+    <div class="tree-card" id="tree-preview" style="display:none">
+      <div class="tree-head">
+        <h3>Árvore da EAP</h3>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="document.getElementById('tree-preview').style.display='none'">Fechar</button>
+      </div>
+      <div class="tree-area" id="tree-area"></div>
+    </div>
+  </div>
+
+  <div id="view-list" style="display:none">
+    <div class="card">
+      <div class="list-head">
+        <span class="ttl">EAPs cadastradas</span>
+        <input type="search" id="search" placeholder="Buscar por projeto, gerente…" oninput="renderList()">
+        <div class="ml">
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Exportar CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.print()">Imprimir</button>
+        </div>
+      </div>
+      <div id="list-body"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-top">
+    <div><h2 id="d-proj">—</h2><div class="proto-lg" id="d-proto">—</div></div>
+    <button class="xbtn" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="drawer-body" id="d-body"></div>
+  <div class="drawer-foot">
+    <div class="status-row">
+      <label for="d-status">Status</label>
+      <select id="d-status" onchange="changeStatus()">
+        <option value="Em elaboração">Em elaboração</option>
+        <option value="Aprovada">Aprovada</option>
+        <option value="Revisão necessária">Revisão necessária</option>
+      </select>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="editCurrent()">Editar dados</button>
+    <button class="btn btn-danger btn-sm" onclick="deleteCurrent()">Excluir</button>
+  </div>
+</aside>
+<div class="toast" id="toast"><span class="dot"></span><span id="toast-msg"></span></div>
+
+<script>
+/* ---- Armazenamento persistente via Supabase (substitui window.storage) ---- */
+(function(){
+  var SUPABASE_URL = 'https://fiarntunpqteopwjkhjg.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+  var TABLE = 'kv_store';
+  var base = SUPABASE_URL + '/rest/v1/' + TABLE;
+  function headers(extra){
+    var h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+    if (extra) { for (var k in extra) h[k] = extra[k]; }
+    return h;
+  }
+  window.storage = {
+    get: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key) + '&select=value', { headers: headers() });
+      if(!r.ok) return null;
+      var rows = await r.json();
+      return rows.length ? { value: rows[0].value } : null;
+    },
+    set: async function(key, value){
+      var r = await fetch(base + '?on_conflict=key', { method: 'POST', headers: headers({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }) });
+      return r.ok;
+    },
+    delete: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key), { method: 'DELETE', headers: headers() });
+      return r.ok;
+    },
+    list: async function(prefix){
+      var r = await fetch(base + '?key=like.' + encodeURIComponent(prefix) + '*&select=key', { headers: headers() });
+      if(!r.ok) return { keys: [] };
+      var rows = await r.json();
+      return { keys: rows.map(function(x){ return x.key; }) };
+    },
+  };
+})();
+</script>
+<script>
+const KEY_PREFIX='eap:';
+let cache=[], currentId=null, editId=null, _n1c=0, _n2c={}, _n3c={};
+
+function toast(msg,ok=true){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.classList.toggle('ok',ok); t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),3200);
+}
+function fmtStamp(ms){const dt=new Date(ms); return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+function badgeClass(s){return s==='Aprovada'?'b-apr':s==='Revisão necessária'?'b-rep':'b-pend';}
+function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function addN1Block(val=''){
+  _n1c++;
+  const id='n1_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+  const n=_n1c;
+  _n2c[id]=0;
+  const div=document.createElement('div');
+  div.className='n1-block'; div.id=id; div.dataset.n1=n;
+  div.innerHTML=`<div class="n1-head">
+    <span class="n1-badge">NÍVEL 1 · ${n}</span>
+    <input type="text" placeholder="Nome do pacote de trabalho" value="${esc(val)}">
+    <button class="n1-del" onclick="document.getElementById('${id}').remove()">×</button>
+  </div>
+  <div class="n1-body">
+    <div id="n2list_${id}"></div>
+    <button class="add-btn add-n2" onclick="addN2Block('${id}')">+ Adicionar entrega (nível 2)</button>
+  </div>`;
+  const btn=document.getElementById('btn-add-n1');
+  document.getElementById('builder').insertBefore(div, btn.parentElement);
+  addN2Block(id);
+}
+
+function addN2Block(n1id,val=''){
+  const n1el=document.getElementById(n1id); if(!n1el) return;
+  const n1=n1el.dataset.n1;
+  _n2c[n1id]=(_n2c[n1id]||0)+1;
+  const n=_n2c[n1id];
+  const id='n2_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+  _n3c[id]=0;
+  const div=document.createElement('div');
+  div.className='n2-block'; div.id=id;
+  div.innerHTML=`<div class="n2-head">
+    <span class="n2-badge">N2 · ${n1}.${n}</span>
+    <input type="text" placeholder="Nome da entrega" value="${esc(val)}">
+    <button class="n2-del" onclick="document.getElementById('${id}').remove()">×</button>
+  </div>
+  <div class="n2-body">
+    <div id="n3list_${id}"></div>
+    <button class="add-btn add-n3" onclick="addN3Row('${id}')">+ Atividade (nível 3)</button>
+  </div>`;
+  document.getElementById('n2list_'+n1id).appendChild(div);
+  addN3Row(id);
+}
+
+function addN3Row(n2id,val=''){
+  _n3c[n2id]=(_n3c[n2id]||0)+1;
+  const n=_n3c[n2id];
+  const id='n3_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+  const div=document.createElement('div');
+  div.className='n3-row'; div.id=id;
+  div.innerHTML=`<span class="n3-badge">N3·${n}</span>
+    <input type="text" placeholder="Nome da atividade" value="${esc(val)}">
+    <button class="n3-del" onclick="document.getElementById('${id}').remove()">×</button>`;
+  document.getElementById('n3list_'+n2id).appendChild(div);
+}
+
+function readForm(){
+  const n1s=[];
+  document.querySelectorAll('#builder > .n1-block').forEach(b=>{
+    const name=(b.querySelector('.n1-head input').value||'').trim();
+    const n2s=[];
+    b.querySelectorAll('.n2-block').forEach(b2=>{
+      const n2name=(b2.querySelector('.n2-head input').value||'').trim();
+      const n3s=[];
+      b2.querySelectorAll('.n3-row input').forEach(i=>{const v=(i.value||'').trim(); if(v) n3s.push(v);});
+      n2s.push({name:n2name,n3s});
+    });
+    n1s.push({name,n2s});
+  });
+  return n1s;
+}
+
+function renderTree(nome,n1s,host){
+  if(!n1s||!n1s.length){host.innerHTML='<p style="color:var(--muted);font-size:13px;text-align:center">Nenhum pacote de trabalho cadastrado.</p>'; return;}
+  let html=`<div class="t-root"><div class="t-root-box">${esc(nome)}</div><div class="t-vline"></div><div class="t-hrow">`;
+  n1s.forEach((n1,i)=>{
+    html+=`<div class="t-col"><div class="t-n1">${esc(n1.name||'(sem nome)')}<div class="t-code">${i+1}</div></div>`;
+    if(n1.n2s&&n1.n2s.length){
+      html+=`<div class="t-vline2"></div><div class="t-hrow2">`;
+      n1.n2s.forEach((n2,j)=>{
+        html+=`<div class="t-col2"><div class="t-n2">${esc(n2.name||'(sem nome)')}<div class="t-code">${i+1}.${j+1}</div></div>`;
+        if(n2.n3s&&n2.n3s.length){
+          html+=`<div class="t-n3list">`;
+          n2.n3s.forEach((n3,k)=>{ html+=`<div class="t-n3">${esc(n3||'(sem nome)')}<div class="t-code">${i+1}.${j+1}.${k+1}</div></div>`; });
+          html+=`</div>`;
+        }
+        html+=`</div>`;
+      });
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+  });
+  html+=`</div></div>`;
+  host.innerHTML=html;
+}
+
+function previewTree(){
+  const nome=(document.getElementById('nomeProjeto').value||'').trim()||'(Projeto)';
+  renderTree(nome, readForm(), document.getElementById('tree-area'));
+  document.getElementById('tree-preview').style.display='block';
+  document.getElementById('tree-preview').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function validate(){
+  const el=document.getElementById('nomeProjeto');
+  const f=document.getElementById('field-nomeProjeto');
+  if(!el.value.trim()){f.classList.add('error'); el.focus(); return false;}
+  f.classList.remove('error'); return true;
+}
+
+async function submitForm(){
+  if(!validate()){toast('Informe o nome do projeto',false); return;}
+  let rec;
+  if(editId){
+    rec = Object.assign({}, cache.find(x=>x.id===editId));
+  } else {
+    const year=new Date().getFullYear();
+    const seq=String(cache.length+1).padStart(3,'0');
+    rec={ id:'e_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo:`EAP-${year}-${seq}`, status:'Em elaboração', createdAt:Date.now() };
+  }
+  rec.nomeProjeto=document.getElementById('nomeProjeto').value.trim();
+  rec.unidade=document.getElementById('unidade').value;
+  rec.gerente=document.getElementById('gerente').value.trim();
+  rec.n1s=readForm();
+  try{
+    const r=await window.storage.set(KEY_PREFIX+rec.id, JSON.stringify(rec));
+    if(!r) throw new Error();
+    if(editId){
+      const idx=cache.findIndex(x=>x.id===rec.id);
+      if(idx>-1) cache[idx]=rec; else cache.unshift(rec);
+      toast('EAP '+rec.protocolo+' atualizada');
+    } else {
+      cache.unshift(rec);
+      toast('EAP '+rec.protocolo+' registrada');
+    }
+    document.getElementById('count').textContent=cache.length;
+    editId=null;
+    clearForm(); showView('list');
+  }catch(e){toast('Não foi possível salvar.',false);}
+}
+
+function rebuildTree(n1sData){
+  clearFormDOM();
+  (n1sData||[]).forEach(n1=>{
+    addN1Block(n1.name);
+    const blocks=document.querySelectorAll('#builder > .n1-block');
+    const n1id=blocks[blocks.length-1].id;
+    document.getElementById('n2list_'+n1id).innerHTML='';
+    _n2c[n1id]=0;
+    (n1.n2s||[]).forEach(n2=>{
+      addN2Block(n1id, n2.name);
+      const n2els=document.querySelectorAll('#n2list_'+n1id+' .n2-block');
+      const n2id=n2els[n2els.length-1].id;
+      document.getElementById('n3list_'+n2id).innerHTML='';
+      _n3c[n2id]=0;
+      (n2.n3s||[]).forEach(n3name=>{ addN3Row(n2id, n3name); });
+    });
+  });
+  if(!n1sData || !n1sData.length){ addN1Block(); }
+}
+
+function editCurrent(){
+  const r=cache.find(x=>x.id===currentId); if(!r) return;
+  editId=r.id;
+  document.getElementById('nomeProjeto').value=r.nomeProjeto||'';
+  document.getElementById('unidade').value=r.unidade||'';
+  document.getElementById('gerente').value=r.gerente||'';
+  document.getElementById('field-nomeProjeto').classList.remove('error');
+  rebuildTree(r.n1s);
+  document.getElementById('tree-preview').style.display='none';
+  closeDrawer();
+  showView('new');
+  updateEditBanner();
+}
+function updateEditBanner(){
+  document.getElementById('submitBtn').textContent = editId ? 'Salvar alterações' : 'Registrar EAP';
+}
+
+function clearFormDOM(){
+  _n1c=0; _n2c={}; _n3c={};
+  const b=document.getElementById('builder');
+  b.querySelectorAll('.n1-block').forEach(el=>el.remove());
+}
+function clearForm(){
+  document.getElementById('nomeProjeto').value='';
+  document.getElementById('unidade').value='';
+  document.getElementById('gerente').value='';
+  document.getElementById('field-nomeProjeto').classList.remove('error');
+  clearFormDOM();
+  document.getElementById('tree-preview').style.display='none';
+  addN1Block();
+  editId=null;
+  updateEditBanner();
+}
+
+async function loadAll(){
+  cache=[];
+  try{
+    const res=await window.storage.list(KEY_PREFIX);
+    const keys=(res&&res.keys)?res.keys:[];
+    for(const k of keys){try{const r=await window.storage.get(k); if(r&&r.value) cache.push(JSON.parse(r.value));}catch(e){}}
+  }catch(e){console.warn(e);}
+  cache.sort((a,b)=>b.createdAt-a.createdAt);
+  document.getElementById('count').textContent=cache.length;
+}
+
+function showView(v){
+  document.getElementById('view-new').style.display=v==='new'?'block':'none';
+  document.getElementById('view-list').style.display=v==='list'?'block':'none';
+  document.getElementById('tab-new').setAttribute('aria-selected',v==='new');
+  document.getElementById('tab-list').setAttribute('aria-selected',v==='list');
+  if(v==='list') renderList();
+}
+
+function renderList(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const rows=cache.filter(r=>!q||((r.nomeProjeto+r.gerente+r.unidade+r.protocolo).toLowerCase().includes(q)));
+  const body=document.getElementById('list-body');
+  if(!cache.length){body.innerHTML='<div class="empty"><h3>Nenhuma EAP cadastrada</h3><p>As estruturas analíticas registradas aparecem aqui.</p></div>'; return;}
+  if(!rows.length){body.innerHTML='<div class="empty"><h3>Nenhum resultado</h3><p>Ajuste a busca.</p></div>'; return;}
+  let html='<table class="list"><thead><tr><th>Protocolo</th><th>Projeto</th><th class="hide-sm">Unidade</th><th class="hide-sm">Pacotes N1</th><th>Status</th></tr></thead><tbody>';
+  for(const r of rows){
+    const n1c=(r.n1s||[]).length;
+    html+=`<tr onclick="openDrawer('${r.id}')">
+      <td><div class="proto">${esc(r.protocolo)}<small>${fmtStamp(r.createdAt)}</small></div></td>
+      <td><div class="proj">${esc(r.nomeProjeto)}<small>GP: ${esc(r.gerente||'—')}</small></div></td>
+      <td class="hide-sm">${esc(r.unidade||'—')}</td>
+      <td class="hide-sm">${n1c} pacote${n1c!==1?'s':''}</td>
+      <td><span class="badge ${badgeClass(r.status)}">${esc(r.status)}</span></td>
+    </tr>`;
+  }
+  html+='</tbody></table>'; body.innerHTML=html;
+}
+
+function openDrawer(id){
+  const r=cache.find(x=>x.id===id); if(!r) return; currentId=id;
+  document.getElementById('d-proj').textContent=r.nomeProjeto;
+  document.getElementById('d-proto').textContent=r.protocolo+' · '+fmtStamp(r.createdAt);
+  document.getElementById('d-status').value=r.status;
+  const body=document.getElementById('d-body');
+  body.innerHTML=`<p style="font-size:11px;color:var(--muted);font-weight:600;margin:0 0 14px">GERENTE: ${esc(r.gerente||'—')} &nbsp;|&nbsp; UNIDADE: ${esc(r.unidade||'—')}</p><div id="drawer-tree" style="overflow-x:auto"></div>`;
+  renderTree(r.nomeProjeto, r.n1s, document.getElementById('drawer-tree'));
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
+}
+function closeDrawer(){document.getElementById('overlay').classList.remove('show'); document.getElementById('drawer').classList.remove('show'); currentId=null;}
+async function changeStatus(){
+  const r=cache.find(x=>x.id===currentId); if(!r) return;
+  r.status=document.getElementById('d-status').value;
+  try{await window.storage.set(KEY_PREFIX+r.id, JSON.stringify(r)); renderList(); toast('Status atualizado para "'+r.status+'"');}
+  catch(e){toast('Erro ao atualizar status',false);}
+}
+async function deleteCurrent(){
+  const r=cache.find(x=>x.id===currentId); if(!r) return;
+  if(!confirm('Excluir a EAP '+r.protocolo+'?')) return;
+  try{await window.storage.delete(KEY_PREFIX+r.id); cache=cache.filter(x=>x.id!==currentId); document.getElementById('count').textContent=cache.length; closeDrawer(); renderList(); toast('EAP excluída');}
+  catch(e){toast('Erro ao excluir',false);}
+}
+
+function exportCSV(){
+  if(!cache.length){toast('Nenhuma EAP para exportar',false); return;}
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  let csv='"Protocolo";"Projeto";"Unidade";"Gerente";"Status";"Estrutura"\r\n';
+  for(const r of cache){
+    const linhas=[];
+    (r.n1s||[]).forEach((n1,i)=>{
+      linhas.push(`N1.${i+1}: ${n1.name||''}`);
+      (n1.n2s||[]).forEach((n2,j)=>{
+        linhas.push(`  N2.${i+1}.${j+1}: ${n2.name||''}`);
+        (n2.n3s||[]).forEach((n3,k)=>linhas.push(`    N3.${i+1}.${j+1}.${k+1}: ${n3||''}`));
+      });
+    });
+    csv+=`${q(r.protocolo)};${q(r.nomeProjeto)};${q(r.unidade)};${q(r.gerente)};${q(r.status)};${q(linhas.join('\n'))}\r\n`;
+  }
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download='eap_projetos.csv'; a.click(); URL.revokeObjectURL(url);
+  toast('CSV exportado ('+cache.length+' EAPs)');
+}
+
+document.getElementById('nomeProjeto').addEventListener('input',()=>document.getElementById('field-nomeProjeto').classList.remove('error'));
+document.addEventListener('keydown',e=>{if(e.key==='Escape') closeDrawer();});
+(async()=>{await loadAll(); addN1Block(); renderList();})();
+</script>

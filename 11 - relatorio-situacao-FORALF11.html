@@ -1,0 +1,633 @@
+<!-- Relatório de Situação de Projetos — FORALF11 / UNIALFA -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#B91D2E;--red-deep:#8E1322;--red-light:#FEF2F2;
+  --ink:#0F0F0F;--muted:#6B7280;--muted-2:#9CA3AF;
+  --paper:#FFFFFF;--surface:#F8F8F9;--surface-2:#F1F2F4;
+  --line:#E5E7EB;--line-strong:#D1D5DB;
+  --ok:#059669;--ok-soft:#D1FAE5;
+  --warn:#D97706;--warn-soft:#FEF3C7;
+  --bad:#DC2626;--bad-soft:#FEE2E2;
+  --blue:#2563EB;--blue-soft:#DBEAFE;
+  --purple:#7C3AED;--purple-soft:#EDE9FE;
+  --gray-soft:#F3F4F6;
+  --s-ok:#059669;--s-init:#2563EB;--s-prazo:#059669;
+  --s-atras:#DC2626;--s-par:#D97706;--s-conc:#7C3AED;--s-canc:#6B7280;
+  --radius:10px;--shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);
+  --font:'Montserrat',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);color:var(--ink);background:var(--surface);-webkit-font-smoothing:antialiased;line-height:1.5;font-size:14px}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 72px}
+
+/* ── header ── */
+.page-head{background:var(--ink);color:#fff;border-radius:14px;padding:28px 32px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:24px}
+.head-logo{font-weight:900;font-size:24px;letter-spacing:.04em;border-right:2px solid rgba(255,255,255,.2);padding-right:22px}
+.head-logo small{display:block;font-weight:600;font-size:9.5px;letter-spacing:.22em;opacity:.6;margin-top:4px}
+.head-title{flex:1}
+.head-title h1{font-size:19px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;line-height:1.2}
+.head-title p{font-size:11.5px;font-weight:500;opacity:.6;margin-top:4px;letter-spacing:.02em}
+.head-meta{display:flex;gap:18px;flex-wrap:wrap}
+.head-meta-item{display:flex;flex-direction:column;gap:2px;text-align:right}
+.head-meta-item span{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.5}
+.head-meta-item b{font-size:13px;font-weight:700}
+.head-ref{background:var(--red);color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
+
+/* ── section titles ── */
+.sec-title{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:28px 0 12px;display:flex;align-items:center;gap:10px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--line)}
+
+/* ── KPI cards ── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:6px}
+.kpi{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red)}
+.kpi.ok::before{background:var(--ok)}
+.kpi.warn::before{background:var(--warn)}
+.kpi.blue::before{background:var(--blue)}
+.kpi-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.kpi-value{font-size:32px;font-weight:900;line-height:1;color:var(--ink)}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:6px;font-weight:500}
+
+/* ── status legend ── */
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex:none}
+
+/* ── project table ── */
+.proj-table-wrap{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+table.proj-t{width:100%;border-collapse:collapse}
+table.proj-t thead th{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:11px 14px;background:var(--surface-2);border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+table.proj-t tbody td{padding:11px 14px;border-bottom:1px solid var(--surface-2);vertical-align:middle;font-size:12.5px}
+table.proj-t tbody tr:last-child td{border-bottom:none}
+table.proj-t tbody tr:hover{background:var(--surface)}
+.s-badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.s-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.s-no-prazo{background:var(--ok-soft);color:var(--ok)}
+.s-atrasado{background:var(--bad-soft);color:var(--bad)}
+.s-paralisado{background:var(--warn-soft);color:var(--warn)}
+.s-a-iniciar{background:var(--blue-soft);color:var(--blue)}
+.s-concluido{background:var(--purple-soft);color:var(--purple)}
+.s-cancelado{background:var(--gray-soft);color:var(--muted)}
+.prog-bar-wrap{display:flex;align-items:center;gap:8px}
+.prog-bar{flex:1;height:6px;background:var(--line);border-radius:99px;overflow:hidden;min-width:60px}
+.prog-fill{height:100%;border-radius:99px;background:var(--ok);transition:width .6s ease}
+.prog-fill.warn{background:var(--warn)}
+.prog-fill.bad{background:var(--bad)}
+.prog-pct{font-size:11px;font-weight:800;color:var(--ink);min-width:30px}
+.proj-name{font-weight:700;font-size:13px}
+.proj-name small{display:block;font-weight:500;font-size:11px;color:var(--muted);margin-top:1px}
+
+/* ── program detail cards ── */
+.prog-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.prog-card-head{display:flex;align-items:center;gap:14px;padding:16px 20px;background:var(--ink);color:#fff}
+.prog-card-head h3{font-size:14px;font-weight:800;letter-spacing:.03em;flex:1}
+.prog-card-head .prog-pct-big{font-size:22px;font-weight:900}
+.prog-card-head .prog-pct-label{font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.6;text-transform:uppercase;margin-top:1px}
+.prog-card-body{padding:0}
+.prog-section{padding:14px 20px;border-bottom:1px solid var(--line)}
+.prog-section:last-child{border-bottom:none}
+.prog-section-title{font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.marcos-list{display:flex;flex-direction:column;gap:6px}
+.marco-row{display:flex;align-items:center;gap:10px}
+.marco-name{flex:1;font-size:12.5px;font-weight:600}
+.marco-date{font-size:11px;color:var(--muted);min-width:76px;text-align:right}
+.atencao-destaque{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.atd-box{border-radius:8px;padding:12px 14px}
+.atd-box.atencao{background:#FFF7ED;border:1px solid #FED7AA}
+.atd-box.destaque{background:#F0FDF4;border:1px solid #BBF7D0}
+.atd-label{font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.atd-box.atencao .atd-label{color:#9A3412}
+.atd-box.destaque .atd-label{color:#14532D}
+.atd-text{font-size:12px;line-height:1.5;color:var(--ink)}
+
+/* ── portfolio by year ── */
+.year-table-wrap{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow-x:auto}
+table.year-t{width:100%;border-collapse:collapse;min-width:600px}
+table.year-t th{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:10px 14px;background:var(--surface-2);border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+table.year-t th:first-child{text-align:left}
+table.year-t td{padding:10px 14px;border-bottom:1px solid var(--surface-2);font-size:12.5px;text-align:center;font-weight:600}
+table.year-t td:first-child{text-align:left;font-weight:700}
+table.year-t .sub-h{background:var(--surface-2);font-size:9px;font-weight:700;color:var(--muted);padding:6px 14px;letter-spacing:.06em}
+table.year-t tbody tr:last-child td{border-bottom:none}
+.year-span{background:var(--ink);color:#fff;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+
+/* ── forms / inputs ── */
+.import-zone{border:2px dashed var(--line-strong);border-radius:10px;padding:28px;text-align:center;background:var(--surface);cursor:pointer;transition:all .15s;margin-bottom:6px}
+.import-zone:hover,.import-zone.drag{border-color:var(--red);background:var(--red-light)}
+.import-zone input{display:none}
+.import-zone p{font-size:13px;font-weight:600;color:var(--muted);margin-top:8px}
+.import-zone .icon{font-size:28px}
+.import-hint{font-size:11px;color:var(--muted);text-align:center;margin-bottom:18px}
+
+/* ── edit panel ── */
+.edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;padding:18px 20px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.full{grid-column:1/-1}
+label{font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--ink)}
+input,select,textarea{font-family:var(--font);font-size:13px;color:var(--ink);border:1px solid var(--line-strong);border-radius:7px;padding:9px 11px;background:var(--paper);width:100%;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(185,29,46,.1)}
+textarea{resize:vertical;min-height:68px}
+
+/* ── actions ── */
+.action-bar{display:flex;gap:10px;align-items:center;padding:16px 20px;border-top:1px solid var(--line);background:var(--surface-2);flex-wrap:wrap}
+.btn{appearance:none;font-family:var(--font);font-weight:700;font-size:12.5px;border-radius:8px;padding:10px 20px;cursor:pointer;border:1px solid transparent;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn-primary{background:var(--red);color:#fff}.btn-primary:hover{background:var(--red-deep)}
+.btn-ghost{background:var(--paper);color:var(--ink);border-color:var(--line-strong)}.btn-ghost:hover{border-color:var(--ink)}
+.btn-ok{background:var(--ok);color:#fff}.btn-ok:hover{background:#047857}
+.btn-sm{padding:7px 14px;font-size:12px}
+.ml{margin-left:auto}
+
+/* ── tabs ── */
+.view-tabs{display:flex;gap:8px;margin-bottom:18px}
+.vtab{appearance:none;border:1px solid var(--line);background:var(--paper);color:var(--muted);font-family:var(--font);font-weight:700;font-size:12px;padding:9px 16px;border-radius:999px;cursor:pointer;transition:all .15s}
+.vtab:hover{border-color:var(--line-strong);color:var(--ink)}
+.vtab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+
+/* ── toast ── */
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 12px 40px rgba(0,0,0,.25);display:flex;align-items:center;gap:10px;opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.2,.8,.2,1);z-index:50;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast .dot{width:7px;height:7px;border-radius:50%;background:#5BE49B;flex:none}
+
+@media(max-width:720px){.kpi-row{grid-template-columns:1fr 1fr}.atencao-destaque{grid-template-columns:1fr}.edit-grid{grid-template-columns:1fr}.head-meta{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="page-head">
+    <div class="head-logo">UNIALFA<small>GRUPO JOSÉ ALVES</small></div>
+    <div class="head-title">
+      <h1>Relatório de Situação de Projetos</h1>
+      <p>Escritório de Projetos · Visão geral e por programa/projeto</p>
+    </div>
+    <div class="head-meta">
+      <div class="head-meta-item"><span>Referência</span><b id="hd-ref">—</b></div>
+      <div class="head-meta-item"><span>Responsável</span><b id="hd-resp">—</b></div>
+    </div>
+    <div class="head-ref" id="hd-code">FORALF11</div>
+  </div>
+
+  <!-- View tabs -->
+  <div class="view-tabs">
+    <button class="vtab" aria-selected="true" onclick="showView('painel')">📊 Painel</button>
+    <button class="vtab" aria-selected="false" onclick="showView('editar')">✏️ Editar dados</button>
+    <button class="vtab" aria-selected="false" onclick="showView('importar')">⬆ Importar Project</button>
+  </div>
+
+  <!-- ===== PAINEL VIEW ===== -->
+  <div id="view-painel">
+    <div class="sec-title">Visão geral do portfólio</div>
+    <div class="kpi-row">
+      <div class="kpi blue"><div class="kpi-label">Programas</div><div class="kpi-value" id="kpi-prog">—</div><div class="kpi-sub">ativos no portfólio</div></div>
+      <div class="kpi"><div class="kpi-label">Projetos</div><div class="kpi-value" id="kpi-proj">—</div><div class="kpi-sub">cadastrados</div></div>
+      <div class="kpi ok"><div class="kpi-label">Entregas</div><div class="kpi-value" id="kpi-entr">—</div><div class="kpi-sub">planejadas</div></div>
+      <div class="kpi warn"><div class="kpi-label">Previsão financeira</div><div class="kpi-value" id="kpi-fin" style="font-size:20px;margin-top:4px">—</div><div class="kpi-sub">total estimado</div></div>
+    </div>
+
+    <div class="sec-title">Status dos projetos</div>
+    <div class="legend" id="legend-status">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>A iniciar</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--ok)"></div>No prazo</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--bad)"></div>Atrasado</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--warn)"></div>Paralisado</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--purple)"></div>Concluído</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--muted)"></div>Cancelado</div>
+    </div>
+    <div class="proj-table-wrap" id="proj-table-wrap">
+      <div style="padding:40px;text-align:center;color:var(--muted);font-size:13px;font-weight:600">Nenhum projeto cadastrado. Clique em <b>Editar dados</b> ou <b>Importar Project</b> para começar.</div>
+    </div>
+
+    <div class="sec-title">Visão geral por ano</div>
+    <div class="year-table-wrap" id="year-table-wrap">
+      <div style="padding:28px;text-align:center;color:var(--muted);font-size:13px">Adicione projetos para ver a tabela por ano.</div>
+    </div>
+
+    <div class="sec-title" id="sec-programas-title" style="display:none">Detalhe por programa / projeto</div>
+    <div id="prog-cards"></div>
+
+    <div class="action-bar" style="margin-top:18px;border-radius:var(--radius);border:1px solid var(--line)">
+      <button class="btn btn-ghost" onclick="window.print()">🖨 Imprimir</button>
+      <button class="btn btn-ghost" onclick="exportCSV()">📥 Exportar CSV</button>
+      <div class="ml" style="font-size:11px;color:var(--muted)">Relatório FORALF11 · UNIALFA</div>
+    </div>
+  </div>
+
+  <!-- ===== EDITAR VIEW ===== -->
+  <div id="view-editar" style="display:none">
+
+    <!-- Cabeçalho -->
+    <div class="prog-card">
+      <div class="prog-card-head"><h3>Cabeçalho do relatório</h3></div>
+      <div class="edit-grid">
+        <div class="field"><label>Mês/Ano de referência</label><input id="e-ref" type="month" placeholder="2026-06"></div>
+        <div class="field"><label>Responsável</label><input id="e-resp" type="text" placeholder="Nome do GP ou PMO"></div>
+        <div class="field"><label>Previsão financeira total (R$)</label><input id="e-fin" type="text" placeholder="Ex: 1.250.000,00"></div>
+        <div class="field"><label>Total de entregas planejadas</label><input id="e-entr" type="number" placeholder="0" min="0"></div>
+      </div>
+    </div>
+
+    <!-- Projetos -->
+    <div class="prog-card" style="margin-top:14px">
+      <div class="prog-card-head"><h3>Projetos / marcos</h3><button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)" onclick="addProjeto()">+ Adicionar projeto</button></div>
+      <div id="proj-editor"></div>
+      <div class="action-bar"><div style="font-size:11px;color:var(--muted)">Cada projeto pode ter um programa vinculado, % execução, status, marcos, atenção e destaque.</div></div>
+    </div>
+
+    <div class="action-bar" style="margin-top:14px;border-radius:var(--radius);border:1px solid var(--line)">
+      <button class="btn btn-primary" onclick="saveAndPreview()">✓ Salvar e ver painel</button>
+      <button class="btn btn-ghost" onclick="showView('painel')">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- ===== IMPORTAR VIEW ===== -->
+  <div id="view-importar" style="display:none">
+    <div class="prog-card">
+      <div class="prog-card-head"><h3>Importar exportação do MS Project</h3></div>
+      <div style="padding:20px">
+        <div class="import-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+          <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="handleFile(this.files[0])">
+          <div class="icon">📂</div>
+          <b style="font-size:14px;display:block;margin-top:8px">Clique ou arraste o arquivo aqui</b>
+          <p>Aceita exportação do Project em Excel (.xlsx) ou CSV</p>
+        </div>
+        <div class="import-hint">Como exportar do Project: <b>Arquivo → Salvar como → Excel (.xlsx)</b> ou use Relatório → Exportar. O sistema lê automaticamente as colunas: <b>Nome da Tarefa, % Concluído, Início, Término, Responsável</b> e infere o status.</div>
+
+        <div id="import-preview" style="display:none">
+          <div class="sec-title">Pré-visualização dos dados importados</div>
+          <div class="proj-table-wrap" id="import-table"></div>
+          <div class="action-bar" style="margin-top:12px;border-radius:var(--radius);border:1px solid var(--line)">
+            <button class="btn btn-ok" onclick="confirmImport()">✓ Confirmar importação</button>
+            <button class="btn btn-ghost" onclick="cancelImport()">Cancelar</button>
+            <span style="font-size:11px;color:var(--muted);margin-left:8px">Após confirmar, edite manualmente em <b>Editar dados</b>.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toast-msg"></span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/* ---- Armazenamento persistente via Supabase (substitui window.storage) ---- */
+(function(){
+  var SUPABASE_URL = 'https://fiarntunpqteopwjkhjg.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+  var TABLE = 'kv_store';
+  var base = SUPABASE_URL + '/rest/v1/' + TABLE;
+  function headers(extra){
+    var h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+    if (extra) { for (var k in extra) h[k] = extra[k]; }
+    return h;
+  }
+  window.storage = {
+    get: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key) + '&select=value', { headers: headers() });
+      if(!r.ok) return null;
+      var rows = await r.json();
+      return rows.length ? { value: rows[0].value } : null;
+    },
+    set: async function(key, value){
+      var r = await fetch(base + '?on_conflict=key', { method: 'POST', headers: headers({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }) });
+      return r.ok;
+    },
+    delete: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key), { method: 'DELETE', headers: headers() });
+      return r.ok;
+    },
+    list: async function(prefix){
+      var r = await fetch(base + '?key=like.' + encodeURIComponent(prefix) + '*&select=key', { headers: headers() });
+      if(!r.ok) return { keys: [] };
+      var rows = await r.json();
+      return { keys: rows.map(function(x){ return x.key; }) };
+    },
+  };
+})();
+</script>
+<script>
+const KEY='relsit_data';
+let importedRows=[];
+
+const STATUS_OPTS=['A iniciar','No prazo','Atrasado','Paralisado','Concluído','Cancelado'];
+const STATUS_CLASS={'A iniciar':'s-a-iniciar','No prazo':'s-no-prazo','Atrasado':'s-atrasado','Paralisado':'s-paralisado','Concluído':'s-concluido','Cancelado':'s-cancelado'};
+
+let data={ref:'',resp:'',fin:'',entr:'',projetos:[]};
+
+/* ── helpers ── */
+function toast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3000);}
+function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function fmtBRL(s){if(!s)return '—';return 'R$ '+String(s).replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
+function fmtRef(ym){if(!ym)return '—';const[y,m]=ym.split('-');const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return meses[parseInt(m)-1]+' / '+y;}
+function progClass(p){const n=parseInt(p)||0;return n>=75?'':'n>=40?warn:bad'.split(':')[n>=40?1:2]||'';}
+
+function showView(v){
+  ['painel','editar','importar'].forEach(x=>{document.getElementById('view-'+x).style.display=x===v?'block':'none';});
+  document.querySelectorAll('.vtab').forEach((b,i)=>b.setAttribute('aria-selected',['painel','editar','importar'][i]===v));
+  if(v==='painel') renderPainel();
+  if(v==='editar') renderEditor();
+}
+
+/* ── storage ── */
+async function loadData(){
+  try{const r=await window.storage.get(KEY);if(r&&r.value){data=JSON.parse(r.value);}}catch(e){console.warn(e);}
+}
+async function saveData(){
+  try{await window.storage.set(KEY,JSON.stringify(data));}catch(e){toast('Erro ao salvar');}
+}
+
+/* ── render painel ── */
+function renderPainel(){
+  // header
+  document.getElementById('hd-ref').textContent=fmtRef(data.ref);
+  document.getElementById('hd-resp').textContent=data.resp||'—';
+
+  const projs=data.projetos||[];
+  const programs=[...new Set(projs.map(p=>p.programa).filter(Boolean))];
+
+  document.getElementById('kpi-prog').textContent=programs.length||projs.length;
+  document.getElementById('kpi-proj').textContent=projs.length;
+  document.getElementById('kpi-entr').textContent=data.entr||'—';
+  document.getElementById('kpi-fin').textContent=data.fin?fmtBRL(data.fin):'—';
+
+  // project table
+  const wrap=document.getElementById('proj-table-wrap');
+  if(!projs.length){wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted);font-size:13px;font-weight:600">Nenhum projeto. Use <b>Editar dados</b> ou <b>Importar Project</b>.</div>';return;}
+  let html='<table class="proj-t"><thead><tr><th>Projeto</th><th>Programa</th><th>Status</th><th>Execução</th><th>Responsável</th><th>Previsão término</th></tr></thead><tbody>';
+  projs.forEach(p=>{
+    const pct=parseInt(p.pct)||0;
+    const cls=pct>=75?'':'pct>=40?warn:bad'.split(':')[pct>=40?1:2]||'';
+    html+=`<tr>
+      <td><div class="proj-name">${esc(p.nome||'—')}<small>${esc(p.cod||'')}</small></div></td>
+      <td>${esc(p.programa||'—')}</td>
+      <td><span class="s-badge ${STATUS_CLASS[p.status]||''}">${esc(p.status||'—')}</span></td>
+      <td><div class="prog-bar-wrap"><div class="prog-bar"><div class="prog-fill ${cls}" style="width:${pct}%"></div></div><span class="prog-pct">${pct}%</span></div></td>
+      <td>${esc(p.resp||'—')}</td>
+      <td>${esc(p.termino||'—')}</td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+
+  // year table
+  renderYearTable(projs);
+
+  // program cards
+  renderProgCards(projs,programs);
+}
+
+function renderYearTable(projs){
+  const wrap=document.getElementById('year-table-wrap');
+  if(!projs.length){wrap.innerHTML='<div style="padding:28px;text-align:center;color:var(--muted);font-size:13px">Adicione projetos para ver a tabela por ano.</div>';return;}
+  const years=[...new Set(projs.map(p=>(p.inicio||'').slice(0,4)).filter(y=>y&&y.length===4))].sort();
+  if(!years.length){wrap.innerHTML='<div style="padding:28px;text-align:center;color:var(--muted);font-size:13px">Informe datas de início nos projetos para ver a tabela por ano.</div>';return;}
+  const progs=[...new Set(projs.map(p=>p.programa).filter(Boolean))];
+  let html='<table class="year-t"><thead><tr><th rowspan="2">Carteira</th>';
+  years.forEach(y=>html+=`<th colspan="2" class="year-span">${y}</th>`);
+  html+='</tr><tr>';
+  years.forEach(()=>html+='<th>Em andamento</th><th>Realizado</th>');
+  html+='</tr></thead><tbody>';
+  const rows=[{label:'Programas',fn:(y,done)=>{const s=new Set(projs.filter(p=>p.inicio?.startsWith(y)&&(p.programa)).map(p=>p.programa));const d=new Set(projs.filter(p=>p.inicio?.startsWith(y)&&p.status==='Concluído'&&p.programa).map(p=>p.programa));return[s.size-d.size,d.size];}},{label:'Projetos',fn:(y,done)=>{const a=projs.filter(p=>p.inicio?.startsWith(y));const d=a.filter(p=>p.status==='Concluído');return[a.length-d.length,d.length];}},];
+  rows.forEach(row=>{
+    html+=`<tr><td>${row.label}</td>`;
+    years.forEach(y=>{const[em,real]=row.fn(y);html+=`<td>${em||'—'}</td><td>${real||'—'}</td>`;});
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+}
+
+function renderProgCards(projs,programs){
+  const sec=document.getElementById('sec-programas-title');
+  const container=document.getElementById('prog-cards');
+  container.innerHTML='';
+  if(!programs.length&&!projs.length){sec.style.display='none';return;}
+  sec.style.display='flex';
+
+  const groups=programs.length?programs:[null];
+  groups.forEach(prog=>{
+    const pp=prog?projs.filter(p=>p.programa===prog):projs;
+    if(!pp.length) return;
+    const avgPct=Math.round(pp.reduce((a,p)=>a+(parseInt(p.pct)||0),0)/pp.length);
+    const atencao=pp.map(p=>p.atencao).filter(Boolean).join('\n');
+    const destaque=pp.map(p=>p.destaque).filter(Boolean).join('\n');
+    const card=document.createElement('div');
+    card.className='prog-card';
+    let marcosHTML='<div class="marcos-list">';
+    pp.forEach(p=>{
+      if(p.marcos&&p.marcos.length){
+        p.marcos.forEach(m=>{
+          if(!m.nome) return;
+          const cls=STATUS_CLASS[m.status]||'';
+          marcosHTML+=`<div class="marco-row"><div class="marco-name">${esc(p.nome)} → ${esc(m.nome)}</div><span class="s-badge ${cls}" style="font-size:10px">${esc(m.status||'')}</span><div class="marco-date">${esc(m.data||'')}</div></div>`;
+        });
+      } else {
+        marcosHTML+=`<div class="marco-row"><div class="marco-name">${esc(p.nome)}</div><span class="s-badge ${STATUS_CLASS[p.status]||''}" style="font-size:10px">${esc(p.status||'')}</span><div class="marco-date">${esc(p.termino||'')}</div></div>`;
+      }
+    });
+    marcosHTML+='</div>';
+    card.innerHTML=`
+      <div class="prog-card-head">
+        <h3>${esc(prog||'Projetos sem programa')}</h3>
+        <div style="text-align:right"><div class="prog-pct-big">${avgPct}%</div><div class="prog-pct-label">Execução média</div></div>
+      </div>
+      <div class="prog-card-body">
+        <div class="prog-section"><div class="prog-section-title">Marcos / Projetos — Situação</div>${marcosHTML}</div>
+        ${(atencao||destaque)?`<div class="prog-section"><div class="prog-section-title">Atenção e destaque</div><div class="atencao-destaque">
+          <div class="atd-box atencao"><div class="atd-label">⚠ Merece atenção</div><div class="atd-text">${esc(atencao||'Nenhum item registrado.')}</div></div>
+          <div class="atd-box destaque"><div class="atd-label">★ Merece destaque</div><div class="atd-text">${esc(destaque||'Nenhum item registrado.')}</div></div>
+        </div></div>`:''}
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+/* ── editor ── */
+function renderEditor(){
+  document.getElementById('e-ref').value=data.ref||'';
+  document.getElementById('e-resp').value=data.resp||'';
+  document.getElementById('e-fin').value=data.fin||'';
+  document.getElementById('e-entr').value=data.entr||'';
+  const ed=document.getElementById('proj-editor');
+  ed.innerHTML='';
+  (data.projetos||[]).forEach((p,i)=>ed.appendChild(buildProjCard(p,i)));
+}
+
+function buildProjCard(p,i){
+  const div=document.createElement('div');
+  div.style.cssText='border-top:1px solid var(--line);padding:16px 20px';
+  div.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <b style="font-size:13px;flex:1">Projeto ${i+1}: ${esc(p.nome||'(sem nome)')}</b>
+      <button class="btn btn-sm btn-ghost" style="color:var(--bad)" onclick="removeProjeto(${i})">Remover</button>
+    </div>
+    <div class="edit-grid" style="padding:0">
+      <div class="field"><label>Código / ID</label><input data-pi="${i}" data-k="cod" value="${esc(p.cod||'')}"></div>
+      <div class="field full"><label>Nome do projeto</label><input data-pi="${i}" data-k="nome" value="${esc(p.nome||'')}"></div>
+      <div class="field"><label>Programa vinculado</label><input data-pi="${i}" data-k="programa" value="${esc(p.programa||'')}"></div>
+      <div class="field"><label>Responsável</label><input data-pi="${i}" data-k="resp" value="${esc(p.resp||'')}"></div>
+      <div class="field"><label>Status</label><select data-pi="${i}" data-k="status">${STATUS_OPTS.map(s=>`<option ${p.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="field"><label>% Execução</label><input data-pi="${i}" data-k="pct" type="number" min="0" max="100" value="${esc(p.pct||'0')}"></div>
+      <div class="field"><label>Início previsto</label><input data-pi="${i}" data-k="inicio" type="text" placeholder="dd/mm/aaaa" value="${esc(p.inicio||'')}"></div>
+      <div class="field"><label>Término previsto</label><input data-pi="${i}" data-k="termino" type="text" placeholder="dd/mm/aaaa" value="${esc(p.termino||'')}"></div>
+      <div class="field full"><label>⚠ Merece atenção</label><textarea data-pi="${i}" data-k="atencao" rows="2">${esc(p.atencao||'')}</textarea></div>
+      <div class="field full"><label>★ Merece destaque</label><textarea data-pi="${i}" data-k="destaque" rows="2">${esc(p.destaque||'')}</textarea></div>
+    </div>
+    <div style="margin-top:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Marcos</div>
+      <div id="marcos-${i}"></div>
+      <button class="btn btn-sm btn-ghost" style="margin-top:6px" onclick="addMarco(${i})">+ Marco</button>
+    </div>`;
+  div.querySelectorAll('input,select,textarea').forEach(el=>{
+    el.addEventListener('input',()=>{
+      const pi=parseInt(el.dataset.pi),k=el.dataset.k;
+      if(pi>=0&&k) data.projetos[pi][k]=el.value;
+    });
+  });
+  setTimeout(()=>renderMarcosEditor(i,p.marcos||[]),0);
+  return div;
+}
+
+function renderMarcosEditor(pi,marcos){
+  const host=document.getElementById('marcos-'+pi);
+  if(!host) return;
+  host.innerHTML='';
+  marcos.forEach((m,mi)=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap';
+    row.innerHTML=`<input style="flex:2;min-width:140px" placeholder="Nome do marco" value="${esc(m.nome||'')}">
+      <select style="flex:1;min-width:110px">${STATUS_OPTS.map(s=>`<option ${m.status===s?'selected':''}>${s}</option>`).join('')}</select>
+      <input style="flex:1;min-width:100px" placeholder="Data" value="${esc(m.data||'')}">
+      <button class="btn btn-sm btn-ghost" style="color:var(--bad);flex:none" onclick="removeMarco(${pi},${mi})">×</button>`;
+    row.querySelectorAll('input,select').forEach((el,j)=>{
+      el.addEventListener('input',()=>{
+        const keys=['nome','status','data'];
+        if(!data.projetos[pi].marcos) data.projetos[pi].marcos=[];
+        data.projetos[pi].marcos[mi]=data.projetos[pi].marcos[mi]||{};
+        data.projetos[pi].marcos[mi][keys[j]]=el.value;
+      });
+    });
+    host.appendChild(row);
+  });
+}
+function addMarco(pi){
+  if(!data.projetos[pi].marcos) data.projetos[pi].marcos=[];
+  data.projetos[pi].marcos.push({nome:'',status:'A iniciar',data:''});
+  renderMarcosEditor(pi,data.projetos[pi].marcos);
+}
+function removeMarco(pi,mi){data.projetos[pi].marcos.splice(mi,1);renderMarcosEditor(pi,data.projetos[pi].marcos);}
+function addProjeto(){
+  data.projetos.push({cod:'',nome:'',programa:'',resp:'',status:'A iniciar',pct:'0',inicio:'',termino:'',atencao:'',destaque:'',marcos:[]});
+  const ed=document.getElementById('proj-editor');
+  ed.appendChild(buildProjCard(data.projetos[data.projetos.length-1],data.projetos.length-1));
+  ed.lastElementChild.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function removeProjeto(i){data.projetos.splice(i,1);renderEditor();}
+
+async function saveAndPreview(){
+  data.ref=document.getElementById('e-ref').value;
+  data.resp=document.getElementById('e-resp').value;
+  data.fin=document.getElementById('e-fin').value;
+  data.entr=document.getElementById('e-entr').value;
+  await saveData();
+  toast('Dados salvos');
+  showView('painel');
+}
+
+/* ── import ── */
+function dragOver(e){e.preventDefault();document.getElementById('drop-zone').classList.add('drag');}
+function dragLeave(){document.getElementById('drop-zone').classList.remove('drag');}
+function dropFile(e){e.preventDefault();dragLeave();const f=e.dataTransfer.files[0];if(f)handleFile(f);}
+
+function handleFile(file){
+  if(!file)return;
+  const isCSV=file.name.endsWith('.csv');
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      let rows=[];
+      if(isCSV){
+        const lines=e.target.result.split('\n').filter(l=>l.trim());
+        const headers=lines[0].split(';').map(h=>h.replace(/"/g,'').trim());
+        rows=lines.slice(1).map(line=>{const vals=line.split(';').map(v=>v.replace(/"/g,'').trim());const obj={};headers.forEach((h,i)=>obj[h]=vals[i]||'');return obj;});
+      } else {
+        const wb=XLSX.read(e.target.result,{type:'binary'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      }
+      importedRows=rows;
+      showImportPreview(rows);
+    }catch(err){toast('Erro ao ler o arquivo: '+err.message);}
+  };
+  if(isCSV)reader.readAsText(file,'UTF-8');
+  else reader.readAsBinaryString(file);
+}
+
+function detectCol(headers,candidates){return headers.find(h=>candidates.some(c=>h.toLowerCase().includes(c.toLowerCase())))||null;}
+
+function showImportPreview(rows){
+  if(!rows.length){toast('Arquivo vazio ou sem dados reconhecíveis');return;}
+  const headers=Object.keys(rows[0]);
+  const colNome=detectCol(headers,['nome','name','tarefa','task','título','title']);
+  const colPct=detectCol(headers,['%','pct','concluído','complete','execução','physical']);
+  const colResp=detectCol(headers,['responsável','responsible','resource','recurso','assignee']);
+  const colInicio=detectCol(headers,['início','start','inicio']);
+  const colTermino=detectCol(headers,['término','finish','termino','end']);
+
+  const preview=document.getElementById('import-preview');
+  const tbl=document.getElementById('import-table');
+  let html='<table class="proj-t"><thead><tr><th>Nome</th><th>% Execução</th><th>Responsável</th><th>Início</th><th>Término</th><th>Status inferido</th></tr></thead><tbody>';
+  rows.slice(0,20).forEach(r=>{
+    const nome=colNome?r[colNome]:'';
+    const pct=parseInt(colPct?r[colPct]:0)||0;
+    const resp=colResp?r[colResp]:'';
+    const ini=colInicio?r[colInicio]:'';
+    const term=colTermino?r[colTermino]:'';
+    const status=pct===100?'Concluído':pct===0?'A iniciar':pct<50?'Atrasado':'No prazo';
+    if(!nome) return;
+    html+=`<tr><td>${esc(nome)}</td><td>${pct}%</td><td>${esc(resp)}</td><td>${esc(ini)}</td><td>${esc(term)}</td><td><span class="s-badge ${STATUS_CLASS[status]||''}">${status}</span></td></tr>`;
+  });
+  html+='</tbody></table>';
+  if(rows.length>20) html+=`<div style="padding:10px 14px;font-size:11px;color:var(--muted)">Mostrando primeiros 20 de ${rows.length} registros.</div>`;
+  tbl.innerHTML=html;
+  preview.style.display='block';
+  preview.scrollIntoView({behavior:'smooth',block:'start'});
+
+  // store detected cols
+  importedRows._cols={colNome,colPct,colResp,colInicio,colTermino};
+}
+
+function confirmImport(){
+  const cols=importedRows._cols||{};
+  const novos=importedRows.filter(r=>cols.colNome&&r[cols.colNome]).map(r=>{
+    const pct=parseInt(r[cols.colPct])||0;
+    const status=pct===100?'Concluído':pct===0?'A iniciar':pct<50?'Atrasado':'No prazo';
+    return{cod:'',nome:r[cols.colNome]||'',programa:'',resp:r[cols.colResp]||'',status,pct:String(pct),inicio:r[cols.colInicio]||'',termino:r[cols.colTermino]||'',atencao:'',destaque:'',marcos:[]};
+  });
+  data.projetos=[...data.projetos,...novos];
+  saveData();
+  document.getElementById('import-preview').style.display='none';
+  toast(`${novos.length} projetos importados. Ajuste em Editar dados.`);
+  showView('painel');
+}
+function cancelImport(){document.getElementById('import-preview').style.display='none';importedRows=[];}
+
+/* ── export CSV ── */
+function exportCSV(){
+  const projs=data.projetos||[];
+  if(!projs.length){toast('Nenhum projeto para exportar');return;}
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  let csv='"Código";"Nome";"Programa";"Responsável";"Status";"% Execução";"Início";"Término";"Atenção";"Destaque"\r\n';
+  projs.forEach(p=>csv+=`${q(p.cod)};${q(p.nome)};${q(p.programa)};${q(p.resp)};${q(p.status)};${q(p.pct)};${q(p.inicio)};${q(p.termino)};${q(p.atencao)};${q(p.destaque)}\r\n`);
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='relatorio_situacao_FORALF11.csv';a.click();URL.revokeObjectURL(url);
+  toast('CSV exportado');
+}
+
+(async()=>{await loadData();renderPainel();})();
+</script>

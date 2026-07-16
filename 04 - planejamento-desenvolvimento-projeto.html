@@ -1,0 +1,687 @@
+<!-- Planejamento e Desenvolvimento de Projeto — FORALF00325 / UNIALFA -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --red:#B91D2E; --red-deep:#8E1322; --ink:#1A1A1A; --muted:#6A6A70;
+    --paper:#FFFFFF; --surface:#F6F6F7; --surface-2:#FAFAFB;
+    --line:#E4E4E7; --line-strong:#D4D4D8;
+    --ok:#1B7F4B; --ok-soft:#E6F4EC; --warn:#B45309; --warn-soft:#FBF1E3; --bad:#9F1239; --bad-soft:#FBE7EC;
+    --radius:10px; --shadow:0 1px 2px rgba(20,20,20,.04), 0 8px 28px rgba(20,20,20,.06);
+    --font:'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:var(--font); color:var(--ink); background:var(--surface); -webkit-font-smoothing:antialiased; line-height:1.5;}
+  .wrap{max-width:1000px; margin:0 auto; padding:28px 20px 64px}
+
+  .doc-head{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);}
+  .doc-band{background:var(--red); color:#fff; padding:18px 24px; display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+  .doc-logo{font-weight:800; font-size:22px; letter-spacing:.04em; line-height:1; padding-right:18px; border-right:2px solid rgba(255,255,255,.35);}
+  .doc-logo small{display:block; font-weight:600; font-size:10px; letter-spacing:.22em; margin-top:5px; opacity:.85}
+  .doc-title{flex:1; min-width:220px}
+  .doc-title h1{margin:0; font-size:17px; font-weight:700; letter-spacing:.05em; text-transform:uppercase}
+  .doc-title p{margin:3px 0 0; font-size:12px; font-weight:500; opacity:.9; letter-spacing:.02em}
+  .doc-meta{display:flex; gap:0; border-top:1px solid var(--line); background:var(--surface-2); font-size:11px;}
+  .doc-meta div{padding:9px 24px; border-right:1px solid var(--line); display:flex; flex-direction:column; gap:1px;}
+  .doc-meta div:last-child{border-right:none}
+  .doc-meta span{color:var(--muted); font-weight:600; letter-spacing:.12em; text-transform:uppercase; font-size:9.5px}
+  .doc-meta b{font-weight:700; font-size:12px}
+
+  .tabs{display:flex; gap:8px; margin:22px 0 16px}
+  .tab{appearance:none; border:1px solid var(--line); background:var(--paper); color:var(--muted); font-family:var(--font); font-weight:600; font-size:13px; letter-spacing:.02em; padding:10px 18px; border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:all .15s ease;}
+  .tab:hover{border-color:var(--line-strong); color:var(--ink)}
+  .tab[aria-selected="true"]{background:var(--ink); border-color:var(--ink); color:#fff}
+  .tab .count{background:var(--red); color:#fff; font-size:11px; font-weight:700; min-width:20px; height:20px; padding:0 6px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center;}
+  .tab[aria-selected="true"] .count{background:#fff; color:var(--ink)}
+
+  .card{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-top:18px;}
+  .card:first-of-type{margin-top:0}
+  .section-h{display:flex; align-items:center; gap:12px; padding:18px 24px 14px; border-bottom:1px solid var(--line); background:var(--surface-2);}
+  .section-h .n{padding:0 9px; height:26px; min-width:26px; border-radius:7px; background:var(--red); color:#fff; font-weight:800; font-size:11px; display:flex; align-items:center; justify-content:center; flex:none;}
+  .section-h h2{margin:0; font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase}
+  .section-h p{margin:0 0 0 auto; font-size:11px; color:var(--muted); font-weight:500}
+
+  .grid{padding:22px 24px; display:grid; grid-template-columns:1fr 1fr; gap:18px 20px}
+  .field{display:flex; flex-direction:column; gap:6px}
+  .field.full{grid-column:1 / -1}
+  label{font-size:12px; font-weight:700; letter-spacing:.02em; color:var(--ink)}
+  label .req{color:var(--red); margin-left:2px}
+  .hint{font-size:11px; color:var(--muted); font-weight:500; margin-top:-2px}
+  input, select, textarea{font-family:var(--font); font-size:13.5px; color:var(--ink); border:1px solid var(--line-strong); border-radius:8px; padding:10px 12px; background:var(--paper); transition:border-color .15s, box-shadow .15s; width:100%;}
+  input::placeholder, textarea::placeholder{color:#A8A8AE}
+  input:focus, select:focus, textarea:focus{outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(185,29,46,.12);}
+  textarea{resize:vertical; min-height:80px}
+  .field.error input, .field.error select, .field.error textarea{border-color:var(--bad); box-shadow:0 0 0 3px rgba(159,18,57,.10);}
+  .err-msg{font-size:11px; color:var(--bad); font-weight:600; display:none}
+  .field.error .err-msg{display:block}
+
+  /* stage sub-tabs */
+  .stage-bar{display:flex; gap:6px; overflow-x:auto; padding:4px; margin-top:18px; background:var(--paper); border:1px solid var(--line); border-radius:999px; box-shadow:var(--shadow);}
+  .stage-bar::-webkit-scrollbar{height:0}
+  .stage-btn{appearance:none; border:none; background:transparent; font-family:var(--font); font-weight:600; font-size:12.5px; color:var(--muted); padding:9px 15px; border-radius:999px; cursor:pointer; white-space:nowrap; transition:all .15s; flex:none}
+  .stage-btn:hover{color:var(--ink); background:var(--surface)}
+  .stage-btn[aria-selected="true"]{background:var(--red); color:#fff}
+  .stage-panel{display:none}
+  .stage-panel.active{display:block}
+
+  .dyn{padding:18px 24px 22px}
+  .dyn>label.blocklabel{display:block; margin-bottom:10px; font-size:12px; font-weight:700}
+  .dyn-table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px}
+  table.dyn-t{width:100%; border-collapse:collapse; min-width:620px}
+  table.dyn-t th{font-size:9px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); padding:9px 10px; background:var(--surface-2); border-bottom:1px solid var(--line); text-align:left; white-space:nowrap}
+  table.dyn-t td{padding:4px 6px; border-bottom:1px solid var(--surface)}
+  table.dyn-t tbody tr:last-child td{border-bottom:none}
+  table.dyn-t input, table.dyn-t select{border:1px solid transparent; border-radius:6px; padding:8px; font-size:12.5px; background:var(--surface-2); min-width:120px}
+  table.dyn-t input:focus, table.dyn-t select:focus{background:#fff; border-color:var(--red); box-shadow:none}
+  .row-x{appearance:none; border:none; background:transparent; color:var(--muted); font-size:18px; cursor:pointer; width:28px; height:28px; border-radius:6px; line-height:1}
+  .row-x:hover{background:var(--bad-soft); color:var(--bad)}
+  .dyn-foot{display:flex; align-items:center; gap:14px; margin-top:12px}
+
+  .actions{display:flex; align-items:center; gap:12px; padding:18px 24px; margin-top:18px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-2); box-shadow:var(--shadow);}
+  .btn{appearance:none; font-family:var(--font); font-weight:700; font-size:13px; letter-spacing:.02em; border-radius:8px; padding:11px 22px; cursor:pointer; border:1px solid transparent; transition:all .15s ease; display:inline-flex; align-items:center; gap:8px;}
+  .btn-primary{background:var(--red); color:#fff}
+  .btn-primary:hover{background:var(--red-deep)}
+  .btn-ghost{background:var(--paper); color:var(--ink); border-color:var(--line-strong)}
+  .btn-ghost:hover{border-color:var(--ink)}
+  .btn-sm{padding:8px 14px; font-size:12px}
+  .actions .spacer{margin-left:auto; font-size:11px; color:var(--muted); font-weight:500}
+
+  .toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:13px 20px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:0 12px 40px rgba(0,0,0,.25); display:flex; align-items:center; gap:10px; opacity:0; pointer-events:none; transition:all .3s cubic-bezier(.2,.8,.2,1); z-index:50; max-width:90vw;}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .toast .dot{width:8px; height:8px; border-radius:50%; background:#fff; flex:none}
+  .toast.ok .dot{background:#5BE49B}
+
+  .list-head{display:flex; align-items:center; gap:14px; padding:16px 24px; border-bottom:1px solid var(--line); background:var(--surface-2); flex-wrap:wrap;}
+  .list-head input[type=search]{max-width:300px}
+  .list-head .ttl{font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase}
+  .list-head .ml{margin-left:auto; display:flex; gap:8px}
+
+  table.list{width:100%; border-collapse:collapse; font-size:13px}
+  table.list thead th{text-align:left; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding:12px 16px; border-bottom:1px solid var(--line); white-space:nowrap;}
+  table.list tbody td{padding:13px 16px; border-bottom:1px solid var(--surface); vertical-align:top}
+  table.list tbody tr{cursor:pointer; transition:background .12s}
+  table.list tbody tr:hover{background:var(--surface-2)}
+  .proto{font-weight:700; font-size:12px; white-space:nowrap}
+  .proto small{display:block; color:var(--muted); font-weight:500; font-size:10.5px; margin-top:2px}
+  .proj{font-weight:600}
+  .proj small{display:block; color:var(--muted); font-weight:500; font-size:11.5px; margin-top:2px}
+
+  .badge{display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px; white-space:nowrap; letter-spacing:.02em;}
+  .badge::before{content:""; width:6px; height:6px; border-radius:50%; background:currentColor}
+  .b-pend{background:var(--warn-soft); color:var(--warn)}
+  .b-apr{background:var(--ok-soft); color:var(--ok)}
+  .b-rep{background:var(--bad-soft); color:var(--bad)}
+
+  .empty{padding:56px 24px; text-align:center; color:var(--muted)}
+  .empty svg{width:42px; height:42px; opacity:.4; margin-bottom:12px}
+  .empty h3{margin:0 0 4px; font-size:15px; color:var(--ink); font-weight:700}
+  .empty p{margin:0; font-size:13px}
+
+  .overlay{position:fixed; inset:0; background:rgba(20,20,22,.45); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity .2s; z-index:40;}
+  .overlay.show{opacity:1; pointer-events:auto}
+  .drawer{position:fixed; top:0; right:0; height:100%; width:min(680px,97vw); background:var(--paper); box-shadow:-16px 0 50px rgba(0,0,0,.18); transform:translateX(100%); transition:transform .28s cubic-bezier(.2,.8,.2,1); z-index:45; display:flex; flex-direction:column;}
+  .drawer.show{transform:translateX(0)}
+  .drawer-top{padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:flex-start; gap:12px}
+  .drawer-top h2{margin:0; font-size:16px; font-weight:700}
+  .drawer-top .proto-lg{font-size:11.5px; color:var(--muted); font-weight:600; letter-spacing:.04em; margin-top:3px}
+  .x{margin-left:auto; appearance:none; border:1px solid var(--line); background:var(--paper); width:34px; height:34px; border-radius:8px; cursor:pointer; font-size:18px; color:var(--muted); flex:none}
+  .x:hover{border-color:var(--ink); color:var(--ink)}
+  .drawer-body{padding:8px 24px 24px; overflow-y:auto; flex:1}
+  .dl{margin:0}
+  .dl .grp{margin:20px 0 6px; font-size:10.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--red); padding-bottom:5px; border-bottom:2px solid var(--surface)}
+  .dl .row{padding:11px 0; border-bottom:1px solid var(--surface)}
+  .dl dt{font-size:10.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-bottom:5px}
+  .dl dd{margin:0; font-size:13.5px; white-space:pre-wrap; word-break:break-word}
+  .ro-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:7px; margin-top:4px}
+  table.ro-t{width:100%; border-collapse:collapse; font-size:12px; min-width:480px}
+  table.ro-t th{text-align:left; font-size:9px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); padding:7px 9px; background:var(--surface-2); border-bottom:1px solid var(--line); white-space:nowrap}
+  table.ro-t td{padding:7px 9px; border-bottom:1px solid var(--surface)}
+  table.ro-t tbody tr:last-child td{border-bottom:none}
+  .drawer-foot{padding:16px 24px; border-top:1px solid var(--line); background:var(--surface-2); display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .drawer-foot label{font-size:11px; color:var(--muted)}
+  .status-row{display:flex; align-items:center; gap:8px; margin-right:auto}
+  .status-row select{width:auto; padding:8px 12px; font-size:12px; font-weight:600}
+  .btn-danger{background:var(--paper); color:var(--bad); border-color:var(--bad-soft)}
+  .btn-danger:hover{background:var(--bad-soft)}
+
+  @media (max-width:680px){
+    .grid{grid-template-columns:1fr}
+    .doc-meta{flex-wrap:wrap}
+    .doc-meta div{flex:1 1 40%}
+    .hide-sm{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <div class="doc-head">
+    <div class="doc-band">
+      <div class="doc-logo">UNIALFA<small>GRUPO JOSÉ ALVES</small></div>
+      <div class="doc-title">
+        <h1>Planejamento e Desenvolvimento de Projeto</h1>
+        <p>Dossiê de ciclo de vida do projeto · Gerência de Projetos</p>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <div><span>Código</span><b>FORALF00325</b></div>
+      <div><span>Versão</span><b>V.00 / 2025</b></div>
+      <div class="hide-sm"><span>Aprovação</span><b>Via status do registro</b></div>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" id="tab-new" onclick="showView('new')">＋ Novo dossiê</button>
+    <button class="tab" role="tab" aria-selected="false" id="tab-list" onclick="showView('list')">
+      Projetos cadastrados <span class="count" id="count">0</span>
+    </button>
+  </div>
+
+  <!-- ====== FORM VIEW ====== -->
+  <div id="view-new">
+    <!-- Identification (always visible) -->
+    <div class="card">
+      <div class="section-h"><div class="n">★</div><h2>Identificação do projeto</h2><p>Capa do dossiê</p></div>
+      <div class="grid" id="id-grid"></div>
+    </div>
+
+    <!-- Stage tabs -->
+    <div class="stage-bar" id="stage-bar"></div>
+    <div id="stage-panels"></div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="submitBtn" onclick="submitForm()">Registrar dossiê</button>
+      <button class="btn btn-ghost" onclick="clearForm()">Limpar tudo</button>
+      <span class="spacer">Campos com <b style="color:var(--red)">*</b> são obrigatórios</span>
+    </div>
+  </div>
+
+  <!-- ====== LIST VIEW ====== -->
+  <div id="view-list" style="display:none">
+    <div class="card">
+      <div class="list-head">
+        <span class="ttl">Projetos cadastrados</span>
+        <input type="search" id="search" placeholder="Buscar por projeto, gestor…" oninput="renderList()">
+        <div class="ml">
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Exportar CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.print()">Imprimir</button>
+        </div>
+      </div>
+      <div id="list-body"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" aria-label="Detalhes do dossiê">
+  <div class="drawer-top">
+    <div><h2 id="d-proj">—</h2><div class="proto-lg" id="d-proto">—</div></div>
+    <button class="x" onclick="closeDrawer()" aria-label="Fechar">×</button>
+  </div>
+  <div class="drawer-body"><dl class="dl" id="d-body"></dl></div>
+  <div class="drawer-foot">
+    <div class="status-row">
+      <label for="d-status">Status</label>
+      <select id="d-status" onchange="changeStatus()">
+        <option value="Em planejamento">Em planejamento</option>
+        <option value="Em execução">Em execução</option>
+        <option value="Concluído">Concluído</option>
+        <option value="Cancelado">Cancelado</option>
+      </select>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="editCurrent()">Editar dados</button>
+    <button class="btn btn-danger btn-sm" onclick="deleteCurrent()">Excluir</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toast-msg"></span></div>
+
+<script>
+/* ---- Armazenamento persistente via Supabase (substitui window.storage) ---- */
+(function(){
+  var SUPABASE_URL = 'https://fiarntunpqteopwjkhjg.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+  var TABLE = 'kv_store';
+  var base = SUPABASE_URL + '/rest/v1/' + TABLE;
+  function headers(extra){
+    var h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+    if (extra) { for (var k in extra) h[k] = extra[k]; }
+    return h;
+  }
+  window.storage = {
+    get: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key) + '&select=value', { headers: headers() });
+      if(!r.ok) return null;
+      var rows = await r.json();
+      return rows.length ? { value: rows[0].value } : null;
+    },
+    set: async function(key, value){
+      var r = await fetch(base + '?on_conflict=key', { method: 'POST', headers: headers({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }) });
+      return r.ok;
+    },
+    delete: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key), { method: 'DELETE', headers: headers() });
+      return r.ok;
+    },
+    list: async function(prefix){
+      var r = await fetch(base + '?key=like.' + encodeURIComponent(prefix) + '*&select=key', { headers: headers() });
+      if(!r.ok) return { keys: [] };
+      var rows = await r.json();
+      return { keys: rows.map(function(x){ return x.key; }) };
+    },
+  };
+})();
+</script>
+<script>
+const KEY_PREFIX='plan:';
+let cache=[]; let currentId=null; let editId=null;
+
+const UNIDADES=['Superintendência Reitoria','Ouvidoria','CPA','Comitê da Qualidade','Diretoria Educação Executiva','Diretoria de Escola Business','Diretoria de Escola de Direito','Diretoria de Operações EAD','Diretoria de Marketing e Vendas','Coord. Curso Lato Sensu','Coord. Pós-Graduação Stricto Sensu','Coord. Curso Graduação, Técnico e Ensino Médio','Coord. Curso Graduação','Coord. Operações Acadêmicas EAD','Coord. Gestão de Polos','Corpo Docente','Corpo Docente (PJ)','Marketing','Vendas','Relacionamento','Planej. e Operações','RH','Secretaria Geral','Asseg. Qualidade','Segurança','ADM e Infraestrutura','GPTI','Controladoria','Gerência de Controladoria'];
+const ST_ENTRADA=['Pendente','Em andamento','OK','Não aplicável'];
+const ST_SAIDA_VERIF=['Pendente','Verificado','Não conforme'];
+const ST_APROV=['Pendente','Aprovado','Reprovado'];
+const RES_CNC=['Pendente','Conforme','Não conforme'];
+const RES_AV=['Pendente','Aprovado','Reprovado'];
+
+/* identification (capa) */
+const IDFIELDS=[
+  {key:'nomeProjeto', label:'Nome do projeto', type:'text', req:true, full:true},
+  {key:'negocio', label:'Negócio', type:'text'},
+  {key:'unidade', label:'Unidade', type:'select', options:UNIDADES, req:true},
+  {key:'gestor', label:'Gestor do projeto', type:'text', req:true},
+  {key:'solicitante', label:'Solicitante do projeto', type:'text'},
+  {key:'data', label:'Data de elaboração', type:'date'},
+];
+
+/* full schema: stages with ordered blocks */
+const STAGES=[
+  {id:'pre', tab:'1 · Pré-projeto', title:'Pré-projeto', sub:'Identificação, escopo e objetivos', blocks:[
+    {kind:'field', key:'produtos', label:'Produtos impactados', type:'textarea'},
+    {kind:'field', key:'geografico', label:'Escopo geográfico', type:'textarea'},
+    {kind:'field', key:'contexto', label:'Contexto e problemática', type:'textarea'},
+    {kind:'field', key:'objGeral', label:'Objetivo geral', type:'textarea'},
+    {kind:'field', key:'objEspec', label:'Objetivos específicos', type:'textarea'},
+    {kind:'field', key:'escIncluido', label:'Escopo incluído', type:'textarea'},
+    {kind:'field', key:'escExcluido', label:'Escopo excluído', type:'textarea'},
+    {kind:'field', key:'entregaveis', label:'Entregáveis', type:'textarea'},
+    {kind:'field', key:'premissas', label:'Premissas', type:'textarea'},
+    {kind:'field', key:'restricoes', label:'Restrições', type:'textarea'},
+    {kind:'field', key:'partes', label:'Partes interessadas', type:'textarea'},
+    {kind:'field', key:'macroFases', label:'Macro fases do projeto', type:'textarea'},
+  ]},
+  {id:'via', tab:'2 · Viabilidade', title:'Viabilidade', sub:'Análise e recomendação', blocks:[
+    {kind:'field', key:'introducao', label:'Introdução', type:'textarea'},
+    {kind:'field', key:'situacao', label:'Situação atual', type:'textarea'},
+    {kind:'field', key:'proposta', label:'Proposta de mudança', type:'textarea'},
+    {kind:'field', key:'beneficios', label:'Benefícios do projeto', type:'textarea'},
+    {kind:'table', key:'comparacao', label:'Comparação de alternativas', seed:2, cols:[
+      {key:'criterio',label:'Critério',type:'text'},
+      {key:'p1',label:'Projeto 1',type:'text'},
+      {key:'p2',label:'Projeto 2',type:'text'},
+    ]},
+    {kind:'field', key:'impPos', label:'Impactos esperados — positivos', type:'textarea'},
+    {kind:'field', key:'impNeg', label:'Impactos esperados — negativos', type:'textarea'},
+    {kind:'field', key:'plano', label:'Plano de implementação', type:'textarea'},
+    {kind:'field', key:'conclusao', label:'Conclusão e recomendação', type:'textarea'},
+    {kind:'field', key:'viaAnexos', label:'Anexos', type:'textarea'},
+  ]},
+  {id:'crono', tab:'3 · Cronograma', title:'Cronograma', sub:'Marcos e prazos', blocks:[
+    {kind:'table', key:'cronograma', label:'Marcos do projeto', seed:3, cols:[
+      {key:'marco',label:'Marco do projeto',type:'text'},
+      {key:'resp',label:'Responsável',type:'text'},
+      {key:'duracao',label:'Duração',type:'text'},
+      {key:'entrega',label:'Data de entrega',type:'date'},
+    ]},
+  ]},
+  {id:'entradas', tab:'4 · Entradas', title:'Entradas do projeto', sub:'Requisitos e fontes', blocks:[
+    {kind:'table', key:'entradas', label:'Entradas', cols:[
+      {key:'id',label:'ID',type:'text'},
+      {key:'categoria',label:'Categoria de entrada',type:'text'},
+      {key:'descricao',label:'Descrição detalhada',type:'text'},
+      {key:'fonte',label:'Fonte / documento de origem',type:'text'},
+      {key:'resp',label:'Responsável',type:'text'},
+      {key:'status',label:'Status',type:'select',options:ST_ENTRADA},
+    ], seedRows:[
+      {id:'E1',categoria:'Requisitos Funcionais',status:'Pendente'},
+      {id:'E2',categoria:'Requisitos de Desempenho',status:'Pendente'},
+      {id:'E3',categoria:'Requisitos Legais/Regulatórios',status:'Pendente'},
+      {id:'E4',categoria:'Normas/Códigos de Prática',status:'Pendente'},
+      {id:'E5',categoria:'Consequências de Falhas',status:'Pendente'},
+      {id:'E6',categoria:'Informações de Projetos Anteriores',status:'Pendente'},
+      {id:'E7',categoria:'Recursos e Infraestrutura',status:'Pendente'},
+    ]},
+  ]},
+  {id:'saidas', tab:'5 · Saídas', title:'Saídas do projeto', sub:'Entregáveis e aceitação', blocks:[
+    {kind:'table', key:'saidas', label:'Saídas', cols:[
+      {key:'id',label:'ID',type:'text'},
+      {key:'item',label:'Item de saída (entregável)',type:'text'},
+      {key:'requisito',label:'Requisito de entrada (fonte da demanda)',type:'text'},
+      {key:'criterios',label:'Critérios de aceitação',type:'text'},
+      {key:'statusVerif',label:'Status de verificação',type:'select',options:ST_SAIDA_VERIF},
+      {key:'aprovacao',label:'Aprovação final',type:'select',options:ST_APROV},
+    ], seedRows:[{id:'S1'},{id:'S2'},{id:'S3'},{id:'S4'},{id:'S5'},{id:'S6'},{id:'S7'}]},
+  ]},
+  {id:'verif', tab:'6 · Verificação', title:'Verificação do projeto', sub:'Conformidade das saídas', blocks:[
+    {kind:'table', key:'verificacao', label:'Verificação', cols:[
+      {key:'id',label:'ID',type:'text'},
+      {key:'requisito',label:'Requisito de entrada',type:'text'},
+      {key:'saida',label:'Item de saída correspondente',type:'text'},
+      {key:'metodo',label:'Método de verificação',type:'text'},
+      {key:'resultado',label:'Resultado (C/NC)',type:'select',options:RES_CNC},
+      {key:'evidencia',label:'Evidência documental',type:'text'},
+      {key:'resp',label:'Responsável',type:'text'},
+    ], seedRows:[{id:'VR1'},{id:'VR2'},{id:'VR3'},{id:'VR4'},{id:'VR5'},{id:'VR6'},{id:'VR7'}]},
+  ]},
+  {id:'valid', tab:'7 · Validação', title:'Validação do projeto', sub:'Uso pretendido', blocks:[
+    {kind:'table', key:'validacao', label:'Validação', cols:[
+      {key:'id',label:'ID',type:'text'},
+      {key:'requisito',label:'Requisito do usuário / uso pretendido',type:'text'},
+      {key:'metodo',label:'Método de validação (teste prático)',type:'text'},
+      {key:'criterio',label:'Critério de sucesso',type:'text'},
+      {key:'resultado',label:'Resultado',type:'select',options:RES_AV},
+      {key:'evidencia',label:'Evidência (relatório/foto/vídeo)',type:'text'},
+    ], seedRows:[{id:'V1'},{id:'V2'},{id:'V3'},{id:'V4'},{id:'V5'},{id:'V6'},{id:'V7'}]},
+  ]},
+  {id:'analise', tab:'8 · Análise crítica', title:'Análise crítica do projeto', sub:'Pontos de controle', blocks:[
+    {kind:'table', key:'analise', label:'Análise crítica', cols:[
+      {key:'etapa',label:'Etapa do projeto',type:'text'},
+      {key:'dataAnalise',label:'Data da análise',type:'date'},
+      {key:'participantes',label:'Participantes (áreas)',type:'text'},
+      {key:'pontos',label:'Pontos analisados (status)',type:'text'},
+      {key:'problemas',label:'Problemas/riscos identificados',type:'text'},
+      {key:'acoes',label:'Ações necessárias / decisões',type:'text'},
+      {key:'respPrazo',label:'Responsável e prazo',type:'text'},
+    ], seedRows:[{etapa:'Planejamento'},{etapa:'Pós-verificação'},{etapa:'Pós-validação'},{etapa:'Finalização'}]},
+  ]},
+];
+
+/* derive flat keys */
+const FIELD_KEYS=[]; const TABLE_DEFS={};
+IDFIELDS.forEach(f=>FIELD_KEYS.push(f.key));
+STAGES.forEach(s=>s.blocks.forEach(b=>{ if(b.kind==='field') FIELD_KEYS.push(b.key); else { TABLE_DEFS[b.key]=b; } }));
+const REQUIRED=IDFIELDS.filter(f=>f.req).map(f=>f.key);
+
+/* ---------- helpers ---------- */
+function toast(msg, ok=true){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.classList.toggle('ok', ok); t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),3200);
+}
+function fmtDate(iso){ if(!iso) return '—'; const p=String(iso).split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:iso; }
+function fmtStamp(ms){ const dt=new Date(ms); return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+function badgeClass(s){ if(s==='Concluído') return 'b-apr'; if(s==='Cancelado') return 'b-rep'; return 'b-pend'; }
+function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+/* ---------- build form ---------- */
+function fieldHTML(f){
+  const req=f.req?'<span class="req">*</span>':'';
+  const hint=f.hint?`<div class="hint">${f.hint}</div>`:'';
+  let ctrl;
+  if(f.type==='textarea') ctrl=`<textarea id="${f.key}"></textarea>`;
+  else if(f.type==='select'){
+    ctrl=`<select id="${f.key}"><option value="">Selecione…</option>${(f.options||[]).map(o=>`<option>${o}</option>`).join('')}</select>`;
+  } else ctrl=`<input id="${f.key}" type="${f.type==='date'?'date':'text'}">`;
+  return `<div class="field ${f.full!==false?'full':''}" data-for="${f.key}">
+    <label>${f.label}${req}</label>${hint}${ctrl}
+    <div class="err-msg">Campo obrigatório.</div></div>`;
+}
+
+function buildIdGrid(){
+  document.getElementById('id-grid').innerHTML=IDFIELDS.map(f=>fieldHTML({...f, full:f.full===true})).join('');
+}
+
+function buildStages(){
+  const bar=document.getElementById('stage-bar');
+  const panels=document.getElementById('stage-panels');
+  bar.innerHTML=STAGES.map((s,i)=>`<button class="stage-btn" aria-selected="${i===0}" onclick="showStage('${s.id}')">${s.tab}</button>`).join('');
+  panels.innerHTML=STAGES.map((s,i)=>{
+    let inner='';
+    // group consecutive field blocks into grids; tables stand alone
+    let buffer=[];
+    const flush=()=>{ if(buffer.length){ inner+=`<div class="grid">${buffer.map(fieldHTML).join('')}</div>`; buffer=[]; } };
+    s.blocks.forEach(b=>{
+      if(b.kind==='field'){ buffer.push({...b, full:true}); }
+      else { flush(); inner+=`<div class="dyn" id="dyn-${b.key}"><label class="blocklabel">${b.label}</label></div>`; }
+    });
+    flush();
+    return `<div class="stage-panel ${i===0?'active':''}" id="stage-${s.id}">
+      <div class="card">
+        <div class="section-h"><div class="n">${i+1}</div><h2>${s.title}</h2><p>${s.sub}</p></div>
+        ${inner}
+      </div></div>`;
+  }).join('');
+  // mount tables
+  Object.values(TABLE_DEFS).forEach(t=>mountTable(t));
+}
+
+function showStage(id){
+  STAGES.forEach(s=>{ document.getElementById('stage-'+s.id).classList.toggle('active', s.id===id); });
+  document.querySelectorAll('.stage-btn').forEach((b,i)=>b.setAttribute('aria-selected', STAGES[i].id===id));
+}
+
+/* ---------- dynamic tables ---------- */
+function mountTable(t){
+  const host=document.getElementById('dyn-'+t.key);
+  const wrap=document.createElement('div');
+  wrap.innerHTML=`<div class="dyn-table-wrap"><table class="dyn-t" id="tbl-${t.key}">
+    <thead><tr>${t.cols.map(c=>`<th>${c.label}</th>`).join('')}<th style="width:36px"></th></tr></thead><tbody></tbody></table></div>
+    <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addRow('${t.key}')">+ Adicionar linha</button></div>`;
+  host.appendChild(wrap);
+  if(t.seedRows) t.seedRows.forEach(r=>addRow(t.key, r));
+  else { const n=t.seed||1; for(let i=0;i<n;i++) addRow(t.key); }
+}
+function cellInput(c, v){
+  if(c.type==='select'){
+    return `<select data-k="${c.key}"><option value="">—</option>${c.options.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`;
+  }
+  const t=c.type==='date'?'date':'text';
+  return `<input data-k="${c.key}" type="${t}" value="${esc(v)}">`;
+}
+function addRow(key, vals){
+  const t=TABLE_DEFS[key];
+  const tb=document.querySelector(`#tbl-${key} tbody`);
+  const tr=document.createElement('tr');
+  let cells=t.cols.map(c=>`<td>${cellInput(c, vals?(vals[c.key]||''):'')}</td>`).join('');
+  cells+=`<td><button type="button" class="row-x" title="Remover" onclick="this.closest('tr').remove()">×</button></td>`;
+  tr.innerHTML=cells; tb.appendChild(tr);
+}
+function readTable(key){
+  const rows=[];
+  document.querySelectorAll(`#tbl-${key} tbody tr`).forEach(tr=>{
+    const obj={}; let any=false;
+    tr.querySelectorAll('input,select').forEach(inp=>{ const val=(inp.value||'').trim(); obj[inp.dataset.k]=val; if(val) any=true; });
+    if(any) rows.push(obj);
+  });
+  return rows;
+}
+function roTable(key, rows){
+  const t=TABLE_DEFS[key];
+  if(!rows||!rows.length) return '<dd>—</dd>';
+  let h='<dd><div class="ro-wrap"><table class="ro-t"><thead><tr>'+t.cols.map(c=>`<th>${c.label}</th>`).join('')+'</tr></thead><tbody>';
+  rows.forEach(r=>{ h+='<tr>'+t.cols.map(c=>{let v=r[c.key]||''; if(c.type==='date'&&v) v=fmtDate(v); return `<td>${esc(v||'—')}</td>`;}).join('')+'</tr>'; });
+  h+='</tbody></table></div></dd>'; return h;
+}
+
+/* ---------- views ---------- */
+function showView(v){
+  document.getElementById('view-new').style.display=v==='new'?'block':'none';
+  document.getElementById('view-list').style.display=v==='list'?'block':'none';
+  document.getElementById('tab-new').setAttribute('aria-selected', v==='new');
+  document.getElementById('tab-list').setAttribute('aria-selected', v==='list');
+  if(v==='list') renderList();
+}
+
+async function loadAll(){
+  cache=[];
+  try{
+    const res=await window.storage.list(KEY_PREFIX);
+    const keys=(res&&res.keys)?res.keys:[];
+    for(const k of keys){ try{ const r=await window.storage.get(k); if(r&&r.value) cache.push(JSON.parse(r.value)); }catch(e){} }
+  }catch(e){ console.warn('list failed',e); }
+  cache.sort((a,b)=>b.createdAt-a.createdAt);
+  document.getElementById('count').textContent=cache.length;
+}
+async function nextProtocol(){
+  const year=new Date().getFullYear();
+  const seq=String(cache.length+1).padStart(3,'0');
+  return `FORALF00325-${year}-${seq}`;
+}
+
+function clearError(id){ const f=document.querySelector(`.field[data-for="${id}"]`); if(f) f.classList.remove('error'); }
+function validate(){
+  let firstBad=null;
+  REQUIRED.forEach(id=>{
+    const el=document.getElementById(id);
+    const f=document.querySelector(`.field[data-for="${id}"]`);
+    if(!el.value.trim()){ f.classList.add('error'); if(!firstBad) firstBad=f; } else f.classList.remove('error');
+  });
+  if(firstBad) firstBad.scrollIntoView({behavior:'smooth',block:'center'});
+  return !firstBad;
+}
+
+async function submitForm(){
+  if(!validate()){ toast('Revise os campos obrigatórios da identificação', false); return; }
+  let rec;
+  if(editId){
+    rec = Object.assign({}, cache.find(x=>x.id===editId));
+  } else {
+    rec = { id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo: await nextProtocol(), status:'Em planejamento', createdAt:Date.now() };
+  }
+  FIELD_KEYS.forEach(id=>{ const el=document.getElementById(id); if(el) rec[id]=(el.value||'').trim(); });
+  Object.keys(TABLE_DEFS).forEach(k=>{ rec[k]=readTable(k); });
+  try{
+    const r=await window.storage.set(KEY_PREFIX+rec.id, JSON.stringify(rec));
+    if(!r) throw new Error('no result');
+    if(editId){
+      const idx=cache.findIndex(x=>x.id===rec.id);
+      if(idx>-1) cache[idx]=rec; else cache.unshift(rec);
+      toast('Dossiê '+rec.protocolo+' atualizado');
+    } else {
+      cache.unshift(rec);
+      toast('Dossiê '+rec.protocolo+' registrado');
+    }
+    document.getElementById('count').textContent=cache.length;
+    editId=null;
+    clearForm(); showView('list');
+  }catch(e){ console.error(e); toast('Não foi possível salvar. Tente novamente.', false); }
+}
+function editCurrent(){
+  const r=cache.find(x=>x.id===currentId); if(!r) return;
+  editId=r.id;
+  FIELD_KEYS.forEach(id=>{ const el=document.getElementById(id); if(el) el.value = r[id]||''; });
+  Object.values(TABLE_DEFS).forEach(t=>{
+    document.querySelector(`#tbl-${t.key} tbody`).innerHTML='';
+    const rows=r[t.key]||[];
+    if(rows.length){ rows.forEach(row=>addRow(t.key,row)); }
+    else if(t.seedRows){ t.seedRows.forEach(sr=>addRow(t.key,sr)); }
+    else { const n=t.seed||1; for(let i=0;i<n;i++) addRow(t.key); }
+  });
+  document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
+  closeDrawer();
+  showView('new');
+  showStage(STAGES[0].id);
+  updateEditBanner();
+}
+function updateEditBanner(){
+  document.getElementById('submitBtn').textContent = editId ? 'Salvar alterações' : 'Registrar dossiê';
+}
+function clearForm(){
+  FIELD_KEYS.forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+  Object.values(TABLE_DEFS).forEach(t=>{ document.querySelector(`#tbl-${t.key} tbody`).innerHTML=''; if(t.seedRows) t.seedRows.forEach(r=>addRow(t.key,r)); else { const n=t.seed||1; for(let i=0;i<n;i++) addRow(t.key); } });
+  document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
+  showStage(STAGES[0].id);
+  editId=null;
+  updateEditBanner();
+}
+
+function renderList(){
+  const q=(document.getElementById('search').value||'').toLowerCase().trim();
+  const rows=cache.filter(r=>!q || ((r.nomeProjeto||'')+(r.gestor||'')+(r.unidade||'')+r.protocolo).toLowerCase().includes(q));
+  const body=document.getElementById('list-body');
+  if(!cache.length){
+    body.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v16H4zM4 9h16M9 9v11"/></svg><h3>Nenhum dossiê cadastrado</h3><p>Os projetos planejados aparecem aqui.</p></div>`; return;
+  }
+  if(!rows.length){ body.innerHTML=`<div class="empty"><h3>Nenhum resultado</h3><p>Ajuste a busca.</p></div>`; return; }
+  let html=`<table class="list"><thead><tr><th>Protocolo</th><th>Projeto</th><th class="hide-sm">Unidade</th><th class="hide-sm">Elaboração</th><th>Status</th></tr></thead><tbody>`;
+  for(const r of rows){
+    html+=`<tr onclick="openDrawer('${r.id}')">
+      <td><div class="proto">${esc(r.protocolo)}<small>${fmtStamp(r.createdAt)}</small></div></td>
+      <td><div class="proj">${esc(r.nomeProjeto)}<small>Gestor: ${esc(r.gestor)}</small></div></td>
+      <td class="hide-sm">${esc(r.unidade)}</td>
+      <td class="hide-sm">${fmtDate(r.data)}</td>
+      <td><span class="badge ${badgeClass(r.status)}">${esc(r.status)}</span></td>
+    </tr>`;
+  }
+  html+='</tbody></table>'; body.innerHTML=html;
+}
+
+function openDrawer(id){
+  const r=cache.find(x=>x.id===id); if(!r) return; currentId=id;
+  document.getElementById('d-proj').textContent=r.nomeProjeto;
+  document.getElementById('d-proto').textContent=r.protocolo+' · elaborado em '+fmtDate(r.data);
+  document.getElementById('d-status').value=r.status;
+  let html='<div class="grp">Identificação</div>';
+  IDFIELDS.filter(f=>f.key!=='nomeProjeto').forEach(f=>{
+    let v=r[f.key]; if(f.type==='date') v=fmtDate(v);
+    html+=`<div class="row"><dt>${f.label}</dt><dd>${esc(v||'—')}</dd></div>`;
+  });
+  STAGES.forEach(s=>{
+    html+=`<div class="grp">${s.title}</div>`;
+    s.blocks.forEach(b=>{
+      if(b.kind==='field'){ html+=`<div class="row"><dt>${b.label}</dt><dd>${esc(r[b.key]||'—')}</dd></div>`; }
+      else { html+=`<div class="row"><dt>${b.label}</dt>${roTable(b.key, r[b.key])}</div>`; }
+    });
+  });
+  document.getElementById('d-body').innerHTML=html;
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
+}
+function closeDrawer(){ document.getElementById('overlay').classList.remove('show'); document.getElementById('drawer').classList.remove('show'); currentId=null; }
+async function changeStatus(){
+  const r=cache.find(x=>x.id===currentId); if(!r) return;
+  r.status=document.getElementById('d-status').value;
+  try{ await window.storage.set(KEY_PREFIX+r.id, JSON.stringify(r)); renderList(); toast('Status atualizado para "'+r.status+'"'); }
+  catch(e){ toast('Não foi possível atualizar o status', false); }
+}
+async function deleteCurrent(){
+  const r=cache.find(x=>x.id===currentId); if(!r) return;
+  if(!confirm('Excluir o dossiê '+r.protocolo+'? Esta ação não pode ser desfeita.')) return;
+  try{ await window.storage.delete(KEY_PREFIX+r.id); cache=cache.filter(x=>x.id!==currentId); document.getElementById('count').textContent=cache.length; closeDrawer(); renderList(); toast('Dossiê excluído'); }
+  catch(e){ toast('Não foi possível excluir', false); }
+}
+
+function tableToText(key, rows){
+  if(!rows||!rows.length) return '';
+  const t=TABLE_DEFS[key];
+  return rows.map(r=>t.cols.map(c=>{let v=r[c.key]||''; if(c.type==='date'&&v) v=fmtDate(v); return c.label+': '+v;}).join(' | ')).join('\n');
+}
+function exportCSV(){
+  if(!cache.length){ toast('Não há dossiês para exportar', false); return; }
+  const simpleCols=[['protocolo','Protocolo'],['status','Status']].concat(FIELD_KEYS.map(k=>[k,k]));
+  const tableKeys=Object.keys(TABLE_DEFS);
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  let header=simpleCols.map(c=>q(c[1])).concat(tableKeys.map(k=>q(TABLE_DEFS[k].label)));
+  let csv=header.join(';')+'\r\n';
+  for(const r of cache){
+    const row={...r, data:fmtDate(r.data)};
+    let line=simpleCols.map(c=>q(row[c[0]]));
+    line=line.concat(tableKeys.map(k=>q(tableToText(k, r[k]))));
+    csv+=line.join(';')+'\r\n';
+  }
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download='planejamento_FORALF00325.csv'; a.click(); URL.revokeObjectURL(url);
+  toast('CSV exportado ('+cache.length+' dossiês)');
+}
+
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
+
+/* ---------- init ---------- */
+buildIdGrid();
+buildStages();
+REQUIRED.forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('input',()=>clearError(id)); });
+(async()=>{ await loadAll(); renderList(); })();
+</script>

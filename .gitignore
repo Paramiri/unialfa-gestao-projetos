@@ -1,0 +1,10 @@
+# Documentos-fonte institucionais — não fazem parte do app web, ficam só locais
+*.docx
+*.doc
+*.DOC
+*.pdf
+*.pptx
+*.xlsx
+*.jpg
+*.jpeg
+*.png

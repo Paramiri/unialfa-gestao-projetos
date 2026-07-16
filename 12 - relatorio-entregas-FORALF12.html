@@ -1,0 +1,504 @@
+<!-- Relatório de Entregas e Benefícios — FORALF12 / UNIALFA -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#B91D2E;--red-deep:#8E1322;--red-light:#FEF2F2;
+  --ink:#0F0F0F;--muted:#6B7280;--muted-2:#9CA3AF;
+  --paper:#FFFFFF;--surface:#F8F8F9;--surface-2:#F1F2F4;
+  --line:#E5E7EB;--line-strong:#D1D5DB;
+  --ok:#059669;--ok-soft:#D1FAE5;
+  --warn:#D97706;--warn-soft:#FEF3C7;
+  --bad:#DC2626;--bad-soft:#FEE2E2;
+  --blue:#2563EB;--blue-soft:#DBEAFE;
+  --radius:10px;--shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);
+  --font:'Montserrat',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);color:var(--ink);background:var(--surface);-webkit-font-smoothing:antialiased;line-height:1.5;font-size:14px}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 72px}
+
+/* header */
+.page-head{background:var(--ink);color:#fff;border-radius:14px;padding:28px 32px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:24px}
+.head-logo{font-weight:900;font-size:24px;letter-spacing:.04em;border-right:2px solid rgba(255,255,255,.2);padding-right:22px;flex:none}
+.head-logo small{display:block;font-weight:600;font-size:9.5px;letter-spacing:.22em;opacity:.6;margin-top:4px}
+.head-title{flex:1}
+.head-title h1{font-size:19px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;line-height:1.2}
+.head-title p{font-size:11.5px;font-weight:500;opacity:.6;margin-top:4px}
+.head-badge{background:var(--red);color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;letter-spacing:.04em;white-space:nowrap;flex:none}
+
+/* view tabs */
+.view-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.vtab{appearance:none;border:1px solid var(--line);background:var(--paper);color:var(--muted);font-family:var(--font);font-weight:700;font-size:12px;padding:9px 16px;border-radius:999px;cursor:pointer;transition:all .15s}
+.vtab:hover{border-color:var(--line-strong);color:var(--ink)}
+.vtab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+
+/* section title */
+.sec-title{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--line)}
+
+/* ficha cards — painel */
+.ficha-prog{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px}
+.ficha-prog-head{background:var(--ink);color:#fff;padding:20px 24px;display:flex;align-items:flex-start;gap:16px}
+.ficha-prog-head .left{flex:1}
+.ficha-prog-head h2{font-size:17px;font-weight:900;letter-spacing:.03em;line-height:1.2}
+.ficha-prog-head .sub{font-size:11px;opacity:.6;margin-top:4px;font-weight:500}
+.ficha-prog-head .code{background:var(--red);border-radius:6px;padding:6px 12px;font-size:11px;font-weight:800;letter-spacing:.06em;white-space:nowrap;flex:none;align-self:flex-start}
+.ficha-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.ficha-cell{padding:16px 20px;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+.ficha-cell:nth-child(2n){border-right:none}
+.ficha-cell.full{grid-column:1/-1;border-right:none}
+.ficha-cell:last-child,.ficha-cell:nth-last-child(2):not(.full){border-bottom:none}
+.ficha-label{font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.ficha-value{font-size:13px;font-weight:500;color:var(--ink);white-space:pre-wrap;word-break:break-word;line-height:1.55}
+.ficha-value.strong{font-weight:700}
+
+/* tabelas de fichas */
+.mini-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+.mini-table th{font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:7px 10px;background:var(--surface-2);border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.mini-table td{padding:8px 10px;border-bottom:1px solid var(--surface-2);vertical-align:top}
+.mini-table tbody tr:last-child td{border-bottom:none}
+.mini-table .num{text-align:right;font-weight:700}
+
+/* projeto fichas */
+.ficha-proj{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px}
+.ficha-proj-head{background:var(--red);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px}
+.ficha-proj-head h3{font-size:14px;font-weight:800;flex:1;line-height:1.3}
+.ficha-proj-head .code{background:rgba(0,0,0,.2);border-radius:5px;padding:4px 10px;font-size:10px;font-weight:800;letter-spacing:.06em;white-space:nowrap}
+.ficha-proj-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.proj-cell{padding:14px 18px;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+.proj-cell:nth-child(2n){border-right:none}
+.proj-cell.full{grid-column:1/-1;border-right:none}
+.proj-cell:last-child,.proj-cell:nth-last-child(2):not(.full){border-bottom:none}
+
+/* add project button */
+.add-proj-btn{display:flex;align-items:center;justify-content:center;gap:8px;border:2px dashed var(--line-strong);border-radius:var(--radius);padding:18px;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);background:var(--paper);transition:all .15s;width:100%;margin-bottom:14px}
+.add-proj-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-light)}
+
+/* editor */
+.edit-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.edit-card-head{background:var(--ink);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:10px}
+.edit-card-head h3{font-size:14px;font-weight:800;flex:1}
+.edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;padding:18px 20px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.full{grid-column:1/-1}
+.field label{font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--ink)}
+input,select,textarea{font-family:var(--font);font-size:13px;color:var(--ink);border:1px solid var(--line-strong);border-radius:7px;padding:9px 11px;background:var(--paper);width:100%;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(185,29,46,.1)}
+textarea{resize:vertical;min-height:68px}
+
+/* dyn mini tables in editor */
+.dyn-mini{width:100%;border-collapse:collapse;border:1px solid var(--line);border-radius:7px;overflow:hidden;font-size:12.5px;margin-top:4px}
+.dyn-mini th{font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:8px 10px;background:var(--surface-2);border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.dyn-mini td{padding:3px 5px;border-bottom:1px solid var(--surface-2)}
+.dyn-mini tbody tr:last-child td{border-bottom:none}
+.dyn-mini input{border:1px solid transparent;border-radius:5px;padding:7px;background:var(--surface-2);font-size:12px}
+.dyn-mini input:focus{background:#fff;border-color:var(--red);box-shadow:none;outline:none}
+.row-x{appearance:none;border:none;background:transparent;color:var(--muted);font-size:17px;cursor:pointer;width:26px;height:26px;border-radius:5px;line-height:1;display:flex;align-items:center;justify-content:center}
+.row-x:hover{background:var(--bad-soft);color:var(--bad)}
+.dyn-foot{margin-top:8px}
+
+/* actions */
+.action-bar{display:flex;gap:10px;align-items:center;padding:14px 20px;border-top:1px solid var(--line);background:var(--surface-2);flex-wrap:wrap}
+.btn{appearance:none;font-family:var(--font);font-weight:700;font-size:12.5px;border-radius:8px;padding:10px 20px;cursor:pointer;border:1px solid transparent;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn-primary{background:var(--red);color:#fff}.btn-primary:hover{background:var(--red-deep)}
+.btn-ghost{background:var(--paper);color:var(--ink);border-color:var(--line-strong)}.btn-ghost:hover{border-color:var(--ink)}
+.btn-danger{background:var(--paper);color:var(--bad);border-color:var(--bad-soft)}.btn-danger:hover{background:var(--bad-soft)}
+.btn-sm{padding:7px 13px;font-size:12px}
+.ml{margin-left:auto}
+
+/* empty */
+.empty-state{padding:48px 24px;text-align:center;color:var(--muted)}
+.empty-state h3{font-size:15px;color:var(--ink);font-weight:700;margin-bottom:6px}
+.empty-state p{font-size:13px}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 12px 40px rgba(0,0,0,.25);display:flex;align-items:center;gap:10px;opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.2,.8,.2,1);z-index:50;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast .dot{width:7px;height:7px;border-radius:50%;background:#5BE49B;flex:none}
+
+@media(max-width:720px){.ficha-body,.ficha-proj-body,.edit-grid{grid-template-columns:1fr}.ficha-cell,.proj-cell{border-right:none!important}.ficha-cell:nth-last-child(2){border-bottom:1px solid var(--line)!important}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <div class="head-logo">UNIALFA<small>GRUPO JOSÉ ALVES</small></div>
+    <div class="head-title">
+      <h1>Relatório de Entregas e Benefícios</h1>
+      <p>Ficha de programa e projetos vinculados · Escritório de Projetos</p>
+    </div>
+    <div class="head-badge">FORALF12</div>
+  </div>
+
+  <div class="view-tabs">
+    <button class="vtab" aria-selected="true" onclick="showView('painel')">📋 Painel</button>
+    <button class="vtab" aria-selected="false" onclick="showView('editar')">✏️ Editar dados</button>
+  </div>
+
+  <!-- ===== PAINEL ===== -->
+  <div id="view-painel">
+    <div id="painel-content">
+      <div class="empty-state"><h3>Nenhum dado cadastrado</h3><p>Clique em <b>Editar dados</b> para preencher o programa e seus projetos.</p></div>
+    </div>
+    <div class="action-bar" style="margin-top:18px;border-radius:var(--radius);border:1px solid var(--line)">
+      <button class="btn btn-ghost" onclick="window.print()">🖨 Imprimir</button>
+      <button class="btn btn-ghost" onclick="exportCSV()">📥 Exportar CSV</button>
+      <div class="ml" style="font-size:11px;color:var(--muted)">FORALF12 · UNIALFA</div>
+    </div>
+  </div>
+
+  <!-- ===== EDITOR ===== -->
+  <div id="view-editar" style="display:none">
+
+    <!-- Ficha do Programa -->
+    <div class="edit-card">
+      <div class="edit-card-head"><h3>Ficha do Programa</h3></div>
+      <div class="edit-grid">
+        <div class="field"><label>Código do programa</label><input id="prog-cod" placeholder="Ex: PRG-001"></div>
+        <div class="field"><label>Nome do programa</label><input id="prog-nome" placeholder="Nome completo do programa"></div>
+        <div class="field"><label>Unidade responsável</label><select id="prog-unidade"><option value="">Selecione…</option><option>Superintendência Reitoria</option><option>Ouvidoria</option><option>CPA</option><option>Comitê da Qualidade</option><option>Diretoria Educação Executiva</option><option>Diretoria de Escola Business</option><option>Diretoria de Escola de Direito</option><option>Diretoria de Operações EAD</option><option>Diretoria de Marketing e Vendas</option><option>Coord. Curso Lato Sensu</option><option>Coord. Pós-Graduação Stricto Sensu</option><option>Coord. Curso Graduação, Técnico e Ensino Médio</option><option>Coord. Curso Graduação</option><option>Coord. Operações Acadêmicas EAD</option><option>Coord. Gestão de Polos</option><option>Corpo Docente</option><option>Corpo Docente (PJ)</option><option>Marketing</option><option>Vendas</option><option>Relacionamento</option><option>Planej. e Operações</option><option>RH</option><option>Secretaria Geral</option><option>Asseg. Qualidade</option><option>Segurança</option><option>ADM e Infraestrutura</option><option>GPTI</option><option>Controladoria</option><option>Gerência de Controladoria</option></select></div>
+        <div class="field"><label>Responsável pelo programa</label><input id="prog-resp" placeholder="Nome do responsável"></div>
+        <div class="field full"><label>Justificativa</label><textarea id="prog-just" placeholder="Por que este programa é necessário?"></textarea></div>
+        <div class="field full"><label>Objetivo</label><textarea id="prog-obj" placeholder="O que o programa busca alcançar?"></textarea></div>
+        <div class="field full"><label>Impacto / Resultado do programa</label><textarea id="prog-impacto" placeholder="Qual o resultado esperado para a organização?"></textarea></div>
+        <div class="field full"><label>Alinhamento estratégico</label><textarea id="prog-alinhamento" placeholder="Como o programa se alinha à estratégia institucional?"></textarea></div>
+        <div class="field full"><label>Prováveis parceiros na execução</label><textarea id="prog-parceiros" placeholder="Liste as áreas, unidades ou entidades parceiras"></textarea></div>
+        <div class="field full"><label>Restrições à implementação</label><textarea id="prog-restricoes" placeholder="Limitações conhecidas que podem impactar o programa"></textarea></div>
+      </div>
+
+      <!-- Indicadores do programa -->
+      <div style="padding:0 20px 8px">
+        <div class="sec-title" style="margin-top:4px">Indicadores associados ao programa</div>
+        <div id="dyn-ind-prog-wrap"><table class="dyn-mini" id="tbl-ind-prog"><thead><tr><th>Indicador</th><th>Valor atual</th><th>Meta</th><th style="width:36px"></th></tr></thead><tbody id="tbody-ind-prog"></tbody></table></div>
+        <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addRow('ind-prog',['indicador','valor','meta'])">+ Indicador</button></div>
+      </div>
+
+      <!-- Valores estimados do programa -->
+      <div style="padding:0 20px 20px">
+        <div class="sec-title" style="margin-top:12px">Valores estimados — programa</div>
+        <div id="dyn-val-prog-wrap"><table class="dyn-mini" id="tbl-val-prog"><thead><tr><th>Tipo de despesa</th><th>2025</th><th>2026</th><th>2027</th><th style="width:36px"></th></tr></thead><tbody id="tbody-val-prog"></tbody></table></div>
+        <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addRow('val-prog',['tipo','a1','a2','a3'])">+ Linha</button></div>
+      </div>
+    </div>
+
+    <!-- Projetos -->
+    <div class="sec-title">Projetos vinculados ao programa</div>
+    <div id="proj-editor-list"></div>
+    <button class="add-proj-btn" onclick="addProjeto()">＋ Adicionar projeto</button>
+
+    <div class="action-bar" style="border-radius:var(--radius);border:1px solid var(--line)">
+      <button class="btn btn-primary" onclick="saveAndPreview()">✓ Salvar e ver painel</button>
+      <button class="btn btn-ghost" onclick="showView('painel')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toast-msg"></span></div>
+
+<script>
+/* ---- Armazenamento persistente via Supabase (substitui window.storage) ---- */
+(function(){
+  var SUPABASE_URL = 'https://fiarntunpqteopwjkhjg.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+  var TABLE = 'kv_store';
+  var base = SUPABASE_URL + '/rest/v1/' + TABLE;
+  function headers(extra){
+    var h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+    if (extra) { for (var k in extra) h[k] = extra[k]; }
+    return h;
+  }
+  window.storage = {
+    get: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key) + '&select=value', { headers: headers() });
+      if(!r.ok) return null;
+      var rows = await r.json();
+      return rows.length ? { value: rows[0].value } : null;
+    },
+    set: async function(key, value){
+      var r = await fetch(base + '?on_conflict=key', { method: 'POST', headers: headers({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }) });
+      return r.ok;
+    },
+    delete: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key), { method: 'DELETE', headers: headers() });
+      return r.ok;
+    },
+    list: async function(prefix){
+      var r = await fetch(base + '?key=like.' + encodeURIComponent(prefix) + '*&select=key', { headers: headers() });
+      if(!r.ok) return { keys: [] };
+      var rows = await r.json();
+      return { keys: rows.map(function(x){ return x.key; }) };
+    },
+  };
+})();
+</script>
+<script>
+const KEY='relent_data';
+let data={prog:{cod:'',nome:'',unidade:'',resp:'',just:'',obj:'',impacto:'',alinhamento:'',parceiros:'',restricoes:'',indicadores:[],valores:[]},projetos:[]};
+
+function toast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3000);}
+function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function nl(s){return esc(s).replace(/\n/g,'<br>')}
+
+/* ── storage ── */
+async function loadData(){try{const r=await window.storage.get(KEY);if(r&&r.value)data=JSON.parse(r.value);}catch(e){console.warn(e);}}
+async function saveData(){try{await window.storage.set(KEY,JSON.stringify(data));}catch(e){toast('Erro ao salvar');}}
+
+/* ── views ── */
+function showView(v){
+  document.getElementById('view-painel').style.display=v==='painel'?'block':'none';
+  document.getElementById('view-editar').style.display=v==='editar'?'block':'none';
+  document.querySelectorAll('.vtab').forEach((b,i)=>b.setAttribute('aria-selected',['painel','editar'][i]===v));
+  if(v==='painel') renderPainel();
+  if(v==='editar') renderEditor();
+}
+
+/* ── PAINEL ── */
+function renderPainel(){
+  const p=data.prog;
+  const projs=data.projetos||[];
+  if(!p.nome&&!projs.length){document.getElementById('painel-content').innerHTML='<div class="empty-state"><h3>Nenhum dado cadastrado</h3><p>Clique em <b>Editar dados</b> para preencher o programa e seus projetos.</p></div>';return;}
+  let html='';
+
+  /* Ficha do Programa */
+  const indHTML=indicadoresTable(p.indicadores||[]);
+  const valHTML=valoresTable(p.valores||[]);
+  html+=`<div class="ficha-prog">
+    <div class="ficha-prog-head">
+      <div class="left">
+        <div style="font-size:10px;font-weight:800;letter-spacing:.14em;opacity:.5;text-transform:uppercase;margin-bottom:6px">Ficha do Programa</div>
+        <h2>${esc(p.nome||'(Programa sem nome)')}</h2>
+        <div class="sub">${esc(p.unidade||'')}${p.resp?' · Responsável: '+p.resp:''}</div>
+      </div>
+      ${p.cod?`<div class="code">${esc(p.cod)}</div>`:''}
+    </div>
+    <div class="ficha-body">
+      ${cell('Justificativa',p.just,'full')}
+      ${cell('Objetivo',p.obj,'full')}
+      ${cell('Impacto / Resultado',p.impacto,'full')}
+      ${cell('Alinhamento estratégico',p.alinhamento)}
+      ${cell('Parceiros na execução',p.parceiros)}
+      ${cell('Restrições à implementação',p.restricoes,'full')}
+      ${p.indicadores&&p.indicadores.length?`<div class="ficha-cell full"><div class="ficha-label">Indicadores associados</div>${indHTML}</div>`:''}
+      ${p.valores&&p.valores.length?`<div class="ficha-cell full"><div class="ficha-label">Valores estimados</div>${valHTML}</div>`:''}
+    </div>
+  </div>`;
+
+  /* Fichas dos Projetos */
+  if(projs.length){
+    html+=`<div class="sec-title">Fichas dos projetos</div>`;
+    projs.forEach(pr=>{
+      const entHTML=entregasTable(pr.entregas||[]);
+      const indPrHTML=indicadoresTable(pr.indicadores||[]);
+      const valPrHTML=valoresTable(pr.valores||[]);
+      html+=`<div class="ficha-proj">
+        <div class="ficha-proj-head">
+          <h3>${esc(pr.nome||'(Projeto sem nome)')}</h3>
+          ${pr.codAcao?`<div class="code">${esc(pr.codAcao)}</div>`:''}
+        </div>
+        <div class="ficha-proj-body">
+          ${pcell('Unidade responsável',pr.unidade)}
+          ${pcell('Responsável pelo projeto',pr.resp)}
+          ${pcell('Objetivo',pr.obj,'full')}
+          ${pcell('Público-alvo',pr.publico)}
+          ${pcell('Riscos',pr.riscos)}
+          ${pcell('Impacto / Resultado do projeto',pr.impacto,'full')}
+          ${pr.entregas&&pr.entregas.length?`<div class="proj-cell full"><div class="ficha-label">Principais entregas</div>${entHTML}</div>`:''}
+          ${pr.indicadores&&pr.indicadores.length?`<div class="proj-cell full"><div class="ficha-label">Indicadores associados</div>${indPrHTML}</div>`:''}
+          ${pr.valores&&pr.valores.length?`<div class="proj-cell full"><div class="ficha-label">Valores estimados</div>${valPrHTML}</div>`:''}
+        </div>
+      </div>`;
+    });
+  }
+  document.getElementById('painel-content').innerHTML=html;
+}
+
+function cell(label,val,cls){return`<div class="ficha-cell ${cls||''}"><div class="ficha-label">${label}</div><div class="ficha-value">${val?nl(val):'<span style="color:var(--muted)">—</span>'}</div></div>`;}
+function pcell(label,val,cls){return`<div class="proj-cell ${cls||''}"><div class="ficha-label">${label}</div><div class="ficha-value">${val?nl(val):'<span style="color:var(--muted)">—</span>'}</div></div>`;}
+
+function indicadoresTable(rows){
+  if(!rows.length)return '<span style="color:var(--muted);font-size:12px">—</span>';
+  let h='<table class="mini-table"><thead><tr><th>Indicador</th><th>Valor atual</th><th>Meta</th></tr></thead><tbody>';
+  rows.forEach(r=>{h+=`<tr><td>${esc(r.indicador||'')}</td><td class="num">${esc(r.valor||'')}</td><td class="num">${esc(r.meta||'')}</td></tr>`;});
+  return h+'</tbody></table>';
+}
+function valoresTable(rows){
+  if(!rows.length)return '<span style="color:var(--muted);font-size:12px">—</span>';
+  let h='<table class="mini-table"><thead><tr><th>Tipo</th><th class="num">2025</th><th class="num">2026</th><th class="num">2027</th></tr></thead><tbody>';
+  rows.forEach(r=>{h+=`<tr><td>${esc(r.tipo||'')}</td><td class="num">${esc(r.a1||'')}</td><td class="num">${esc(r.a2||'')}</td><td class="num">${esc(r.a3||'')}</td></tr>`;});
+  return h+'</tbody></table>';
+}
+function entregasTable(rows){
+  if(!rows.length)return '<span style="color:var(--muted);font-size:12px">—</span>';
+  let h='<table class="mini-table"><thead><tr><th>Entrega</th><th>Qtde / %</th><th>Data limite</th></tr></thead><tbody>';
+  rows.forEach(r=>{h+=`<tr><td>${esc(r.entrega||'')}</td><td class="num">${esc(r.qtde||'')}</td><td>${esc(r.data||'')}</td></tr>`;});
+  return h+'</tbody></table>';
+}
+
+/* ── EDITOR ── */
+function renderEditor(){
+  const p=data.prog;
+  const fields={
+    'prog-cod':p.cod,'prog-nome':p.nome,'prog-unidade':p.unidade,'prog-resp':p.resp,
+    'prog-just':p.just,'prog-obj':p.obj,'prog-impacto':p.impacto,
+    'prog-alinhamento':p.alinhamento,'prog-parceiros':p.parceiros,'prog-restricoes':p.restricoes
+  };
+  Object.entries(fields).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.value=val||'';});
+  rebuildTable('ind-prog',['indicador','valor','meta'],p.indicadores||[]);
+  rebuildTable('val-prog',['tipo','a1','a2','a3'],p.valores||[]);
+  renderProjEditor();
+}
+
+function readProg(){
+  return{
+    cod:v('prog-cod'),nome:v('prog-nome'),unidade:v('prog-unidade'),resp:v('prog-resp'),
+    just:v('prog-just'),obj:v('prog-obj'),impacto:v('prog-impacto'),
+    alinhamento:v('prog-alinhamento'),parceiros:v('prog-parceiros'),restricoes:v('prog-restricoes'),
+    indicadores:readDynTable('tbody-ind-prog',['indicador','valor','meta']),
+    valores:readDynTable('tbody-val-prog',['tipo','a1','a2','a3']),
+  };
+}
+function v(id){const el=document.getElementById(id);return el?(el.value||'').trim():'';}
+
+/* dyn tables */
+function addRow(name,keys){
+  const tbody=document.getElementById('tbody-'+name);
+  const tr=document.createElement('tr');
+  tr.innerHTML=keys.map(k=>`<td><input data-k="${k}" placeholder="${k}"></td>`).join('')+`<td><button type="button" class="row-x" onclick="this.closest('tr').remove()">×</button></td>`;
+  tbody.appendChild(tr);
+}
+function rebuildTable(name,keys,rows){
+  const tbody=document.getElementById('tbody-'+name);
+  tbody.innerHTML='';
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=keys.map(k=>`<td><input data-k="${k}" value="${esc(r[k]||'')}" placeholder="${k}"></td>`).join('')+`<td><button type="button" class="row-x" onclick="this.closest('tr').remove()">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+function readDynTable(tbodyId,keys){
+  const rows=[];
+  document.querySelectorAll(`#${tbodyId} tr`).forEach(tr=>{
+    const obj={};let any=false;
+    tr.querySelectorAll('input').forEach(inp=>{const val=(inp.value||'').trim();obj[inp.dataset.k]=val;if(val)any=true;});
+    if(any)rows.push(obj);
+  });
+  return rows;
+}
+
+/* projetos editor */
+function renderProjEditor(){
+  const list=document.getElementById('proj-editor-list');
+  list.innerHTML='';
+  (data.projetos||[]).forEach((pr,i)=>list.appendChild(buildProjEditor(pr,i)));
+}
+
+function buildProjEditor(pr,i){
+  const div=document.createElement('div');
+  div.className='edit-card';
+  div.innerHTML=`
+    <div class="edit-card-head">
+      <h3>Projeto ${i+1}: ${esc(pr.nome||'(sem nome)')}</h3>
+      <button class="btn btn-sm btn-danger" onclick="removeProj(${i})">Remover</button>
+    </div>
+    <div class="edit-grid">
+      <div class="field"><label>Código da ação</label><input id="pr${i}-codAcao" value="${esc(pr.codAcao||'')}" placeholder="Ex: ACT-001"></div>
+      <div class="field full"><label>Nome do projeto</label><input id="pr${i}-nome" value="${esc(pr.nome||'')}" placeholder="Nome do projeto"></div>
+      <div class="field"><label>Unidade responsável</label><select id="pr${i}-unidade"><option value="">Selecione…</option>${['Superintendência Reitoria','Ouvidoria','CPA','Comitê da Qualidade','Diretoria Educação Executiva','Diretoria de Escola Business','Diretoria de Escola de Direito','Diretoria de Operações EAD','Diretoria de Marketing e Vendas','Coord. Curso Lato Sensu','Coord. Pós-Graduação Stricto Sensu','Coord. Curso Graduação, Técnico e Ensino Médio','Coord. Curso Graduação','Coord. Operações Acadêmicas EAD','Coord. Gestão de Polos','Corpo Docente','Corpo Docente (PJ)','Marketing','Vendas','Relacionamento','Planej. e Operações','RH','Secretaria Geral','Asseg. Qualidade','Segurança','ADM e Infraestrutura','GPTI','Controladoria','Gerência de Controladoria'].map(u=>`<option ${pr.unidade===u?'selected':''}>${u}</option>`).join('')}</select></div>
+      <div class="field"><label>Responsável pelo projeto</label><input id="pr${i}-resp" value="${esc(pr.resp||'')}" placeholder="Nome do GP"></div>
+      <div class="field full"><label>Objetivo</label><textarea id="pr${i}-obj" rows="2">${esc(pr.obj||'')}</textarea></div>
+      <div class="field"><label>Público-alvo</label><textarea id="pr${i}-publico" rows="2">${esc(pr.publico||'')}</textarea></div>
+      <div class="field"><label>Riscos</label><textarea id="pr${i}-riscos" rows="2">${esc(pr.riscos||'')}</textarea></div>
+      <div class="field full"><label>Impacto / Resultado do projeto</label><textarea id="pr${i}-impacto" rows="2">${esc(pr.impacto||'')}</textarea></div>
+    </div>
+    <div style="padding:0 20px 8px">
+      <div class="sec-title" style="margin-top:4px">Principais entregas</div>
+      <table class="dyn-mini" id="tbl-ent-${i}"><thead><tr><th>Entrega</th><th>Qtde / %</th><th>Data limite</th><th style="width:32px"></th></tr></thead><tbody id="tbody-ent-${i}"></tbody></table>
+      <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addEntrega(${i})">+ Entrega</button></div>
+    </div>
+    <div style="padding:0 20px 8px">
+      <div class="sec-title" style="margin-top:8px">Indicadores do projeto</div>
+      <table class="dyn-mini" id="tbl-ind-pr-${i}"><thead><tr><th>Indicador</th><th>Valor atual</th><th>Meta</th><th style="width:32px"></th></tr></thead><tbody id="tbody-ind-pr-${i}"></tbody></table>
+      <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addIndPr(${i})">+ Indicador</button></div>
+    </div>
+    <div style="padding:0 20px 20px">
+      <div class="sec-title" style="margin-top:8px">Valores estimados do projeto</div>
+      <table class="dyn-mini" id="tbl-val-pr-${i}"><thead><tr><th>Tipo</th><th>2025</th><th>2026</th><th>2027</th><th style="width:32px"></th></tr></thead><tbody id="tbody-val-pr-${i}"></tbody></table>
+      <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addValPr(${i})">+ Linha</button></div>
+    </div>`;
+  setTimeout(()=>{
+    rebuildTable(`ent-${i}`,['entrega','qtde','data'],pr.entregas||[{entrega:'',qtde:'',data:''}]);
+    rebuildTable(`ind-pr-${i}`,['indicador','valor','meta'],pr.indicadores||[]);
+    rebuildTable(`val-pr-${i}`,['tipo','a1','a2','a3'],pr.valores||[]);
+  },0);
+  return div;
+}
+
+function addProjeto(){
+  data.projetos.push({codAcao:'',nome:'',unidade:'',resp:'',obj:'',publico:'',riscos:'',impacto:'',entregas:[],indicadores:[],valores:[]});
+  renderProjEditor();
+  document.querySelector('.add-proj-btn').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function removeProj(i){data.projetos.splice(i,1);renderProjEditor();}
+function addEntrega(i){addDynRow(`tbody-ent-${i}`,['entrega','qtde','data']);}
+function addIndPr(i){addDynRow(`tbody-ind-pr-${i}`,['indicador','valor','meta']);}
+function addValPr(i){addDynRow(`tbody-val-pr-${i}`,['tipo','a1','a2','a3']);}
+function addDynRow(tbodyId,keys){
+  const tbody=document.getElementById(tbodyId);
+  const tr=document.createElement('tr');
+  tr.innerHTML=keys.map(k=>`<td><input data-k="${k}" placeholder="—"></td>`).join('')+`<td><button type="button" class="row-x" onclick="this.closest('tr').remove()">×</button></td>`;
+  tbody.appendChild(tr);
+}
+
+function readProjetos(){
+  return(data.projetos||[]).map((_,i)=>({
+    codAcao:v(`pr${i}-codAcao`),nome:v(`pr${i}-nome`),unidade:v(`pr${i}-unidade`),
+    resp:v(`pr${i}-resp`),obj:v(`pr${i}-obj`),publico:v(`pr${i}-publico`),
+    riscos:v(`pr${i}-riscos`),impacto:v(`pr${i}-impacto`),
+    entregas:readDynTable(`tbody-ent-${i}`,['entrega','qtde','data']),
+    indicadores:readDynTable(`tbody-ind-pr-${i}`,['indicador','valor','meta']),
+    valores:readDynTable(`tbody-val-pr-${i}`,['tipo','a1','a2','a3']),
+  }));
+}
+
+async function saveAndPreview(){
+  data.prog=readProg();
+  data.projetos=readProjetos();
+  await saveData();
+  toast('Dados salvos');
+  showView('painel');
+}
+
+/* export CSV */
+function exportCSV(){
+  const p=data.prog;const projs=data.projetos||[];
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  let csv='"Tipo";"Campo";"Valor"\r\n';
+  csv+=`"Programa";"Código";${q(p.cod)}\r\n`;
+  csv+=`"Programa";"Nome";${q(p.nome)}\r\n`;
+  csv+=`"Programa";"Unidade";${q(p.unidade)}\r\n`;
+  csv+=`"Programa";"Responsável";${q(p.resp)}\r\n`;
+  csv+=`"Programa";"Justificativa";${q(p.just)}\r\n`;
+  csv+=`"Programa";"Objetivo";${q(p.obj)}\r\n`;
+  csv+=`"Programa";"Impacto";${q(p.impacto)}\r\n`;
+  projs.forEach((pr,i)=>{
+    csv+=`"Projeto ${i+1}";"Código";${q(pr.codAcao)}\r\n`;
+    csv+=`"Projeto ${i+1}";"Nome";${q(pr.nome)}\r\n`;
+    csv+=`"Projeto ${i+1}";"Unidade";${q(pr.unidade)}\r\n`;
+    csv+=`"Projeto ${i+1}";"Responsável";${q(pr.resp)}\r\n`;
+    csv+=`"Projeto ${i+1}";"Objetivo";${q(pr.obj)}\r\n`;
+    csv+=`"Projeto ${i+1}";"Público-alvo";${q(pr.publico)}\r\n`;
+    csv+=`"Projeto ${i+1}";"Riscos";${q(pr.riscos)}\r\n`;
+    csv+=`"Projeto ${i+1}";"Impacto";${q(pr.impacto)}\r\n`;
+    (pr.entregas||[]).forEach((e,j)=>csv+=`"Projeto ${i+1} — Entrega ${j+1}";"${e.entrega}";${q(e.qtde+' / '+e.data)}\r\n`);
+  });
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='relatorio_entregas_FORALF12.csv';a.click();URL.revokeObjectURL(url);
+  toast('CSV exportado');
+}
+
+(async()=>{await loadData();renderPainel();})();
+</script>

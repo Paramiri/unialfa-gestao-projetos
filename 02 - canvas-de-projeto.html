@@ -1,0 +1,573 @@
+<!-- Canvas de Projeto / UNIALFA -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --red:#B91D2E;
+    --red-deep:#8E1322;
+    --ink:#1A1A1A;
+    --muted:#6A6A70;
+    --paper:#FFFFFF;
+    --surface:#F6F6F7;
+    --surface-2:#FAFAFB;
+    --line:#E4E4E7;
+    --line-strong:#D4D4D8;
+    --ok:#1B7F4B;
+    --ok-soft:#E6F4EC;
+    --warn:#B45309;
+    --warn-soft:#FBF1E3;
+    --bad:#9F1239;
+    --bad-soft:#FBE7EC;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(20,20,20,.04), 0 8px 28px rgba(20,20,20,.06);
+    --font:'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:var(--font); color:var(--ink); background:var(--surface); -webkit-font-smoothing:antialiased; line-height:1.5;}
+  .wrap{max-width:980px; margin:0 auto; padding:28px 20px 64px}
+
+  .doc-head{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);}
+  .doc-band{background:var(--red); color:#fff; padding:18px 24px; display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+  .doc-logo{font-weight:800; font-size:22px; letter-spacing:.04em; line-height:1; padding-right:18px; border-right:2px solid rgba(255,255,255,.35);}
+  .doc-logo small{display:block; font-weight:600; font-size:10px; letter-spacing:.22em; margin-top:5px; opacity:.85}
+  .doc-title{flex:1; min-width:220px}
+  .doc-title h1{margin:0; font-size:17px; font-weight:700; letter-spacing:.06em; text-transform:uppercase}
+  .doc-title p{margin:3px 0 0; font-size:12px; font-weight:500; opacity:.9; letter-spacing:.02em}
+  .doc-meta{display:flex; gap:0; border-top:1px solid var(--line); background:var(--surface-2); font-size:11px;}
+  .doc-meta div{padding:9px 24px; border-right:1px solid var(--line); display:flex; flex-direction:column; gap:1px;}
+  .doc-meta div:last-child{border-right:none}
+  .doc-meta span{color:var(--muted); font-weight:600; letter-spacing:.12em; text-transform:uppercase; font-size:9.5px}
+  .doc-meta b{font-weight:700; font-size:12px}
+
+  .tabs{display:flex; gap:8px; margin:22px 0 16px}
+  .tab{appearance:none; border:1px solid var(--line); background:var(--paper); color:var(--muted); font-family:var(--font); font-weight:600; font-size:13px; letter-spacing:.02em; padding:10px 18px; border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:all .15s ease;}
+  .tab:hover{border-color:var(--line-strong); color:var(--ink)}
+  .tab[aria-selected="true"]{background:var(--ink); border-color:var(--ink); color:#fff}
+  .tab .count{background:var(--red); color:#fff; font-size:11px; font-weight:700; min-width:20px; height:20px; padding:0 6px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center;}
+  .tab[aria-selected="true"] .count{background:#fff; color:var(--ink)}
+
+  .card{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;}
+  .section-h{display:flex; align-items:center; gap:12px; padding:18px 24px 14px; border-bottom:1px solid var(--line); background:var(--surface-2);}
+  .section-h .n{padding:0 9px; height:26px; min-width:26px; border-radius:7px; background:var(--red); color:#fff; font-weight:800; font-size:11px; letter-spacing:.04em; display:flex; align-items:center; justify-content:center; flex:none; text-transform:uppercase;}
+  .section-h h2{margin:0; font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase}
+  .section-h p{margin:0 0 0 auto; font-size:11px; color:var(--muted); font-weight:500}
+
+  .grid{padding:22px 24px; display:grid; grid-template-columns:1fr 1fr; gap:18px 20px}
+  .field{display:flex; flex-direction:column; gap:6px}
+  .field.full{grid-column:1 / -1}
+  label{font-size:12px; font-weight:700; letter-spacing:.02em; color:var(--ink)}
+  label .req{color:var(--red); margin-left:2px}
+  .hint{font-size:11px; color:var(--muted); font-weight:500; margin-top:-2px}
+  input, select, textarea{font-family:var(--font); font-size:13.5px; color:var(--ink); border:1px solid var(--line-strong); border-radius:8px; padding:10px 12px; background:var(--paper); transition:border-color .15s, box-shadow .15s; width:100%;}
+  input::placeholder, textarea::placeholder{color:#A8A8AE}
+  input:focus, select:focus, textarea:focus{outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(185,29,46,.12);}
+  textarea{resize:vertical; min-height:84px}
+  .field.error input, .field.error select, .field.error textarea{border-color:var(--bad); box-shadow:0 0 0 3px rgba(159,18,57,.10);}
+  .err-msg{font-size:11px; color:var(--bad); font-weight:600; display:none}
+  .field.error .err-msg{display:block}
+
+  .actions{display:flex; align-items:center; gap:12px; padding:18px 24px; border-top:1px solid var(--line); background:var(--surface-2);}
+  .btn{appearance:none; font-family:var(--font); font-weight:700; font-size:13px; letter-spacing:.02em; border-radius:8px; padding:11px 22px; cursor:pointer; border:1px solid transparent; transition:all .15s ease; display:inline-flex; align-items:center; gap:8px;}
+  .btn-primary{background:var(--red); color:#fff}
+  .btn-primary:hover{background:var(--red-deep)}
+  .btn-ghost{background:var(--paper); color:var(--ink); border-color:var(--line-strong)}
+  .btn-ghost:hover{border-color:var(--ink)}
+  .actions .spacer{margin-left:auto; font-size:11px; color:var(--muted); font-weight:500}
+
+  .toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:13px 20px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:0 12px 40px rgba(0,0,0,.25); display:flex; align-items:center; gap:10px; opacity:0; pointer-events:none; transition:all .3s cubic-bezier(.2,.8,.2,1); z-index:50; max-width:90vw;}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .toast .dot{width:8px; height:8px; border-radius:50%; background:#fff; flex:none}
+  .toast.ok .dot{background:#5BE49B}
+
+  .list-head{display:flex; align-items:center; gap:14px; padding:16px 24px; border-bottom:1px solid var(--line); background:var(--surface-2); flex-wrap:wrap;}
+  .list-head input[type=search]{max-width:300px}
+  .list-head .ttl{font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase}
+  .list-head .ml{margin-left:auto; display:flex; gap:8px}
+  .btn-sm{padding:8px 14px; font-size:12px}
+
+  table{width:100%; border-collapse:collapse; font-size:13px}
+  thead th{text-align:left; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding:12px 16px; border-bottom:1px solid var(--line); white-space:nowrap;}
+  tbody td{padding:13px 16px; border-bottom:1px solid var(--surface); vertical-align:top}
+  tbody tr{cursor:pointer; transition:background .12s}
+  tbody tr:hover{background:var(--surface-2)}
+  .proto{font-weight:700; font-size:12px; white-space:nowrap}
+  .proto small{display:block; color:var(--muted); font-weight:500; font-size:10.5px; margin-top:2px}
+  .proj{font-weight:600}
+  .proj small{display:block; color:var(--muted); font-weight:500; font-size:11.5px; margin-top:2px}
+
+  .badge{display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px; white-space:nowrap; letter-spacing:.02em;}
+  .badge::before{content:""; width:6px; height:6px; border-radius:50%; background:currentColor}
+  .b-pend{background:var(--warn-soft); color:var(--warn)}
+  .b-apr{background:var(--ok-soft); color:var(--ok)}
+  .b-rep{background:var(--bad-soft); color:var(--bad)}
+
+  .empty{padding:56px 24px; text-align:center; color:var(--muted)}
+  .empty svg{width:42px; height:42px; opacity:.4; margin-bottom:12px}
+  .empty h3{margin:0 0 4px; font-size:15px; color:var(--ink); font-weight:700}
+  .empty p{margin:0; font-size:13px}
+
+  .overlay{position:fixed; inset:0; background:rgba(20,20,22,.45); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity .2s; z-index:40;}
+  .overlay.show{opacity:1; pointer-events:auto}
+  .drawer{position:fixed; top:0; right:0; height:100%; width:min(540px,94vw); background:var(--paper); box-shadow:-16px 0 50px rgba(0,0,0,.18); transform:translateX(100%); transition:transform .28s cubic-bezier(.2,.8,.2,1); z-index:45; display:flex; flex-direction:column;}
+  .drawer.show{transform:translateX(0)}
+  .drawer-top{padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:flex-start; gap:12px}
+  .drawer-top h2{margin:0; font-size:16px; font-weight:700}
+  .drawer-top .proto-lg{font-size:11.5px; color:var(--muted); font-weight:600; letter-spacing:.04em; margin-top:3px}
+  .x{margin-left:auto; appearance:none; border:1px solid var(--line); background:var(--paper); width:34px; height:34px; border-radius:8px; cursor:pointer; font-size:18px; color:var(--muted); flex:none}
+  .x:hover{border-color:var(--ink); color:var(--ink)}
+  .drawer-body{padding:8px 24px 24px; overflow-y:auto; flex:1}
+  .dl{margin:0}
+  .dl .grp{margin:18px 0 6px; font-size:10.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--red)}
+  .dl .row{padding:12px 0; border-bottom:1px solid var(--surface)}
+  .dl dt{font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:5px}
+  .dl dd{margin:0; font-size:13.5px; white-space:pre-wrap; word-break:break-word}
+  .drawer-foot{padding:16px 24px; border-top:1px solid var(--line); background:var(--surface-2); display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .drawer-foot label{font-size:11px; color:var(--muted)}
+  .status-row{display:flex; align-items:center; gap:8px; margin-right:auto}
+  .status-row select{width:auto; padding:8px 12px; font-size:12px; font-weight:600}
+  .btn-danger{background:var(--paper); color:var(--bad); border-color:var(--bad-soft)}
+  .btn-danger:hover{background:var(--bad-soft)}
+
+  @media (max-width:680px){
+    .grid{grid-template-columns:1fr}
+    .doc-meta{flex-wrap:wrap}
+    .doc-meta div{flex:1 1 40%}
+    .hide-sm{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <div class="doc-head">
+    <div class="doc-band">
+      <div class="doc-logo">UNIALFA<small>GRUPO JOSÉ ALVES</small></div>
+      <div class="doc-title">
+        <h1>Canvas de Projeto</h1>
+        <p>Planejamento do projeto em uma página · Escritório de Projetos</p>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <div><span>Código</span><b>FORALF00344</b></div>
+      <div><span>Revisão</span><b>00</b></div>
+      <div><span>Homologação</span><b>19/05/2026</b></div>
+      <div class="hide-sm"><span>Aprovação</span><b>Via status do registro</b></div>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" id="tab-new" onclick="showView('new')">＋ Novo canvas</button>
+    <button class="tab" role="tab" aria-selected="false" id="tab-list" onclick="showView('list')">
+      Canvas cadastrados <span class="count" id="count">0</span>
+    </button>
+  </div>
+
+  <!-- ====== FORM VIEW ====== -->
+  <div id="view-new">
+    <div class="card">
+      <div class="section-h"><div class="n">1</div><h2>Identificação</h2><p>Quem, onde e quando</p></div>
+      <div class="grid">
+        <div class="field full" data-for="nomeProjeto">
+          <label>Nome do projeto<span class="req">*</span></label>
+          <input id="nomeProjeto" type="text" placeholder="Nome do projeto">
+          <div class="err-msg">Informe o nome do projeto.</div>
+        </div>
+        <div class="field" data-for="unidade">
+          <label>Unidade responsável<span class="req">*</span></label>
+          <select id="unidade">
+            <option value="">Selecione…</option>
+            <option>Superintendência Reitoria</option>
+            <option>Ouvidoria</option>
+            <option>CPA</option>
+            <option>Comitê da Qualidade</option>
+            <option>Diretoria Educação Executiva</option>
+            <option>Diretoria de Escola Business</option>
+            <option>Diretoria de Escola de Direito</option>
+            <option>Diretoria de Operações EAD</option>
+            <option>Diretoria de Marketing e Vendas</option>
+            <option>Coord. Curso Lato Sensu</option>
+            <option>Coord. Pós-Graduação Stricto Sensu</option>
+            <option>Coord. Curso Graduação, Técnico e Ensino Médio</option>
+            <option>Coord. Curso Graduação</option>
+            <option>Coord. Operações Acadêmicas EAD</option>
+            <option>Coord. Gestão de Polos</option>
+            <option>Corpo Docente</option>
+            <option>Corpo Docente (PJ)</option>
+            <option>Marketing</option>
+            <option>Vendas</option>
+            <option>Relacionamento</option>
+            <option>Planej. e Operações</option>
+            <option>RH</option>
+            <option>Secretaria Geral</option>
+            <option>Asseg. Qualidade</option>
+            <option>Segurança</option>
+            <option>ADM e Infraestrutura</option>
+            <option>GPTI</option>
+            <option>Controladoria</option>
+            <option>Gerência de Controladoria</option>
+          </select>
+          <div class="err-msg">Selecione a unidade.</div>
+        </div>
+        <div class="field" data-for="gerente">
+          <label>Gerente de projeto<span class="req">*</span></label>
+          <input id="gerente" type="text" placeholder="Nome do GP">
+          <div class="err-msg">Informe o gerente.</div>
+        </div>
+        <div class="field" data-for="dataElab">
+          <label>Data de elaboração<span class="req">*</span></label>
+          <input id="dataElab" type="date">
+          <div class="err-msg">Informe a data.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="section-h"><div class="n">Por quê?</div><h2>Motivação</h2><p>Passado, presente e futuro</p></div>
+      <div class="grid">
+        <div class="field full" data-for="justificativas">
+          <label>Justificativas<span class="req">*</span></label>
+          <div class="hint">Por que estamos aqui? Problemas ou demandas não atendidas. Palavras-chave: passado, dores.</div>
+          <textarea id="justificativas" placeholder="Descreva as dores que originam o projeto"></textarea>
+          <div class="err-msg">Descreva as justificativas.</div>
+        </div>
+        <div class="field full" data-for="objetivo">
+          <label>Objetivo<span class="req">*</span></label>
+          <div class="hint">Onde queremos chegar. Deve ser SMART: específico, mensurável, atingível, realista e no tempo.</div>
+          <textarea id="objetivo" placeholder="Defina o objetivo SMART do projeto"></textarea>
+          <div class="err-msg">Descreva o objetivo.</div>
+        </div>
+        <div class="field full" data-for="beneficios">
+          <label>Benefícios</label>
+          <div class="hint">O que a organização ganha após a implantação. Palavras-chave: futuro, valor, coisas boas.</div>
+          <textarea id="beneficios" placeholder="Liste os benefícios esperados"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="section-h"><div class="n">O quê?</div><h2>Produto</h2><p>O resultado final</p></div>
+      <div class="grid">
+        <div class="field full" data-for="produto">
+          <label>Produto<span class="req">*</span></label>
+          <div class="hint">O que será construído ou elaborado — produto, serviço ou resultado final.</div>
+          <textarea id="produto" placeholder="Descreva o produto/resultado do projeto"></textarea>
+          <div class="err-msg">Descreva o produto.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="section-h"><div class="n">Quem?</div><h2>Parceiros</h2><p>Quem apoia a execução</p></div>
+      <div class="grid">
+        <div class="field full" data-for="parceiros">
+          <label>Parceiros</label>
+          <div class="hint">Pessoas, grupos ou entidades que apoiam o projeto e não se subordinam ao gerente.</div>
+          <textarea id="parceiros" placeholder="Liste os parceiros do projeto"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="section-h"><div class="n">Como?</div><h2>Entregas e restrições</h2><p>O caminho da execução</p></div>
+      <div class="grid">
+        <div class="field full" data-for="entregas">
+          <label>Grupo de entregas<span class="req">*</span></label>
+          <div class="hint">Componentes do produto gerados pelo projeto, que serão detalhados na EAP.</div>
+          <textarea id="entregas" placeholder="Liste os grupos de entrega"></textarea>
+          <div class="err-msg">Descreva os grupos de entrega.</div>
+        </div>
+        <div class="field full" data-for="restricoes">
+          <label>Restrições</label>
+          <div class="hint">Limitações impostas ao trabalho da equipe que reduzem a liberdade de opção. Palavra-chave: limitante.</div>
+          <textarea id="restricoes" placeholder="Liste as restrições do projeto"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="section-h"><div class="n">Quando e Quanto?</div><h2>Riscos e custos</h2><p>Incertezas e estimativas</p></div>
+      <div class="grid">
+        <div class="field full" data-for="riscos">
+          <label>Riscos<span class="req">*</span></label>
+          <div class="hint">Eventos inesperados que podem afetar os objetivos. Palavras-chave: futuros, incertos, relevantes.</div>
+          <textarea id="riscos" placeholder="Liste os principais riscos"></textarea>
+          <div class="err-msg">Descreva os riscos.</div>
+        </div>
+        <div class="field full" data-for="custos">
+          <label>Custos<span class="req">*</span></label>
+          <div class="hint">Estimativa de gastos, distribuída por grupo de entrega. Palavras-chave: aproximado, resumido.</div>
+          <textarea id="custos" placeholder="Estime os custos por grupo de entrega"></textarea>
+          <div class="err-msg">Descreva os custos.</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="submitBtn" onclick="submitForm()">Registrar canvas</button>
+        <button class="btn btn-ghost" onclick="clearForm()">Limpar campos</button>
+        <span class="spacer">Campos com <b style="color:var(--red)">*</b> são obrigatórios</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== LIST VIEW ====== -->
+  <div id="view-list" style="display:none">
+    <div class="card">
+      <div class="list-head">
+        <span class="ttl">Canvas cadastrados</span>
+        <input type="search" id="search" placeholder="Buscar por projeto, gerente…" oninput="renderList()">
+        <div class="ml">
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Exportar CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.print()">Imprimir</button>
+        </div>
+      </div>
+      <div id="list-body"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" aria-label="Detalhes do canvas">
+  <div class="drawer-top">
+    <div>
+      <h2 id="d-proj">—</h2>
+      <div class="proto-lg" id="d-proto">—</div>
+    </div>
+    <button class="x" onclick="closeDrawer()" aria-label="Fechar">×</button>
+  </div>
+  <div class="drawer-body"><dl class="dl" id="d-body"></dl></div>
+  <div class="drawer-foot">
+    <div class="status-row">
+      <label for="d-status">Status</label>
+      <select id="d-status" onchange="changeStatus()">
+        <option value="Pendente de aprovação">Pendente de aprovação</option>
+        <option value="Aprovado">Aprovado</option>
+        <option value="Reprovado">Reprovado</option>
+      </select>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="editCurrent()">Editar dados</button>
+    <button class="btn btn-danger btn-sm" onclick="deleteCurrent()">Excluir</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toast-msg"></span></div>
+
+<script>
+/* ---- Armazenamento persistente via Supabase (substitui window.storage) ---- */
+(function(){
+  var SUPABASE_URL = 'https://fiarntunpqteopwjkhjg.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+  var TABLE = 'kv_store';
+  var base = SUPABASE_URL + '/rest/v1/' + TABLE;
+  function headers(extra){
+    var h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+    if (extra) { for (var k in extra) h[k] = extra[k]; }
+    return h;
+  }
+  window.storage = {
+    get: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key) + '&select=value', { headers: headers() });
+      if(!r.ok) return null;
+      var rows = await r.json();
+      return rows.length ? { value: rows[0].value } : null;
+    },
+    set: async function(key, value){
+      var r = await fetch(base + '?on_conflict=key', { method: 'POST', headers: headers({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }) });
+      return r.ok;
+    },
+    delete: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key), { method: 'DELETE', headers: headers() });
+      return r.ok;
+    },
+    list: async function(prefix){
+      var r = await fetch(base + '?key=like.' + encodeURIComponent(prefix) + '*&select=key', { headers: headers() });
+      if(!r.ok) return { keys: [] };
+      var rows = await r.json();
+      return { keys: rows.map(function(x){ return x.key; }) };
+    },
+  };
+})();
+</script>
+<script>
+const KEY_PREFIX='canvas:';
+let cache=[]; let currentId=null; let editId=null;
+
+const FIELDS=['nomeProjeto','unidade','gerente','dataElab','justificativas','objetivo','beneficios','produto','parceiros','entregas','restricoes','riscos','custos'];
+const REQUIRED=['nomeProjeto','unidade','gerente','dataElab','justificativas','objetivo','produto','entregas','riscos','custos'];
+
+// drawer layout: [groupLabel?, fieldKey, label]
+const DETAIL=[
+  ['Identificação','gerente','Gerente de projeto'],
+  [null,'unidade','Unidade responsável'],
+  [null,'dataElab','Data de elaboração'],
+  ['Por quê?','justificativas','Justificativas'],
+  [null,'objetivo','Objetivo'],
+  [null,'beneficios','Benefícios'],
+  ['O quê?','produto','Produto'],
+  ['Quem?','parceiros','Parceiros'],
+  ['Como?','entregas','Grupo de entregas'],
+  [null,'restricoes','Restrições'],
+  ['Quando e Quanto?','riscos','Riscos'],
+  [null,'custos','Custos'],
+];
+
+function toast(msg, ok=true){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.classList.toggle('ok', ok); t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),3200);
+}
+function fmtDate(iso){ if(!iso) return '—'; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
+function fmtStamp(ms){ const dt=new Date(ms); return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+function badgeClass(s){ if(s==='Aprovado') return 'b-apr'; if(s==='Reprovado') return 'b-rep'; return 'b-pend'; }
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+function showView(v){
+  document.getElementById('view-new').style.display=v==='new'?'block':'none';
+  document.getElementById('view-list').style.display=v==='list'?'block':'none';
+  document.getElementById('tab-new').setAttribute('aria-selected', v==='new');
+  document.getElementById('tab-list').setAttribute('aria-selected', v==='list');
+  if(v==='list') renderList();
+}
+
+async function loadAll(){
+  cache=[];
+  try{
+    const res=await window.storage.list(KEY_PREFIX);
+    const keys=(res&&res.keys)?res.keys:[];
+    for(const k of keys){
+      try{ const r=await window.storage.get(k); if(r&&r.value) cache.push(JSON.parse(r.value)); }catch(e){}
+    }
+  }catch(e){ console.warn('list failed',e); }
+  cache.sort((a,b)=>b.createdAt-a.createdAt);
+  document.getElementById('count').textContent=cache.length;
+}
+async function nextProtocol(){
+  const year=new Date().getFullYear();
+  const seq=String(cache.length+1).padStart(3,'0');
+  return `FORALF00344-${year}-${seq}`;
+}
+
+function clearError(id){ const f=document.querySelector(`.field[data-for="${id}"]`); if(f) f.classList.remove('error'); }
+REQUIRED.forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('input',()=>clearError(id)); });
+
+function validate(){
+  let firstBad=null;
+  REQUIRED.forEach(id=>{
+    const el=document.getElementById(id);
+    const f=document.querySelector(`.field[data-for="${id}"]`);
+    if(!el.value.trim()){ f.classList.add('error'); if(!firstBad) firstBad=f; } else f.classList.remove('error');
+  });
+  if(firstBad) firstBad.scrollIntoView({behavior:'smooth',block:'center'});
+  return !firstBad;
+}
+
+async function submitForm(){
+  if(!validate()){ toast('Revise os campos obrigatórios destacados', false); return; }
+  let rec;
+  if(editId){
+    rec = Object.assign({}, cache.find(x=>x.id===editId));
+  } else {
+    rec = { id:'c_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo: await nextProtocol(), status:'Pendente de aprovação', createdAt:Date.now() };
+  }
+  FIELDS.forEach(id=>{ rec[id]=document.getElementById(id).value.trim?document.getElementById(id).value.trim():document.getElementById(id).value; });
+  try{
+    const r=await window.storage.set(KEY_PREFIX+rec.id, JSON.stringify(rec));
+    if(!r) throw new Error('no result');
+    if(editId){
+      const idx=cache.findIndex(x=>x.id===rec.id);
+      if(idx>-1) cache[idx]=rec; else cache.unshift(rec);
+      toast('Canvas '+rec.protocolo+' atualizado');
+    } else {
+      cache.unshift(rec);
+      toast('Canvas '+rec.protocolo+' registrado');
+    }
+    document.getElementById('count').textContent=cache.length;
+    editId=null;
+    clearForm(); showView('list');
+  }catch(e){ console.error(e); toast('Não foi possível salvar. Tente novamente.', false); }
+}
+function editCurrent(){
+  const r=cache.find(x=>x.id===currentId); if(!r) return;
+  editId=r.id;
+  FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el) el.value = r[id]||''; });
+  document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
+  closeDrawer();
+  showView('new');
+  updateEditBanner();
+}
+function updateEditBanner(){
+  document.getElementById('submitBtn').textContent = editId ? 'Salvar alterações' : 'Registrar canvas';
+}
+function clearForm(){
+  FIELDS.forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+  document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
+  editId=null;
+  updateEditBanner();
+}
+
+function renderList(){
+  const q=(document.getElementById('search').value||'').toLowerCase().trim();
+  const rows=cache.filter(r=>!q || (r.nomeProjeto+r.gerente+r.unidade+r.protocolo).toLowerCase().includes(q));
+  const body=document.getElementById('list-body');
+  if(!cache.length){
+    body.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M9 4v16M3 10h6M15 4v16"/></svg><h3>Nenhum canvas cadastrado</h3><p>Os canvas registrados aparecem aqui.</p></div>`; return;
+  }
+  if(!rows.length){ body.innerHTML=`<div class="empty"><h3>Nenhum resultado</h3><p>Ajuste a busca para encontrar o canvas.</p></div>`; return; }
+  let html=`<table><thead><tr><th>Protocolo</th><th>Projeto</th><th class="hide-sm">Unidade</th><th class="hide-sm">Elaboração</th><th>Status</th></tr></thead><tbody>`;
+  for(const r of rows){
+    html+=`<tr onclick="openDrawer('${r.id}')">
+      <td><div class="proto">${esc(r.protocolo)}<small>${fmtStamp(r.createdAt)}</small></div></td>
+      <td><div class="proj">${esc(r.nomeProjeto)}<small>GP: ${esc(r.gerente)}</small></div></td>
+      <td class="hide-sm">${esc(r.unidade)}</td>
+      <td class="hide-sm">${fmtDate(r.dataElab)}</td>
+      <td><span class="badge ${badgeClass(r.status)}">${esc(r.status)}</span></td>
+    </tr>`;
+  }
+  html+='</tbody></table>'; body.innerHTML=html;
+}
+
+function openDrawer(id){
+  const r=cache.find(x=>x.id===id); if(!r) return; currentId=id;
+  document.getElementById('d-proj').textContent=r.nomeProjeto;
+  document.getElementById('d-proto').textContent=r.protocolo+' · elaborado em '+fmtDate(r.dataElab);
+  document.getElementById('d-status').value=r.status;
+  let html='';
+  for(const [grp,key,lab] of DETAIL){
+    if(grp) html+=`<div class="grp">${grp}</div>`;
+    let v=r[key]; if(key==='dataElab') v=fmtDate(v);
+    html+=`<div class="row"><dt>${lab}</dt><dd>${esc(v||'—')}</dd></div>`;
+  }
+  document.getElementById('d-body').innerHTML=html;
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
+}
+function closeDrawer(){ document.getElementById('overlay').classList.remove('show'); document.getElementById('drawer').classList.remove('show'); currentId=null; }
+async function changeStatus(){
+  const r=cache.find(x=>x.id===currentId); if(!r) return;
+  r.status=document.getElementById('d-status').value;
+  try{ await window.storage.set(KEY_PREFIX+r.id, JSON.stringify(r)); renderList(); toast('Status atualizado para "'+r.status+'"'); }
+  catch(e){ toast('Não foi possível atualizar o status', false); }
+}
+async function deleteCurrent(){
+  const r=cache.find(x=>x.id===currentId); if(!r) return;
+  if(!confirm('Excluir o canvas '+r.protocolo+'? Esta ação não pode ser desfeita.')) return;
+  try{ await window.storage.delete(KEY_PREFIX+r.id); cache=cache.filter(x=>x.id!==currentId); document.getElementById('count').textContent=cache.length; closeDrawer(); renderList(); toast('Canvas excluído'); }
+  catch(e){ toast('Não foi possível excluir', false); }
+}
+
+function exportCSV(){
+  if(!cache.length){ toast('Não há canvas para exportar', false); return; }
+  const cols=[['protocolo','Protocolo'],['nomeProjeto','Projeto'],['unidade','Unidade'],['gerente','Gerente'],['dataElab','Data de elaboração'],['justificativas','Justificativas'],['objetivo','Objetivo'],['beneficios','Beneficios'],['produto','Produto'],['parceiros','Parceiros'],['entregas','Grupo de entregas'],['restricoes','Restricoes'],['riscos','Riscos'],['custos','Custos'],['status','Status']];
+  const q=v=>'"'+String(v||'').replace(/"/g,'""')+'"';
+  let csv=cols.map(c=>q(c[1])).join(';')+'\r\n';
+  for(const r of cache){ const row={...r, dataElab:fmtDate(r.dataElab)}; csv+=cols.map(c=>q(row[c[0]])).join(';')+'\r\n'; }
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download='canvas_FORALF00344.csv'; a.click(); URL.revokeObjectURL(url);
+  toast('CSV exportado ('+cache.length+' canvas)');
+}
+
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
+(async()=>{ await loadAll(); renderList(); })();
+</script>

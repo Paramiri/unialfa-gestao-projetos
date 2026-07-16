@@ -1,0 +1,700 @@
+<!-- Solicitação de Demanda de Projetos — FORALF00339 / UNIALFA -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --red:#B91D2E;
+    --red-deep:#8E1322;
+    --ink:#1A1A1A;
+    --muted:#6A6A70;
+    --paper:#FFFFFF;
+    --surface:#F6F6F7;
+    --surface-2:#FAFAFB;
+    --line:#E4E4E7;
+    --line-strong:#D4D4D8;
+    --ok:#1B7F4B;
+    --ok-soft:#E6F4EC;
+    --warn:#B45309;
+    --warn-soft:#FBF1E3;
+    --bad:#9F1239;
+    --bad-soft:#FBE7EC;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(20,20,20,.04), 0 8px 28px rgba(20,20,20,.06);
+    --font:'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:var(--font); color:var(--ink);
+    background:var(--surface);
+    -webkit-font-smoothing:antialiased; line-height:1.5;
+  }
+  .wrap{max-width:980px; margin:0 auto; padding:28px 20px 64px}
+
+  /* ---------- Document-control header ---------- */
+  .doc-head{
+    background:var(--paper); border:1px solid var(--line);
+    border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);
+  }
+  .doc-band{
+    background:var(--red); color:#fff; padding:18px 24px;
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+  }
+  .doc-logo{
+    font-weight:800; font-size:22px; letter-spacing:.04em;
+    line-height:1; padding-right:18px; border-right:2px solid rgba(255,255,255,.35);
+  }
+  .doc-logo small{display:block; font-weight:600; font-size:10px; letter-spacing:.22em; margin-top:5px; opacity:.85}
+  .doc-title{flex:1; min-width:220px}
+  .doc-title h1{margin:0; font-size:17px; font-weight:700; letter-spacing:.06em; text-transform:uppercase}
+  .doc-title p{margin:3px 0 0; font-size:12px; font-weight:500; opacity:.9; letter-spacing:.02em}
+  .doc-meta{
+    display:flex; gap:0; border-top:1px solid var(--line); background:var(--surface-2);
+    font-size:11px;
+  }
+  .doc-meta div{
+    padding:9px 24px; border-right:1px solid var(--line);
+    display:flex; flex-direction:column; gap:1px;
+  }
+  .doc-meta div:last-child{border-right:none}
+  .doc-meta span{color:var(--muted); font-weight:600; letter-spacing:.12em; text-transform:uppercase; font-size:9.5px}
+  .doc-meta b{font-weight:700; font-size:12px}
+
+  /* ---------- Tabs ---------- */
+  .tabs{display:flex; gap:8px; margin:22px 0 16px}
+  .tab{
+    appearance:none; border:1px solid var(--line); background:var(--paper);
+    color:var(--muted); font-family:var(--font); font-weight:600; font-size:13px;
+    letter-spacing:.02em; padding:10px 18px; border-radius:999px; cursor:pointer;
+    display:inline-flex; align-items:center; gap:8px; transition:all .15s ease;
+  }
+  .tab:hover{border-color:var(--line-strong); color:var(--ink)}
+  .tab[aria-selected="true"]{background:var(--ink); border-color:var(--ink); color:#fff}
+  .tab .count{
+    background:var(--red); color:#fff; font-size:11px; font-weight:700;
+    min-width:20px; height:20px; padding:0 6px; border-radius:999px;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .tab[aria-selected="true"] .count{background:#fff; color:var(--ink)}
+
+  /* ---------- Form card ---------- */
+  .card{
+    background:var(--paper); border:1px solid var(--line);
+    border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;
+  }
+  .section-h{
+    display:flex; align-items:center; gap:12px;
+    padding:18px 24px 14px; border-bottom:1px solid var(--line);
+    background:var(--surface-2);
+  }
+  .section-h .n{
+    width:26px; height:26px; border-radius:7px; background:var(--red); color:#fff;
+    font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .section-h h2{margin:0; font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase}
+  .section-h p{margin:0 0 0 auto; font-size:11px; color:var(--muted); font-weight:500}
+
+  .grid{padding:22px 24px; display:grid; grid-template-columns:1fr 1fr; gap:18px 20px}
+  .field{display:flex; flex-direction:column; gap:6px}
+  .field.full{grid-column:1 / -1}
+  label{font-size:12px; font-weight:700; letter-spacing:.02em; color:var(--ink)}
+  label .req{color:var(--red); margin-left:2px}
+  .hint{font-size:11px; color:var(--muted); font-weight:500; margin-top:-2px}
+  input, select, textarea{
+    font-family:var(--font); font-size:13.5px; color:var(--ink);
+    border:1px solid var(--line-strong); border-radius:8px; padding:10px 12px;
+    background:var(--paper); transition:border-color .15s, box-shadow .15s; width:100%;
+  }
+  input::placeholder, textarea::placeholder{color:#A8A8AE}
+  input:focus, select:focus, textarea:focus{
+    outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(185,29,46,.12);
+  }
+  textarea{resize:vertical; min-height:84px}
+  .field.error input, .field.error select, .field.error textarea{
+    border-color:var(--bad); box-shadow:0 0 0 3px rgba(159,18,57,.10);
+  }
+  .err-msg{font-size:11px; color:var(--bad); font-weight:600; display:none}
+  .field.error .err-msg{display:block}
+
+  .actions{
+    display:flex; align-items:center; gap:12px; padding:18px 24px;
+    border-top:1px solid var(--line); background:var(--surface-2);
+  }
+  .btn{
+    appearance:none; font-family:var(--font); font-weight:700; font-size:13px;
+    letter-spacing:.02em; border-radius:8px; padding:11px 22px; cursor:pointer;
+    border:1px solid transparent; transition:all .15s ease; display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn-primary{background:var(--red); color:#fff}
+  .btn-primary:hover{background:var(--red-deep)}
+  .btn-ghost{background:var(--paper); color:var(--ink); border-color:var(--line-strong)}
+  .btn-ghost:hover{border-color:var(--ink)}
+  .actions .spacer{margin-left:auto; font-size:11px; color:var(--muted); font-weight:500}
+
+  /* ---------- Toast ---------- */
+  .toast{
+    position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:#fff; padding:13px 20px; border-radius:10px;
+    font-size:13px; font-weight:600; box-shadow:0 12px 40px rgba(0,0,0,.25);
+    display:flex; align-items:center; gap:10px; opacity:0; pointer-events:none;
+    transition:all .3s cubic-bezier(.2,.8,.2,1); z-index:50; max-width:90vw;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .toast .dot{width:8px; height:8px; border-radius:50%; background:#fff; flex:none}
+  .toast.ok .dot{background:#5BE49B}
+
+  /* ---------- List / table ---------- */
+  .list-head{
+    display:flex; align-items:center; gap:14px; padding:16px 24px; border-bottom:1px solid var(--line);
+    background:var(--surface-2); flex-wrap:wrap;
+  }
+  .list-head input[type=search]{max-width:300px}
+  .list-head .ttl{font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase}
+  .list-head .ml{margin-left:auto; display:flex; gap:8px}
+  .btn-sm{padding:8px 14px; font-size:12px}
+
+  table{width:100%; border-collapse:collapse; font-size:13px}
+  thead th{
+    text-align:left; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--muted); padding:12px 16px; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  tbody td{padding:13px 16px; border-bottom:1px solid var(--surface); vertical-align:top}
+  tbody tr{cursor:pointer; transition:background .12s}
+  tbody tr:hover{background:var(--surface-2)}
+  .proto{font-weight:700; font-size:12px; white-space:nowrap}
+  .proto small{display:block; color:var(--muted); font-weight:500; font-size:10.5px; margin-top:2px}
+  .proj{font-weight:600}
+  .proj small{display:block; color:var(--muted); font-weight:500; font-size:11.5px; margin-top:2px}
+
+  .badge{
+    display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700;
+    padding:4px 10px; border-radius:999px; white-space:nowrap; letter-spacing:.02em;
+  }
+  .badge::before{content:""; width:6px; height:6px; border-radius:50%; background:currentColor}
+  .b-pend{background:var(--warn-soft); color:var(--warn)}
+  .b-apr{background:var(--ok-soft); color:var(--ok)}
+  .b-rep{background:var(--bad-soft); color:var(--bad)}
+
+  .empty{padding:56px 24px; text-align:center; color:var(--muted)}
+  .empty svg{width:42px; height:42px; opacity:.4; margin-bottom:12px}
+  .empty h3{margin:0 0 4px; font-size:15px; color:var(--ink); font-weight:700}
+  .empty p{margin:0; font-size:13px}
+
+  /* ---------- Detail drawer ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(20,20,22,.45); backdrop-filter:blur(2px);
+    opacity:0; pointer-events:none; transition:opacity .2s; z-index:40;
+  }
+  .overlay.show{opacity:1; pointer-events:auto}
+  .drawer{
+    position:fixed; top:0; right:0; height:100%; width:min(520px,94vw); background:var(--paper);
+    box-shadow:-16px 0 50px rgba(0,0,0,.18); transform:translateX(100%); transition:transform .28s cubic-bezier(.2,.8,.2,1);
+    z-index:45; display:flex; flex-direction:column;
+  }
+  .drawer.show{transform:translateX(0)}
+  .drawer-top{padding:20px 24px; border-bottom:1px solid var(--line); display:flex; align-items:flex-start; gap:12px}
+  .drawer-top h2{margin:0; font-size:16px; font-weight:700}
+  .drawer-top .proto-lg{font-size:11.5px; color:var(--muted); font-weight:600; letter-spacing:.04em; margin-top:3px}
+  .x{margin-left:auto; appearance:none; border:1px solid var(--line); background:var(--paper); width:34px; height:34px; border-radius:8px; cursor:pointer; font-size:18px; color:var(--muted); flex:none}
+  .x:hover{border-color:var(--ink); color:var(--ink)}
+  .drawer-body{padding:8px 24px 24px; overflow-y:auto; flex:1}
+  .dl{margin:0}
+  .dl .row{padding:14px 0; border-bottom:1px solid var(--surface)}
+  .dl dt{font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:5px}
+  .dl dd{margin:0; font-size:13.5px; white-space:pre-wrap; word-break:break-word}
+  .drawer-foot{padding:16px 24px; border-top:1px solid var(--line); background:var(--surface-2); display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .drawer-foot label{font-size:11px; color:var(--muted)}
+  .status-row{display:flex; align-items:center; gap:8px; margin-right:auto}
+  .status-row select{width:auto; padding:8px 12px; font-size:12px; font-weight:600}
+  .btn-danger{background:var(--paper); color:var(--bad); border-color:var(--bad-soft)}
+  .btn-danger:hover{background:var(--bad-soft)}
+
+  @media (max-width:680px){
+    .grid{grid-template-columns:1fr}
+    .doc-meta{flex-wrap:wrap}
+    .doc-meta div{flex:1 1 40%}
+    .hide-sm{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <!-- Document control header -->
+  <div class="doc-head">
+    <div class="doc-band">
+      <div class="doc-logo">UNIALFA<small>GRUPO JOSÉ ALVES</small></div>
+      <div class="doc-title">
+        <h1>Solicitação de Demanda de Projetos</h1>
+        <p>Formulário de entrada de demandas · Escritório de Projetos</p>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <div><span>Código</span><b>FORALF00339</b></div>
+      <div><span>Revisão</span><b>00</b></div>
+      <div><span>Homologação</span><b>07/05/2026</b></div>
+      <div class="hide-sm"><span>Aprovação</span><b>Via status do registro</b></div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" id="tab-new" onclick="showView('new')">＋ Nova solicitação</button>
+    <button class="tab" role="tab" aria-selected="false" id="tab-list" onclick="showView('list')">
+      Demandas cadastradas <span class="count" id="count">0</span>
+    </button>
+  </div>
+
+  <!-- ====== FORM VIEW ====== -->
+  <div id="view-new">
+    <div class="card">
+      <div class="section-h"><div class="n">1</div><h2>Identificação</h2><p>Quem está solicitando e qual o projeto</p></div>
+      <div class="grid">
+        <div class="field full" data-for="projeto">
+          <label>Nome do projeto<span class="req">*</span></label>
+          <input id="projeto" type="text" placeholder="Ex: Implementação do CRM">
+          <div class="err-msg">Informe o nome do projeto.</div>
+        </div>
+        <div class="field" data-for="solicitante">
+          <label>Solicitante<span class="req">*</span></label>
+          <input id="solicitante" type="text" placeholder="Nome completo">
+          <div class="err-msg">Informe o solicitante.</div>
+        </div>
+        <div class="field" data-for="departamento">
+          <label>Departamento / unidade<span class="req">*</span></label>
+          <select id="departamento">
+            <option value="">Selecione…</option>
+            <option>Superintendência Reitoria</option>
+            <option>Ouvidoria</option>
+            <option>CPA</option>
+            <option>Comitê da Qualidade</option>
+            <option>Diretoria Educação Executiva</option>
+            <option>Diretoria de Escola Business</option>
+            <option>Diretoria de Escola de Direito</option>
+            <option>Diretoria de Operações EAD</option>
+            <option>Diretoria de Marketing e Vendas</option>
+            <option>Coord. Curso Lato Sensu</option>
+            <option>Coord. Pós-Graduação Stricto Sensu</option>
+            <option>Coord. Curso Graduação, Técnico e Ensino Médio</option>
+            <option>Coord. Curso Graduação</option>
+            <option>Coord. Operações Acadêmicas EAD</option>
+            <option>Coord. Gestão de Polos</option>
+            <option>Corpo Docente</option>
+            <option>Corpo Docente (PJ)</option>
+            <option>Marketing</option>
+            <option>Vendas</option>
+            <option>Relacionamento</option>
+            <option>Planej. e Operações</option>
+            <option>RH</option>
+            <option>Secretaria Geral</option>
+            <option>Asseg. Qualidade</option>
+            <option>Segurança</option>
+            <option>ADM e Infraestrutura</option>
+            <option>GPTI</option>
+            <option>Controladoria</option>
+            <option>Gerência de Controladoria</option>
+          </select>
+          <div class="err-msg">Selecione o departamento.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="section-h"><div class="n">2</div><h2>Detalhamento da demanda</h2><p>O coração da solicitação</p></div>
+      <div class="grid">
+        <div class="field full" data-for="justificativa">
+          <label>Justificativa / necessidade<span class="req">*</span></label>
+          <div class="hint">Por que o projeto é necessário? Ex: aumentar a conversão de vendas em 15%.</div>
+          <textarea id="justificativa" placeholder="Descreva a necessidade que origina a demanda"></textarea>
+          <div class="err-msg">Descreva a justificativa.</div>
+        </div>
+        <div class="field full" data-for="objetivo">
+          <label>Objetivo / resultado esperado<span class="req">*</span></label>
+          <div class="hint">O que será entregue? Ex: CRM configurado para 50 usuários.</div>
+          <textarea id="objetivo" placeholder="Descreva o resultado esperado ao final do projeto"></textarea>
+          <div class="err-msg">Descreva o objetivo.</div>
+        </div>
+        <div class="field full" data-for="escopo">
+          <label>Escopo<span class="req">*</span></label>
+          <div class="hint">O que está incluído — e o que NÃO está.</div>
+          <textarea id="escopo" placeholder="Delimite a fronteira do projeto"></textarea>
+          <div class="err-msg">Descreva o escopo.</div>
+        </div>
+        <div class="field" data-for="prazo">
+          <label>Prazo desejado<span class="req">*</span></label>
+          <input id="prazo" type="date">
+          <div class="err-msg">Informe o prazo desejado.</div>
+        </div>
+        <div class="field" data-for="orcamento">
+          <label>Orçamento estimado</label>
+          <input id="orcamento" type="text" placeholder="Ex: R$ 50.000,00">
+        </div>
+        <div class="field full" data-for="partes">
+          <label>Partes interessadas<span class="req">*</span></label>
+          <div class="hint">Quem será impactado pelo projeto?</div>
+          <textarea id="partes" placeholder="Liste áreas, equipes ou pessoas impactadas"></textarea>
+          <div class="err-msg">Informe as partes interessadas.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="section-h"><div class="n">3</div><h2>Anexos</h2><p>Documentos de apoio</p></div>
+      <div class="grid">
+        <div class="field full">
+          <label>Documentos auxiliares</label>
+          <div class="hint">Liste os nomes dos documentos ou cole links (Drive, SharePoint). Um por linha.</div>
+          <textarea id="anexos" placeholder="Ex: Estudo de viabilidade.pdf&#10;https://..."></textarea>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="submitBtn" onclick="submitForm()">Registrar solicitação</button>
+        <button class="btn btn-ghost" onclick="clearForm()">Limpar campos</button>
+        <span class="spacer">Campos com <b style="color:var(--red)">*</b> são obrigatórios</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== LIST VIEW ====== -->
+  <div id="view-list" style="display:none">
+    <div class="card">
+      <div class="list-head">
+        <span class="ttl">Demandas cadastradas</span>
+        <input type="search" id="search" placeholder="Buscar por projeto, solicitante…" oninput="renderList()">
+        <div class="ml">
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Exportar CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.print()">Imprimir</button>
+        </div>
+      </div>
+      <div id="list-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail drawer -->
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" aria-label="Detalhes da demanda">
+  <div class="drawer-top">
+    <div>
+      <h2 id="d-proj">—</h2>
+      <div class="proto-lg" id="d-proto">—</div>
+    </div>
+    <button class="x" onclick="closeDrawer()" aria-label="Fechar">×</button>
+  </div>
+  <div class="drawer-body"><dl class="dl" id="d-body"></dl></div>
+  <div class="drawer-foot">
+    <div class="status-row">
+      <label for="d-status">Status</label>
+      <select id="d-status" onchange="changeStatus()">
+        <option value="Pendente de aprovação">Pendente de aprovação</option>
+        <option value="Aprovada">Aprovada</option>
+        <option value="Reprovada">Reprovada</option>
+      </select>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="editCurrent()">Editar dados</button>
+    <button class="btn btn-danger btn-sm" onclick="deleteCurrent()">Excluir</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toast-msg"></span></div>
+
+<script>
+/* ---- Armazenamento persistente via Supabase (substitui window.storage) ---- */
+(function(){
+  var SUPABASE_URL = 'https://fiarntunpqteopwjkhjg.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+  var TABLE = 'kv_store';
+  var base = SUPABASE_URL + '/rest/v1/' + TABLE;
+  function headers(extra){
+    var h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+    if (extra) { for (var k in extra) h[k] = extra[k]; }
+    return h;
+  }
+  window.storage = {
+    get: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key) + '&select=value', { headers: headers() });
+      if(!r.ok) return null;
+      var rows = await r.json();
+      return rows.length ? { value: rows[0].value } : null;
+    },
+    set: async function(key, value){
+      var r = await fetch(base + '?on_conflict=key', { method: 'POST', headers: headers({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }) });
+      return r.ok;
+    },
+    delete: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key), { method: 'DELETE', headers: headers() });
+      return r.ok;
+    },
+    list: async function(prefix){
+      var r = await fetch(base + '?key=like.' + encodeURIComponent(prefix) + '*&select=key', { headers: headers() });
+      if(!r.ok) return { keys: [] };
+      var rows = await r.json();
+      return { keys: rows.map(function(x){ return x.key; }) };
+    },
+  };
+})();
+</script>
+<script>
+const KEY_PREFIX = 'demanda:';
+let cache = [];        // loaded records
+let currentId = null;  // id open in drawer
+let editId = null;     // id currently being edited in the form (null = creating new)
+
+/* ---------- helpers ---------- */
+function toast(msg, ok=true){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.classList.toggle('ok', ok);
+  t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),3200);
+}
+function fmtDate(iso){
+  if(!iso) return '—';
+  const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`;
+}
+function fmtStamp(ms){
+  const dt=new Date(ms);
+  return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+function badgeClass(s){
+  if(s==='Aprovada') return 'b-apr';
+  if(s==='Reprovada') return 'b-rep';
+  return 'b-pend';
+}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+/* ---------- view switching ---------- */
+function showView(v){
+  document.getElementById('view-new').style.display  = v==='new'?'block':'none';
+  document.getElementById('view-list').style.display = v==='list'?'block':'none';
+  document.getElementById('tab-new').setAttribute('aria-selected', v==='new');
+  document.getElementById('tab-list').setAttribute('aria-selected', v==='list');
+  if(v==='list') renderList();
+}
+
+/* ---------- storage ---------- */
+async function loadAll(){
+  cache=[];
+  try{
+    const res=await window.storage.list(KEY_PREFIX);
+    const keys=(res&&res.keys)?res.keys:[];
+    for(const k of keys){
+      try{
+        const r=await window.storage.get(k);
+        if(r&&r.value) cache.push(JSON.parse(r.value));
+      }catch(e){/* skip unreadable */}
+    }
+  }catch(e){ console.warn('list failed',e); }
+  cache.sort((a,b)=>b.createdAt-a.createdAt);
+  document.getElementById('count').textContent=cache.length;
+}
+
+async function nextProtocol(){
+  const year=new Date().getFullYear();
+  const seq=String(cache.length+1).padStart(3,'0');
+  return `FORALF00339-${year}-${seq}`;
+}
+
+/* ---------- form ---------- */
+const REQUIRED=['projeto','solicitante','departamento','justificativa','objetivo','escopo','prazo','partes'];
+
+function clearError(id){
+  const f=document.querySelector(`.field[data-for="${id}"]`);
+  if(f) f.classList.remove('error');
+}
+REQUIRED.forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('input',()=>clearError(id));
+});
+
+function validate(){
+  let firstBad=null;
+  REQUIRED.forEach(id=>{
+    const el=document.getElementById(id);
+    const f=document.querySelector(`.field[data-for="${id}"]`);
+    if(!el.value.trim()){ f.classList.add('error'); if(!firstBad) firstBad=f; }
+    else f.classList.remove('error');
+  });
+  if(firstBad){ firstBad.scrollIntoView({behavior:'smooth',block:'center'}); }
+  return !firstBad;
+}
+
+async function submitForm(){
+  if(!validate()){ toast('Revise os campos obrigatórios destacados', false); return; }
+  let rec;
+  if(editId){
+    rec = Object.assign({}, cache.find(x=>x.id===editId));
+  } else {
+    rec = { id:'d_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo: await nextProtocol(), status:'Pendente de aprovação', createdAt:Date.now() };
+  }
+  rec.projeto=document.getElementById('projeto').value.trim();
+  rec.solicitante=document.getElementById('solicitante').value.trim();
+  rec.departamento=document.getElementById('departamento').value;
+  rec.justificativa=document.getElementById('justificativa').value.trim();
+  rec.objetivo=document.getElementById('objetivo').value.trim();
+  rec.escopo=document.getElementById('escopo').value.trim();
+  rec.prazo=document.getElementById('prazo').value;
+  rec.orcamento=document.getElementById('orcamento').value.trim();
+  rec.partes=document.getElementById('partes').value.trim();
+  rec.anexos=document.getElementById('anexos').value.trim();
+  try{
+    const r=await window.storage.set(KEY_PREFIX+rec.id, JSON.stringify(rec));
+    if(!r) throw new Error('no result');
+    if(editId){
+      const idx=cache.findIndex(x=>x.id===rec.id);
+      if(idx>-1) cache[idx]=rec; else cache.unshift(rec);
+      toast('Demanda '+rec.protocolo+' atualizada');
+    } else {
+      cache.unshift(rec);
+      toast('Demanda '+rec.protocolo+' registrada');
+    }
+    document.getElementById('count').textContent=cache.length;
+    editId=null;
+    clearForm();
+    showView('list');
+  }catch(e){
+    console.error(e);
+    toast('Não foi possível salvar. Tente novamente.', false);
+  }
+}
+
+function editCurrent(){
+  const r=cache.find(x=>x.id===currentId); if(!r) return;
+  editId=r.id;
+  document.getElementById('projeto').value=r.projeto||'';
+  document.getElementById('solicitante').value=r.solicitante||'';
+  document.getElementById('departamento').value=r.departamento||'';
+  document.getElementById('justificativa').value=r.justificativa||'';
+  document.getElementById('objetivo').value=r.objetivo||'';
+  document.getElementById('escopo').value=r.escopo||'';
+  document.getElementById('prazo').value=r.prazo||'';
+  document.getElementById('orcamento').value=r.orcamento||'';
+  document.getElementById('partes').value=r.partes||'';
+  document.getElementById('anexos').value=r.anexos||'';
+  document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
+  closeDrawer();
+  showView('new');
+  updateEditBanner();
+}
+
+function updateEditBanner(){
+  const btn=document.getElementById('submitBtn');
+  btn.textContent = editId ? 'Salvar alterações' : 'Registrar solicitação';
+}
+
+function clearForm(){
+  ['projeto','solicitante','departamento','justificativa','objetivo','escopo','prazo','orcamento','partes','anexos']
+    .forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+  document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
+  editId=null;
+  updateEditBanner();
+}
+
+/* ---------- list ---------- */
+function renderList(){
+  const q=(document.getElementById('search').value||'').toLowerCase().trim();
+  const rows=cache.filter(r=>!q || (r.projeto+r.solicitante+r.departamento+r.protocolo).toLowerCase().includes(q));
+  const body=document.getElementById('list-body');
+
+  if(!cache.length){
+    body.innerHTML=`<div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6M9 16h6M9 8h6M5 3h14a1 1 0 011 1v16a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg>
+      <h3>Nenhuma demanda cadastrada</h3>
+      <p>As solicitações registradas aparecem aqui.</p></div>`;
+    return;
+  }
+  if(!rows.length){
+    body.innerHTML=`<div class="empty"><h3>Nenhum resultado</h3><p>Ajuste a busca para encontrar a demanda.</p></div>`;
+    return;
+  }
+
+  let html=`<table><thead><tr>
+    <th>Protocolo</th><th>Projeto</th><th class="hide-sm">Departamento</th>
+    <th class="hide-sm">Prazo</th><th>Status</th></tr></thead><tbody>`;
+  for(const r of rows){
+    html+=`<tr onclick="openDrawer('${r.id}')">
+      <td><div class="proto">${esc(r.protocolo)}<small>${fmtStamp(r.createdAt)}</small></div></td>
+      <td><div class="proj">${esc(r.projeto)}<small>${esc(r.solicitante)}</small></div></td>
+      <td class="hide-sm">${esc(r.departamento)}</td>
+      <td class="hide-sm">${fmtDate(r.prazo)}</td>
+      <td><span class="badge ${badgeClass(r.status)}">${esc(r.status)}</span></td>
+    </tr>`;
+  }
+  html+='</tbody></table>';
+  body.innerHTML=html;
+}
+
+/* ---------- drawer ---------- */
+function openDrawer(id){
+  const r=cache.find(x=>x.id===id); if(!r) return;
+  currentId=id;
+  document.getElementById('d-proj').textContent=r.projeto;
+  document.getElementById('d-proto').textContent=r.protocolo+' · registrada em '+fmtStamp(r.createdAt);
+  document.getElementById('d-status').value=r.status;
+  const rows=[
+    ['Solicitante',r.solicitante],
+    ['Departamento / unidade',r.departamento],
+    ['Justificativa / necessidade',r.justificativa],
+    ['Objetivo / resultado esperado',r.objetivo],
+    ['Escopo',r.escopo],
+    ['Prazo desejado',fmtDate(r.prazo)],
+    ['Orçamento estimado',r.orcamento||'—'],
+    ['Partes interessadas',r.partes],
+    ['Anexos',r.anexos||'—'],
+  ];
+  document.getElementById('d-body').innerHTML=rows.map(([k,v])=>
+    `<div class="row"><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
+}
+function closeDrawer(){
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('drawer').classList.remove('show');
+  currentId=null;
+}
+async function changeStatus(){
+  const r=cache.find(x=>x.id===currentId); if(!r) return;
+  r.status=document.getElementById('d-status').value;
+  try{
+    await window.storage.set(KEY_PREFIX+r.id, JSON.stringify(r));
+    renderList(); toast('Status atualizado para "'+r.status+'"');
+  }catch(e){ toast('Não foi possível atualizar o status', false); }
+}
+async function deleteCurrent(){
+  const r=cache.find(x=>x.id===currentId); if(!r) return;
+  if(!confirm('Excluir a demanda '+r.protocolo+'? Esta ação não pode ser desfeita.')) return;
+  try{
+    await window.storage.delete(KEY_PREFIX+r.id);
+    cache=cache.filter(x=>x.id!==currentId);
+    document.getElementById('count').textContent=cache.length;
+    closeDrawer(); renderList(); toast('Demanda excluída');
+  }catch(e){ toast('Não foi possível excluir', false); }
+}
+
+/* ---------- export ---------- */
+function exportCSV(){
+  if(!cache.length){ toast('Não há demandas para exportar', false); return; }
+  const cols=[['protocolo','Protocolo'],['projeto','Projeto'],['solicitante','Solicitante'],
+    ['departamento','Departamento'],['justificativa','Justificativa'],['objetivo','Objetivo'],
+    ['escopo','Escopo'],['prazo','Prazo'],['orcamento','Orcamento'],['partes','Partes interessadas'],
+    ['anexos','Anexos'],['status','Status']];
+  const q=v=>'"'+String(v||'').replace(/"/g,'""')+'"';
+  let csv=cols.map(c=>q(c[1])).join(';')+'\r\n';
+  for(const r of cache){
+    const row={...r, prazo:fmtDate(r.prazo)};
+    csv+=cols.map(c=>q(row[c[0]])).join(';')+'\r\n';
+  }
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='demandas_FORALF00339.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV exportado ('+cache.length+' demandas)');
+}
+
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
+
+/* ---------- init ---------- */
+(async()=>{ await loadAll(); renderList(); })();
+</script>

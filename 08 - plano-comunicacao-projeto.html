@@ -1,0 +1,391 @@
+<!-- Plano de Comunicação de Projeto / UNIALFA -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#B91D2E;--red-deep:#8E1322;--red-light:#FEF2F2;
+  --ink:#0F0F0F;--muted:#6B7280;--muted-2:#9CA3AF;
+  --paper:#FFFFFF;--surface:#F8F8F9;--surface-2:#F1F2F4;
+  --line:#E5E7EB;--line-strong:#D1D5DB;
+  --ok:#059669;--ok-soft:#D1FAE5;
+  --warn:#D97706;--warn-soft:#FEF3C7;
+  --gold:#B45309;--gold-soft:#FEF3C7;
+  --radius:10px;--shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);
+  --font:'Montserrat',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);color:var(--ink);background:var(--surface);-webkit-font-smoothing:antialiased;line-height:1.5;font-size:14px}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 72px}
+
+.page-head{background:var(--ink);color:#fff;border-radius:14px;padding:28px 32px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:24px}
+.head-logo{font-weight:900;font-size:24px;letter-spacing:.04em;border-right:2px solid rgba(255,255,255,.2);padding-right:22px;flex:none}
+.head-logo small{display:block;font-weight:600;font-size:9.5px;letter-spacing:.22em;opacity:.6;margin-top:4px}
+.head-title{flex:1}
+.head-title h1{font-size:19px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;line-height:1.2}
+.head-title p{font-size:11.5px;font-weight:500;opacity:.6;margin-top:4px}
+.head-badge{background:var(--red);color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;letter-spacing:.04em;white-space:nowrap;flex:none}
+
+.view-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.vtab{appearance:none;border:1px solid var(--line);background:var(--paper);color:var(--muted);font-family:var(--font);font-weight:700;font-size:12px;padding:9px 16px;border-radius:999px;cursor:pointer;transition:all .15s}
+.vtab:hover{border-color:var(--line-strong);color:var(--ink)}
+.vtab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+
+.sec-title{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--line)}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px}
+.card-head{background:var(--gold-soft);border-bottom:1px solid #F5E1B8;padding:12px 20px}
+.card-head h2{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+
+table.pcp-t{width:100%;border-collapse:collapse}
+table.pcp-t thead th{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:10px 16px;background:var(--surface-2);border-bottom:1px solid var(--line);text-align:left}
+table.pcp-t td{padding:12px 16px;border-bottom:1px solid var(--surface-2);vertical-align:top;font-size:13px}
+table.pcp-t tbody tr:last-child td{border-bottom:none}
+table.pcp-t tbody tr:hover{background:var(--surface)}
+table.pcp-t td.tipo{font-weight:700;width:32%}
+
+.empty-state{padding:48px 24px;text-align:center;color:var(--muted)}
+.empty-state h3{font-size:15px;color:var(--ink);font-weight:700;margin-bottom:6px}
+.empty-state p{font-size:13px}
+
+.approv-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.approv-cell{padding:16px 20px;border-right:1px solid var(--line)}
+.approv-cell:last-child{border-right:none}
+.approv-label{font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.approv-value{font-size:14px;font-weight:700}
+
+.gloss-list{padding:6px 20px 18px}
+.gloss-item{padding:10px 0;border-bottom:1px solid var(--surface-2);font-size:12.5px;line-height:1.6}
+.gloss-item:last-child{border-bottom:none}
+.gloss-item b{color:var(--red)}
+
+.coment-body{padding:16px 20px;font-size:13px;white-space:pre-wrap;line-height:1.6}
+.coment-body.empty{color:var(--muted-2);font-style:italic}
+
+/* editor */
+.edit-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.edit-card-head{background:var(--ink);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:10px}
+.edit-card-head h3{font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;flex:1}
+.edit-body{padding:16px 20px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.field label{font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--ink)}
+input,textarea{font-family:var(--font);font-size:13px;color:var(--ink);border:1px solid var(--line-strong);border-radius:7px;padding:9px 11px;background:var(--paper);width:100%;transition:border-color .15s,box-shadow .15s}
+input:focus,textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(185,29,46,.1)}
+textarea{resize:vertical;min-height:80px}
+.approv-edit{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+.dyn-mini{width:100%;border-collapse:collapse;border:1px solid var(--line);border-radius:7px;overflow:hidden;font-size:12.5px}
+.dyn-mini th{font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:8px 10px;background:var(--surface-2);border-bottom:1px solid var(--line);text-align:left}
+.dyn-mini td{padding:4px 6px;border-bottom:1px solid var(--surface-2);vertical-align:top}
+.dyn-mini tbody tr:last-child td{border-bottom:none}
+.dyn-mini textarea,.dyn-mini input{border:1px solid transparent;border-radius:5px;padding:7px;background:var(--surface-2);font-size:12.5px;min-height:0}
+.dyn-mini textarea{min-height:40px}
+.dyn-mini input:focus,.dyn-mini textarea:focus{background:#fff;border-color:var(--red);box-shadow:none}
+.row-x{appearance:none;border:none;background:transparent;color:var(--muted);font-size:17px;cursor:pointer;width:26px;height:26px;border-radius:5px;line-height:1;display:flex;align-items:center;justify-content:center}
+.row-x:hover{background:#FEE2E2;color:#DC2626}
+.dyn-foot{margin-top:8px}
+
+.action-bar{display:flex;gap:10px;align-items:center;padding:14px 20px;border-top:1px solid var(--line);background:var(--surface-2);flex-wrap:wrap}
+.btn{appearance:none;font-family:var(--font);font-weight:700;font-size:12.5px;border-radius:8px;padding:10px 20px;cursor:pointer;border:1px solid transparent;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn-primary{background:var(--red);color:#fff}.btn-primary:hover{background:var(--red-deep)}
+.btn-ghost{background:var(--paper);color:var(--ink);border-color:var(--line-strong)}.btn-ghost:hover{border-color:var(--ink)}
+.btn-sm{padding:7px 13px;font-size:12px}
+.ml{margin-left:auto}
+
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 12px 40px rgba(0,0,0,.25);display:flex;align-items:center;gap:10px;opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.2,.8,.2,1);z-index:50;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast .dot{width:7px;height:7px;border-radius:50%;background:#5BE49B;flex:none}
+
+@media(max-width:720px){.approv-grid,.approv-edit{grid-template-columns:1fr}.approv-cell{border-right:none;border-bottom:1px solid var(--line)}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <div class="head-logo">UNIALFA<small>GRUPO JOSÉ ALVES</small></div>
+    <div class="head-title">
+      <h1>Plano de Comunicação de Projeto</h1>
+      <p>Tipos de comunicação e o que é comunicado em cada uma · Escritório de Projetos</p>
+    </div>
+  </div>
+
+  <div class="view-tabs">
+    <button class="vtab" aria-selected="true" onclick="showView('painel')">📋 Painel</button>
+    <button class="vtab" aria-selected="false" onclick="showView('editar')">✏️ Editar dados</button>
+  </div>
+
+  <!-- ===== PAINEL ===== -->
+  <div id="view-painel">
+    <div id="painel-content"></div>
+    <div class="action-bar" style="border-radius:var(--radius);border:1px solid var(--line)">
+      <button class="btn btn-ghost" onclick="window.print()">🖨 Imprimir</button>
+      <div class="ml" style="font-size:11px;color:var(--muted)">UNIALFA</div>
+    </div>
+  </div>
+
+  <!-- ===== EDITOR ===== -->
+  <div id="view-editar" style="display:none">
+
+    <div class="edit-card">
+      <div class="edit-card-head"><h3>Tipos de Comunicação</h3><button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)" onclick="addTipo()">+ Adicionar linha</button></div>
+      <div class="edit-body">
+        <table class="dyn-mini" id="tbl-tipos">
+          <thead><tr><th style="width:32%">Tipo de Comunicação</th><th>O que Comunicar</th><th style="width:32px"></th></tr></thead>
+          <tbody id="tbody-tipos"></tbody>
+        </table>
+        <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addTipo()">+ Adicionar linha</button></div>
+      </div>
+    </div>
+
+    <div class="edit-card">
+      <div class="edit-card-head"><h3>Comentários</h3></div>
+      <div class="edit-body">
+        <div class="field"><textarea id="comentarios" rows="4" placeholder="Observações sobre esta revisão do plano de comunicação"></textarea></div>
+      </div>
+    </div>
+
+    <div class="edit-card">
+      <div class="edit-card-head"><h3>Aprovação — Responsável da Área</h3></div>
+      <div class="edit-body">
+        <div class="approv-edit">
+          <div class="field"><label>Data</label><input id="aprovData" type="date"></div>
+          <div class="field"><label>Nome</label><input id="aprovNome" type="text" placeholder="Nome de quem aprovou/revisou"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="edit-card">
+      <div class="edit-card-head"><h3>Glossário</h3><button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)" onclick="addTermo()">+ Adicionar termo</button></div>
+      <div class="edit-body">
+        <table class="dyn-mini" id="tbl-gloss">
+          <thead><tr><th>Termo e definição</th><th style="width:32px"></th></tr></thead>
+          <tbody id="tbody-gloss"></tbody>
+        </table>
+        <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addTermo()">+ Adicionar termo</button></div>
+      </div>
+    </div>
+
+    <div class="action-bar" style="border-radius:var(--radius);border:1px solid var(--line)">
+      <button class="btn btn-primary" onclick="saveAndPreview()">✓ Salvar e ver painel</button>
+      <button class="btn btn-ghost" onclick="showView('painel')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toast-msg"></span></div>
+
+<script>
+/* ---- Armazenamento persistente via Supabase (substitui window.storage) ---- */
+(function(){
+  var SUPABASE_URL = 'https://fiarntunpqteopwjkhjg.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+  var TABLE = 'kv_store';
+  var base = SUPABASE_URL + '/rest/v1/' + TABLE;
+  function headers(extra){
+    var h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+    if (extra) { for (var k in extra) h[k] = extra[k]; }
+    return h;
+  }
+  window.storage = {
+    get: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key) + '&select=value', { headers: headers() });
+      if(!r.ok) return null;
+      var rows = await r.json();
+      return rows.length ? { value: rows[0].value } : null;
+    },
+    set: async function(key, value){
+      var r = await fetch(base + '?on_conflict=key', { method: 'POST', headers: headers({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }) });
+      return r.ok;
+    },
+    delete: async function(key){
+      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key), { method: 'DELETE', headers: headers() });
+      return r.ok;
+    },
+    list: async function(prefix){
+      var r = await fetch(base + '?key=like.' + encodeURIComponent(prefix) + '*&select=key', { headers: headers() });
+      if(!r.ok) return { keys: [] };
+      var rows = await r.json();
+      return { keys: rows.map(function(x){ return x.key; }) };
+    },
+  };
+})();
+
+const KEY = 'plancom_data';
+
+/* seed = conteúdo real do documento (usado apenas se ainda não houver nada salvo) */
+const SEED = {
+  tipos: [
+    {tipo:'Começo do projeto', oque:'Escopo, objetivos, governança, cronograma macro, papéis e regras'},
+    {tipo:'Diário de equipe', oque:'Progresso, impedimentos, plano do dia'},
+    {tipo:'Status semanal', oque:'Andamento vs. plano, riscos/ações, decisões, próximos passos'},
+    {tipo:'Report executivo', oque:'Indicadores (prazo, custo, escopo, qualidade), marcos e desvios'},
+    {tipo:'Comitê de Mudanças (CCB)', oque:'Solicitações de mudança, impactos e deliberações'},
+    {tipo:'Gestão de Riscos', oque:'Novos riscos, status, planos de resposta'},
+    {tipo:'Comunicação de incidentes', oque:'Incidentes/erros críticos, impacto e mitigação'},
+    {tipo:'Entregas e marcos', oque:'Conclusão de entregáveis, critérios de aceite'},
+    {tipo:'Integração com stakeholders externos', oque:'Alinhamentos contratuais, prazos, dependências'},
+    {tipo:'Comunicação de mudanças organizacionais', oque:'Impactos em processo/pessoas, plano de adoção'},
+    {tipo:'Treinamentos', oque:'Conteúdo, público, agenda, materiais e avaliações'},
+    {tipo:'Homologação/UAT', oque:'Escopo de testes, critérios de aprovação, defeitos'},
+    {tipo:'Go/No-Go', oque:'Checklist, riscos remanescentes, decisão final'},
+    {tipo:'Pós-Lançamento', oque:'Estabilização, KPIs, chamados, melhorias'},
+    {tipo:'Lições aprendidas & Encerramento', oque:'Resultados, o que funcionou, melhorias, documentação final'},
+  ],
+  comentarios: '',
+  aprovData: '2026-05-08',
+  aprovNome: 'André Luís Rodrigues Torres',
+  glossario: [
+    'PMO (Project Management Office), ou Escritório de Gestão de Projetos',
+    'RDM (Requirements Definition and Management) para gestão de projetos é Definição e Gestão de Requisitos',
+    'RCA (Root Cause Analysis) para gestão de projetos é a análise de causa raiz',
+    'CCB (Change Control Board) para gestão de projetos é Comitê de Controle de Mudança',
+    'LMS (Learning Management System) para gestão de projetos é uma plataforma virtual que organiza, entrega e monitora treinamentos e capacitações',
+    'QA - Quality Assurance (Garantia de Qualidade)',
+    'UAT (User Acceptance Testing) na gestão de projetos é a etapa final de validação',
+    'Go ("Ir") ou No-Go ("Não ir") é a definição se o projeto possui viabilidade para continuar após análises.',
+    'KPIs (Key Performance Indicators) de gestão de projetos são métricas essenciais para medir o sucesso',
+    'War Room (sala de guerra) na gestão de projetos é um espaço físico ou virtual dedicado a reunir equipes multidisciplinares para foco intenso, colaboração e tomada de decisão rápida em projetos críticos ou de alto risco',
+  ],
+};
+
+let data = JSON.parse(JSON.stringify(SEED));
+let loadedFromStorage = false;
+
+function toast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3000);}
+function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function nl(s){return esc(s).replace(/\n/g,'<br>');}
+function fmtDate(iso){if(!iso)return '—';const p=String(iso).split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:iso;}
+
+async function loadData(){
+  try{
+    const r = await window.storage.get(KEY);
+    if(r && r.value){ data = JSON.parse(r.value); loadedFromStorage = true; }
+  }catch(e){ console.warn(e); }
+}
+async function saveData(){
+  try{ await window.storage.set(KEY, JSON.stringify(data)); return true; }
+  catch(e){ toast('Erro ao salvar'); return false; }
+}
+
+function showView(v){
+  document.getElementById('view-painel').style.display = v==='painel' ? 'block' : 'none';
+  document.getElementById('view-editar').style.display = v==='editar' ? 'block' : 'none';
+  document.querySelectorAll('.vtab').forEach((b,i)=>b.setAttribute('aria-selected', ['painel','editar'][i]===v));
+  if(v==='painel') renderPainel();
+  if(v==='editar') renderEditor();
+}
+
+/* ---- PAINEL ---- */
+function renderPainel(){
+  let html = '';
+
+  html += `<div class="card">
+    <div class="card-head"><h2>Tipos de Comunicação</h2></div>
+    <table class="pcp-t">
+      <thead><tr><th>Tipo de Comunicação</th><th>O que Comunicar</th></tr></thead>
+      <tbody>`;
+  if(data.tipos && data.tipos.length){
+    data.tipos.forEach(t=>{ html += `<tr><td class="tipo">${esc(t.tipo)}</td><td>${esc(t.oque)}</td></tr>`; });
+  } else {
+    html += `<tr><td colspan="2"><div class="empty-state"><h3>Nenhum tipo cadastrado</h3><p>Use "Editar dados" para adicionar.</p></div></td></tr>`;
+  }
+  html += `</tbody></table></div>`;
+
+  html += `<div class="card">
+    <div class="card-head"><h2>Comentários</h2></div>
+    <div class="coment-body ${data.comentarios ? '' : 'empty'}">${data.comentarios ? nl(data.comentarios) : 'Nenhum comentário registrado nesta revisão.'}</div>
+  </div>`;
+
+  html += `<div class="card">
+    <div class="card-head"><h2>Aprovação — Responsável da Área</h2></div>
+    <div class="approv-grid">
+      <div class="approv-cell"><div class="approv-label">Data</div><div class="approv-value">${fmtDate(data.aprovData)}</div></div>
+      <div class="approv-cell"><div class="approv-label">Nome</div><div class="approv-value">${esc(data.aprovNome || '—')}</div></div>
+    </div>
+  </div>`;
+
+  html += `<div class="card">
+    <div class="card-head"><h2>Glossário</h2></div>
+    <div class="gloss-list">`;
+  if(data.glossario && data.glossario.length){
+    data.glossario.forEach(g=>{ html += `<div class="gloss-item">${nl(g)}</div>`; });
+  } else {
+    html += `<div class="empty-state"><h3>Nenhum termo cadastrado</h3></div>`;
+  }
+  html += `</div></div>`;
+
+  document.getElementById('painel-content').innerHTML = html;
+}
+
+/* ---- EDITOR ---- */
+function renderEditor(){
+  document.getElementById('comentarios').value = data.comentarios || '';
+  document.getElementById('aprovData').value = data.aprovData || '';
+  document.getElementById('aprovNome').value = data.aprovNome || '';
+  rebuildTipos(data.tipos || []);
+  rebuildGloss(data.glossario || []);
+}
+
+function rebuildTipos(rows){
+  const tb = document.getElementById('tbody-tipos');
+  tb.innerHTML = '';
+  rows.forEach(r=>addTipo(r));
+  if(!rows.length) addTipo();
+}
+function addTipo(vals){
+  const tb = document.getElementById('tbody-tipos');
+  const tr = document.createElement('tr');
+  const tipoV = vals ? (vals.tipo||'') : '';
+  const oqueV = vals ? (vals.oque||'') : '';
+  tr.innerHTML = `<td><input data-k="tipo" value="${esc(tipoV)}" placeholder="Ex: Status semanal"></td>
+    <td><textarea data-k="oque" placeholder="O que é comunicado">${esc(oqueV)}</textarea></td>
+    <td><button type="button" class="row-x" onclick="this.closest('tr').remove()">×</button></td>`;
+  tb.appendChild(tr);
+}
+function readTipos(){
+  const rows = [];
+  document.querySelectorAll('#tbody-tipos tr').forEach(tr=>{
+    const tipo = tr.querySelector('[data-k="tipo"]').value.trim();
+    const oque = tr.querySelector('[data-k="oque"]').value.trim();
+    if(tipo || oque) rows.push({tipo, oque});
+  });
+  return rows;
+}
+
+function rebuildGloss(rows){
+  const tb = document.getElementById('tbody-gloss');
+  tb.innerHTML = '';
+  rows.forEach(r=>addTermo(r));
+  if(!rows.length) addTermo();
+}
+function addTermo(val){
+  const tb = document.getElementById('tbody-gloss');
+  const tr = document.createElement('tr');
+  const v = val ? (typeof val === 'string' ? val : (val.texto||'')) : '';
+  tr.innerHTML = `<td><textarea data-k="termo" placeholder="Ex: PMO (Project Management Office)...">${esc(v)}</textarea></td>
+    <td><button type="button" class="row-x" onclick="this.closest('tr').remove()">×</button></td>`;
+  tb.appendChild(tr);
+}
+function readGloss(){
+  const rows = [];
+  document.querySelectorAll('#tbody-gloss [data-k="termo"]').forEach(ta=>{
+    const v = ta.value.trim();
+    if(v) rows.push(v);
+  });
+  return rows;
+}
+
+async function saveAndPreview(){
+  data.tipos = readTipos();
+  data.comentarios = document.getElementById('comentarios').value.trim();
+  data.aprovData = document.getElementById('aprovData').value;
+  data.aprovNome = document.getElementById('aprovNome').value.trim();
+  data.glossario = readGloss();
+  const ok = await saveData();
+  if(ok){ toast('Plano de comunicação salvo'); showView('painel'); }
+}
+
+(async()=>{ await loadData(); renderPainel(); })();
+</script>
