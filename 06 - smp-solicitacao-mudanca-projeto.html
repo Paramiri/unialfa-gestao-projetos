@@ -117,6 +117,268 @@ table.list tbody tr:hover{background:var(--surface-2)}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
+<!-- ==== AUTH GATE (HTML) ==== -->
+<div class="auth-gate" id="authGate" style="display:none">
+  <div class="auth-card">
+    <div class="auth-logo">UNIALFA<small>GRUPO JOSÉ ALVES</small></div>
+    <h2>Entrar</h2>
+    <p>Digite seu e-mail institucional para receber um link de acesso — sem senha.</p>
+    <div id="authStep1">
+      <input type="email" id="authEmail" placeholder="seu.nome@unialfa.com.br">
+      <button class="btn btn-primary" onclick="unialfaAuthUI.sendLink()">Enviar link de acesso</button>
+    </div>
+    <div id="authStep2" style="display:none">
+      <p>✓ Link enviado para <b id="authEmailSent"></b>. Verifique seu e-mail e clique no link — esta página atualiza sozinha.</p>
+      <button class="btn btn-ghost btn-sm" onclick="unialfaAuthUI.reset()">Usar outro e-mail</button>
+    </div>
+    <div id="authMsg" class="auth-msg" style="display:none"></div>
+  </div>
+</div>
+
+<style>
+.auth-gate{position:fixed;inset:0;background:rgba(15,15,15,.92);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-card{background:var(--paper,#fff);border-radius:14px;padding:32px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.auth-logo{font-weight:900;font-size:20px;letter-spacing:.04em;color:var(--red,#B91D2E);margin-bottom:18px}
+.auth-logo small{display:block;font-weight:600;font-size:9px;letter-spacing:.2em;color:var(--muted,#6B7280);margin-top:3px}
+.auth-card h2{font-size:17px;font-weight:800;margin-bottom:6px;color:var(--ink,#0F0F0F)}
+.auth-card p{font-size:12.5px;color:var(--muted,#6B7280);margin-bottom:16px;line-height:1.5}
+.auth-card input{width:100%;font-family:inherit;font-size:13.5px;border:1px solid var(--line-strong,#D1D5DB);border-radius:8px;padding:10px 12px;margin-bottom:10px;color:var(--ink,#0F0F0F)}
+.auth-card input:focus{outline:none;border-color:var(--red,#B91D2E);box-shadow:0 0 0 3px rgba(185,29,46,.12)}
+.auth-card .btn{width:100%;justify-content:center}
+.auth-msg{margin-top:10px;font-size:12px;font-weight:600;padding:8px 10px;border-radius:7px}
+.auth-msg.err{background:#FEE2E2;color:#DC2626}
+.auth-msg.ok{background:#D1FAE5;color:#059669}
+.auth-topbar{position:fixed;top:0;left:0;right:0;background:var(--ink,#0F0F0F);color:#fff;font-size:11.5px;padding:8px 18px;display:flex;align-items:center;gap:10px;z-index:150;font-family:var(--font)}
+.auth-topbar b{font-weight:700}
+.auth-topbar .papel-tag{background:var(--red,#B91D2E);padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.auth-topbar .sair{margin-left:auto;background:none;border:none;color:#fff;opacity:.7;cursor:pointer;font-size:11px;text-decoration:underline;font-family:inherit}
+.auth-topbar .sair:hover{opacity:1}
+body.auth-ready{padding-top:34px}
+
+/* projeto vinculado */
+.proj-link-card{background:var(--paper,#fff);border:1px solid var(--line,#E5E7EB);border-radius:var(--radius,10px);box-shadow:var(--shadow);padding:16px 20px;margin-bottom:18px}
+.proj-link-card .plc-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.proj-link-card .plc-head h3{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted,#6B7280);flex:1}
+.proj-link-card .plc-hist{font-size:11px;font-weight:700;color:var(--red,#B91D2E);background:none;border:none;cursor:pointer;text-decoration:underline}
+.proj-link-card select{width:100%;font-family:inherit;font-size:13.5px;border:1px solid var(--line-strong,#D1D5DB);border-radius:8px;padding:10px 12px;color:var(--ink,#0F0F0F)}
+.proj-link-card .plc-info{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12px}
+.proj-link-card .plc-info span{color:var(--muted,#6B7280)}
+.proj-link-card .plc-info b{color:var(--ink,#0F0F0F);margin-left:4px}
+.hist-panel{background:var(--surface-2,#F1F2F4);border:1px solid var(--line,#E5E7EB);border-radius:8px;margin-top:12px;padding:12px 14px;font-size:12px;max-height:220px;overflow-y:auto}
+.hist-panel .hi{padding:6px 0;border-bottom:1px solid var(--line,#E5E7EB)}
+.hist-panel .hi:last-child{border-bottom:none}
+.hist-panel .hi b{color:var(--red,#B91D2E)}
+</style>
+
+<script>
+/* ---- Autenticacao (magic link) ---- */
+(function(){
+  var SUPABASE_URL = 'https://fiarntunpqteopwjkhjg.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+  var AUTH_BASE = SUPABASE_URL + '/auth/v1';
+  var REST_BASE = SUPABASE_URL + '/rest/v1';
+  var SESSION_KEY = 'unialfa_session';
+
+  function saveSession(s){ localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
+  function getSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)); }catch(e){ return null; } }
+  function clearSession(){ localStorage.removeItem(SESSION_KEY); }
+
+  function captureRedirect(){
+    if (location.hash && location.hash.indexOf('access_token') > -1) {
+      var params = new URLSearchParams(location.hash.slice(1));
+      if (params.get('access_token')) {
+        saveSession({
+          access_token: params.get('access_token'),
+          refresh_token: params.get('refresh_token'),
+          expires_at: Date.now() + (parseInt(params.get('expires_in')||'3600',10)*1000),
+        });
+        history.replaceState(null, '', location.pathname + location.search);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async function sendMagicLink(email){
+    var r = await fetch(AUTH_BASE + '/otp', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, create_user: true, options: { email_redirect_to: location.href.split('#')[0] } }),
+    });
+    return r.ok;
+  }
+
+  async function fetchUser(){
+    var s = getSession();
+    if(!s || !s.access_token) return null;
+    if (s.expires_at && Date.now() > s.expires_at) { clearSession(); return null; }
+    var r = await fetch(AUTH_BASE + '/user', { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + s.access_token } });
+    if(!r.ok) { clearSession(); return null; }
+    return await r.json();
+  }
+
+  function authHeaders(extra){
+    var s = getSession();
+    var token = (s && s.access_token) ? s.access_token : SUPABASE_ANON_KEY;
+    var h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+    if (extra) for (var k in extra) h[k]=extra[k];
+    return h;
+  }
+
+  async function fetchProfile(userId){
+    var r = await fetch(REST_BASE + '/perfis?id=eq.' + userId + '&select=*', { headers: authHeaders() });
+    if(!r.ok) return null;
+    var rows = await r.json();
+    return rows[0] || null;
+  }
+
+  async function ensureProfile(user){
+    var p = await fetchProfile(user.id);
+    if(p) return p;
+    await fetch(REST_BASE + '/perfis', {
+      method: 'POST', headers: authHeaders({ 'Prefer': 'return=minimal' }),
+      body: JSON.stringify({ id: user.id, email: user.email, papel: 'solicitante' }),
+    });
+    return await fetchProfile(user.id);
+  }
+
+  var PAPEL_LABEL = {
+    solicitante: 'Solicitante', gerente_projetos: 'Gerente de Projetos', gestor_responsavel: 'Gestor Responsável',
+    dono_negocio: 'Dono do Negócio', alta_gestao: 'Alta Gestão', admin: 'PMO / Admin',
+  };
+
+  window.unialfaAuth = {
+    REST_BASE: REST_BASE,
+    getSession: getSession, clearSession: clearSession, captureRedirect: captureRedirect,
+    sendMagicLink: sendMagicLink, fetchUser: fetchUser, authHeaders: authHeaders,
+    fetchProfile: fetchProfile, ensureProfile: ensureProfile, papelLabel: function(p){ return PAPEL_LABEL[p]||p; },
+    signOut: function(){ clearSession(); location.reload(); },
+  };
+})();
+
+var unialfaAuthUI = {
+  sendLink: async function(){
+    var email = document.getElementById('authEmail').value.trim();
+    var msg = document.getElementById('authMsg');
+    if(!email || email.indexOf('@')<0){ msg.textContent='Digite um e-mail válido.'; msg.className='auth-msg err'; msg.style.display='block'; return; }
+    msg.style.display='none';
+    var ok = await unialfaAuth.sendMagicLink(email);
+    if(ok){
+      document.getElementById('authStep1').style.display='none';
+      document.getElementById('authStep2').style.display='block';
+      document.getElementById('authEmailSent').textContent=email;
+    } else {
+      msg.textContent='Não foi possível enviar o link. Tente novamente.'; msg.className='auth-msg err'; msg.style.display='block';
+    }
+  },
+  reset: function(){
+    document.getElementById('authStep1').style.display='block';
+    document.getElementById('authStep2').style.display='none';
+    document.getElementById('authEmail').value='';
+  },
+};
+
+window.currentUser = null;
+window.currentProfile = null;
+
+function ensureAuthenticated(){
+  return new Promise(function(resolve){
+    async function trySetup(){
+      var user = await unialfaAuth.fetchUser();
+      if(!user) return null;
+      var profile = await unialfaAuth.ensureProfile(user);
+      window.currentUser = user; window.currentProfile = profile;
+      var gate = document.getElementById('authGate');
+      if(gate) gate.style.display='none';
+      document.body.classList.add('auth-ready');
+      if(!document.querySelector('.auth-topbar')){
+        var bar = document.createElement('div');
+        bar.className='auth-topbar';
+        bar.innerHTML = '<span>Conectado como <b>'+ (user.email||'') +'</b></span><span class="papel-tag">'+unialfaAuth.papelLabel(profile?profile.papel:'solicitante')+'</span><button class="sair" onclick="unialfaAuth.signOut()">Sair</button>';
+        document.body.prepend(bar);
+      }
+      return {user:user, profile:profile};
+    }
+    (async function(){
+      unialfaAuth.captureRedirect();
+      var result = await trySetup();
+      if(result){ resolve(result); return; }
+      var gate = document.getElementById('authGate');
+      if(gate) gate.style.display='flex';
+      var iv = setInterval(async function(){
+        var r = await trySetup();
+        if(r){ clearInterval(iv); resolve(r); }
+      }, 3000);
+    })();
+  });
+}
+
+/* ---- Projeto compartilhado + historico ---- */
+window.unialfaProjeto = {
+  async listarAprovados(){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projetos?status=eq.Aprovado&select=id,nome,unidade,gerente&order=nome', { headers: unialfaAuth.authHeaders() });
+    return r.ok ? await r.json() : [];
+  },
+  async buscar(id){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projetos?id=eq.'+id+'&select=*', { headers: unialfaAuth.authHeaders() });
+    var rows = r.ok ? await r.json() : [];
+    return rows[0] || null;
+  },
+  async criar(dados){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projetos', {
+      method:'POST', headers: unialfaAuth.authHeaders({'Prefer':'return=representation'}), body: JSON.stringify(dados)
+    });
+    var rows = r.ok ? await r.json() : [];
+    return rows[0] || null;
+  },
+  async atualizarCampo(projetoId, campo, valorNovo, valorAnterior, formularioOrigem){
+    var patch = {}; patch[campo] = valorNovo; patch.atualizado_em = new Date().toISOString();
+    await fetch(unialfaAuth.REST_BASE + '/projetos?id=eq.'+projetoId, {
+      method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}), body: JSON.stringify(patch)
+    });
+    var user = window.currentUser;
+    await fetch(unialfaAuth.REST_BASE + '/projeto_historico', {
+      method:'POST', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
+      body: JSON.stringify({ projeto_id: projetoId, campo: campo, valor_anterior: valorAnterior, valor_novo: valorNovo, formulario_origem: formularioOrigem, alterado_por: user?user.id:null, alterado_por_email: user?user.email:null })
+    });
+  },
+  async marcarStatus(projetoId, status){
+    await fetch(unialfaAuth.REST_BASE + '/projetos?id=eq.'+projetoId, {
+      method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}), body: JSON.stringify({status:status, atualizado_em: new Date().toISOString()})
+    });
+  },
+  async historico(projetoId){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projeto_historico?projeto_id=eq.'+projetoId+'&select=*&order=criado_em.desc', { headers: unialfaAuth.authHeaders() });
+    return r.ok ? await r.json() : [];
+  },
+  async sincronizarSeMudou(projetoId, formularioOrigem, camposAntigos, camposNovos){
+    if(!projetoId) return;
+    var labels = {nome:'Nome do projeto', unidade:'Unidade', gerente:'Gerente de projeto'};
+    for(var campo in camposNovos){
+      var novo = (camposNovos[campo]||'').trim();
+      var antigo = (camposAntigos[campo]||'').trim();
+      if(novo && novo !== antigo){
+        var ok = confirm('O campo "'+(labels[campo]||campo)+'" mudou de "'+(antigo||'—')+'" para "'+novo+'".\n\nAtualizar no projeto compartilhado? (isso reflete em todos os formulários vinculados a este projeto)');
+        if(ok){ await this.atualizarCampo(projetoId, campo, novo, antigo, formularioOrigem); }
+      }
+    }
+  },
+  async mostrarHistorico(projetoId, hostEl){
+    var itens = await this.historico(projetoId);
+    var labels = {nome:'Nome do projeto', unidade:'Unidade', gerente:'Gerente de projeto', status:'Status'};
+    if(!itens.length){ hostEl.innerHTML = '<div class="hist-panel"><i>Nenhuma alteração registrada ainda.</i></div>'; hostEl.style.display='block'; return; }
+    var html = '<div class="hist-panel">';
+    itens.forEach(function(h){
+      var d = new Date(h.criado_em);
+      html += '<div class="hi"><b>'+(labels[h.campo]||h.campo)+'</b>: "'+(h.valor_anterior||'—')+'" → "'+(h.valor_novo||'—')+'"<br>'+
+        '<span style="color:var(--muted-2,#9CA3AF)">'+d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+(h.formulario_origem||'')+' · '+(h.alterado_por_email||'—')+'</span></div>';
+    });
+    html += '</div>';
+    hostEl.innerHTML = html; hostEl.style.display='block';
+  },
+};
+</script>
+
 <div class="wrap">
   <div class="doc-head">
     <div class="doc-band">
@@ -142,6 +404,18 @@ table.list tbody tr:hover{background:var(--surface-2)}
   </div>
 
   <div id="view-new">
+    <div class="proj-link-card">
+      <div class="plc-head"><h3>Projeto vinculado</h3><button type="button" class="plc-hist" id="btnHistorico" onclick="toggleHistorico()" style="display:none">Ver histórico</button></div>
+      <select id="projetoSelect" onchange="onProjetoSelect()">
+        <option value="">Selecione um projeto aprovado (Gate 1)…</option>
+      </select>
+      <div class="plc-info" id="projetoInfo" style="display:none">
+        <span>Unidade:<b id="pi-unidade">—</b></span>
+        <span>Gerente:<b id="pi-gerente">—</b></span>
+        <span>Status:<b id="pi-status">—</b></span>
+      </div>
+      <div id="historicoPanel" style="display:none"></div>
+    </div>
 
     <!-- 1 Identificação do projeto -->
     <div class="card">
@@ -332,7 +606,10 @@ table.list tbody tr:hover{background:var(--surface-2)}
   var TABLE = 'kv_store';
   var base = SUPABASE_URL + '/rest/v1/' + TABLE;
   function headers(extra){
-    var h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+    var session = null;
+    try{ session = JSON.parse(localStorage.getItem('unialfa_session')); }catch(e){}
+    var token = (session && session.access_token) ? session.access_token : SUPABASE_ANON_KEY;
+    var h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
     if (extra) { for (var k in extra) h[k] = extra[k]; }
     return h;
   }
@@ -388,6 +665,40 @@ const DETAIL=[
   ]},
 ];
 
+let projetosAprovados=[]; let historicoAberto=false;
+async function carregarProjetosAprovados(selecionarId){
+  projetosAprovados = await unialfaProjeto.listarAprovados();
+  const sel=document.getElementById('projetoSelect');
+  sel.innerHTML='<option value="">Selecione um projeto aprovado (Gate 1)…</option>' +
+    projetosAprovados.map(p=>`<option value="${p.id}">${esc(p.nome)}</option>`).join('');
+  if(selecionarId){ sel.value=selecionarId; onProjetoSelect(false); }
+}
+function onProjetoSelect(preencherCampos=true){
+  const id=document.getElementById('projetoSelect').value;
+  const info=document.getElementById('projetoInfo');
+  document.getElementById('btnHistorico').style.display = id ? 'inline' : 'none';
+  document.getElementById('historicoPanel').style.display='none'; historicoAberto=false;
+  const p=projetosAprovados.find(x=>x.id===id);
+  if(!p){ info.style.display='none'; return; }
+  document.getElementById('pi-unidade').textContent=p.unidade||'—';
+  document.getElementById('pi-gerente').textContent=p.gerente||'—';
+  document.getElementById('pi-status').textContent='Aprovado';
+  info.style.display='flex';
+  if(preencherCampos){
+    document.getElementById('nomeProjeto').value=p.nome||'';
+    document.getElementById('unidade').value=p.unidade||'';
+    document.getElementById('gerente').value=p.gerente||'';
+    clearError('nomeProjeto'); clearError('unidade'); clearError('gerente');
+  }
+}
+async function toggleHistorico(){
+  const id=document.getElementById('projetoSelect').value; if(!id) return;
+  const panel=document.getElementById('historicoPanel');
+  historicoAberto=!historicoAberto;
+  if(historicoAberto) await unialfaProjeto.mostrarHistorico(id, panel);
+  else panel.style.display='none';
+}
+
 function toast(msg,ok=true){
   const t=document.getElementById('toast');
   document.getElementById('toast-msg').textContent=msg;
@@ -414,10 +725,13 @@ function validate(){
 
 async function submitForm(){
   if(!validate()){toast('Revise os campos obrigatórios',false);return;}
+  const projetoId=document.getElementById('projetoSelect').value;
+  if(!projetoId){ toast('Selecione o projeto vinculado (deve estar Aprovado no Gate 1)', false); return; }
   const dec=document.querySelector('input[name="decisao"]:checked');
-  let rec;
+  let rec, camposAntigos={};
   if(editId){
     rec = Object.assign({}, cache.find(x=>x.id===editId));
+    camposAntigos = { nome: rec.nomeProjeto, unidade: rec.unidade, gerente: rec.gerente };
   } else {
     const year=new Date().getFullYear();
     const seq=String(cache.length+1).padStart(3,'0');
@@ -428,7 +742,9 @@ async function submitForm(){
   if(rec.decisao==='Aprovada')rec.status='Aprovada';
   else if(rec.decisao==='Não aprovada')rec.status='Não aprovada';
   else rec.status='Pendente de avaliação';
+  rec.projetoId=projetoId;
   try{
+    await unialfaProjeto.sincronizarSeMudou(projetoId, 'SMP - Solicitação de Mudança de Projeto (FORALF00343)', camposAntigos, { nome: rec.nomeProjeto, unidade: rec.unidade, gerente: rec.gerente });
     const r=await window.storage.set(KEY_PREFIX+rec.id,JSON.stringify(rec));
     if(!r)throw new Error();
     if(editId){
@@ -444,7 +760,7 @@ async function submitForm(){
     clearForm();showView('list');
   }catch(e){toast('Não foi possível salvar.',false);}
 }
-function editCurrent(){
+async function editCurrent(){
   const r=cache.find(x=>x.id===currentId); if(!r) return;
   editId=r.id;
   SIMPLE_FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=r[id]||''; });
@@ -455,6 +771,7 @@ function editCurrent(){
   closeDrawer();
   showView('new');
   updateEditBanner();
+  if(r.projetoId) await carregarProjetosAprovados(r.projetoId);
 }
 function updateEditBanner(){
   document.getElementById('submitBtn').textContent = editId ? 'Salvar alterações' : 'Registrar SMP';
@@ -463,6 +780,10 @@ function clearForm(){
   SIMPLE_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('dec-pend').checked=true;
   document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
+  document.getElementById('projetoSelect').value='';
+  document.getElementById('projetoInfo').style.display='none';
+  document.getElementById('btnHistorico').style.display='none';
+  document.getElementById('historicoPanel').style.display='none';
   editId=null;
   updateEditBanner();
 }
@@ -552,5 +873,5 @@ function exportCSV(){
 }
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
-(async()=>{await loadAll();renderList();})();
+(async()=>{ await ensureAuthenticated(); await loadAll(); renderList(); await carregarProjetosAprovados(); })();
 </script>
