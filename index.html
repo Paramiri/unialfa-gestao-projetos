@@ -11,6 +11,29 @@
 </head>
 <body>
 <div class="app" id="app"></div>
+<script>
+/* Captura o token de login caso o Supabase redirecione a confirmação de e-mail para esta página (raiz), em vez do formulário de origem. */
+(function(){
+  if (location.hash && location.hash.indexOf('access_token') > -1) {
+    var params = new URLSearchParams(location.hash.slice(1));
+    if (params.get('access_token')) {
+      localStorage.setItem('unialfa_session', JSON.stringify({
+        access_token: params.get('access_token'),
+        refresh_token: params.get('refresh_token'),
+        expires_at: Date.now() + (parseInt(params.get('expires_in')||'3600',10)*1000),
+      }));
+      history.replaceState(null, '', location.pathname + location.search);
+      document.addEventListener('DOMContentLoaded', function(){
+        var b = document.createElement('div');
+        b.textContent = 'Login confirmado! Clique em qualquer formulário no mapa para continuar.';
+        b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#1B7F4B;color:#fff;padding:10px 18px;font:600 13px Montserrat,sans-serif;text-align:center;z-index:999';
+        document.body.prepend(b);
+        setTimeout(function(){ b.remove(); }, 7000);
+      });
+    }
+  }
+})();
+</script>
 <script src="app-data.js?v=4"></script>
 <script src="app.js?v=4"></script>
 </body>
