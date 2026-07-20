@@ -159,6 +159,8 @@
       <input type="email" id="authEmail" placeholder="seu.nome@unialfa.com.br">
       <button class="btn btn-primary" onclick="unialfaAuthUI.sendLink()">Enviar link de acesso</button>
     </div>
+    <div style="text-align:center;margin:14px 0;color:var(--muted,#6B7280);font-size:11px;font-weight:600">— ou —</div>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="unialfaAuthUI.signInWithAzure()">Entrar com Microsoft</button>
     <div id="authStep2" style="display:none">
       <p>✓ Link enviado para <b id="authEmailSent"></b>. Verifique seu e-mail e clique no link — esta página atualiza sozinha.</p>
       <button class="btn btn-ghost btn-sm" onclick="unialfaAuthUI.reset()">Usar outro e-mail</button>
@@ -281,6 +283,7 @@ body.auth-ready{padding-top:34px}
 
   window.unialfaAuth = {
     REST_BASE: REST_BASE,
+    AUTH_BASE: AUTH_BASE,
     getSession: getSession, clearSession: clearSession, captureRedirect: captureRedirect,
     sendMagicLink: sendMagicLink, fetchUser: fetchUser, authHeaders: authHeaders,
     fetchProfile: fetchProfile, ensureProfile: ensureProfile, papelLabel: function(p){ return PAPEL_LABEL[p]||p; },
@@ -303,6 +306,7 @@ var unialfaAuthUI = {
       msg.textContent='Não foi possível enviar o link. Tente novamente.'; msg.className='auth-msg err'; msg.style.display='block';
     }
   },
+  signInWithAzure: function(){ location.href = unialfaAuth.AUTH_BASE + '/authorize?provider=azure'; },
   reset: function(){
     document.getElementById('authStep1').style.display='block';
     document.getElementById('authStep2').style.display='none';
