@@ -304,7 +304,7 @@ body.auth-ready{padding-top:34px}
     var r = await fetch(AUTH_BASE + '/otp', {
       method: 'POST',
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, create_user: true, options: { email_redirect_to: 'https://paramiri.github.io/unialfa-gestao-projetos/' } }),
+      body: JSON.stringify({ email: email, create_user: true }),
     });
     return r.ok;
   }
