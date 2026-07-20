@@ -399,6 +399,42 @@ window.unialfaProjeto = {
     hostEl.innerHTML = html; hostEl.style.display='block';
   },
 };
+
+/* ---- Historico de alteracoes por registro (conteudo do proprio documento) ---- */
+window.unialfaHistorico = {
+  async registrar(registroKey, formulario, camposAntigos, camposNovos){
+    var user = window.currentUser;
+    var entries = [];
+    for(var campo in camposNovos){
+      var novo = (camposNovos[campo]==null?'':String(camposNovos[campo])).trim();
+      var antigo = (camposAntigos[campo]==null?'':String(camposAntigos[campo])).trim();
+      if(novo !== antigo){
+        entries.push({ registro_key: registroKey, formulario: formulario, campo: campo, valor_anterior: antigo, valor_novo: novo, alterado_por: user?user.id:null, alterado_por_email: user?user.email:null });
+      }
+    }
+    if(!entries.length) return;
+    await fetch(unialfaAuth.REST_BASE + '/registro_historico', {
+      method:'POST', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}), body: JSON.stringify(entries)
+    });
+  },
+  async listar(registroKey){
+    var r = await fetch(unialfaAuth.REST_BASE + '/registro_historico?registro_key=eq.'+encodeURIComponent(registroKey)+'&select=*&order=criado_em.desc', { headers: unialfaAuth.authHeaders() });
+    return r.ok ? await r.json() : [];
+  },
+  async mostrar(registroKey, hostEl, labels){
+    var itens = await this.listar(registroKey);
+    if(!itens.length){ hostEl.innerHTML = '<div class="hist-panel"><i>Nenhuma alteração registrada ainda.</i></div>'; hostEl.style.display='block'; return; }
+    var html = '<div class="hist-panel">';
+    itens.forEach(function(h){
+      var d = new Date(h.criado_em);
+      var lbl = (labels && labels[h.campo]) || h.campo;
+      html += '<div class="hi"><b>'+lbl+'</b>: "'+(h.valor_anterior||'—')+'" → "'+(h.valor_novo||'—')+'"<br>'+
+        '<span style="color:var(--muted-2,#9CA3AF)">'+d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+(h.alterado_por_email||'—')+'</span></div>';
+    });
+    html += '</div>';
+    hostEl.innerHTML = html; hostEl.style.display='block';
+  },
+};
 </script>
 
 <div class="wrap">
@@ -609,7 +645,11 @@ window.unialfaProjeto = {
     </div>
     <button class="x" onclick="closeDrawer()" aria-label="Fechar">×</button>
   </div>
-  <div class="drawer-body"><dl class="dl" id="d-body"></dl></div>
+  <div class="drawer-body">
+    <dl class="dl" id="d-body"></dl>
+    <button type="button" id="btnRegHistorico" onclick="toggleRegistroHistorico()" style="margin-bottom:10px;font-size:11px;font-weight:700;color:var(--red);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:inherit;padding:0">Ver histórico de alterações</button>
+    <div id="regHistoricoPanel" style="display:none"></div>
+  </div>
   <div class="drawer-foot">
     <div class="status-row">
       <label for="d-status">Status</label>
@@ -788,13 +828,16 @@ function validate(){
   return !firstBad;
 }
 
+const HIST_LABELS = { nomeProjeto:'Nome do projeto', unidade:'Unidade responsável', gerente:'Gerente de projeto', dataElab:'Data de elaboração', justificativas:'Justificativas', objetivo:'Objetivo', beneficios:'Benefícios', produto:'Produto', parceiros:'Parceiros', entregas:'Grupo de entregas', restricoes:'Restrições', riscos:'Riscos', custos:'Custos' };
+
 async function submitForm(){
   if(!validate()){ toast('Revise os campos obrigatórios destacados', false); return; }
   const projetoId=document.getElementById('projetoSelect').value;
   if(!projetoId){ toast('Selecione o projeto vinculado (deve estar Aprovado no Gate 1)', false); return; }
-  let rec, camposAntigos={};
+  let rec, camposAntigos={}, registroAntigo=null;
   if(editId){
     rec = Object.assign({}, cache.find(x=>x.id===editId));
+    registroAntigo = Object.assign({}, rec);
     camposAntigos = { nome: rec.nomeProjeto, unidade: rec.unidade, gerente: rec.gerente };
   } else {
     rec = { id:'c_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo: await nextProtocol(), status:'Pendente de aprovação', createdAt:Date.now() };
@@ -803,6 +846,7 @@ async function submitForm(){
   rec.projetoId=projetoId;
   try{
     await unialfaProjeto.sincronizarSeMudou(projetoId, 'Canvas de Projeto (FORALF00344)', camposAntigos, { nome: rec.nomeProjeto, unidade: rec.unidade, gerente: rec.gerente });
+    if(registroAntigo){ await unialfaHistorico.registrar(KEY_PREFIX+rec.id, 'Canvas de Projeto (FORALF00344)', registroAntigo, rec); }
     const r=await window.storage.set(KEY_PREFIX+rec.id, JSON.stringify(rec));
     if(!r) throw new Error('no result');
     if(editId){
@@ -875,10 +919,20 @@ function openDrawer(id){
     html+=`<div class="row"><dt>${lab}</dt><dd>${esc(v||'—')}</dd></div>`;
   }
   document.getElementById('d-body').innerHTML=html;
+  document.getElementById('regHistoricoPanel').style.display='none';
+  regHistoricoAberto=false;
   document.getElementById('overlay').classList.add('show');
   document.getElementById('drawer').classList.add('show');
 }
 function closeDrawer(){ document.getElementById('overlay').classList.remove('show'); document.getElementById('drawer').classList.remove('show'); currentId=null; }
+let regHistoricoAberto=false;
+async function toggleRegistroHistorico(){
+  if(!currentId) return;
+  const panel=document.getElementById('regHistoricoPanel');
+  regHistoricoAberto=!regHistoricoAberto;
+  if(regHistoricoAberto) await unialfaHistorico.mostrar(KEY_PREFIX+currentId, panel, HIST_LABELS);
+  else panel.style.display='none';
+}
 async function changeStatus(){
   const r=cache.find(x=>x.id===currentId); if(!r) return;
   r.status=document.getElementById('d-status').value;
