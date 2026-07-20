@@ -316,7 +316,7 @@ function ensureAuthenticated(){
 /* ---- Projeto compartilhado + historico ---- */
 window.unialfaProjeto = {
   async listarAprovados(){
-    var r = await fetch(unialfaAuth.REST_BASE + '/projetos?status=eq.Aprovado&select=id,nome,unidade,gerente&order=nome', { headers: unialfaAuth.authHeaders() });
+    var r = await fetch(unialfaAuth.REST_BASE + '/projetos?status=eq.Aprovado&select=id,nome,unidade,gerente,solicitacao_id&order=nome', { headers: unialfaAuth.authHeaders() });
     return r.ok ? await r.json() : [];
   },
   async buscar(id){
