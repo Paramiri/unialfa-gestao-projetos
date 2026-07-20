@@ -774,7 +774,22 @@ function onProjetoSelect(preencherCampos=true){
     document.getElementById('unidade').value=p.unidade||'';
     document.getElementById('gerente').value=p.gerente||'';
     clearError('nomeProjeto'); clearError('unidade'); clearError('gerente');
+    carregarDadosDaSolicitacao(p.solicitacao_id);
   }
+}
+async function carregarDadosDaSolicitacao(solicitacaoId){
+  if(!solicitacaoId) return;
+  try{
+    const r = await fetch(unialfaAuth.REST_BASE + '/kv_store?key=eq.' + encodeURIComponent('demanda:'+solicitacaoId) + '&select=value', { headers: unialfaAuth.authHeaders() });
+    if(!r.ok) return;
+    const rows = await r.json();
+    if(!rows.length) return;
+    const dem = JSON.parse(rows[0].value);
+    const jEl=document.getElementById('justificativa');
+    const oEl=document.getElementById('objetivos');
+    if(jEl && !jEl.value.trim() && dem.justificativa) jEl.value=dem.justificativa;
+    if(oEl && !oEl.value.trim() && dem.objetivo) oEl.value=dem.objetivo;
+  }catch(e){ console.warn('não foi possível carregar dados da solicitação', e); }
 }
 async function toggleHistorico(){
   const id=document.getElementById('projetoSelect').value; if(!id) return;
