@@ -43,6 +43,18 @@
   .role-tag{display:inline-block; font-size:10px; font-weight:700; letter-spacing:.03em; padding:3px 9px; border-radius:999px; background:var(--surface-2); border:1px solid var(--line-strong); color:var(--muted);}
   .role-tag.admin{background:var(--bad-soft); color:var(--bad); border-color:transparent}
 
+  .vtabs{display:flex; gap:8px; margin-top:18px}
+  .vtab{appearance:none; border:1px solid var(--line); background:var(--paper); color:var(--muted); font-family:var(--font); font-weight:700; font-size:12px; padding:9px 18px; border-radius:999px; cursor:pointer;}
+  .vtab[aria-selected="true"]{background:var(--ink); border-color:var(--ink); color:#fff}
+  .equipe-picker{padding:18px 24px; border-bottom:1px solid var(--line); background:var(--surface-2); display:flex; gap:12px; align-items:center; flex-wrap:wrap}
+  .equipe-picker select{flex:1; min-width:220px; font-size:13px; padding:9px 12px;}
+  .equipe-add{padding:16px 24px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .equipe-add select{flex:1; min-width:200px}
+  .btn{appearance:none; font-family:var(--font); font-weight:700; font-size:12.5px; border-radius:8px; padding:9px 16px; cursor:pointer; border:1px solid transparent; background:var(--red); color:#fff;}
+  .btn:hover{background:var(--red-deep)}
+  .btn:disabled{opacity:.5; cursor:not-allowed}
+  .btn-remove{appearance:none; border:none; background:none; color:var(--bad); font-size:11px; font-weight:700; cursor:pointer; text-decoration:underline}
+
   .toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:13px 20px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:0 12px 40px rgba(0,0,0,.25); display:flex; align-items:center; gap:10px; opacity:0; pointer-events:none; transition:all .3s cubic-bezier(.2,.8,.2,1); z-index:50; max-width:90vw;}
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
   .toast .dot{width:8px; height:8px; border-radius:50%; background:#5BE49B; flex:none}
@@ -235,6 +247,31 @@ function ensureAuthenticated(){
     })();
   });
 }
+
+/* ---- Equipe por projeto ---- */
+window.unialfaEquipe = {
+  async listarTodosProjetos(){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projetos?select=id,nome,unidade,status&order=nome', { headers: unialfaAuth.authHeaders() });
+    return r.ok ? await r.json() : [];
+  },
+  async listar(projetoId){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projeto_equipe?projeto_id=eq.'+projetoId+'&select=*&order=usuario_email', { headers: unialfaAuth.authHeaders() });
+    return r.ok ? await r.json() : [];
+  },
+  async adicionar(projetoId, usuarioId, usuarioEmail){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projeto_equipe', {
+      method:'POST', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
+      body: JSON.stringify({ projeto_id: projetoId, usuario_id: usuarioId, usuario_email: usuarioEmail, adicionado_por: window.currentUser?window.currentUser.id:null })
+    });
+    return r.ok;
+  },
+  async remover(projetoId, usuarioId){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projeto_equipe?projeto_id=eq.'+projetoId+'&usuario_id=eq.'+usuarioId, {
+      method:'DELETE', headers: unialfaAuth.authHeaders()
+    });
+    return r.ok;
+  },
+};
 </script>
 
 <div class="wrap">
@@ -248,9 +285,28 @@ function ensureAuthenticated(){
     </div>
   </div>
 
+  <div class="vtabs" id="vtabs" style="display:none">
+    <button class="vtab" aria-selected="true" onclick="showAba('usuarios')">Usuários</button>
+    <button class="vtab" aria-selected="false" onclick="showAba('equipes')">Equipes</button>
+  </div>
+
   <div class="card" id="content-card">
     <div class="section-h"><h2>Usuários cadastrados</h2><p id="count-label"></p></div>
     <div id="content-body"><div class="empty">Carregando…</div></div>
+  </div>
+
+  <div class="card" id="equipes-card" style="display:none">
+    <div class="section-h"><h2>Equipe por projeto</h2><p>Quem pode criar/editar registros vinculados</p></div>
+    <div class="equipe-picker">
+      <select id="equipeProjetoSelect" onchange="carregarEquipe()">
+        <option value="">Selecione um projeto…</option>
+      </select>
+    </div>
+    <div class="equipe-add" id="equipeAddRow" style="display:none">
+      <select id="equipeUsuarioSelect"></select>
+      <button class="btn" onclick="adicionarMembro()">+ Adicionar à equipe</button>
+    </div>
+    <div id="equipe-body"><div class="empty">Selecione um projeto para ver a equipe.</div></div>
   </div>
 </div>
 
@@ -267,10 +323,13 @@ function toast(msg, ok=true){
 }
 function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 
+let todosUsuarios=[];
+
 async function carregarUsuarios(){
   const body=document.getElementById('content-body');
   const r=await fetch(unialfaAuth.REST_BASE+'/perfis?select=*&order=email', { headers: unialfaAuth.authHeaders() });
   const rows = r.ok ? await r.json() : [];
+  todosUsuarios = rows;
   document.getElementById('count-label').textContent = rows.length+' usuário(s)';
   if(!rows.length){ body.innerHTML='<div class="empty">Nenhum usuário cadastrado ainda. Usuários aparecem aqui após o primeiro login via link mágico.</div>'; return; }
   let html='<table><thead><tr><th>E-mail</th><th>Nome</th><th>Papel atual</th><th>Alterar papel</th></tr></thead><tbody>';
@@ -305,6 +364,60 @@ async function alterarPapel(userId, novoPapel, selectEl){
   }
 }
 
+function showAba(aba){
+  document.getElementById('content-card').style.display = aba==='usuarios' ? 'block' : 'none';
+  document.getElementById('equipes-card').style.display = aba==='equipes' ? 'block' : 'none';
+  document.querySelectorAll('.vtab').forEach((b,i)=>b.setAttribute('aria-selected', (aba==='usuarios'&&i===0)||(aba==='equipes'&&i===1)));
+}
+
+async function carregarProjetosEquipe(){
+  const projetos = await unialfaEquipe.listarTodosProjetos();
+  const sel=document.getElementById('equipeProjetoSelect');
+  sel.innerHTML='<option value="">Selecione um projeto…</option>' +
+    projetos.map(p=>`<option value="${p.id}">${esc(p.nome)} (${esc(p.status)})</option>`).join('');
+}
+
+async function carregarEquipe(){
+  const projetoId=document.getElementById('equipeProjetoSelect').value;
+  const addRow=document.getElementById('equipeAddRow');
+  const body=document.getElementById('equipe-body');
+  if(!projetoId){ addRow.style.display='none'; body.innerHTML='<div class="empty">Selecione um projeto para ver a equipe.</div>'; return; }
+  addRow.style.display='flex';
+  const membros = await unialfaEquipe.listar(projetoId);
+  const usuarioSel=document.getElementById('equipeUsuarioSelect');
+  const jaNaEquipe = new Set(membros.map(m=>m.usuario_id));
+  const disponiveis = todosUsuarios.filter(u=>!jaNaEquipe.has(u.id));
+  usuarioSel.innerHTML = disponiveis.length
+    ? disponiveis.map(u=>`<option value="${u.id}" data-email="${esc(u.email)}">${esc(u.email)} — ${esc(unialfaAuth.papelLabel(u.papel))}</option>`).join('')
+    : '<option value="">Todos os usuários já estão na equipe</option>';
+  if(!membros.length){ body.innerHTML='<div class="empty">Nenhum membro nesta equipe ainda.</div>'; return; }
+  let html='<table><thead><tr><th>E-mail</th><th>Adicionado em</th><th></th></tr></thead><tbody>';
+  membros.forEach(m=>{
+    const d=new Date(m.criado_em);
+    html+=`<tr><td><b>${esc(m.usuario_email)}</b></td><td>${d.toLocaleDateString('pt-BR')}</td>
+      <td><button class="btn-remove" onclick="removerMembro('${projetoId}','${m.usuario_id}')">Remover</button></td></tr>`;
+  });
+  html+='</tbody></table>';
+  body.innerHTML=html;
+}
+
+async function adicionarMembro(){
+  const projetoId=document.getElementById('equipeProjetoSelect').value; if(!projetoId) return;
+  const sel=document.getElementById('equipeUsuarioSelect');
+  const opt=sel.options[sel.selectedIndex];
+  if(!opt || !opt.value){ toast('Nenhum usuário disponível para adicionar', false); return; }
+  const ok = await unialfaEquipe.adicionar(projetoId, opt.value, opt.dataset.email);
+  if(ok){ toast('Membro adicionado à equipe'); await carregarEquipe(); }
+  else toast('Não foi possível adicionar', false);
+}
+
+async function removerMembro(projetoId, usuarioId){
+  if(!confirm('Remover esta pessoa da equipe do projeto?')) return;
+  const ok = await unialfaEquipe.remover(projetoId, usuarioId);
+  if(ok){ toast('Membro removido'); await carregarEquipe(); }
+  else toast('Não foi possível remover', false);
+}
+
 (async()=>{
   await ensureAuthenticated();
   if(!window.currentProfile || window.currentProfile.papel!=='admin'){
@@ -315,6 +428,8 @@ async function alterarPapel(userId, novoPapel, selectEl){
     </div>`;
     return;
   }
+  document.getElementById('vtabs').style.display='flex';
   await carregarUsuarios();
+  await carregarProjetosEquipe();
 })();
 </script>

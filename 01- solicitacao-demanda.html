@@ -514,6 +514,38 @@ window.unialfaHistorico = {
     hostEl.innerHTML = html; hostEl.style.display='block';
   },
 };
+
+/* ---- Equipe por projeto (controla quem pode criar/editar registros vinculados) ---- */
+window.unialfaEquipe = {
+  async listarTodosProjetos(){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projetos?select=id,nome,unidade,status&order=nome', { headers: unialfaAuth.authHeaders() });
+    return r.ok ? await r.json() : [];
+  },
+  async listar(projetoId){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projeto_equipe?projeto_id=eq.'+projetoId+'&select=*&order=usuario_email', { headers: unialfaAuth.authHeaders() });
+    return r.ok ? await r.json() : [];
+  },
+  async souMembro(projetoId){
+    if(window.currentProfile && window.currentProfile.papel==='admin') return true;
+    if(!projetoId) return false;
+    var membros = await this.listar(projetoId);
+    var uid = window.currentUser ? window.currentUser.id : null;
+    return membros.some(function(m){ return m.usuario_id===uid; });
+  },
+  async adicionar(projetoId, usuarioId, usuarioEmail){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projeto_equipe', {
+      method:'POST', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
+      body: JSON.stringify({ projeto_id: projetoId, usuario_id: usuarioId, usuario_email: usuarioEmail, adicionado_por: window.currentUser?window.currentUser.id:null })
+    });
+    return r.ok;
+  },
+  async remover(projetoId, usuarioId){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projeto_equipe?projeto_id=eq.'+projetoId+'&usuario_id=eq.'+usuarioId, {
+      method:'DELETE', headers: unialfaAuth.authHeaders()
+    });
+    return r.ok;
+  },
+};
 </script>
 
 <div class="wrap">
@@ -685,6 +717,7 @@ window.unialfaHistorico = {
     <div id="regHistoricoPanel" style="display:none"></div>
   </div>
   <div class="drawer-foot">
+    <div style="width:100%; display:none" id="gate1-aviso"><small style="color:var(--muted)">Apenas PMO/Admin pode aprovar ou reprovar (Gate 1).</small></div>
     <div class="status-row">
       <label for="d-status">Status</label>
       <select id="d-status" onchange="changeStatus()">
@@ -947,6 +980,9 @@ function openDrawer(id){
   document.getElementById('d-proj').textContent=r.projeto;
   document.getElementById('d-proto').textContent=r.protocolo+' · registrada em '+fmtStamp(r.createdAt);
   document.getElementById('d-status').value=r.status;
+  const souAdmin = window.currentProfile && window.currentProfile.papel==='admin';
+  document.getElementById('d-status').disabled = !souAdmin;
+  document.getElementById('gate1-aviso').style.display = souAdmin ? 'none' : 'block';
   const rows=[
     ['Solicitante',r.solicitante],
     ['Departamento / unidade',r.departamento],
@@ -980,6 +1016,11 @@ async function toggleRegistroHistorico(){
 }
 async function changeStatus(){
   const r=cache.find(x=>x.id===currentId); if(!r) return;
+  if(!window.currentProfile || window.currentProfile.papel!=='admin'){
+    document.getElementById('d-status').value=r.status;
+    toast('Apenas PMO/Admin pode aprovar ou reprovar (Gate 1).', false);
+    return;
+  }
   r.status=document.getElementById('d-status').value;
   try{
     await window.storage.set(KEY_PREFIX+r.id, JSON.stringify(r));
