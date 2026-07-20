@@ -67,6 +67,10 @@
           ${seqItems}
           <div class="sidebar-section-label">Transversais</div>
           ${tvItems}
+          <div class="sidebar-section-label">Gestão</div>
+          <a class="nav-item" href="13 - administracao-usuarios.html" target="_blank" rel="noopener">
+            <span class="tag">⚙</span><span class="lbl">Administração</span>
+          </a>
         </nav>
         <div class="sidebar-foot">12 artefatos institucionais · 2 gates de autorização</div>
       </aside>
