@@ -8,6 +8,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="app.css?v=4">
+<style>
+.auth-topbar{position:fixed;top:0;left:0;right:0;background:#0F0F0F;color:#fff;font-size:11.5px;padding:8px 18px;display:flex;align-items:center;gap:10px;z-index:150;font-family:'Montserrat',sans-serif}
+.auth-topbar b{font-weight:700}
+.auth-topbar .papel-tag{background:#B91D2E;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.auth-topbar .sair{margin-left:auto;background:none;border:none;color:#fff;opacity:.7;cursor:pointer;font-size:11px;text-decoration:underline;font-family:inherit}
+.auth-topbar .sair:hover{opacity:1}
+body.auth-ready{padding-top:34px}
+</style>
 </head>
 <body>
 <div class="app" id="app"></div>
@@ -32,6 +40,34 @@
       });
     }
   }
+})();
+
+/* Mostra quem está logado (se houver sessão), sem exigir login para ver o mapa — acesso continua livre. */
+(function(){
+  var SUPABASE_URL = 'https://fiarntunpqteopwjkhjg.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+  var PAPEL_LABEL = {
+    solicitante: 'Solicitante', gerente_projetos: 'Gerente de Projetos', gestor_responsavel: 'Gestor Responsável',
+    dono_negocio: 'Dono do Negócio', alta_gestao: 'Alta Gestão', admin: 'PMO / Admin',
+  };
+  function getSession(){ try{ return JSON.parse(localStorage.getItem('unialfa_session')); }catch(e){ return null; } }
+  async function mostrarTopbar(){
+    var s = getSession();
+    if(!s || !s.access_token) return;
+    if (s.expires_at && Date.now() > s.expires_at) { localStorage.removeItem('unialfa_session'); return; }
+    var r = await fetch(SUPABASE_URL + '/auth/v1/user', { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + s.access_token } });
+    if(!r.ok) return;
+    var user = await r.json();
+    var pr = await fetch(SUPABASE_URL + '/rest/v1/perfis?id=eq.' + user.id + '&select=papel', { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + s.access_token } });
+    var rows = pr.ok ? await pr.json() : [];
+    var papel = rows[0] ? rows[0].papel : 'solicitante';
+    document.body.classList.add('auth-ready');
+    var bar = document.createElement('div');
+    bar.className='auth-topbar';
+    bar.innerHTML = '<span>Conectado como <b>'+ (user.email||'') +'</b></span><span class="papel-tag">'+(PAPEL_LABEL[papel]||papel)+'</span><button class="sair" onclick="localStorage.removeItem(\'unialfa_session\');location.reload();">Sair</button>';
+    document.body.prepend(bar);
+  }
+  document.addEventListener('DOMContentLoaded', mostrarTopbar);
 })();
 </script>
 <script src="app-data.js?v=4"></script>
