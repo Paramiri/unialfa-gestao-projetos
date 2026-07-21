@@ -115,6 +115,19 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 .verdict button{margin-top:.8rem;background:var(--paper);border:1px solid var(--line-strong);color:var(--ink);border-radius:999px;padding:9px 22px;font-family:var(--font);font-weight:700;font-size:12.5px;cursor:pointer}
 .verdict button:hover{border-color:var(--red);color:var(--red)}
 
+.proj-link-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 20px;margin-bottom:18px}
+.proj-link-card .plc-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.proj-link-card .plc-head h3{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);flex:1}
+.proj-link-card .plc-hist{font-size:11px;font-weight:700;color:var(--red);background:none;border:none;cursor:pointer;text-decoration:underline}
+.proj-link-card select{width:100%;font-family:var(--font);font-size:13px;border:1px solid var(--line-strong);border-radius:8px;padding:9px 12px;color:var(--ink)}
+.proj-link-card .plc-info{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:11.5px}
+.proj-link-card .plc-info span{color:var(--muted)}
+.proj-link-card .plc-info b{color:var(--ink);margin-left:4px}
+.hist-panel{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;margin-top:12px;padding:12px 14px;font-size:11.5px;max-height:220px;overflow-y:auto}
+.hist-panel .hi{padding:6px 0;border-bottom:1px solid var(--line)}
+.hist-panel .hi:last-child{border-bottom:none}
+.hist-panel .hi b{color:var(--red)}
+
 /* ---- casos ---- */
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-top:1.4rem}
 .card{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--paper);box-shadow:var(--shadow);display:flex;flex-direction:column}
@@ -339,6 +352,45 @@ function ensureAuthenticated(){
     })();
   });
 }
+
+/* ---- Projeto compartilhado (somente leitura, para vincular avaliações) ---- */
+window.unialfaProjeto = {
+  async listarAprovados(){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projetos?status=eq.Aprovado&select=id,nome,unidade,gerente&order=nome', { headers: unialfaAuth.authHeaders() });
+    return r.ok ? await r.json() : [];
+  },
+};
+
+/* ---- Historico de avaliacoes do Validador (assistente de decisao) ---- */
+window.unialfaAvaliacoes = {
+  async registrar(projetoId, veredito, titulo, score, respostas){
+    var user = window.currentUser;
+    await fetch(unialfaAuth.REST_BASE + '/validador_avaliacoes', {
+      method:'POST', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
+      body: JSON.stringify({
+        projeto_id: projetoId, veredito: veredito, titulo: titulo,
+        score_verde: score[0], score_amarelo: score[1], score_vermelho: score[2],
+        respostas: respostas, avaliado_por: user?user.id:null, avaliado_por_email: user?user.email:null
+      })
+    });
+  },
+  async listar(projetoId){
+    var r = await fetch(unialfaAuth.REST_BASE + '/validador_avaliacoes?projeto_id=eq.'+projetoId+'&select=*&order=criado_em.desc', { headers: unialfaAuth.authHeaders() });
+    return r.ok ? await r.json() : [];
+  },
+  async mostrar(projetoId, hostEl){
+    var itens = await this.listar(projetoId);
+    if(!itens.length){ hostEl.innerHTML = '<div class="hist-panel"><i>Nenhuma avaliação registrada ainda para este projeto.</i></div>'; hostEl.style.display='block'; return; }
+    var html = '<div class="hist-panel">';
+    itens.forEach(function(h){
+      var d = new Date(h.criado_em);
+      html += '<div class="hi"><b>'+h.titulo+'</b> — 🟢 '+h.score_verde+' 🟡 '+h.score_amarelo+' 🔴 '+h.score_vermelho+'<br>'+
+        '<span style="color:var(--muted-2,#9CA3AF)">'+d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+(h.avaliado_por_email||'—')+'</span></div>';
+    });
+    html += '</div>';
+    hostEl.innerHTML = html; hostEl.style.display='block';
+  },
+};
 </script>
 
 <div class="wrap">
@@ -425,6 +477,19 @@ function ensureAuthenticated(){
         <div class="eyebrow">concluir, replanejar ou encerrar?</div>
         <h2>Assistente de decisão em 8 perguntas</h2>
         <p class="sub">As oito perguntas do semáforo de decisão, uma de cada vez. Ao final, o painel devolve um veredito com a regra aplicada — coerente com as duas dimensões de sucesso do PMBOK 8ª edição.</p>
+
+        <div class="proj-link-card">
+          <div class="plc-head"><h3>Projeto vinculado (opcional — salva o veredito no histórico)</h3><button type="button" class="plc-hist" id="btnHistoricoAval" onclick="toggleHistoricoAvaliacoes()" style="display:none">Ver histórico de avaliações</button></div>
+          <select id="projetoSelect" onchange="onProjetoAvaliadorSelect()">
+            <option value="">Selecione um projeto aprovado (Gate 1)…</option>
+          </select>
+          <div class="plc-info" id="projetoInfo" style="display:none">
+            <span>Unidade:<b id="pi-unidade">—</b></span>
+            <span>Gerente:<b id="pi-gerente">—</b></span>
+          </div>
+          <div id="historicoAvalPanel" style="display:none"></div>
+        </div>
+
         <div class="quiz" id="quiz"></div>
       </section>
 
@@ -678,8 +743,33 @@ const OPT = [
  ["Sim","Parcialmente","Riscos inviabilizam continuidade"],
  ["Sim","Em implantação","Não foi incorporada"]
 ];
-let qi=0, score=[0,0,0]; // g,y,r
+let qi=0, score=[0,0,0], respostasDadas=[]; // g,y,r
 const quiz=document.getElementById("quiz");
+let projetosAprovadosAval=[]; let historicoAvalAberto=false;
+async function carregarProjetosAvaliador(){
+  projetosAprovadosAval = await unialfaProjeto.listarAprovados();
+  const sel=document.getElementById('projetoSelect');
+  sel.innerHTML='<option value="">Selecione um projeto aprovado (Gate 1)…</option>' +
+    projetosAprovadosAval.map(p=>`<option value="${p.id}">${p.nome}</option>`).join('');
+}
+function onProjetoAvaliadorSelect(){
+  const id=document.getElementById('projetoSelect').value;
+  const info=document.getElementById('projetoInfo');
+  document.getElementById('btnHistoricoAval').style.display = id ? 'inline' : 'none';
+  document.getElementById('historicoAvalPanel').style.display='none'; historicoAvalAberto=false;
+  const p=projetosAprovadosAval.find(x=>x.id===id);
+  if(!p){ info.style.display='none'; return; }
+  document.getElementById('pi-unidade').textContent=p.unidade||'—';
+  document.getElementById('pi-gerente').textContent=p.gerente||'—';
+  info.style.display='flex';
+}
+async function toggleHistoricoAvaliacoes(){
+  const id=document.getElementById('projetoSelect').value; if(!id) return;
+  const panel=document.getElementById('historicoAvalPanel');
+  historicoAvalAberto=!historicoAvalAberto;
+  if(historicoAvalAberto) await unialfaAvaliacoes.mostrar(id, panel);
+  else panel.style.display='none';
+}
 function renderQ(){
   if(qi>=Q.length){return renderVerdict();}
   quiz.innerHTML=`<div class="qbar"><i style="width:${(qi/Q.length)*100}%"></i></div>
@@ -690,19 +780,26 @@ function renderQ(){
      <button onclick="ans(2)"><span class="dot r"></span>${OPT[qi][2]}</button>
    </div>`;
 }
-function ans(k){score[k]++;qi++;renderQ();}
-function renderVerdict(){
+function ans(k){score[k]++;respostasDadas.push({pergunta:Q[qi],resposta:OPT[qi][k]});qi++;renderQ();}
+async function renderVerdict(){
   let cls,titulo,txt;
   if(score[2]>0){cls="bad";titulo="Encerrar ou repactuar formalmente";txt="Ao menos uma condição está no vermelho. Pela matriz de decisão, itens vermelhos inviabilizam a conclusão com sucesso: encerre formalmente ou repactue escopo, prazo e recursos antes de seguir.";}
   else if(score[1]>=3){cls="warn";titulo="Replanejar antes de concluir";txt="Três ou mais condições exigem ajuste. O projeto pode chegar ao sucesso, mas precisa de replanejamento formal — com registro das mudanças e novo aceite das partes interessadas.";}
   else if(score[1]>0){cls="warn";titulo="Concluir com plano de ajuste";txt="Condições majoritariamente verdes, com pontos de atenção. Trate os itens amarelos como riscos monitorados no encerramento.";}
   else{cls="ok";titulo="Pode concluir com sucesso";txt="Entregáveis aceitos, valor demonstrável, usuários envolvidos e operação sustentável: as duas dimensões de sucesso do PMBOK 8ª edição estão atendidas.";}
+  const projetoId=document.getElementById('projetoSelect').value;
+  let salvoMsg='';
+  if(projetoId){
+    await unialfaAvaliacoes.registrar(projetoId, cls, titulo, score, respostasDadas);
+    salvoMsg='<p style="font-size:.85rem;color:var(--ok,#059669)">✓ Veredito salvo no histórico do projeto.</p>';
+  }
   quiz.innerHTML=`<div class="verdict ${cls}">
     <div class="qnum">veredito</div><div class="big">${titulo}</div>
     <div class="placar"><span>🟢 ${score[0]}</span><span>🟡 ${score[1]}</span><span>🔴 ${score[2]}</span></div>
     <p>${txt}</p>
     <p style="font-size:.9rem">Regra aplicada: qualquer resposta vermelha → encerrar/repactuar; três ou mais amarelas → replanejar; caso contrário → concluir. Regra operacional derivada da matriz de decisão do estudo-base.</p>
-    <button onclick="qi=0;score=[0,0,0];renderQ()">Avaliar outro projeto</button>
+    ${salvoMsg}
+    <button onclick="qi=0;score=[0,0,0];respostasDadas=[];renderQ()">Avaliar outro projeto</button>
   </div>`;
 }
 renderQ();
@@ -720,5 +817,5 @@ const spy = new IntersectionObserver(ents=>{
 secs.forEach(sc=>spy.observe(sc));
 
 /* ============ INIT ============ */
-(async()=>{ await ensureAuthenticated(); })();
+(async()=>{ await ensureAuthenticated(); await carregarProjetosAvaliador(); })();
 </script>
