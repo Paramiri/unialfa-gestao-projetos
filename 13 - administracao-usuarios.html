@@ -171,10 +171,21 @@ body.auth-ready{padding-top:34px}
 
   async function ensureProfile(user){
     var p = await fetchProfile(user.id);
-    if(p) return p;
+    var meta = user.user_metadata || {};
+    var nome = meta.name || [meta.given_name, meta.family_name].filter(Boolean).join(' ') || null;
+    if(p){
+      if(nome && !p.nome){
+        await fetch(REST_BASE + '/perfis?id=eq.' + user.id, {
+          method: 'PATCH', headers: authHeaders({ 'Prefer': 'return=minimal' }),
+          body: JSON.stringify({ nome: nome }),
+        });
+        p.nome = nome;
+      }
+      return p;
+    }
     await fetch(REST_BASE + '/perfis', {
       method: 'POST', headers: authHeaders({ 'Prefer': 'return=minimal' }),
-      body: JSON.stringify({ id: user.id, email: user.email, papel: 'solicitante' }),
+      body: JSON.stringify({ id: user.id, email: user.email, nome: nome, papel: 'solicitante' }),
     });
     return await fetchProfile(user.id);
   }
