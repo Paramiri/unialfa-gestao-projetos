@@ -67,6 +67,10 @@
           ${seqItems}
           <div class="sidebar-section-label">Transversais</div>
           ${tvItems}
+          <div class="sidebar-section-label">Ferramentas</div>
+          <a class="nav-item" href="14 - validador-projetos.html" target="_blank" rel="noopener">
+            <span class="tag">◈</span><span class="lbl">Validador de Projetos</span>
+          </a>
           <div class="sidebar-section-label">Gestão</div>
           <a class="nav-item" href="13 - administracao-usuarios.html" target="_blank" rel="noopener">
             <span class="tag">⚙</span><span class="lbl">Administração</span>
