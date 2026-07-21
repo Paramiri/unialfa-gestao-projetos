@@ -306,7 +306,7 @@ var unialfaAuthUI = {
       msg.textContent='Não foi possível enviar o link. Tente novamente.'; msg.className='auth-msg err'; msg.style.display='block';
     }
   },
-  signInWithAzure: function(){ location.href = unialfaAuth.AUTH_BASE + '/authorize?provider=azure'; },
+  signInWithAzure: function(){ location.href = unialfaAuth.AUTH_BASE + '/authorize?provider=azure&scopes=openid%20email%20profile'; },
   reset: function(){
     document.getElementById('authStep1').style.display='block';
     document.getElementById('authStep2').style.display='none';
