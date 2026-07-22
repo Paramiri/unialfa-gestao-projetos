@@ -194,6 +194,7 @@ body.auth-ready{padding-top:34px}
           refresh_token: params.get('refresh_token'),
           expires_at: Date.now() + (parseInt(params.get('expires_in')||'3600',10)*1000),
         });
+        if (params.get('provider_token')) { localStorage.setItem('unialfa_provider_token', params.get('provider_token')); }
         history.replaceState(null, '', location.pathname + location.search);
         return true;
       }
@@ -260,12 +261,34 @@ body.auth-ready{padding-top:34px}
     dono_negocio: 'Dono do Negócio', alta_gestao: 'Alta Gestão', admin: 'PMO / Admin',
   };
 
+  async function tentarNomeViaGraph(profile){
+    var token = localStorage.getItem('unialfa_provider_token');
+    if(!token) return profile;
+    localStorage.removeItem('unialfa_provider_token');
+    if(!profile || profile.nome) return profile;
+    try{
+      var r = await fetch('https://graph.microsoft.com/v1.0/me', { headers: { 'Authorization': 'Bearer ' + token } });
+      if(!r.ok) return profile;
+      var me = await r.json();
+      var nome = me.displayName || [me.givenName, me.surname].filter(Boolean).join(' ');
+      if(nome){
+        await fetch(REST_BASE + '/perfis?id=eq.' + profile.id, {
+          method:'PATCH', headers: authHeaders({'Prefer':'return=minimal'}),
+          body: JSON.stringify({ nome: nome })
+        });
+        profile.nome = nome;
+      }
+    }catch(e){ console.warn('Nao foi possivel buscar nome via Microsoft Graph', e); }
+    return profile;
+  }
+
   window.unialfaAuth = {
     REST_BASE: REST_BASE,
     AUTH_BASE: AUTH_BASE,
     getSession: getSession, clearSession: clearSession, captureRedirect: captureRedirect,
     sendMagicLink: sendMagicLink, fetchUser: fetchUser, authHeaders: authHeaders,
-    fetchProfile: fetchProfile, ensureProfile: ensureProfile, papelLabel: function(p){ return PAPEL_LABEL[p]||p; },
+    fetchProfile: fetchProfile, ensureProfile: ensureProfile, tentarNomeViaGraph: tentarNomeViaGraph,
+    papelLabel: function(p){ return PAPEL_LABEL[p]||p; },
     signOut: function(){ clearSession(); location.reload(); },
   };
 })();
@@ -285,7 +308,7 @@ var unialfaAuthUI = {
       msg.textContent='Não foi possível enviar o link. Tente novamente.'; msg.className='auth-msg err'; msg.style.display='block';
     }
   },
-  signInWithAzure: function(){ location.href = unialfaAuth.AUTH_BASE + '/authorize?provider=azure&scopes=openid%20email%20profile'; },
+  signInWithAzure: function(){ location.href = unialfaAuth.AUTH_BASE + '/authorize?provider=azure&scopes=openid%20email%20profile%20User.Read'; },
   reset: function(){
     document.getElementById('authStep1').style.display='block';
     document.getElementById('authStep2').style.display='none';
@@ -302,6 +325,7 @@ function ensureAuthenticated(){
       var user = await unialfaAuth.fetchUser();
       if(!user) return null;
       var profile = await unialfaAuth.ensureProfile(user);
+      profile = await unialfaAuth.tentarNomeViaGraph(profile);
       window.currentUser = user; window.currentProfile = profile;
       var gate = document.getElementById('authGate');
       if(gate) gate.style.display='none';
