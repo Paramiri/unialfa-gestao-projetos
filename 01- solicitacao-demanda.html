@@ -235,6 +235,19 @@
       <button class="btn btn-ghost btn-sm" onclick="unialfaAuthUI.reset()">Usar outro e-mail</button>
     </div>
     <div id="authMsg" class="auth-msg" style="display:none"></div>
+
+    <div id="semLoginBloco" style="display:none">
+      <div style="text-align:center;margin:14px 0;color:var(--muted,#6B7280);font-size:11px;font-weight:600">— ou —</div>
+      <div id="semLoginStep1">
+        <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="unialfaAuthUI.mostrarSemLogin()">Continuar sem login</button>
+      </div>
+      <div id="semLoginStep2" style="display:none">
+        <p style="font-size:12.5px;color:var(--muted,#6B7280);margin-bottom:10px">Informe seu nome e e-mail para registro da solicitação:</p>
+        <input type="text" id="semLoginNome" placeholder="Seu nome completo">
+        <input type="email" id="semLoginEmail" placeholder="seu.email@..." style="margin-top:8px">
+        <button class="btn btn-primary" style="margin-top:10px" onclick="unialfaAuthUI.enviarSemLogin()">Continuar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -312,6 +325,22 @@ body.auth-ready{padding-top:34px}
     return r.ok;
   }
 
+  async function signInAnonymously(){
+    var r = await fetch(AUTH_BASE + '/signup', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    if(!r.ok) return null;
+    var data = await r.json();
+    saveSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at: Date.now() + (parseInt(data.expires_in||'3600',10)*1000),
+    });
+    return data.user;
+  }
+
   async function fetchUser(){
     var s = getSession();
     if(!s || !s.access_token) return null;
@@ -387,10 +416,10 @@ body.auth-ready{padding-top:34px}
     REST_BASE: REST_BASE,
     AUTH_BASE: AUTH_BASE,
     getSession: getSession, clearSession: clearSession, captureRedirect: captureRedirect,
-    sendMagicLink: sendMagicLink, fetchUser: fetchUser, authHeaders: authHeaders,
+    sendMagicLink: sendMagicLink, signInAnonymously: signInAnonymously, fetchUser: fetchUser, authHeaders: authHeaders,
     fetchProfile: fetchProfile, ensureProfile: ensureProfile, tentarNomeViaGraph: tentarNomeViaGraph,
     papelLabel: function(p){ return PAPEL_LABEL[p]||p; },
-    signOut: function(){ clearSession(); location.reload(); },
+    signOut: function(){ clearSession(); localStorage.removeItem('unialfa_guest_info'); location.reload(); },
   };
 })();
 
@@ -415,7 +444,34 @@ var unialfaAuthUI = {
     document.getElementById('authStep2').style.display='none';
     document.getElementById('authEmail').value='';
   },
+  mostrarSemLogin: function(){
+    document.getElementById('semLoginStep1').style.display='none';
+    document.getElementById('semLoginStep2').style.display='block';
+  },
+  enviarSemLogin: async function(){
+    var nome = document.getElementById('semLoginNome').value.trim();
+    var email = document.getElementById('semLoginEmail').value.trim();
+    var msg = document.getElementById('authMsg');
+    if(!nome || !email || email.indexOf('@')<0){ msg.textContent='Preencha nome e e-mail válidos.'; msg.className='auth-msg err'; msg.style.display='block'; return; }
+    msg.style.display='none';
+    var user = await unialfaAuth.signInAnonymously();
+    if(!user){ msg.textContent='Não foi possível continuar sem login. Tente novamente.'; msg.className='auth-msg err'; msg.style.display='block'; return; }
+    localStorage.setItem('unialfa_guest_info', JSON.stringify({ nome: nome, email: email }));
+    location.reload();
+  },
 };
+
+async function verificarConfigSemLogin(){
+  try{
+    var r = await fetch(unialfaAuth.REST_BASE + '/configuracoes?chave=eq.permitir_solicitacao_sem_login&select=valor', { headers: { 'apikey': 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ' } });
+    if(!r.ok) return;
+    var rows = await r.json();
+    if(rows[0] && rows[0].valor === true){
+      var bloco = document.getElementById('semLoginBloco');
+      if(bloco) bloco.style.display='block';
+    }
+  }catch(e){}
+}
 
 window.currentUser = null;
 window.currentProfile = null;
@@ -428,13 +484,18 @@ function ensureAuthenticated(){
       var profile = await unialfaAuth.ensureProfile(user);
       profile = await unialfaAuth.tentarNomeViaGraph(profile);
       window.currentUser = user; window.currentProfile = profile;
+      window.guestInfo = null;
+      if(user.is_anonymous){
+        try{ window.guestInfo = JSON.parse(localStorage.getItem('unialfa_guest_info')); }catch(e){}
+      }
       var gate = document.getElementById('authGate');
       if(gate) gate.style.display='none';
       document.body.classList.add('auth-ready');
       if(!document.querySelector('.auth-topbar')){
         var bar = document.createElement('div');
         bar.className='auth-topbar';
-        bar.innerHTML = '<span>Conectado como <b>'+ (user.email||'') +'</b></span><span class="papel-tag">'+unialfaAuth.papelLabel(profile?profile.papel:'solicitante')+'</span><button class="sair" onclick="unialfaAuth.signOut()">Sair</button>';
+        var label = (user.is_anonymous && window.guestInfo) ? ('Sem login — '+window.guestInfo.nome) : (user.email||'');
+        bar.innerHTML = '<span>Conectado como <b>'+ label +'</b></span><span class="papel-tag">'+unialfaAuth.papelLabel(profile?profile.papel:'solicitante')+'</span><button class="sair" onclick="unialfaAuth.signOut()">Sair</button>';
         document.body.prepend(bar);
       }
       return {user:user, profile:profile};
@@ -918,6 +979,11 @@ async function submitForm(){
   rec.orcamento=document.getElementById('orcamento').value.trim();
   rec.partes=document.getElementById('partes').value.trim();
   rec.anexos=document.getElementById('anexos').value.trim();
+  if(window.guestInfo){
+    if(!rec.solicitante) rec.solicitante=window.guestInfo.nome;
+    rec.guestEmail=window.guestInfo.email;
+    rec.semLogin=true;
+  }
   try{
     if(!rec.projetoId){
       const proj = await unialfaProjeto.criar({ nome: rec.projeto, unidade: rec.departamento, status:'Em avaliação', solicitacao_id: rec.id, criado_por: window.currentUser?window.currentUser.id:null });
@@ -1002,7 +1068,7 @@ function renderList(){
   for(const r of rows){
     html+=`<tr onclick="openDrawer('${r.id}')">
       <td><div class="proto">${esc(r.protocolo)}<small>${fmtStamp(r.createdAt)}</small></div></td>
-      <td><div class="proj">${esc(r.projeto)}<small>${esc(r.solicitante)}</small></div></td>
+      <td><div class="proj">${esc(r.projeto)}${r.semLogin?' <span class="badge" style="background:var(--warn-soft);color:var(--warn)">Sem login</span>':''}<small>${esc(r.solicitante)}</small></div></td>
       <td class="hide-sm">${esc(r.departamento)}</td>
       <td class="hide-sm">${fmtDate(r.prazo)}</td>
       <td><span class="badge ${badgeClass(r.status)}">${esc(r.status)}</span></td>
@@ -1023,7 +1089,8 @@ function openDrawer(id){
   document.getElementById('d-status').disabled = !souAdmin;
   document.getElementById('gate1-aviso').style.display = souAdmin ? 'none' : 'block';
   const rows=[
-    ['Solicitante',r.solicitante],
+    ['Solicitante',r.solicitante + (r.semLogin?' (enviado sem login)':'')],
+    ...(r.semLogin ? [['E-mail informado (sem login)', r.guestEmail||'—']] : []),
     ['Departamento / unidade',r.departamento],
     ['Justificativa / necessidade',r.justificativa],
     ['Objetivo / resultado esperado',r.objetivo],
@@ -1105,5 +1172,5 @@ function exportCSV(){
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
 
 /* ---------- init ---------- */
-(async()=>{ await ensureAuthenticated(); await loadAll(); renderList(); })();
+(async()=>{ await verificarConfigSemLogin(); await ensureAuthenticated(); await loadAll(); renderList(); })();
 </script>
