@@ -24,9 +24,9 @@ a{color:var(--red)}
 h1,h2,h3{font-weight:800;line-height:1.2}
 section{padding:44px 0;border-bottom:1px solid var(--line)}
 section:last-of-type{border-bottom:none}
-.eyebrow{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--red);margin-bottom:8px}
-h2{font-size:clamp(1.3rem,2.4vw,1.7rem);margin-bottom:8px}
-.sub{color:var(--muted);max-width:780px;font-size:13.5px}
+.eyebrow{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--red);margin-bottom:8px;text-align:center}
+h2{font-size:clamp(1.3rem,2.4vw,1.7rem);margin-bottom:8px;text-align:center}
+.sub{color:var(--muted);max-width:780px;font-size:13.5px;margin-left:auto;margin-right:auto;text-align:center}
 
 /* ---- topo / doc-head ---- */
 .page-head{background:var(--ink);color:#fff;border-radius:14px;padding:28px 32px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:24px}
@@ -67,7 +67,7 @@ h2{font-size:clamp(1.3rem,2.4vw,1.7rem);margin-bottom:8px}
 .edge{fill:none;stroke:var(--line-strong);stroke-linecap:round;transition:opacity .25s, stroke .25s}
 .edge.dim{opacity:.15}
 .edge.hot{stroke:var(--red)}
-.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:11.5px;color:var(--muted)}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:13.5px;color:var(--muted)}
 .legend span b{color:var(--ink)}
 .detail{border:1px solid var(--line);border-radius:var(--radius);padding:20px;background:var(--paper);box-shadow:var(--shadow);min-height:300px}
 .detail h3{color:var(--red);font-size:15px;font-weight:800;margin-bottom:.4rem}
@@ -189,7 +189,7 @@ footer.tool-foot .quote{font-size:13px;font-style:italic;color:var(--ink);font-w
 .auth-card{background:var(--paper,#fff);border-radius:14px;padding:32px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
 .auth-logo{font-weight:900;font-size:20px;letter-spacing:.04em;color:var(--red,#B91D2E);margin-bottom:18px}
 .auth-logo small{display:block;font-weight:600;font-size:9px;letter-spacing:.2em;color:var(--muted,#6B7280);margin-top:3px}
-.auth-card h2{font-size:17px;font-weight:800;margin-bottom:6px;color:var(--ink,#0F0F0F)}
+.auth-card h2{font-size:17px;font-weight:800;margin-bottom:6px;color:var(--ink,#0F0F0F);text-align:left}
 .auth-card p{font-size:12.5px;color:var(--muted,#6B7280);margin-bottom:16px;line-height:1.5}
 .auth-card input{width:100%;font-family:inherit;font-size:13.5px;border:1px solid var(--line-strong,#D1D5DB);border-radius:8px;padding:10px 12px;margin-bottom:10px;color:var(--ink,#0F0F0F)}
 .auth-card input:focus{outline:none;border-color:var(--red,#B91D2E);box-shadow:0 0 0 3px rgba(185,29,46,.12)}
@@ -469,7 +469,7 @@ window.unialfaAvaliacoes = {
 
         <div class="board-grid">
           <div class="board">
-            <svg id="svgBoard" viewBox="0 0 1000 740" role="img" aria-label="Diagrama de conexões entre fatores críticos de sucesso e dimensões de benefício"></svg>
+            <svg id="svgBoard" viewBox="0 0 1000 780" role="img" aria-label="Diagrama de conexões entre fatores críticos de sucesso e dimensões de benefício"></svg>
             <div class="legend">
               <span><b>traço grosso</b> = contribuição forte ●</span>
               <span><b>médio</b> = moderada ◐</span>
@@ -654,7 +654,7 @@ const W = [
 /* ============ QUADRO SVG ============ */
 const svg = document.getElementById("svgBoard");
 const NS = "http://www.w3.org/2000/svg";
-const fy = i => 50 + i*96, by = i => 110 + i*124;
+const fy = i => 50 + i*104, by = i => 110 + i*130;
 const FX = 262, BX = 738;
 let edges = [];
 
@@ -683,15 +683,15 @@ function wrapTxt(t,max){
 function nodeBox(x,y,w,txt,cls,idx){
   const g = el("g",{class:"node "+cls,tabindex:0,role:"button","aria-label":txt});
   const [code,...rest]=txt.split(" — ");
-  const lines = wrapTxt(rest.join(" — "),22);
-  const h = lines.length>1 ? 78 : 60;
+  const lines = wrapTxt(rest.join(" — "),19);
+  const h = lines.length>1 ? 84 : 64;
   el("rect",{x:x-(cls==="f"?w:0),y:y,width:w,height:h,rx:10},g);
   const bx = cls==="f"?x-w+14:x+14;
-  const label = el("text",{x:bx,y:y+26,"font-size":15.5},g);
+  const label = el("text",{x:bx,y:y+28,"font-size":17},g);
   label.textContent = code;
   label.style.fill = cls==="f" ? "var(--red)" : "var(--ink)";
   lines.forEach((ln,li)=>{
-    const l2 = el("text",{x:bx,y:y+46+li*17,"font-size":13.5},g);
+    const l2 = el("text",{x:bx,y:y+49+li*19,"font-size":15},g);
     l2.textContent = ln;
     l2.style.fill="var(--ink)"; l2.style.fontWeight="500";
   });
