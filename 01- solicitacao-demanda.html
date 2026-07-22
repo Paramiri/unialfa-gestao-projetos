@@ -984,6 +984,8 @@ async function submitForm(){
     if(!rec.solicitante) rec.solicitante=window.guestInfo.nome;
     rec.guestEmail=window.guestInfo.email;
     rec.semLogin=true;
+  } else {
+    rec.semLogin=false;
   }
   try{
     if(!rec.projetoId){
