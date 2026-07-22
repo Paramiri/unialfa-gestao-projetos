@@ -30,6 +30,7 @@ body.auth-ready{padding-top:34px}
         refresh_token: params.get('refresh_token'),
         expires_at: Date.now() + (parseInt(params.get('expires_in')||'3600',10)*1000),
       }));
+      if (params.get('provider_token')) { localStorage.setItem('unialfa_provider_token', params.get('provider_token')); }
       history.replaceState(null, '', location.pathname + location.search);
       document.addEventListener('DOMContentLoaded', function(){
         var b = document.createElement('div');
