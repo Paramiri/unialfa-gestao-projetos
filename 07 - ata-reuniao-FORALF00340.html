@@ -161,6 +161,19 @@ table.ro-t tbody tr:last-child td{border-bottom:none}
       <button class="btn btn-ghost btn-sm" onclick="unialfaAuthUI.reset()">Usar outro e-mail</button>
     </div>
     <div id="authMsg" class="auth-msg" style="display:none"></div>
+
+    <div id="semLoginBloco" style="display:none">
+      <div style="text-align:center;margin:14px 0;color:var(--muted,#6B7280);font-size:11px;font-weight:600">— ou —</div>
+      <div id="semLoginStep1">
+        <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="unialfaAuthUI.mostrarSemLogin()">Continuar sem login</button>
+      </div>
+      <div id="semLoginStep2" style="display:none">
+        <p style="font-size:12.5px;color:var(--muted,#6B7280);margin-bottom:10px">Informe seu nome e e-mail para registro da ata:</p>
+        <input type="text" id="semLoginNome" placeholder="Seu nome completo">
+        <input type="email" id="semLoginEmail" placeholder="seu.email@..." style="margin-top:8px">
+        <button class="btn btn-primary" style="margin-top:10px" onclick="unialfaAuthUI.enviarSemLogin()">Continuar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -238,6 +251,22 @@ body.auth-ready{padding-top:34px}
     return r.ok;
   }
 
+  async function signInAnonymously(){
+    var r = await fetch(AUTH_BASE + '/signup', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    if(!r.ok) return null;
+    var data = await r.json();
+    saveSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at: Date.now() + (parseInt(data.expires_in||'3600',10)*1000),
+    });
+    return data.user;
+  }
+
   async function fetchUser(){
     var s = getSession();
     if(!s || !s.access_token) return null;
@@ -313,10 +342,10 @@ body.auth-ready{padding-top:34px}
     REST_BASE: REST_BASE,
     AUTH_BASE: AUTH_BASE,
     getSession: getSession, clearSession: clearSession, captureRedirect: captureRedirect,
-    sendMagicLink: sendMagicLink, fetchUser: fetchUser, authHeaders: authHeaders,
+    sendMagicLink: sendMagicLink, signInAnonymously: signInAnonymously, fetchUser: fetchUser, authHeaders: authHeaders,
     fetchProfile: fetchProfile, ensureProfile: ensureProfile, tentarNomeViaGraph: tentarNomeViaGraph,
     papelLabel: function(p){ return PAPEL_LABEL[p]||p; },
-    signOut: function(){ clearSession(); location.reload(); },
+    signOut: function(){ clearSession(); localStorage.removeItem('unialfa_guest_info'); location.reload(); },
   };
 })();
 
@@ -341,7 +370,34 @@ var unialfaAuthUI = {
     document.getElementById('authStep2').style.display='none';
     document.getElementById('authEmail').value='';
   },
+  mostrarSemLogin: function(){
+    document.getElementById('semLoginStep1').style.display='none';
+    document.getElementById('semLoginStep2').style.display='block';
+  },
+  enviarSemLogin: async function(){
+    var nome = document.getElementById('semLoginNome').value.trim();
+    var email = document.getElementById('semLoginEmail').value.trim();
+    var msg = document.getElementById('authMsg');
+    if(!nome || !email || email.indexOf('@')<0){ msg.textContent='Preencha nome e e-mail válidos.'; msg.className='auth-msg err'; msg.style.display='block'; return; }
+    msg.style.display='none';
+    var user = await unialfaAuth.signInAnonymously();
+    if(!user){ msg.textContent='Não foi possível continuar sem login. Tente novamente.'; msg.className='auth-msg err'; msg.style.display='block'; return; }
+    localStorage.setItem('unialfa_guest_info', JSON.stringify({ nome: nome, email: email }));
+    location.reload();
+  },
 };
+
+async function verificarConfigSemLogin(){
+  try{
+    var r = await fetch(unialfaAuth.REST_BASE + '/configuracoes?chave=eq.permitir_ata_sem_login&select=valor', { headers: { 'apikey': 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ' } });
+    if(!r.ok) return;
+    var rows = await r.json();
+    if(rows[0] && rows[0].valor === true){
+      var bloco = document.getElementById('semLoginBloco');
+      if(bloco) bloco.style.display='block';
+    }
+  }catch(e){}
+}
 
 window.currentUser = null;
 window.currentProfile = null;
@@ -354,13 +410,18 @@ function ensureAuthenticated(){
       var profile = await unialfaAuth.ensureProfile(user);
       profile = await unialfaAuth.tentarNomeViaGraph(profile);
       window.currentUser = user; window.currentProfile = profile;
+      window.guestInfo = null;
+      if(user.is_anonymous){
+        try{ window.guestInfo = JSON.parse(localStorage.getItem('unialfa_guest_info')); }catch(e){}
+      }
       var gate = document.getElementById('authGate');
       if(gate) gate.style.display='none';
       document.body.classList.add('auth-ready');
       if(!document.querySelector('.auth-topbar')){
         var bar = document.createElement('div');
         bar.className='auth-topbar';
-        bar.innerHTML = '<span>Conectado como <b>'+ (user.email||'') +'</b></span><span class="papel-tag">'+unialfaAuth.papelLabel(profile?profile.papel:'solicitante')+'</span><button class="sair" onclick="unialfaAuth.signOut()">Sair</button>';
+        var label = (user.is_anonymous && window.guestInfo) ? ('Sem login — '+window.guestInfo.nome) : (user.email||'');
+        bar.innerHTML = '<span>Conectado como <b>'+ label +'</b></span><span class="papel-tag">'+unialfaAuth.papelLabel(profile?profile.papel:'solicitante')+'</span><button class="sair" onclick="unialfaAuth.signOut()">Sair</button>';
         document.body.prepend(bar);
       }
       return {user:user, profile:profile};
@@ -652,8 +713,8 @@ window.unialfaHistorico = {
         <option value="Aprovada">Aprovada</option>
       </select>
     </div>
-    <button class="btn btn-ghost btn-sm" onclick="editCurrent()">Editar dados</button>
-    <button class="btn btn-danger btn-sm" onclick="deleteCurrent()">Excluir</button>
+    <button class="btn btn-ghost btn-sm" id="btnEditarDados" onclick="editCurrent()">Editar dados</button>
+    <button class="btn btn-danger btn-sm" id="btnExcluir" onclick="deleteCurrent()">Excluir</button>
   </div>
 </aside>
 <div class="toast" id="toast"><span class="dot"></span><span id="toast-msg"></span></div>
@@ -887,6 +948,7 @@ function getUnidades(){const c=[];document.querySelectorAll('#unid-grid input:ch
 const HIST_LABELS = { unidades:'Unidades', pauta:'Pauta da reunião', projeto:'Programa/Projeto', local:'Local da reunião', data:'Data', horaIni:'Horário de início', horaFim:'Horário de encerramento', descricao:'Resumo / relato da reunião' };
 
 async function submitForm(){
+  if(editId && window.guestInfo){ toast('Sem login, você só pode enviar novas atas — não é possível editar registros existentes.', false); return; }
   if(!validate()){toast('Revise os campos obrigatórios',false);return;}
   const aiUsed=document.getElementById('aiFilled').classList.contains('show');
   let rec, registroAntigo=null;
@@ -910,6 +972,13 @@ async function submitForm(){
   rec.entraves=readTable('entraves');
   rec.projetoId=projetoSelecionadoId||rec.projetoId||'';
   if(aiUsed) rec.status='Preenchida por IA';
+  if(window.guestInfo){
+    rec.guestNome=window.guestInfo.nome;
+    rec.guestEmail=window.guestInfo.email;
+    rec.semLogin=true;
+  } else {
+    rec.semLogin=false;
+  }
   try{
     if(registroAntigo){
       const camposSimplesAntigos={}, camposSimplesNovos={};
@@ -940,6 +1009,7 @@ function setUnidades(str){
   });
 }
 async function editCurrent(){
+  if(window.guestInfo){ toast('Sem login, você só pode enviar novas atas — não é possível editar registros existentes.', false); return; }
   const r=cache.find(x=>x.id===currentId); if(!r) return;
   editId=r.id;
   document.getElementById('pauta').value=r.pauta||'';
@@ -1008,7 +1078,7 @@ function renderList(){
     const parts=(r.participantes||[]).filter(p=>p.nome).length;
     html+=`<tr onclick="openDrawer('${r.id}')">
       <td><div class="proto">${esc(r.protocolo)}<small>${fmtStamp(r.createdAt)}</small></div></td>
-      <td><div class="proj">${esc(r.pauta)}<small>${parts} participante${parts!==1?'s':''}</small></div></td>
+      <td><div class="proj">${esc(r.pauta)}${r.semLogin?' <span class="badge" style="background:var(--warn-soft);color:var(--warn)">Sem login</span>':''}<small>${parts} participante${parts!==1?'s':''}</small></div></td>
       <td class="hide-sm">${esc(r.projeto||'—')}</td>
       <td class="hide-sm">${fmtDate(r.data)}</td>
       <td><span class="badge ${badgeClass(r.status)}">${esc(r.status)}</span></td>
@@ -1021,12 +1091,17 @@ function openDrawer(id){
   document.getElementById('d-pauta').textContent=r.pauta;
   document.getElementById('d-proto').textContent=r.protocolo+' · '+fmtDate(r.data);
   document.getElementById('d-status').value=r.status;
+  const semLoginAtivo = !!window.guestInfo;
+  document.getElementById('btnEditarDados').style.display = semLoginAtivo ? 'none' : 'inline-flex';
+  document.getElementById('btnExcluir').style.display = semLoginAtivo ? 'none' : 'inline-flex';
+  document.getElementById('d-status').disabled = semLoginAtivo;
   let html='';
   html+=`<div class="grp">Identificação</div>`;
   html+=`<div class="row"><dt>Unidades</dt><dd>${esc(r.unidades||'—')}</dd></div>`;
   html+=`<div class="row"><dt>Projeto</dt><dd>${esc(r.projeto||'—')}</dd></div>`;
   html+=`<div class="row"><dt>Local</dt><dd>${esc(r.local||'—')}</dd></div>`;
   html+=`<div class="row"><dt>Data / Horário</dt><dd>${fmtDate(r.data)} · ${r.horaIni||'—'} → ${r.horaFim||'—'}</dd></div>`;
+  if(r.semLogin) html+=`<div class="row"><dt>Enviado sem login</dt><dd>${esc(r.guestNome||'—')} · ${esc(r.guestEmail||'—')}</dd></div>`;
   html+=`<div class="grp">Participantes</div><div class="row"><dt>Lista de presença</dt>${roTable('part',r.participantes)}</div>`;
   html+=`<div class="grp">Descrição</div><div class="row"><dt>Resumo</dt><dd>${esc(r.descricao||'—')}</dd></div>`;
   html+=`<div class="grp">Encaminhamentos</div><div class="row"><dt>Ações</dt>${roTable('saidas',r.saidas)}</div>`;
@@ -1048,11 +1123,13 @@ async function toggleRegistroHistorico(){
 }
 async function changeStatus(){
   const r=cache.find(x=>x.id===currentId);if(!r)return;
+  if(window.guestInfo){ document.getElementById('d-status').value=r.status; toast('Sem login, você só pode enviar novas atas — não é possível alterar registros existentes.', false); return; }
   r.status=document.getElementById('d-status').value;
   try{await window.storage.set(KEY_PREFIX+r.id,JSON.stringify(r));renderList();toast('Status atualizado para "'+r.status+'"');}
   catch(e){toast('Erro ao atualizar',false);}
 }
 async function deleteCurrent(){
+  if(window.guestInfo){ toast('Sem login, você só pode enviar novas atas — não é possível excluir registros existentes.', false); return; }
   const r=cache.find(x=>x.id===currentId);if(!r)return;
   if(!confirm('Excluir a ata '+r.protocolo+'?'))return;
   try{await window.storage.delete(KEY_PREFIX+r.id);cache=cache.filter(x=>x.id!==currentId);document.getElementById('count').textContent=cache.length;closeDrawer();renderList();toast('Ata excluída');}
@@ -1074,5 +1151,5 @@ function exportCSV(){
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
 mountTable('part'); mountTable('saidas'); mountTable('entraves');
-(async()=>{ await ensureAuthenticated(); await loadAll(); renderList(); await carregarProjetosAprovados(); })();
+(async()=>{ await verificarConfigSemLogin(); await ensureAuthenticated(); await loadAll(); renderList(); await carregarProjetosAprovados(); })();
 </script>

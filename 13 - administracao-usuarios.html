@@ -357,7 +357,16 @@ window.unialfaEquipe = {
         <span style="font-size:12px; color:var(--muted)">Quando ativado, aparece a opção "Continuar sem login" na tela de entrada da Solicitação de Demanda — a pessoa informa nome e e-mail manualmente para registro.</span>
       </div>
       <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; flex:none">
-        <input type="checkbox" id="toggleSemLogin" onchange="alterarConfigSemLogin(this.checked)" style="width:38px; height:20px; cursor:pointer">
+        <input type="checkbox" id="toggleSemLogin" onchange="alterarConfigSemLogin('permitir_solicitacao_sem_login', 'toggleSemLogin', this.checked)" style="width:38px; height:20px; cursor:pointer">
+      </label>
+    </div>
+    <div style="padding:20px 24px; display:flex; align-items:center; gap:14px; justify-content:space-between; flex-wrap:wrap; border-top:1px solid var(--line)">
+      <div>
+        <b style="display:block; font-size:13px; margin-bottom:4px">Permitir enviar Ata de Reunião sem login</b>
+        <span style="font-size:12px; color:var(--muted)">Quando ativado, aparece a opção "Continuar sem login" na tela de entrada da Ata de Reunião — a pessoa informa nome e e-mail manualmente para registro.</span>
+      </div>
+      <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; flex:none">
+        <input type="checkbox" id="toggleAtaSemLogin" onchange="alterarConfigSemLogin('permitir_ata_sem_login', 'toggleAtaSemLogin', this.checked)" style="width:38px; height:20px; cursor:pointer">
       </label>
     </div>
   </div>
@@ -422,18 +431,18 @@ function showAba(aba){
   document.getElementById('equipes-card').style.display = aba==='equipes' ? 'block' : 'none';
   document.getElementById('config-card').style.display = aba==='config' ? 'block' : 'none';
   document.querySelectorAll('.vtab').forEach((b,i)=>b.setAttribute('aria-selected', (aba==='usuarios'&&i===0)||(aba==='equipes'&&i===1)||(aba==='config'&&i===2)));
-  if(aba==='config') carregarConfigSemLogin();
+  if(aba==='config'){ carregarConfigSemLogin('permitir_solicitacao_sem_login', 'toggleSemLogin'); carregarConfigSemLogin('permitir_ata_sem_login', 'toggleAtaSemLogin'); }
 }
 
-async function carregarConfigSemLogin(){
-  const r=await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=eq.permitir_solicitacao_sem_login&select=valor', { headers: unialfaAuth.authHeaders() });
+async function carregarConfigSemLogin(chave, elId){
+  const r=await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=eq.'+chave+'&select=valor', { headers: unialfaAuth.authHeaders() });
   const rows = r.ok ? await r.json() : [];
-  document.getElementById('toggleSemLogin').checked = !!(rows[0] && rows[0].valor===true);
+  document.getElementById(elId).checked = !!(rows[0] && rows[0].valor===true);
 }
 
-async function alterarConfigSemLogin(ativo){
+async function alterarConfigSemLogin(chave, elId, ativo){
   try{
-    const r=await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=eq.permitir_solicitacao_sem_login', {
+    const r=await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=eq.'+chave, {
       method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
       body: JSON.stringify({ valor: ativo, atualizado_em: new Date().toISOString() })
     });
@@ -441,7 +450,7 @@ async function alterarConfigSemLogin(ativo){
     toast(ativo ? 'Opção "sem login" ativada' : 'Opção "sem login" desativada');
   }catch(e){
     toast('Não foi possível salvar a configuração', false);
-    document.getElementById('toggleSemLogin').checked = !ativo;
+    document.getElementById(elId).checked = !ativo;
   }
 }
 
