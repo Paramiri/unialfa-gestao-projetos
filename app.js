@@ -17,13 +17,28 @@
     return `<span class="art-chip missing" title="Ainda não construído">${esc(a.nome)} · a construir</span>`;
   }
 
-  function gateBadgeHtml(gateId, size) {
+  function gateBadgeHtml(gateId) {
     const g = GATES[gateId];
+    const parts = g.nome.split(' — ');
     return `<button class="gate-badge" data-gate="${g.id}" title="${esc(g.nome)}">
-      <span class="gate-diamond"></span>
-      <span class="g-lbl">${esc(g.nome.replace('Gate ', 'GATE '))}</span>
+      <span class="gate-diamond"><svg viewBox="0 0 24 24" class="gate-icon">${GATE_ICONS[gateId] || ''}</svg></span>
+      <span class="g-lbl">${esc(parts[0])}<br>${esc(parts[1] || '')}</span>
     </button>`;
   }
+
+  const DIAGRAM_ICONS = {
+    D01: '<g class="icon-svg"><line x1="24" y1="4" x2="24" y2="24"></line><path d="M14 15 L24 25 L34 15"></path><path d="M5 27 L5 43 L43 43 L43 27"></path></g>',
+    D02: '<g class="icon-svg"><circle cx="24" cy="24" r="20"></circle><circle cx="24" cy="24" r="12"></circle><circle cx="24" cy="24" r="4" fill="var(--red-deep)" stroke="none"></circle></g>',
+    D03: '<g class="icon-svg"><circle cx="24" cy="24" r="20"></circle><path d="M19 15 L35 24 L19 33 Z"></path></g>',
+    D04: '<g class="icon-svg" transform="translate(2,3)"><circle cx="22" cy="22" r="21"></circle><line x1="22" y1="22" x2="33" y2="11"></line><circle cx="22" cy="22" r="3.2" fill="var(--red-deep)" stroke="none"></circle></g>',
+    D05: '<g class="icon-svg"><rect x="6" y="20" width="36" height="22" rx="3"></rect><rect x="3" y="9" width="42" height="9" rx="3"></rect><line x1="18" y1="13.5" x2="30" y2="13.5"></line></g>',
+    D06: '<g class="icon-svg-tv" transform="translate(2,4)"><path d="M22 0 L44 14 L0 14 Z"></path><line x1="4" y1="18" x2="4" y2="34"></line><line x1="14" y1="18" x2="14" y2="34"></line><line x1="30" y1="18" x2="30" y2="34"></line><line x1="40" y1="18" x2="40" y2="34"></line><line x1="-2" y1="38" x2="46" y2="38"></line></g>',
+    D07: '<g class="icon-svg-tv" transform="translate(1,3)"><circle cx="16" cy="10" r="8"></circle><path d="M2 34 C2 22 9 16 16 16 C23 16 30 22 30 34"></path><circle cx="33" cy="14" r="6.5"></circle><path d="M24 34 C24 25 29 22 34 22 C39 22 44 26 45 33"></path></g>',
+  };
+  const GATE_ICONS = {
+    gate1: '<path d="M3 4 L21 4 L13 14 L13 20 L11 20 L11 14 Z"></path>',
+    gate2: '<path d="M4 12 L10 18 L20 6"></path>',
+  };
 
   function gateCardHtml(gateId) {
     const g = GATES[gateId];
@@ -87,37 +102,29 @@
 
   // ---------------- Home / Map ----------------
   function renderHome() {
-    const seqNodes = SEQUENCIAIS.map((d, i) => {
-      let out = `<a class="flow-node" href="#/${d.id}">
-          <span class="num">${tag(d)}</span>
-          <h3>${esc(d.titulo)}</h3>
-          <p>${esc(d.resumo)}</p>
-        </a>`;
-      return out;
-    });
-
-    // interleave arrows / gates between sequential nodes
-    let flowHtml = '';
-    SEQUENCIAIS.forEach((d, i) => {
-      flowHtml += seqNodes[i];
-      if (i < SEQUENCIAIS.length - 1) {
-        if (d.id === 'D01') flowHtml += gateBadgeHtml('gate1');
-        else if (d.id === 'D02') flowHtml += gateBadgeHtml('gate2');
-        else flowHtml += `<span class="flow-arrow">→</span>`;
-      }
-    });
-
-    const tvHtml = TRANSVERSAIS.map(d => {
-      const chips = d.grupos[0].estrategias.map(e => `<span class="tv-chip">${esc(e.id)}</span>`).join('');
-      return `<a class="transversal-track" href="#/${d.id}">
-        <span class="tv-tag">${tag(d)}</span>
-        <span class="tv-body">
-          <h4>${esc(d.titulo)} <em style="font-style:normal;color:var(--muted-2);font-weight:600">— transversal, D01 a D05</em></h4>
-          <p>${esc(d.resumo)}</p>
-          <span class="tv-chips">${chips}</span>
-        </span>
+    const nodeColsHtml = SEQUENCIAIS.map((d, i) => {
+      const spacer = (i === 0 || i === 1) ? ' style="margin-right:66px"' : '';
+      return `<a class="node-col" href="#/${d.id}"${spacer}>
+        <span class="icon-circle"><svg viewBox="0 0 48 48">${DIAGRAM_ICONS[d.id] || ''}</svg></span>
+        <span class="tag">${d.id}</span>
+        <h4>${esc(d.titulo)}</h4>
+        <p>${esc(d.resumo)}</p>
       </a>`;
     }).join('');
+
+    const tvCardHtml = (d, pos) => {
+      const chips = d.grupos[0].estrategias.map(e => `<span class="tv-chip">${esc(e.id)}</span>`).join('');
+      const icon = `<span class="icon-circle"><svg viewBox="0 0 48 48">${DIAGRAM_ICONS[d.id] || ''}</svg></span>`;
+      const body = `
+        <span class="tag">${d.id} · Transversal</span>
+        <h3>${esc(d.titulo)}</h3>
+        <p>${esc(d.resumo)}</p>
+        <span class="tv-chips">${chips}</span>`;
+      return `<a class="tv-card ${pos}" href="#/${d.id}">${pos === 'top' ? icon + body : body + icon}</a>`;
+    };
+
+    const d06 = TRANSVERSAIS.find(d => d.id === 'D06');
+    const d07 = TRANSVERSAIS.find(d => d.id === 'D07');
 
     return `
       <div class="hero">
@@ -128,12 +135,25 @@
       <div class="comm-band">Comunicação <span>— atravessa todas as diretrizes, do D01 ao D07</span></div>
 
       <div class="map-wrap">
-        <div class="flow-row">${flowHtml}</div>
-        <div>${tvHtml}</div>
+        <div class="diagram-scroll" id="diagramScroll">
+          <div class="diagram-stage" id="diagramStage">
+            <svg class="arc-svg" id="arcSvg" preserveAspectRatio="none" aria-hidden="true">
+              <path class="arc"></path><path class="arc"></path><path class="arc"></path><path class="arc"></path>
+              <g class="chevron" id="chevronGroup"></g>
+            </svg>
+            ${d06 ? tvCardHtml(d06, 'top') : ''}
+            <div class="node-row" id="nodeRow">
+              ${gateBadgeHtml('gate1').replace('class="gate-badge"', 'class="gate-badge" style="left:228px"')}
+              ${gateBadgeHtml('gate2').replace('class="gate-badge"', 'class="gate-badge" style="left:518px"')}
+              ${nodeColsHtml}
+            </div>
+            ${d07 ? tvCardHtml(d07, 'bottom') : ''}
+          </div>
+        </div>
         <div class="legend">
           <span><i style="background:var(--red)"></i> Diretriz sequencial (D01–D05)</span>
           <span><i style="background:var(--ink)"></i> Diretriz transversal (D06–D07)</span>
-          <span><i style="background:var(--gold);transform:rotate(45deg)"></i> Gate de autorização institucional</span>
+          <span><i style="background:var(--gold);border-radius:3px;transform:rotate(45deg)"></i> Gate de autorização institucional</span>
         </div>
       </div>
 
@@ -235,6 +255,64 @@
     return h || 'home';
   }
 
+  // ---------------- Diagram layout (arcs + responsive scale) ----------------
+  function fitDiagramScale() {
+    const scrollEl = document.getElementById('diagramScroll');
+    const stage = document.getElementById('diagramStage');
+    if (!scrollEl || !stage) return;
+    const naturalW = 1228;
+    const scale = Math.min(1, scrollEl.clientWidth / naturalW);
+    stage.style.transform = `scale(${scale})`;
+    scrollEl.style.height = (stage.offsetHeight * scale) + 'px';
+  }
+
+  function layoutDiagram() {
+    const stage = document.getElementById('diagramStage');
+    if (!stage) return;
+    const svg = document.getElementById('arcSvg');
+    const chevronGroup = document.getElementById('chevronGroup');
+    const nodeRow = document.getElementById('nodeRow');
+    const cols = nodeRow ? nodeRow.querySelectorAll('.node-col') : [];
+    const d06Icon = stage.querySelector('.tv-card.top .icon-circle');
+    const d07Icon = stage.querySelector('.tv-card.bottom .icon-circle');
+    if (!cols.length || !d06Icon || !d07Icon) return;
+
+    stage.style.transform = 'none'; // measure natural (unscaled) layout first
+
+    const sr = stage.getBoundingClientRect();
+    const rel = el => {
+      const r = el.getBoundingClientRect();
+      return { cx: r.left + r.width / 2 - sr.left, cy: r.top + r.height / 2 - sr.top, l: r.left - sr.left, rr: r.right - sr.left, t: r.top - sr.top, b: r.bottom - sr.top };
+    };
+
+    const d06 = rel(d06Icon), d07 = rel(d07Icon);
+    const c1 = rel(cols[0].querySelector('.icon-circle'));
+    const c5 = rel(cols[cols.length - 1].querySelector('.icon-circle'));
+    const R = 24;
+
+    svg.setAttribute('viewBox', `0 0 ${stage.scrollWidth} ${stage.scrollHeight}`);
+    const paths = [
+      `M ${d06.l} ${d06.cy} L ${c1.cx + R} ${d06.cy} Q ${c1.cx} ${d06.cy} ${c1.cx} ${d06.cy + R} L ${c1.cx} ${c1.t}`,
+      `M ${d06.rr} ${d06.cy} L ${c5.cx - R} ${d06.cy} Q ${c5.cx} ${d06.cy} ${c5.cx} ${d06.cy + R} L ${c5.cx} ${c1.t}`,
+      `M ${d07.l} ${d07.cy} L ${c1.cx + R} ${d07.cy} Q ${c1.cx} ${d07.cy} ${c1.cx} ${d07.cy - R} L ${c1.cx} ${c1.b}`,
+      `M ${d07.rr} ${d07.cy} L ${c5.cx - R} ${d07.cy} Q ${c5.cx} ${d07.cy} ${c5.cx} ${d07.cy - R} L ${c5.cx} ${c1.b}`,
+    ];
+    svg.querySelectorAll('.arc').forEach((p, i) => p.setAttribute('d', paths[i] || ''));
+
+    chevronGroup.innerHTML = '';
+    for (let i = 0; i < cols.length - 1; i++) {
+      const a = cols[i].querySelector('.icon-circle');
+      const b = cols[i + 1].querySelector('.icon-circle');
+      const ra = rel(a), rb = rel(b);
+      const midX = (ra.rr + rb.l) / 2, cy = ra.cy;
+      const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      p.setAttribute('d', `M ${midX - 8} ${cy - 12} L ${midX + 8} ${cy} L ${midX - 8} ${cy + 12} L ${midX - 8} ${cy + 3} L ${midX - 20} ${cy + 3} L ${midX - 20} ${cy - 3} L ${midX - 8} ${cy - 3} Z`);
+      chevronGroup.appendChild(p);
+    }
+
+    fitDiagramScale();
+  }
+
   function render() {
     const id = currentId();
     const body = id === 'home' ? renderHome() : renderDetail(id);
@@ -244,6 +322,7 @@
     `;
     wireEvents();
     window.scrollTo(0, 0);
+    if (id === 'home') layoutDiagram();
   }
 
   function wireEvents() {
@@ -283,4 +362,5 @@
 
   window.addEventListener('hashchange', render);
   window.addEventListener('DOMContentLoaded', render);
+  window.addEventListener('resize', () => { if (currentId() === 'home') fitDiagramScale(); });
 })();

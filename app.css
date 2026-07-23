@@ -99,56 +99,61 @@ button{font-family:var(--font)}
   box-shadow:var(--shadow); padding:26px; margin-bottom:22px;
 }
 
-.flow-row{
-  display:flex; align-items:stretch; gap:6px; margin-bottom:8px; flex-wrap:wrap;
-}
-.flow-node{
-  flex:1 1 140px; background:var(--surface-2); border:1.5px solid var(--line-strong);
-  border-radius:var(--radius-sm); padding:14px 12px; cursor:pointer; text-align:left;
-  transition:all .14s ease; position:relative; min-width:130px;
-}
-.flow-node:hover{border-color:var(--red); box-shadow:0 4px 16px rgba(185,29,46,.12); transform:translateY(-1px)}
-.flow-node .num{
-  display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px;
-  border-radius:7px; background:var(--red); color:#fff; font-weight:800; font-size:11.5px; margin-bottom:8px;
-}
-.flow-node h3{margin:0 0 4px; font-size:12.5px; font-weight:700; letter-spacing:.01em}
-.flow-node p{margin:0; font-size:10.5px; color:var(--muted); line-height:1.4}
+/* ---- diagrama de fluxo (circulos + conectores) ---- */
+.diagram-scroll{position:relative; overflow:hidden}
+.diagram-stage{position:relative; width:1228px; transform-origin:top left}
+.arc-svg{position:absolute; inset:0; z-index:1; pointer-events:none; overflow:visible; width:100%; height:100%}
+.arc{fill:none; stroke:rgba(150,24,38,.55); stroke-width:2.5}
+.chevron path{fill:var(--red)}
 
-.flow-arrow{
-  flex:none; display:flex; align-items:center; justify-content:center; width:22px;
-  color:var(--line-strong); font-size:16px; font-weight:700;
+.tv-card{
+  display:block; width:480px; margin:0 auto 40px; text-align:center; text-decoration:none; color:inherit;
 }
+.tv-card.bottom{margin:40px auto 0}
+.icon-circle{
+  width:60px; height:60px; border-radius:50%; background:#fff; border:1.5px solid var(--line-strong); margin:0 auto 10px;
+  display:flex; align-items:center; justify-content:center; box-shadow:0 6px 16px rgba(0,0,0,.1);
+}
+.icon-circle svg{width:30px; height:30px}
+.tv-card .tag{display:block; color:var(--ink); font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; margin-bottom:5px}
+.tv-card h3{color:var(--ink); font-size:14.5px; font-weight:800; margin:0 0 6px; letter-spacing:.01em}
+.tv-card p{color:var(--muted); font-size:11.5px; margin:0 0 10px; line-height:1.5}
+.tv-chips{display:flex; gap:6px; flex-wrap:wrap; justify-content:center}
+.tv-chip{
+  font-size:9.5px; font-weight:700; letter-spacing:.02em; padding:3px 9px; border-radius:999px;
+  background:var(--surface); border:1px solid var(--line-strong); color:var(--ink); cursor:default;
+}
+
+.node-row{position:relative; width:1228px; display:flex; gap:24px; z-index:2}
+.node-col{
+  flex:0 0 200px; width:200px; text-align:center; cursor:pointer; outline:none; text-decoration:none; color:inherit;
+}
+.node-col .icon-circle{width:64px; height:64px; transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s}
+.node-col .icon-circle svg{width:32px; height:32px}
+.node-col:hover .icon-circle, .node-col:focus-visible .icon-circle{transform:translateY(-5px); box-shadow:0 14px 24px rgba(0,0,0,.18)}
+.node-col:focus-visible .icon-circle{outline:2px solid var(--red); outline-offset:2px}
+.node-col .tag{display:block; color:var(--red); font-size:10px; font-weight:800; letter-spacing:.08em; margin-bottom:4px}
+.node-col h4{color:var(--ink); font-size:14px; font-weight:800; margin:0 0 7px}
+.node-col p{color:var(--muted); font-size:11px; margin:0; line-height:1.55}
+
+.icon-svg{stroke:var(--red-deep); stroke-width:5.5; fill:none; stroke-linecap:round; stroke-linejoin:round}
+.icon-svg-tv{stroke:var(--ink); stroke-width:5.5; fill:none; stroke-linecap:round; stroke-linejoin:round}
 
 .gate-badge{
-  flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center;
-  width:68px; cursor:pointer; padding:4px; border-radius:8px; transition:background .12s;
+  position:absolute; top:4px; width:74px; text-align:center; z-index:3;
+  background:none; border:none; padding:0; font-family:var(--font); cursor:pointer;
 }
-.gate-badge:hover{background:var(--gold-soft)}
+.gate-badge::before{
+  content:''; position:absolute; top:-5px; left:50%; transform:translateX(-50%);
+  width:38px; height:38px; border-radius:50%; background:#fff; z-index:-1;
+}
 .gate-diamond{
-  width:26px; height:26px; background:var(--gold); transform:rotate(45deg);
-  border-radius:4px; margin-bottom:6px; box-shadow:0 2px 6px rgba(166,121,10,.35);
+  width:26px; height:26px; background:var(--gold); border-radius:6px; transform:rotate(45deg);
+  margin:0 auto 9px; box-shadow:0 6px 14px rgba(0,0,0,.28);
+  display:flex; align-items:center; justify-content:center;
 }
-.gate-badge .g-lbl{font-size:8.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--gold); text-align:center; line-height:1.2}
-
-.transversal-track{
-  border:1.5px dashed var(--line-strong); border-radius:var(--radius-sm);
-  padding:12px 16px; margin-top:14px; cursor:pointer; transition:all .14s ease;
-  display:flex; align-items:center; gap:14px;
-}
-.transversal-track:hover{border-color:var(--red); background:var(--red-light)}
-.transversal-track .tv-tag{
-  flex:none; width:34px; height:34px; border-radius:9px; background:var(--ink); color:#fff;
-  display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px;
-}
-.transversal-track .tv-body{flex:1; min-width:0}
-.transversal-track h4{margin:0 0 2px; font-size:12.5px; font-weight:700}
-.transversal-track p{margin:0; font-size:10.5px; color:var(--muted)}
-.transversal-track .tv-chips{display:flex; gap:5px; flex-wrap:wrap; margin-top:6px}
-.tv-chip{
-  font-size:9px; font-weight:700; letter-spacing:.02em; padding:3px 7px; border-radius:999px;
-  background:var(--surface-2); border:1px solid var(--line); color:var(--muted);
-}
+.gate-diamond svg{width:15px; height:15px; transform:rotate(-45deg); stroke:#fff; stroke-width:2.4; fill:none; stroke-linecap:round; stroke-linejoin:round}
+.gate-badge .g-lbl{display:block; color:#7A5A08; font-size:8.5px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; line-height:1.3}
 
 .legend{display:flex; gap:18px; flex-wrap:wrap; margin-top:16px; font-size:10.5px; color:var(--muted)}
 .legend span{display:inline-flex; align-items:center; gap:6px}
