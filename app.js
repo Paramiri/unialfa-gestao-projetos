@@ -286,16 +286,19 @@
     };
 
     const d06 = rel(d06Icon), d07 = rel(d07Icon);
-    const c1 = rel(cols[0].querySelector('.icon-circle'));
-    const c5 = rel(cols[cols.length - 1].querySelector('.icon-circle'));
+    const col1El = cols[0], col5El = cols[cols.length - 1];
+    const c1 = rel(col1El.querySelector('.icon-circle'));
+    const c5 = rel(col5El.querySelector('.icon-circle'));
+    const c1Col = rel(col1El); // whole column box (icon + tag + title + paragraph)
+    const c5Col = rel(col5El);
     const R = 24;
 
     svg.setAttribute('viewBox', `0 0 ${stage.scrollWidth} ${stage.scrollHeight}`);
     const paths = [
       `M ${d06.l} ${d06.cy} L ${c1.cx + R} ${d06.cy} Q ${c1.cx} ${d06.cy} ${c1.cx} ${d06.cy + R} L ${c1.cx} ${c1.t}`,
       `M ${d06.rr} ${d06.cy} L ${c5.cx - R} ${d06.cy} Q ${c5.cx} ${d06.cy} ${c5.cx} ${d06.cy + R} L ${c5.cx} ${c1.t}`,
-      `M ${d07.l} ${d07.cy} L ${c1.cx + R} ${d07.cy} Q ${c1.cx} ${d07.cy} ${c1.cx} ${d07.cy - R} L ${c1.cx} ${c1.b}`,
-      `M ${d07.rr} ${d07.cy} L ${c5.cx - R} ${d07.cy} Q ${c5.cx} ${d07.cy} ${c5.cx} ${d07.cy - R} L ${c5.cx} ${c1.b}`,
+      `M ${d07.l} ${d07.cy} L ${c1.cx + R} ${d07.cy} Q ${c1.cx} ${d07.cy} ${c1.cx} ${d07.cy - R} L ${c1.cx} ${c1Col.b}`,
+      `M ${d07.rr} ${d07.cy} L ${c5.cx - R} ${d07.cy} Q ${c5.cx} ${d07.cy} ${c5.cx} ${d07.cy - R} L ${c5.cx} ${c5Col.b}`,
     ];
     svg.querySelectorAll('.arc').forEach((p, i) => p.setAttribute('d', paths[i] || ''));
 
