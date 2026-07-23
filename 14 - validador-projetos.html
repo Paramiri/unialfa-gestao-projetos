@@ -53,6 +53,13 @@ h2{font-size:clamp(1.3rem,2.4vw,1.7rem);margin-bottom:8px;text-align:center}
 .tool-nav a.on{border-color:var(--red);background:var(--red-light)}
 .tool-nav a.on .num{border-color:var(--red);color:var(--red)}
 .tool-main{min-width:0}
+@media (min-width:1250px){
+  /* menu flutua fixo na lateral, fora do fluxo do conteúdo — não disputa largura com o texto centralizado */
+  .tool-nav{position:fixed;left:20px;top:50%;transform:translateY(-50%);flex-direction:column;flex-wrap:nowrap;gap:6px;z-index:40}
+  .tool-nav a{padding:8px;position:relative}
+  .tool-nav a .lbl{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:10px;background:var(--ink);color:#fff;padding:6px 12px;border-radius:6px;font-size:11.5px;font-weight:600;white-space:nowrap;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .15s}
+  .tool-nav a:hover .lbl, .tool-nav a:focus-visible .lbl{opacity:1}
+}
 
 /* ---- quadro de conexoes ---- */
 .board-grid{display:grid;grid-template-columns:1fr 260px;gap:22px;margin-top:1.4rem}
