@@ -53,6 +53,11 @@ h2{font-size:clamp(1.3rem,2.4vw,1.7rem);margin-bottom:8px;text-align:center}
 .tool-nav a.on{border-color:var(--red);background:var(--red-light)}
 .tool-nav a.on .num{border-color:var(--red);color:var(--red)}
 .tool-main{min-width:0}
+@media (min-width:821px){
+  /* alinha o título/introdução de cada seção com o mesmo centro do cabeçalho (ignora a largura do menu lateral) */
+  .tool-main .eyebrow, .tool-main h2{ margin-left:-248px; width:calc(100% + 248px) }
+  .tool-main .sub{ margin-left:-108px }
+}
 @media (max-width:820px){ .tool-layout{grid-template-columns:1fr} .tool-nav{position:static;flex-direction:row;flex-wrap:wrap} }
 
 /* ---- quadro de conexoes ---- */
