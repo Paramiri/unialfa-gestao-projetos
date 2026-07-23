@@ -126,6 +126,26 @@
     const d06 = TRANSVERSAIS.find(d => d.id === 'D06');
     const d07 = TRANSVERSAIS.find(d => d.id === 'D07');
 
+    const mNode = d => `<a class="dm-node" href="#/${d.id}">
+      <span class="icon-circle"><svg viewBox="0 0 48 48">${DIAGRAM_ICONS[d.id] || ''}</svg></span>
+      <span class="dm-body"><span class="tag">${d.id}</span><h4>${esc(d.titulo)}</h4><p>${esc(d.resumo)}</p></span>
+    </a>`;
+    const mGate = gateId => {
+      const g = GATES[gateId];
+      const parts = g.nome.split(' — ');
+      return `<button class="dm-gate" data-gate="${g.id}">
+        <span class="gate-diamond"><svg viewBox="0 0 24 24" class="gate-icon">${GATE_ICONS[gateId] || ''}</svg></span>
+        <span class="dm-body"><b>${esc(parts[0])} — ${esc(parts[1] || '')}</b></span>
+      </button>`;
+    };
+    const mTv = d => {
+      const chips = d.grupos[0].estrategias.map(e => `<span class="tv-chip">${esc(e.id)}</span>`).join('');
+      return `<a class="dm-node dm-tv" href="#/${d.id}">
+        <span class="icon-circle"><svg viewBox="0 0 48 48">${DIAGRAM_ICONS[d.id] || ''}</svg></span>
+        <span class="dm-body"><span class="tag">${d.id} · Transversal</span><h4>${esc(d.titulo)}</h4><p>${esc(d.resumo)}</p><span class="tv-chips">${chips}</span></span>
+      </a>`;
+    };
+
     return `
       <div class="hero">
         <h1>Diretrizes para a Gestão de Projetos — UNIALFA</h1>
@@ -135,20 +155,31 @@
       <div class="comm-band">Comunicação <span>— atravessa todas as diretrizes, do D01 ao D07</span></div>
 
       <div class="map-wrap">
-        <div class="diagram-scroll" id="diagramScroll">
-          <div class="diagram-stage" id="diagramStage">
-            <svg class="arc-svg" id="arcSvg" preserveAspectRatio="none" aria-hidden="true">
-              <path class="arc"></path><path class="arc"></path><path class="arc"></path><path class="arc"></path>
-              <g class="chevron" id="chevronGroup"></g>
-            </svg>
-            ${d06 ? tvCardHtml(d06, 'top') : ''}
-            <div class="node-row" id="nodeRow">
-              ${gateBadgeHtml('gate1').replace('class="gate-badge"', 'class="gate-badge" style="left:228px"')}
-              ${gateBadgeHtml('gate2').replace('class="gate-badge"', 'class="gate-badge" style="left:518px"')}
-              ${nodeColsHtml}
+        <div class="diagram-desktop">
+          <div class="diagram-scroll" id="diagramScroll">
+            <div class="diagram-stage" id="diagramStage">
+              <svg class="arc-svg" id="arcSvg" preserveAspectRatio="none" aria-hidden="true">
+                <path class="arc"></path><path class="arc"></path><path class="arc"></path><path class="arc"></path>
+                <g class="chevron" id="chevronGroup"></g>
+              </svg>
+              ${d06 ? tvCardHtml(d06, 'top') : ''}
+              <div class="node-row" id="nodeRow">
+                ${gateBadgeHtml('gate1').replace('class="gate-badge"', 'class="gate-badge" style="left:228px"')}
+                ${gateBadgeHtml('gate2').replace('class="gate-badge"', 'class="gate-badge" style="left:518px"')}
+                ${nodeColsHtml}
+              </div>
+              ${d07 ? tvCardHtml(d07, 'bottom') : ''}
             </div>
-            ${d07 ? tvCardHtml(d07, 'bottom') : ''}
           </div>
+        </div>
+        <div class="diagram-mobile">
+          ${d06 ? mTv(d06) : ''}
+          ${mNode(SEQUENCIAIS[0])}
+          ${mGate('gate1')}
+          ${mNode(SEQUENCIAIS[1])}
+          ${mGate('gate2')}
+          ${SEQUENCIAIS.slice(2).map(mNode).join('')}
+          ${d07 ? mTv(d07) : ''}
         </div>
         <div class="legend">
           <span><i style="background:var(--red)"></i> Diretriz sequencial (D01–D05)</span>
@@ -259,7 +290,7 @@
   function fitDiagramScale() {
     const scrollEl = document.getElementById('diagramScroll');
     const stage = document.getElementById('diagramStage');
-    if (!scrollEl || !stage) return;
+    if (!scrollEl || !stage || stage.offsetParent === null) return; // oculto (versão mobile empilhada ativa)
     const naturalW = 1228;
     const scale = Math.min(1, scrollEl.clientWidth / naturalW);
     stage.style.transform = `scale(${scale})`;
@@ -268,7 +299,7 @@
 
   function layoutDiagram() {
     const stage = document.getElementById('diagramStage');
-    if (!stage) return;
+    if (!stage || stage.offsetParent === null) return; // oculto (versão mobile empilhada ativa)
     const svg = document.getElementById('arcSvg');
     const chevronGroup = document.getElementById('chevronGroup');
     const nodeRow = document.getElementById('nodeRow');
