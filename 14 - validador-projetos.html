@@ -56,7 +56,7 @@ h2{font-size:clamp(1.3rem,2.4vw,1.7rem);margin-bottom:8px;text-align:center}
 @media (max-width:820px){ .tool-layout{grid-template-columns:1fr} .tool-nav{position:static;flex-direction:row;flex-wrap:wrap} }
 
 /* ---- quadro de conexoes ---- */
-.board-grid{display:grid;grid-template-columns:1fr 320px;gap:22px;margin-top:1.4rem}
+.board-grid{display:grid;grid-template-columns:1fr 260px;gap:22px;margin-top:1.4rem}
 .board{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);box-shadow:var(--shadow);padding:12px}
 .board svg{width:100%;height:auto;display:block}
 .node{cursor:pointer}
@@ -469,7 +469,7 @@ window.unialfaAvaliacoes = {
 
         <div class="board-grid">
           <div class="board">
-            <svg id="svgBoard" viewBox="0 0 1000 780" role="img" aria-label="Diagrama de conexões entre fatores críticos de sucesso e dimensões de benefício"></svg>
+            <svg id="svgBoard" viewBox="0 0 1000 1050" role="img" aria-label="Diagrama de conexões entre fatores críticos de sucesso e dimensões de benefício"></svg>
             <div class="legend">
               <span><b>traço grosso</b> = contribuição forte ●</span>
               <span><b>médio</b> = moderada ◐</span>
@@ -654,16 +654,16 @@ const W = [
 /* ============ QUADRO SVG ============ */
 const svg = document.getElementById("svgBoard");
 const NS = "http://www.w3.org/2000/svg";
-const fy = i => 50 + i*104, by = i => 110 + i*130;
-const FX = 262, BX = 738;
+const fy = i => 50 + i*140, by = i => 110 + i*140;
+const FX = 310, BX = 690;
 let edges = [];
 
 function el(tag, attrs, parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);(parent||svg).appendChild(e);return e;}
 
 W.forEach((row,fi)=>row.forEach((w,bi)=>{
-  const y1=fy(fi)+36, y2=by(bi)+36;
+  const y1=fy(fi)+53, y2=by(bi)+53;
   const path = el("path",{
-    d:`M ${FX+8} ${y1} C ${FX+180} ${y1}, ${BX-180} ${y2}, ${BX-8} ${y2}`,
+    d:`M ${FX+8} ${y1} C ${FX+160} ${y1}, ${BX-160} ${y2}, ${BX-8} ${y2}`,
     class:"edge drawline", "stroke-width": w===1?4.5:(w===0.6?2.4:1.1),
     opacity: w===1?.85:(w===0.6?.5:.28),
     "data-f":fi,"data-b":bi
@@ -683,15 +683,15 @@ function wrapTxt(t,max){
 function nodeBox(x,y,w,txt,cls,idx){
   const g = el("g",{class:"node "+cls,tabindex:0,role:"button","aria-label":txt});
   const [code,...rest]=txt.split(" — ");
-  const lines = wrapTxt(rest.join(" — "),19);
-  const h = lines.length>1 ? 84 : 64;
+  const lines = wrapTxt(rest.join(" — "),18);
+  const h = lines.length>1 ? 122 : 90;
   el("rect",{x:x-(cls==="f"?w:0),y:y,width:w,height:h,rx:10},g);
-  const bx = cls==="f"?x-w+14:x+14;
-  const label = el("text",{x:bx,y:y+28,"font-size":17},g);
+  const bx = cls==="f"?x-w+16:x+16;
+  const label = el("text",{x:bx,y:y+36,"font-size":30},g);
   label.textContent = code;
   label.style.fill = cls==="f" ? "var(--red)" : "var(--ink)";
   lines.forEach((ln,li)=>{
-    const l2 = el("text",{x:bx,y:y+49+li*19,"font-size":15},g);
+    const l2 = el("text",{x:bx,y:y+72+li*33,"font-size":26},g);
     l2.textContent = ln;
     l2.style.fill="var(--ink)"; l2.style.fontWeight="500";
   });
@@ -699,8 +699,8 @@ function nodeBox(x,y,w,txt,cls,idx){
   g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select(cls,idx);}});
   return g;
 }
-F.forEach((f,i)=>nodeBox(FX,fy(i),238,`${f.id} — ${f.nome}`,"f",i));
-B.forEach((b,i)=>nodeBox(BX,by(i),238,`${b.id} — ${b.nome}`,"b",i));
+F.forEach((f,i)=>nodeBox(FX,fy(i),300,`${f.id} — ${f.nome}`,"f",i));
+B.forEach((b,i)=>nodeBox(BX,by(i),300,`${b.id} — ${b.nome}`,"b",i));
 
 const panel = document.getElementById("detailPanel");
 const sym = w => w===1?"● forte":(w===0.6?"◐ moderada":"○ indireta");
