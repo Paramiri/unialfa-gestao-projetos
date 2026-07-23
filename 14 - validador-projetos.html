@@ -472,7 +472,7 @@ window.unialfaAvaliacoes = {
 
         <div class="board-grid">
           <div class="board">
-            <svg id="svgBoard" viewBox="0 0 1000 900" role="img" aria-label="Diagrama de conexões entre fatores críticos de sucesso e dimensões de benefício"></svg>
+            <svg id="svgBoard" viewBox="0 0 1000 750" role="img" aria-label="Diagrama de conexões entre fatores críticos de sucesso e dimensões de benefício"></svg>
             <div class="legend">
               <span><b>traço grosso</b> = contribuição forte ●</span>
               <span><b>médio</b> = moderada ◐</span>
@@ -657,14 +657,14 @@ const W = [
 /* ============ QUADRO SVG ============ */
 const svg = document.getElementById("svgBoard");
 const NS = "http://www.w3.org/2000/svg";
-const fy = i => 50 + i*118, by = i => 90 + i*118;
+const fy = i => 50 + i*96, by = i => 74 + i*96;
 const FX = 310, BX = 690;
 let edges = [];
 
 function el(tag, attrs, parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);(parent||svg).appendChild(e);return e;}
 
 W.forEach((row,fi)=>row.forEach((w,bi)=>{
-  const y1=fy(fi)+44, y2=by(bi)+44;
+  const y1=fy(fi)+36, y2=by(bi)+36;
   const path = el("path",{
     d:`M ${FX+8} ${y1} C ${FX+160} ${y1}, ${BX-160} ${y2}, ${BX-8} ${y2}`,
     class:"edge drawline", "stroke-width": w===1?4.5:(w===0.6?2.4:1.1),
@@ -687,14 +687,14 @@ function nodeBox(x,y,w,txt,cls,idx){
   const g = el("g",{class:"node "+cls,tabindex:0,role:"button","aria-label":txt});
   const [code,...rest]=txt.split(" — ");
   const lines = wrapTxt(rest.join(" — "),18);
-  const h = lines.length>1 ? 102 : 76;
+  const h = lines.length>1 ? 83 : 62;
   el("rect",{x:x-(cls==="f"?w:0),y:y,width:w,height:h,rx:10},g);
   const bx = cls==="f"?x-w+16:x+16;
-  const label = el("text",{x:bx,y:y+30,"font-size":25},g);
+  const label = el("text",{x:bx,y:y+24,"font-size":20},g);
   label.textContent = code;
   label.style.fill = cls==="f" ? "var(--red)" : "var(--ink)";
   lines.forEach((ln,li)=>{
-    const l2 = el("text",{x:bx,y:y+60+li*28,"font-size":22},g);
+    const l2 = el("text",{x:bx,y:y+48+li*23,"font-size":18},g);
     l2.textContent = ln;
     l2.style.fill="var(--ink)"; l2.style.fontWeight="500";
   });
