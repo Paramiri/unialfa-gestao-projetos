@@ -97,10 +97,10 @@ HR
 
 # ---- 1 ----
 H1 "1. Login obrigatorio (regra geral)"
-P "Todos os 14 formularios do sistema exigem login antes de carregar ou salvar qualquer dado. O login pode ser feito de duas formas:"
+P "A maioria dos 14 formularios do sistema exige login antes de carregar ou salvar qualquer dado. O login pode ser feito de duas formas:"
 Bul "Link magico por e-mail - o usuario informa o e-mail e recebe um link de acesso, sem senha."
 Bul "Microsoft (SSO) - `"Entrar com Microsoft - UNIALFA`", usando a conta institucional."
-P "A unica pagina aberta sem exigir login e a pagina inicial (index.html, mapa de diretrizes) - ela mostra o conteudo institucional livremente e so exibe a barra `"Conectado como...`" caso ja exista uma sessao ativa."
+P "As paginas abertas sem exigir login sao a pagina inicial (index.html, mapa de diretrizes) e o Validador de Projetos (ferramenta de apoio a decisao) - ambas mostram o conteudo livremente e so exibem a barra `"Conectado como...`" caso ja exista uma sessao ativa. Diferente da Solicitacao de Demanda e da Ata de Reuniao (secao 2), o acesso sem login do Validador nao depende de nenhuma ativacao pelo Admin - e sempre aberto."
 
 HR
 
@@ -127,6 +127,12 @@ P "Essas acoes ficam bloqueadas de duas formas: os botoes `"Editar dados`" e `"E
 
 H2 "2.4 Identificacao do registro"
 P "Todo registro criado sem login recebe um selo `"Sem login`" na listagem e no detalhe, junto com o nome e e-mail informados pela pessoa. Se depois um usuario autenticado normalmente abrir esse mesmo registro e salvar uma edicao, o selo `"Sem login`" e removido - o registro passa a valer como editado por um usuario identificado."
+
+H2 "2.5 Caso particular: Validador de Projetos"
+P "O Validador de Projetos e mais aberto que os dois formularios acima: o quadro de conexoes, o simulador `"e se?`" e o assistente de decisao (8 perguntas, com veredito) funcionam por inteiro sem nenhum login - nao ha selo, nao ha admin para ativar, e nao ha bloqueio de nenhuma acao dentro da propria ferramenta."
+Bul "Login so e pedido para uma funcionalidade especifica: vincular a avaliacao a um `"Projeto vinculado`" e salvar o veredito no historico daquele projeto."
+Bul "Sem login, essa area do painel mostra um aviso com um botao `"Entrar`" - a pessoa pode logar a qualquer momento sem perder as respostas ja dadas no assistente."
+Bul "Depois de logada, a pessoa ve o campo de projeto normalmente, como qualquer outro usuario autenticado."
 
 HR
 
@@ -214,7 +220,7 @@ $rows = @(
   @("Relatorio de Situacao","Sim","Nao","-"),
   @("Relatorio de Entregas","Sim","Nao","-"),
   @("Administracao","Sim (so Admin acessa)","-","-"),
-  @("Validador de Projetos","Sim","Nao","-")
+  @("Validador de Projetos","Nao (so p/ vincular projeto)","Nao","-")
 )
 
 $nRows = $rows.Count
