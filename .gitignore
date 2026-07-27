@@ -8,3 +8,6 @@
 *.jpg
 *.jpeg
 *.png
+
+# Exceção: documento oficial e versionado de regras de acesso do sistema (ver CLAUDE.md)
+!Regras de Acesso e Permissoes - Sistema UNIALFA.docx
