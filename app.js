@@ -61,11 +61,11 @@
   function renderSidebar(activeId) {
     const seqItems = SEQUENCIAIS.map(d => `
       <a class="nav-item ${activeId === d.id ? 'active' : ''}" href="#/${d.id}">
-        <span class="tag">${tag(d)}</span><span class="lbl">${esc(d.titulo)}</span>
+        <span class="nav-icon"><svg viewBox="0 0 48 48">${DIAGRAM_ICONS[d.id] || ''}</svg></span><span class="lbl">${d.id} ${esc(d.titulo)}</span>
       </a>`).join('');
     const tvItems = TRANSVERSAIS.map(d => `
       <a class="nav-item ${activeId === d.id ? 'active' : ''}" href="#/${d.id}">
-        <span class="tag">${tag(d)}</span><span class="lbl">${esc(d.titulo)}</span><span class="pill">Transv.</span>
+        <span class="nav-icon"><svg viewBox="0 0 48 48">${DIAGRAM_ICONS[d.id] || ''}</svg></span><span class="lbl">${d.id} ${esc(d.titulo)}</span><span class="pill">Transv.</span>
       </a>`).join('');
 
     return `
