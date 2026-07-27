@@ -931,7 +931,7 @@ function toast(msg, ok=true){
   clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),3200);
 }
 function fmtDate(iso){ if(!iso) return '—'; const p=String(iso).split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:iso; }
-function fmtStamp(ms){ const dt=new Date(ms); return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+function fmtStamp(ms){ const dt=new Date(ms); if(!ms||isNaN(dt.getTime())) return '—'; return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
 function badgeClass(s){ if(s==='Aprovado') return 'b-apr'; if(s==='Reprovado') return 'b-rep'; return 'b-pend'; }
 function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function parseBRL(s){
@@ -1112,7 +1112,7 @@ function renderList(){
   let html=`<table class="list"><thead><tr><th>Protocolo</th><th>Projeto</th><th class="hide-sm">Unidade</th><th class="hide-sm">Elaboração</th><th>Status</th></tr></thead><tbody>`;
   for(const r of rows){
     html+=`<tr onclick="openDrawer('${r.id}')">
-      <td><div class="proto">${esc(r.protocolo)}<small>${fmtStamp(r.createdAt)}</small></div></td>
+      <td><div class="proto">${esc(r.protocolo&&r.protocolo!=='Invalid Date'?r.protocolo:'—')}<small>${fmtStamp(r.createdAt)}</small></div></td>
       <td><div class="proj">${esc(r.nomeProjeto)}<small>GP: ${esc(r.gerente)}</small></div></td>
       <td class="hide-sm">${esc(r.unidade)}</td>
       <td class="hide-sm">${fmtDate(r.dataElab)}</td>
