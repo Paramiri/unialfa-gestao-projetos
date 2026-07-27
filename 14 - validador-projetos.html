@@ -359,37 +359,36 @@ var unialfaAuthUI = {
 window.currentUser = null;
 window.currentProfile = null;
 
-function ensureAuthenticated(){
-  return new Promise(function(resolve){
-    async function trySetup(){
-      var user = await unialfaAuth.fetchUser();
-      if(!user) return null;
-      var profile = await unialfaAuth.ensureProfile(user);
-      profile = await unialfaAuth.tentarNomeViaGraph(profile);
-      window.currentUser = user; window.currentProfile = profile;
-      var gate = document.getElementById('authGate');
-      if(gate) gate.style.display='none';
-      document.body.classList.add('auth-ready');
-      if(!document.querySelector('.auth-topbar')){
-        var bar = document.createElement('div');
-        bar.className='auth-topbar';
-        bar.innerHTML = '<span>Conectado como <b>'+ (user.email||'') +'</b></span><span class="papel-tag">'+unialfaAuth.papelLabel(profile?profile.papel:'solicitante')+'</span><button class="sair" onclick="unialfaAuth.signOut()">Sair</button>';
-        document.body.prepend(bar);
-      }
-      return {user:user, profile:profile};
-    }
-    (async function(){
-      unialfaAuth.captureRedirect();
-      var result = await trySetup();
-      if(result){ resolve(result); return; }
-      var gate = document.getElementById('authGate');
-      if(gate) gate.style.display='flex';
-      var iv = setInterval(async function(){
-        var r = await trySetup();
-        if(r){ clearInterval(iv); resolve(r); }
-      }, 3000);
-    })();
-  });
+/* ---- Autenticacao neste painel e opcional: o Validador funciona sem login;
+   so a vinculacao a um projeto (para salvar o veredito no historico) exige login. ---- */
+async function trySetupAuth(){
+  var user = await unialfaAuth.fetchUser();
+  if(!user) return null;
+  var profile = await unialfaAuth.ensureProfile(user);
+  profile = await unialfaAuth.tentarNomeViaGraph(profile);
+  window.currentUser = user; window.currentProfile = profile;
+  var gate = document.getElementById('authGate');
+  if(gate) gate.style.display='none';
+  document.body.classList.add('auth-ready');
+  if(!document.querySelector('.auth-topbar')){
+    var bar = document.createElement('div');
+    bar.className='auth-topbar';
+    bar.innerHTML = '<span>Conectado como <b>'+ (user.email||'') +'</b></span><span class="papel-tag">'+unialfaAuth.papelLabel(profile?profile.papel:'solicitante')+'</span><button class="sair" onclick="unialfaAuth.signOut()">Sair</button>';
+    document.body.prepend(bar);
+  }
+  return {user:user, profile:profile};
+}
+async function tentarAuthSilenciosa(){
+  unialfaAuth.captureRedirect();
+  return await trySetupAuth();
+}
+function entrarParaVincular(){
+  var gate = document.getElementById('authGate');
+  if(gate) gate.style.display='flex';
+  var iv = setInterval(async function(){
+    var r = await trySetupAuth();
+    if(r){ clearInterval(iv); atualizarVinculoProjeto(); }
+  }, 3000);
 }
 
 /* ---- Projeto compartilhado (somente leitura, para vincular avaliações) ---- */
@@ -517,7 +516,7 @@ window.unialfaAvaliacoes = {
         <h2>Assistente de decisão em 8 perguntas</h2>
         <p class="sub">As oito perguntas do semáforo de decisão, uma de cada vez. Ao final, o painel devolve um veredito com a regra aplicada — coerente com as duas dimensões de sucesso do PMBOK 8ª edição.</p>
 
-        <div class="proj-link-card">
+        <div class="proj-link-card" id="projLinkCard" style="display:none">
           <div class="plc-head"><h3>Projeto vinculado (opcional — salva o veredito no histórico)</h3><button type="button" class="plc-hist" id="btnHistoricoAval" onclick="toggleHistoricoAvaliacoes()" style="display:none">Ver histórico de avaliações</button></div>
           <select id="projetoSelect" onchange="onProjetoAvaliadorSelect()">
             <option value="">Selecione um projeto aprovado (Gate 1)…</option>
@@ -527,6 +526,11 @@ window.unialfaAvaliacoes = {
             <span>Gerente:<b id="pi-gerente">—</b></span>
           </div>
           <div id="historicoAvalPanel" style="display:none"></div>
+        </div>
+        <div class="proj-link-card" id="projLoginPrompt" style="display:none">
+          <div class="plc-head"><h3>Projeto vinculado (opcional)</h3></div>
+          <p style="font-size:12.5px;color:var(--muted)">Faça login para vincular esta avaliação a um projeto e salvar o veredito no histórico.</p>
+          <button type="button" class="btn btn-primary" onclick="entrarParaVincular()" style="margin-top:10px">Entrar</button>
         </div>
 
         <div class="quiz" id="quiz"></div>
@@ -791,6 +795,12 @@ async function carregarProjetosAvaliador(){
   sel.innerHTML='<option value="">Selecione um projeto aprovado (Gate 1)…</option>' +
     projetosAprovadosAval.map(p=>`<option value="${p.id}">${p.nome}</option>`).join('');
 }
+async function atualizarVinculoProjeto(){
+  const logado = !!window.currentUser;
+  document.getElementById('projLinkCard').style.display = logado ? 'block' : 'none';
+  document.getElementById('projLoginPrompt').style.display = logado ? 'none' : 'block';
+  if(logado) await carregarProjetosAvaliador();
+}
 function onProjetoAvaliadorSelect(){
   const id=document.getElementById('projetoSelect').value;
   const info=document.getElementById('projetoInfo');
@@ -856,5 +866,5 @@ const spy = new IntersectionObserver(ents=>{
 secs.forEach(sc=>spy.observe(sc));
 
 /* ============ INIT ============ */
-(async()=>{ await ensureAuthenticated(); await carregarProjetosAvaliador(); })();
+(async()=>{ await tentarAuthSilenciosa(); await atualizarVinculoProjeto(); })();
 </script>
