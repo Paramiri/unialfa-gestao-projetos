@@ -805,7 +805,8 @@ window.unialfaEquipe = {
 </script>
 <script>
 const KEY_PREFIX='tap:';
-let cache=[]; let currentId=null; let editId=null;
+let cache=[]; let currentId=null; let currentKey=null; let editId=null;
+function realKey(r){ return (r&&r.__key) || (KEY_PREFIX+(r&&r.id)); }
 
 const FIELDS=['nomeProjeto','unidade','gerente','dataElab','alinhamento','programa','justificativa','objetivos','publico','beneficios','exclusoes','premissas','restricoes','criterios','riscos'];
 const REQUIRED=['nomeProjeto','unidade','gerente','dataElab','justificativa','objetivos'];
@@ -1005,7 +1006,7 @@ async function loadAll(){
   try{
     const res=await window.storage.list(KEY_PREFIX);
     const keys=(res&&res.keys)?res.keys:[];
-    for(const k of keys){ try{ const r=await window.storage.get(k); if(r&&r.value) cache.push(JSON.parse(r.value)); }catch(e){} }
+    for(const k of keys){ try{ const r=await window.storage.get(k); if(r&&r.value){ const parsed=JSON.parse(r.value); parsed.__key=k; cache.push(parsed); } }catch(e){} }
   }catch(e){ console.warn('list failed',e); }
   cache.sort((a,b)=>b.createdAt-a.createdAt);
   document.getElementById('count').textContent=cache.length;
@@ -1053,10 +1054,13 @@ async function submitForm(){
     if(registroAntigo){
       const camposParaHistorico={};
       Object.keys(HIST_LABELS).forEach(k=>{camposParaHistorico[k]=rec[k];});
-      await unialfaHistorico.registrar(KEY_PREFIX+rec.id, 'TAP - Termo de Abertura de Projeto (FORALF00338)', registroAntigo, camposParaHistorico);
+      await unialfaHistorico.registrar(realKey(rec), 'TAP - Termo de Abertura de Projeto (FORALF00338)', registroAntigo, camposParaHistorico);
     }
-    const r=await window.storage.set(KEY_PREFIX+rec.id, JSON.stringify(rec));
+    const key=realKey(rec);
+    const toSave=Object.assign({},rec); delete toSave.__key;
+    const r=await window.storage.set(key, JSON.stringify(toSave));
     if(!r) throw new Error('no result');
+    rec.__key=key;
     if(editId){
       const idx=cache.findIndex(x=>x.id===rec.id);
       if(idx>-1) cache[idx]=rec; else cache.unshift(rec);
@@ -1110,20 +1114,23 @@ function renderList(){
   }
   if(!rows.length){ body.innerHTML=`<div class="empty"><h3>Nenhum resultado</h3><p>Ajuste a busca para encontrar o TAP.</p></div>`; return; }
   let html=`<table class="list"><thead><tr><th>Protocolo</th><th>Projeto</th><th class="hide-sm">Unidade</th><th class="hide-sm">Elaboração</th><th>Status</th></tr></thead><tbody>`;
-  for(const r of rows){
-    html+=`<tr onclick="openDrawer('${r.id}')">
+  listRows=rows;
+  rows.forEach((r,i)=>{
+    html+=`<tr onclick="openDrawerAt(${i})">
       <td><div class="proto">${esc(r.protocolo&&r.protocolo!=='Invalid Date'?r.protocolo:'—')}<small>${fmtStamp(r.createdAt)}</small></div></td>
       <td><div class="proj">${esc(r.nomeProjeto)}<small>GP: ${esc(r.gerente)}</small></div></td>
       <td class="hide-sm">${esc(r.unidade)}</td>
       <td class="hide-sm">${fmtDate(r.dataElab)}</td>
       <td><span class="badge ${badgeClass(r.status)}">${esc(r.status)}</span></td>
     </tr>`;
-  }
+  });
   html+='</tbody></table>'; body.innerHTML=html;
 }
+let listRows=[];
+function openDrawerAt(i){ const r=listRows[i]; if(!r) return; openDrawer(r.id); }
 
 function openDrawer(id){
-  const r=cache.find(x=>x.id===id); if(!r) return; currentId=id;
+  const r=cache.find(x=>x.id===id); if(!r) return; currentId=id; currentKey=realKey(r);
   document.getElementById('d-proj').textContent=r.nomeProjeto;
   document.getElementById('d-proto').textContent=r.protocolo+' · elaborado em '+fmtDate(r.dataElab);
   document.getElementById('d-status').value=r.status;
@@ -1148,13 +1155,13 @@ function openDrawer(id){
   document.getElementById('overlay').classList.add('show');
   document.getElementById('drawer').classList.add('show');
 }
-function closeDrawer(){ document.getElementById('overlay').classList.remove('show'); document.getElementById('drawer').classList.remove('show'); currentId=null; }
+function closeDrawer(){ document.getElementById('overlay').classList.remove('show'); document.getElementById('drawer').classList.remove('show'); currentId=null; currentKey=null; }
 let regHistoricoAberto=false;
 async function toggleRegistroHistorico(){
-  if(!currentId) return;
+  if(!currentKey) return;
   const panel=document.getElementById('regHistoricoPanel');
   regHistoricoAberto=!regHistoricoAberto;
-  if(regHistoricoAberto) await unialfaHistorico.mostrar(KEY_PREFIX+currentId, panel, HIST_LABELS);
+  if(regHistoricoAberto) await unialfaHistorico.mostrar(currentKey, panel, HIST_LABELS);
   else panel.style.display='none';
 }
 async function changeStatus(){
@@ -1165,13 +1172,13 @@ async function changeStatus(){
     return;
   }
   r.status=document.getElementById('d-status').value;
-  try{ await window.storage.set(KEY_PREFIX+r.id, JSON.stringify(r)); renderList(); toast('Status atualizado para "'+r.status+'"'); }
+  try{ const toSave=Object.assign({},r); delete toSave.__key; await window.storage.set(realKey(r), JSON.stringify(toSave)); renderList(); toast('Status atualizado para "'+r.status+'"'); }
   catch(e){ toast('Não foi possível atualizar o status', false); }
 }
 async function deleteCurrent(){
   const r=cache.find(x=>x.id===currentId); if(!r) return;
-  if(!confirm('Excluir o TAP '+r.protocolo+'? Esta ação não pode ser desfeita.')) return;
-  try{ await window.storage.delete(KEY_PREFIX+r.id); cache=cache.filter(x=>x.id!==currentId); document.getElementById('count').textContent=cache.length; closeDrawer(); renderList(); toast('TAP excluído'); }
+  if(!confirm('Excluir o TAP '+(r.protocolo&&r.protocolo!=='Invalid Date'?r.protocolo:'sem protocolo')+'? Esta ação não pode ser desfeita.')) return;
+  try{ await window.storage.delete(realKey(r)); cache=cache.filter(x=>x!==r); document.getElementById('count').textContent=cache.length; closeDrawer(); renderList(); toast('TAP excluído'); }
   catch(e){ toast('Não foi possível excluir', false); }
 }
 
