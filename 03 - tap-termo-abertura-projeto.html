@@ -557,6 +557,7 @@ window.unialfaEquipe = {
         <span>Gerente:<b id="pi-gerente">—</b></span>
         <span>Status:<b id="pi-status">—</b></span>
       </div>
+      <div id="equipeAviso" style="display:none;margin-top:10px;font-size:12px;color:var(--bad,#9F1239);font-weight:600">Você não faz parte da equipe deste projeto. Peça a um administrador para adicioná-lo(a) em Administração → Equipes.</div>
       <div id="historicoPanel" style="display:none"></div>
     </div>
 
@@ -872,17 +873,20 @@ async function carregarProjetosAprovados(selecionarId){
     projetosAprovados.map(p=>`<option value="${p.id}">${esc(p.nome)}</option>`).join('');
   if(selecionarId){ sel.value=selecionarId; onProjetoSelect(false); }
 }
-function onProjetoSelect(preencherCampos=true){
+async function onProjetoSelect(preencherCampos=true){
   const id=document.getElementById('projetoSelect').value;
   const info=document.getElementById('projetoInfo');
   document.getElementById('btnHistorico').style.display = id ? 'inline' : 'none';
   document.getElementById('historicoPanel').style.display='none'; historicoAberto=false;
   const p=projetosAprovados.find(x=>x.id===id);
-  if(!p){ info.style.display='none'; return; }
+  if(!p){ info.style.display='none'; document.getElementById('equipeAviso').style.display='none'; atualizarBotaoEquipe(true); return; }
   document.getElementById('pi-unidade').textContent=p.unidade||'—';
   document.getElementById('pi-gerente').textContent=p.gerente||'—';
   document.getElementById('pi-status').textContent='Aprovado';
   info.style.display='flex';
+  const souMembro = await unialfaEquipe.souMembro(id);
+  document.getElementById('equipeAviso').style.display = souMembro ? 'none' : 'block';
+  atualizarBotaoEquipe(souMembro);
   if(preencherCampos){
     document.getElementById('nomeProjeto').value=p.nome||'';
     document.getElementById('unidade').value=p.unidade||'';
@@ -890,6 +894,13 @@ function onProjetoSelect(preencherCampos=true){
     clearError('nomeProjeto'); clearError('unidade'); clearError('gerente');
     carregarDadosDaSolicitacao(p.solicitacao_id);
   }
+}
+function atualizarBotaoEquipe(souMembro){
+  const btn=document.getElementById('submitBtn');
+  if(!btn) return;
+  btn.disabled = !souMembro;
+  btn.style.opacity = souMembro ? '1' : '.5';
+  btn.style.cursor = souMembro ? 'pointer' : 'not-allowed';
 }
 async function carregarDadosDaSolicitacao(solicitacaoId){
   if(!solicitacaoId) return;
@@ -1025,6 +1036,7 @@ async function submitForm(){
   if(!validate()){ toast('Revise os campos obrigatórios destacados', false); return; }
   const projetoId=document.getElementById('projetoSelect').value;
   if(!projetoId){ toast('Selecione o projeto vinculado (deve estar Aprovado no Gate 1)', false); return; }
+  if(!(await unialfaEquipe.souMembro(projetoId))){ toast('Você não faz parte da equipe deste projeto.', false); return; }
   let rec, camposAntigos={}, registroAntigo=null;
   if(editId){
     rec = Object.assign({}, cache.find(x=>x.id===editId));
