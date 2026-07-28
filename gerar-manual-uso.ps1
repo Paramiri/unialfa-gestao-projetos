@@ -1,0 +1,596 @@
+param(
+  [string]$OutPath = (Join-Path $PSScriptRoot "Manual de Uso - Ferramenta de Gestao de Projetos.docx"),
+  [Parameter(Mandatory=$true)][string]$ImgDir
+)
+$ErrorActionPreference = "Stop"
+
+function RGB($r,$g,$b) { return [int]($r + ($g*256) + ($b*65536)) }
+$colRed   = RGB 0xB9 0x1D 0x2E
+$colInk   = RGB 0x1A 0x1A 0x1A
+$colMuted = RGB 0x6A 0x6A 0x70
+$colWhite = RGB 0xFF 0xFF 0xFF
+$colGood  = RGB 0x05 0x96 0x69
+
+$word = New-Object -ComObject Word.Application
+$word.Visible = $false
+$doc = $word.Documents.Add()
+$sel = $word.Selection
+
+$sec = $doc.Sections.Item(1)
+$sec.PageSetup.PageWidth = $word.CentimetersToPoints(21.59)
+$sec.PageSetup.PageHeight = $word.CentimetersToPoints(27.94)
+
+$footer = $sec.Footers.Item(1)
+$footer.Range.Font.Size = 8.5
+$footer.Range.Font.Color = $colMuted
+$footer.Range.Text = "UNIALFA - Manual de Uso da Ferramenta de Gestao de Projetos | Pagina "
+$footer.Range.Collapse(0) | Out-Null
+$footer.Range.Fields.Add($footer.Range, 33) | Out-Null  # wdFieldPage = 33
+
+function P($text, $size=11, $bold=$false, $italic=$false, $color=$colInk, $align="left", $spaceAfter=8) {
+  $sel.Style = $doc.Styles.Item(-1)
+  $sel.Font.Name = "Montserrat"
+  $sel.Font.Size = $size
+  $sel.Font.Bold = $bold
+  $sel.Font.Italic = $italic
+  $sel.Font.Color = $color
+  $sel.ParagraphFormat.Alignment = if($align -eq "center"){1}else{0}
+  $sel.ParagraphFormat.SpaceAfter = $spaceAfter
+  $sel.ParagraphFormat.LineSpacing = 14
+  $sel.ParagraphFormat.LeftIndent = 0
+  $sel.TypeText($text)
+  $sel.TypeParagraph()
+  $sel.Font.Bold = $false
+  $sel.Font.Italic = $false
+}
+
+function H1($text) {
+  $sel.Style = $doc.Styles.Item(-2)
+  $sel.Font.Name = "Montserrat"
+  $sel.Font.Size = 17
+  $sel.Font.Bold = $true
+  $sel.Font.Color = $colInk
+  $sel.Font.Italic = $false
+  $sel.ParagraphFormat.Alignment = 0
+  $sel.ParagraphFormat.SpaceBefore = 4
+  $sel.ParagraphFormat.SpaceAfter = 10
+  $sel.ParagraphFormat.Borders.Item(3).LineStyle = 1
+  $sel.ParagraphFormat.Borders.Item(3).Color = RGB 0xE4 0xE4 0xE7
+  $sel.ParagraphFormat.PageBreakBefore = $true
+  $sel.TypeText($text)
+  $sel.TypeParagraph()
+  $sel.ParagraphFormat.Borders.Item(3).LineStyle = 0
+  $sel.ParagraphFormat.PageBreakBefore = $false
+  $sel.Style = $doc.Styles.Item(-1)
+}
+
+function H2($text) {
+  $sel.Style = $doc.Styles.Item(-3)
+  $sel.Font.Name = "Montserrat"
+  $sel.Font.Size = 13.5
+  $sel.Font.Bold = $true
+  $sel.Font.Color = $colRed
+  $sel.Font.Italic = $false
+  $sel.ParagraphFormat.Alignment = 0
+  $sel.ParagraphFormat.SpaceBefore = 16
+  $sel.ParagraphFormat.SpaceAfter = 6
+  $sel.ParagraphFormat.PageBreakBefore = $false
+  $sel.TypeText($text)
+  $sel.TypeParagraph()
+  $sel.Style = $doc.Styles.Item(-1)
+  $sel.Font.Color = $colInk
+}
+
+function H3($text) {
+  $sel.Style = $doc.Styles.Item(-1)
+  $sel.Font.Name = "Montserrat"
+  $sel.Font.Size = 12
+  $sel.Font.Bold = $true
+  $sel.Font.Color = $colInk
+  $sel.ParagraphFormat.SpaceBefore = 12
+  $sel.ParagraphFormat.SpaceAfter = 5
+  $sel.TypeText($text)
+  $sel.TypeParagraph()
+  $sel.Font.Bold = $false
+}
+
+function Bul($text) {
+  $sel.Style = $doc.Styles.Item(-1)
+  $sel.Font.Name = "Montserrat"
+  $sel.Font.Size = 11
+  $sel.Font.Bold = $false
+  $sel.Font.Color = $colInk
+  $sel.ParagraphFormat.SpaceAfter = 4
+  $sel.ParagraphFormat.LineSpacing = 13
+  $sel.ParagraphFormat.LeftIndent = $word.CentimetersToPoints(0.6)
+  $sel.Range.ListFormat.ApplyBulletDefault()
+  $sel.TypeText($text)
+  $sel.TypeParagraph()
+  $sel.Range.ListFormat.RemoveNumbers()
+  $sel.ParagraphFormat.LeftIndent = 0
+}
+
+function Nota($text){
+  $sel.Style = $doc.Styles.Item(-1)
+  $sel.ParagraphFormat.LeftIndent = $word.CentimetersToPoints(0.5)
+  $sel.ParagraphFormat.Borders.Item(1).LineStyle = 1
+  $sel.ParagraphFormat.Borders.Item(1).Color = $colRed
+  $sel.ParagraphFormat.Borders.Item(1).LineWidth = 6
+  $sel.Font.Name = "Montserrat"
+  $sel.Font.Size = 10.5
+  $sel.Font.Italic = $true
+  $sel.Font.Color = $colMuted
+  $sel.ParagraphFormat.SpaceBefore = 8
+  $sel.ParagraphFormat.SpaceAfter = 10
+  $sel.TypeText($text)
+  $sel.TypeParagraph()
+  $sel.Font.Italic = $false
+  $sel.ParagraphFormat.Borders.Item(1).LineStyle = 0
+  $sel.ParagraphFormat.LeftIndent = 0
+}
+
+function Exemplo($text){
+  $sel.Style = $doc.Styles.Item(-1)
+  $sel.ParagraphFormat.LeftIndent = $word.CentimetersToPoints(0.5)
+  $sel.ParagraphFormat.Borders.Item(1).LineStyle = 1
+  $sel.ParagraphFormat.Borders.Item(1).Color = $colGood
+  $sel.ParagraphFormat.Borders.Item(1).LineWidth = 6
+  $sel.Font.Name = "Montserrat"
+  $sel.Font.Size = 10.5
+  $sel.Font.Color = $colInk
+  $sel.ParagraphFormat.SpaceBefore = 8
+  $sel.ParagraphFormat.SpaceAfter = 10
+  $sel.Font.Bold = $true
+  $sel.Font.Color = $colGood
+  $sel.TypeText("EXEMPLO - ")
+  $sel.Font.Bold = $false
+  $sel.Font.Color = $colInk
+  $sel.TypeText($text)
+  $sel.TypeParagraph()
+  $sel.ParagraphFormat.Borders.Item(1).LineStyle = 0
+  $sel.ParagraphFormat.LeftIndent = 0
+}
+
+function Img($filename, $caption, $widthIn=5.6){
+  $path = Join-Path $ImgDir $filename
+  if (-not (Test-Path $path)) { Write-Warning "Imagem nao encontrada: $path"; return }
+  $sel.Style = $doc.Styles.Item(-1)
+  $sel.ParagraphFormat.Alignment = 1
+  $sel.ParagraphFormat.SpaceBefore = 6
+  $sel.ParagraphFormat.SpaceAfter = 2
+  $shape = $sel.InlineShapes.AddPicture($path)
+  $ratio = $shape.Height / $shape.Width
+  $shape.Width = $word.InchesToPoints($widthIn)
+  $shape.Height = $shape.Width * $ratio
+  $shape.Line.Visible = $true
+  $shape.Line.ForeColor.RGB = RGB 0xD1 0xD5 0xDB
+  $shape.Line.Weight = 0.75
+  $sel.TypeParagraph()
+  if ($caption) {
+    $sel.Font.Name = "Montserrat"
+    $sel.Font.Size = 9.5
+    $sel.Font.Italic = $true
+    $sel.Font.Color = $colMuted
+    $sel.ParagraphFormat.SpaceAfter = 14
+    $sel.TypeText($caption)
+    $sel.TypeParagraph()
+    $sel.Font.Italic = $false
+  }
+  $sel.ParagraphFormat.Alignment = 0
+}
+
+function TableSimple($rows, $colWidthsCm){
+  $nRows = $rows.Count; $nCols = $rows[0].Count
+  $range = $sel.Range
+  $table = $doc.Tables.Add($range, $nRows, $nCols)
+  $table.Borders.Enable = $true
+  $table.Borders.InsideLineStyle = 1
+  $table.Borders.OutsideLineStyle = 1
+  $table.Borders.InsideColor = RGB 0xD1 0xD5 0xDB
+  $table.Borders.OutsideColor = RGB 0xD1 0xD5 0xDB
+  for ($r=0; $r -lt $nRows; $r++) {
+    for ($c=0; $c -lt $nCols; $c++) {
+      $cell = $table.Cell($r+1, $c+1)
+      $cell.Range.Text = $rows[$r][$c]
+      $cell.Range.Font.Size = 9.5
+      $cell.Range.Font.Name = "Montserrat"
+      if ($r -eq 0) {
+        $cell.Range.Font.Bold = $true
+        $cell.Range.Font.Color = $colWhite
+        $cell.Shading.BackgroundPatternColor = $colInk
+      } else {
+        $cell.Range.Font.Bold = $false
+        $cell.Range.Font.Color = $colInk
+      }
+    }
+  }
+  for ($c=0; $c -lt $nCols; $c++) { $table.Columns.Item($c+1).Width = $word.CentimetersToPoints($colWidthsCm[$c]) }
+  $sel.EndKey(6) | Out-Null
+  $sel.Style = $doc.Styles.Item(-1)
+  $sel.ParagraphFormat.SpaceAfter = 10
+  $sel.TypeParagraph()
+}
+
+# ============================================================
+# CAPA
+# ============================================================
+P "UNIALFA - GERENCIA DE PROJETOS" 10 $true $false $colRed "left" 4
+$sel.Style = $doc.Styles.Item(-1)
+$sel.Font.Name="Montserrat"; $sel.Font.Size = 28; $sel.Font.Bold = $true; $sel.Font.Color = $colInk
+$sel.ParagraphFormat.SpaceAfter = 4
+$sel.TypeText("MANUAL DE USO")
+$sel.TypeParagraph()
+$sel.Font.Bold = $false
+P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 20
+P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
+P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
+P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
+P "Versao 2.0 - 28 de julho de 2026 (substitui a versao 1.0 de 15/07/2026)" 11 $false $false $colMuted "left" 2
+
+$sel.InsertBreak(7) | Out-Null
+
+# ============================================================
+# SUMARIO (TOC automatico)
+# ============================================================
+$sel.Style = $doc.Styles.Item(-1)
+$sel.Font.Name="Montserrat"; $sel.Font.Size = 16; $sel.Font.Bold = $true; $sel.Font.Color = $colInk
+$sel.ParagraphFormat.SpaceAfter = 10
+$sel.TypeText("SUMARIO")
+$sel.TypeParagraph()
+$sel.Font.Bold = $false
+$tocRange = $sel.Range
+$toc = $doc.TablesOfContents.Add($tocRange, $true, 1, 2)
+$sel.EndKey(6) | Out-Null
+$sel.InsertBreak(7) | Out-Null
+
+# ============================================================
+# 1. INTRODUCAO
+# ============================================================
+H1 "1. Introducao"
+
+H2 "1.1 Sobre este manual"
+P "Este manual explica, passo a passo, como usar as ferramentas eletronicas que dao suporte a gestao de projetos da UNIALFA. Ele cobre a sequencia completa de uso: do login e do mapa de diretrizes, passando pelo registro de uma nova demanda, ate a geracao dos dois relatorios de fechamento - o Relatorio de Situacao de Projetos (FORALF11) e o Relatorio de Entregas e Beneficios (FORALF12)."
+P "Esta e a versao 2.0 do manual. Em relacao a versao 1.0 (15/07/2026), foram adicionadas as secoes sobre login obrigatorio, acesso sem login, papeis de usuario, os dois gates de aprovacao, restricao por equipe do projeto, o Validador de Projetos e a pagina de Administracao - alem de capturas de tela reais de cada ferramenta."
+P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
+
+H2 "1.2 Visao geral da ferramenta"
+P "A ferramenta e composta por 14 paginas eletronicas independentes:"
+Bul "12 formularios de registro (codigo FORALF), cada um correspondendo a um artefato institucional - da Solicitacao de Demanda ao Relatorio de Entregas e Beneficios."
+Bul "1 ferramenta de apoio a decisao, o Validador de Projetos, que nao gera registros de artefato mas ajuda a avaliar projetos."
+Bul "1 pagina de Administracao, restrita a Admin, para gerenciar usuarios, equipes e configuracoes do sistema."
+P "Cada formulario de registro tem duas partes: uma tela de preenchimento (`+Novo...`) e uma tela de consulta (`...cadastrados`), onde ficam listados todos os registros ja salvos, com opcao de abrir, editar o status ou excluir cada um."
+P "O Mapa de Diretrizes (pagina inicial) apresenta visualmente as 7 diretrizes (D01 a D07) e mostra, para cada etapa do processo, quais ferramentas usar. E o ponto de partida recomendado para quem quer entender o processo antes de preencher os formularios - e a unica pagina, junto com o Validador de Projetos, que nao exige login."
+Img "00_home.png" "Mapa de diretrizes - pagina inicial. Nao exige login." 5.8
+
+H2 "1.3 Como acessar e fazer login"
+P "Todos os 12 formularios de registro e a pagina de Administracao exigem login antes de carregar ou salvar qualquer dado. Ao abrir qualquer um deles sem sessao ativa, aparece a tela de entrada:"
+Img "01_login_gate.png" "Tela de login, exibida ao abrir qualquer formulario sem sessao ativa." 4.6
+P "O login pode ser feito de duas formas, sem necessidade de senha:"
+Bul "Link magico por e-mail - digite seu e-mail e clique em `Enviar link de acesso`. Um link chega no seu e-mail; clique nele e a pagina de origem atualiza sozinha."
+Bul "Microsoft (SSO) - clique em `Entrar com Microsoft - UNIALFA` e autentique com a sua conta institucional."
+Nota "No primeiro login, cada pessoa recebe automaticamente o papel Solicitante. Para obter outro papel (ex.: Gerente de Projetos, Admin), peca a um Admin para altera-lo em Administracao > Usuarios (secao 6)."
+P "Depois de logado, uma barra preta no topo da pagina mostra `Conectado como [seu e-mail]` e o seu papel atual, com um botao `Sair`."
+
+H2 "1.4 Como a ferramenta se relaciona com as Diretrizes (D01-D07)"
+P "Os 12 formularios cobrem 12 dos 13 artefatos previstos nas Diretrizes. Apenas o Reporte de Resultados ainda nao tem formulario eletronico proprio."
+$rows = @(
+  @("Passo","Formulario","Diretriz / Estrategia"),
+  @("1","Solicitacao de Demanda (FORALF00339)","D01.1 - Recebimento e Registro de Demandas"),
+  @("-","Gate 1 - Triagem","D01.4/D01.5 - aprovacao do Gestor Responsavel (Admin)"),
+  @("2","Canvas de Projeto (FORALF00344)","D01.6 - Elaboracao do Canvas de Projeto"),
+  @("3","TAP - Termo de Abertura (FORALF00338)","D02.1 - Desenvolvimento do TAP"),
+  @("4","Planejamento e Desenvolvimento (FORALF00325)","D02.2 a D02.10"),
+  @("5","EAP - Estrutura Analitica do Projeto","D02.9 - Desenvolvimento da EAP"),
+  @("-","Gate 2 - Pactuacao","D06.1/D06.2 - autorizacao da Alta Gestao"),
+  @("6","Ata de Reuniao (FORALF00340)","D01 a D07 - transversal, qualquer interacao formal"),
+  @("7","SMP - Solicitacao de Mudanca (FORALF00343)","D04.4 - Controle Integrado de Mudancas"),
+  @("8","TEP - Termo de Encerramento (FORALF00341)","D05.1.9 - Emissao do Termo de Encerramento"),
+  @("9","RLA - Registro de Licoes Aprendidas (FORALF00342)","D05.1.6 - Conducao de Licoes Aprendidas"),
+  @("10","Plano de Comunicacao de Projeto (FORALF00308)","D03.5 - Planejamento das Comunicacoes"),
+  @("11","Relatorio de Situacao de Projetos (FORALF11)","D04.3 - Elaboracao de Relatorios"),
+  @("12","Relatorio de Entregas e Beneficios (FORALF12)","D06.1/D06.2 - Governanca e Tomada de Decisao")
+)
+TableSimple $rows @(1.5,7.5,7.0)
+
+# ============================================================
+# 2. ANTES DE COMECAR
+# ============================================================
+H1 "2. Antes de comecar"
+
+H2 "2.1 Onde encontrar as ferramentas"
+P "O Mapa de Diretrizes (pagina inicial) e o ponto central: o menu lateral lista os 12 formularios, o Validador de Projetos e a Administracao. A tabela no Anexo (secao 8) traz o nome de cada artefato e seu codigo, para referencia rapida."
+
+H2 "2.2 Convencoes usadas neste manual"
+Bul "Campos marcados com asterisco (*) nos formularios sao obrigatorios. O sistema nao deixa registrar enquanto algum campo obrigatorio estiver vazio - ele destaca o campo em vermelho e rola a tela ate ele."
+Bul "Ao salvar, cada formulario gera um numero de protocolo automatico no formato CODIGO-ANO-SEQUENCIAL (ex.: FORALF00339-2026-001). Guarde esse numero para localizar o registro depois."
+Bul "Todo registro tem um status (ex.: Pendente de aprovacao, Aprovado, Reprovado), alteravel a partir da tela de consulta - em alguns formularios, so o Admin pode altera-lo (ver secao 2.4)."
+Bul "A tela de consulta de cada formulario tem um campo de busca, exportacao para CSV e opcao de impressao."
+
+H2 "2.3 Papeis de usuario e o que cada um pode fazer"
+P "Cada pessoa que faz login recebe um papel, usado para liberar ou restringir acoes especificas no sistema. Papeis sao atribuidos e alterados por um Admin, em Administracao > Usuarios."
+$rows2 = @(
+  @("Papel","Observacao"),
+  @("Solicitante","Papel padrao, atribuido automaticamente a todo novo usuario no primeiro login."),
+  @("Gerente de Projetos","Sem restricoes adicionais alem das descritas neste manual."),
+  @("Gestor Responsavel","Sem restricoes adicionais alem das descritas neste manual."),
+  @("Dono do Negocio","Sem restricoes adicionais alem das descritas neste manual."),
+  @("Alta Gestao","Sem restricoes adicionais alem das descritas neste manual."),
+  @("Admin (PMO/Admin)","Papel de administracao do sistema - unico que pode executar as acoes da lista abaixo.")
+)
+TableSimple $rows2 @(5.0,11.0)
+P "Acoes exclusivas de Admin:"
+Bul "Acessar a pagina de Administracao (qualquer outro papel ve `Acesso restrito`)."
+Bul "Alterar o papel de outros usuarios."
+Bul "Adicionar ou remover membros da equipe de um projeto."
+Bul "Ativar ou desativar as opcoes de `sem login` da Solicitacao de Demanda e da Ata de Reuniao."
+Bul "Aprovar ou reprovar o Gate 1 na Solicitacao de Demanda."
+Nota "Um Admin e sempre considerado membro de qualquer equipe de projeto automaticamente - nao precisa ser adicionado manualmente para editar registros vinculados a um projeto (ver secao 2.5)."
+
+H2 "2.4 Os dois gates de aprovacao"
+P "O sistema tem dois pontos de decisao formal no ciclo de vida de um projeto:"
+Bul "Gate 1 - Triagem: ocorre logo apos o registro da demanda. So o Admin consegue alterar o status da Solicitacao de Demanda para Aprovada ou Reprovada; qualquer outro papel ve o campo travado."
+Bul "Gate 2 - Pactuacao: ocorre ao final do planejamento, quando o Relatorio de Entregas e Beneficios e apresentado e pactuado com o Dono do Negocio perante a Alta Gestao (ver secao 4.2)."
+Img "14_f01_gate1.png" "Detalhe de uma Solicitacao de Demanda - o campo Status, no rodape, so pode ser alterado pelo Admin (Gate 1)." 5.4
+
+H2 "2.5 Restricao por equipe do projeto"
+P "Sete dos doze formularios exigem vincular o registro a um `Projeto vinculado` (um projeto ja Aprovado no Gate 1): Canvas, TAP, Planejamento e Desenvolvimento, EAP, SMP, TEP e RLA. Nesses formularios, apenas quem faz parte da equipe daquele projeto - ou um Admin - pode criar ou editar um registro vinculado a ele."
+Img "17_f03_novo.png" "TAP com um projeto vinculado selecionado: unidade, gerente e status sao preenchidos automaticamente a partir do projeto." 5.6
+Bul "Se a pessoa nao for da equipe daquele projeto (e nao for Admin), aparece um aviso na tela e o botao de enviar/registrar fica desabilitado."
+Bul "A equipe de cada projeto e definida por um Admin, em Administracao > Equipes (secao 6)."
+Nota "Os outros 5 formularios (Solicitacao de Demanda, Ata de Reuniao, Plano de Comunicacao, Relatorio de Situacao e Relatorio de Entregas) nao usam esse conceito - qualquer usuario autenticado pode criar/editar registros neles."
+
+H2 "2.6 Acesso sem login - Solicitacao de Demanda e Ata de Reuniao"
+P "Dois formularios podem, opcionalmente, ser abertos por um Admin para aceitar registros sem login: Solicitacao de Demanda e Ata de Reuniao. Cada um tem um interruptor independente em Administracao > Configuracoes (secao 6) - podem estar ligados, desligados ou so um dos dois."
+Img "02_sem_login_gate.png" "Quando a opcao esta ativa, a tela de login ganha um terceiro caminho: Continuar sem login." 4.6
+Img "03_sem_login_dados.png" "A pessoa sem login informa apenas nome completo e e-mail para registrar." 4.6
+Bul "Quem usa esse caminho so consegue criar um registro novo - nunca editar, excluir ou alterar status, mesmo em um registro que ela mesma criou."
+Bul "O registro criado sem login recebe um selo `Sem login` na listagem, junto com o nome e e-mail informados."
+
+H2 "2.7 Onde os dados ficam armazenados"
+P "Todos os 12 formularios de registro gravam os dados em um banco de dados real (PostgreSQL, hospedado no Supabase), associados a conta autenticada de quem salvou o registro (ou ao nome/e-mail informado, no caso de registro sem login). Nao ha mais uma chave unica compartilhada por todos: cada sessao usa o token da propria conta, e o acesso as ferramentas segue as regras de login, papel e equipe descritas neste capitulo."
+P "Cada formulario ainda grava seus registros de forma independente - nao existe herenca automatica de informacoes entre eles. Ao preencher o TAP logo depois do Canvas, por exemplo, e preciso informar novamente o nome do projeto, a unidade e o gerente (ou selecionar o mesmo `Projeto vinculado`, quando o formulario tiver esse campo). Preencha os dados de identificacao da mesma forma em todos os formularios de um mesmo projeto, para manter a rastreabilidade entre eles."
+
+# ============================================================
+# 3. PASSO A PASSO DO FLUXO DE UM PROJETO
+# ============================================================
+H1 "3. Passo a passo do fluxo de um projeto"
+P "Esta secao percorre os 12 formularios de registro na ordem em que normalmente sao usados ao longo da vida de um projeto. Os Passos 1 a 5 e 8 a 9 seguem a esteira sequencial do projeto; os Passos 6, 7 e 10 sao de uso recorrente ou condicional; os relatorios finais (Passos 11 e 12) sao detalhados na secao 4."
+
+H2 "Passo 1 - Solicitacao de Demanda (FORALF00339)"
+P "Quando usar: no inicio de tudo, para registrar formalmente uma ideia, necessidade ou problema institucional antes de qualquer outra acao. Pode ser preenchida com login normal ou, se a opcao estiver ativa, sem login (ver secao 2.6)."
+$r1 = @(
+  @("Campo","Obrig.","Descricao"),
+  @("Nome do projeto","Sim","Nome que vai identificar a iniciativa em todos os registros futuros"),
+  @("Solicitante","Sim","Nome de quem esta pedindo o projeto"),
+  @("Departamento / unidade","Sim","UNIALFA, FADISP, Colegio Alfa, TLA, Controladoria, TI ou Outro"),
+  @("Justificativa / necessidade","Sim","Por que o projeto e necessario"),
+  @("Objetivo / resultado esperado","Sim","O que deve ser entregue ao final"),
+  @("Escopo","Sim","O que esta incluido e o que nao esta"),
+  @("Prazo desejado","Sim","Data limite desejada pelo solicitante"),
+  @("Orcamento estimado","Nao","Valor aproximado, se ja houver"),
+  @("Partes interessadas","Sim","Areas, equipes ou pessoas impactadas"),
+  @("Anexos","Nao","Nomes de documentos ou links de apoio")
+)
+TableSimple $r1 @(5.0,1.8,9.2)
+Img "12_f01_novo.png" "Tela de novo registro da Solicitacao de Demanda." 5.6
+Img "13_f01_lista.png" "Demandas cadastradas, com protocolo, projeto, prazo e status." 5.6
+Exemplo "`Automatizacao de servicos` - solicitante Hudson Lucas Aleixo, unidade Relacionamento, justificativa: reduzir o tempo de espera dos alunos e desafogar o atendimento presencial/manual da secretaria, oferecendo disponibilidade 24/7 para solicitacoes basicas."
+P "Como salvar: clique em `Registrar solicitacao`. O sistema gera o protocolo e leva voce para `Demandas cadastradas`. Clique em qualquer linha da tabela para abrir o registro e revisar os dados."
+Nota "E neste ponto que ocorre o Gate 1 - Triagem: so um Admin pode mudar o status para Aprovada ou Reprovada (secao 2.4). So avance para o Passo 2 depois que o status estiver Aprovada."
+
+H2 "Passo 2 - Canvas de Projeto (FORALF00344)"
+P "Quando usar: assim que a demanda for aprovada. O Canvas e o primeiro documento estruturado do projeto - reune, em uma unica tela, a motivacao, o produto, os parceiros, as entregas, os riscos e os custos. Exige selecionar um `Projeto vinculado` ja Aprovado no Gate 1, e so membros da equipe daquele projeto (ou Admin) podem registrar (secao 2.5)."
+$r2 = @(
+  @("Campo","Obrig.","Descricao"),
+  @("Nome / Unidade / Gerente / Data","Sim","Identificacao do projeto"),
+  @("Justificativas","Sim","Por que estamos aqui - dores e problemas nao atendidos"),
+  @("Objetivo","Sim","Objetivo SMART do projeto"),
+  @("Beneficios","Nao","O que a organizacao ganha depois da implantacao"),
+  @("Produto","Sim","O que sera construido ou entregue"),
+  @("Parceiros","Nao","Pessoas ou entidades que apoiam, sem se subordinar ao gerente"),
+  @("Grupo de entregas","Sim","Componentes do produto, que depois viram a EAP"),
+  @("Restricoes","Nao","Limitacoes que reduzem a liberdade de decisao da equipe"),
+  @("Riscos","Sim","Eventos incertos que podem afetar os objetivos"),
+  @("Custos","Sim","Estimativa de gastos por grupo de entrega")
+)
+TableSimple $r2 @(5.0,1.8,9.2)
+Img "15_f02_novo.png" "Tela de novo Canvas, com o seletor de Projeto vinculado no topo." 5.6
+Img "16_f02_lista.png" "Canvas cadastrados." 5.6
+P "Como salvar: clique em `Registrar canvas`. O status inicial e Pendente de aprovacao; altere para Aprovado ao validar o Canvas com o Dono do Negocio e o Gerente de Projetos."
+
+H2 "Passo 3 - TAP, Termo de Abertura de Projeto (FORALF00338)"
+P "Quando usar: depois do Canvas aprovado, para autorizar formalmente a existencia do projeto. Tambem exige `Projeto vinculado` e segue a restricao por equipe (secao 2.5) - a figura da secao 2.5 mostra este formulario com um projeto ja selecionado."
+$r3 = @(
+  @("Campo","Obrig.","Descricao"),
+  @("Identificacao (nome, unidade, gerente, data)","Sim","Cabecalho do TAP"),
+  @("Alinhamento estrategico / Programa vinculado","Nao","Relacao com outras acoes da Holding, se houver"),
+  @("Justificativa","Sim","Problema ou oportunidade que motiva o projeto"),
+  @("Objetivos","Sim","O que o projeto entrega"),
+  @("Publico-alvo / Beneficios / Exclusoes","Nao","Detalhamento do escopo - inclui o que fica de fora"),
+  @("Premissas / Restricoes / Criterios / Riscos","Nao","Condicionantes do projeto"),
+  @("Cronograma de entregas macro (tabela)","Nao","Marco, responsavel, inicio e termino previstos, custo"),
+  @("Custo total estimado (tabela)","Nao","Soma automatica a medida que as linhas sao preenchidas"),
+  @("Partes interessadas e Equipe (tabelas)","Nao","Nome e unidade de cada pessoa"),
+  @("Indicadores de resultado (tabela)","Nao","Valor inicial e valor final esperado, com datas")
+)
+TableSimple $r3 @(5.6,1.6,8.8)
+Img "18_f03_lista.png" "TAPs cadastrados." 5.6
+P "Como salvar: clique em `Registrar TAP`. Um projeto sem TAP aprovado nao deve avancar para a execucao."
+
+H2 "Passo 4 - Planejamento e Desenvolvimento de Projeto (FORALF00325)"
+P "Quando usar: logo apos o TAP, para detalhar o projeto em profundidade. E o dossie mais extenso da ferramenta, organizado em 8 abas internas, navegaveis pela barra de estagios no topo."
+$r4 = @(
+  @("Aba","Conteudo"),
+  @("1. Pre-projeto","Produtos impactados, escopo, contexto, objetivos, entregaveis, premissas, restricoes, partes interessadas, macro fases"),
+  @("2. Viabilidade","Situacao atual, proposta de mudanca, beneficios, alternativas, impactos, plano de implementacao, conclusao"),
+  @("3. Cronograma","Tabela de marcos: nome, responsavel, duracao, data de entrega"),
+  @("4. Entradas","Tabela de requisitos de entrada, com 7 categorias pre-preenchidas, para completar com descricao, fonte, responsavel e status"),
+  @("5. Saidas","Tabela de entregaveis ligados a um requisito de entrada, com criterios de aceitacao"),
+  @("6. Verificacao","Tabela de verificacao de conformidade de cada saida"),
+  @("7. Validacao","Tabela de validacao do uso pretendido, com metodo e resultado"),
+  @("8. Analise critica","Tabela de pontos de controle por etapa do projeto")
+)
+TableSimple $r4 @(3.0,13.0)
+Img "19_f04_novo.png" "Capa de identificacao do dossie, com a barra das 8 abas no rodape visivel." 5.6
+Img "20_f04_lista.png" "Projetos cadastrados (estado vazio, antes do primeiro dossie ser salvo)." 5.6
+P "Como salvar: preencha a capa (nome do projeto, unidade e gestor sao obrigatorios) e navegue pelas 8 abas. Clique em `Registrar dossie`. E este documento que alimenta, junto com o Canvas, a elaboracao do Relatorio de Entregas e Beneficios (Passo 12)."
+
+H2 "Passo 5 - EAP, Estrutura Analitica do Projeto"
+P "Quando usar: em paralelo ao planejamento, para decompor visualmente o escopo em pacotes de trabalho."
+Img "21_f05_novo.png" "Construtor hierarquico de 3 niveis: Pacote de trabalho, Entrega e Atividade." 5.6
+Img "22_f05_lista.png" "EAPs cadastradas (estado vazio)." 5.6
+Bul "Informe o nome do projeto (obrigatorio), a unidade e o gerente."
+Bul "Use o construtor hierarquico de 3 niveis: `+ Adicionar pacote de trabalho`, depois `+ Adicionar entrega` dentro do pacote, depois `+ Atividade` dentro da entrega."
+Bul "Clique em `Visualizar arvore` a qualquer momento para conferir o diagrama antes de salvar."
+P "Clique em `Registrar EAP` para gerar o protocolo."
+
+H2 "Passo 6 - Ata de Reuniao (FORALF00340) - uso recorrente"
+P "Quando usar: a qualquer momento do projeto, para registrar formalmente qualquer reuniao - nao faz parte da esteira sequencial, fica sempre disponivel. Pode ser preenchida com login normal ou, se a opcao estiver ativa, sem login (ver secao 2.6)."
+Img "25_f07_novo.png" "Tela de nova ata, com o painel `Preencher com Read AI` para preenchimento automatico a partir de uma reuniao gravada." 5.6
+Img "26_f07_lista.png" "Atas cadastradas (estado vazio)." 5.6
+Bul "Selecione a(s) unidade(s) envolvidas, preencha Pauta e Projeto (obrigatorios), participantes, resumo, encaminhamentos e entraves."
+Bul "Opcional: use `Preencher com Read AI` para tentar preencher automaticamente a partir do nome de uma reuniao gravada - revise sempre os dados antes de registrar."
+P "Clique em `Registrar ata` para gerar o protocolo."
+
+H2 "Passo 7 - SMP, Solicitacao de Mudanca de Projeto (FORALF00343) - uso condicional"
+P "Quando usar: sempre que for necessario alterar escopo, cronograma, custo ou qualidade de um projeto ja em andamento. Nenhuma mudanca deve ser feita sem passar por este formulario."
+Img "23_f06_novo.png" "Tela de nova SMP." 5.6
+Img "24_f06_lista.png" "SMPs cadastradas (estado vazio)." 5.6
+Bul "Identifique o projeto e a mudanca (titulo e solicitante sao obrigatorios); descreva a mudanca, os beneficios e o impacto de nao implementa-la."
+Bul "Preencha a analise de impactos nas 8 dimensoes: objetivo, cronograma, escopo, custo, alinhamento estrategico, qualidade, riscos e outros impactos."
+Bul "Marque a decisao: Aprovada, Nao aprovada ou Pendente de avaliacao, com justificativa."
+P "Clique em `Registrar SMP` - o status do registro acompanha automaticamente a decisao marcada."
+
+H2 "Passo 8 - TEP, Termo de Encerramento de Projeto (FORALF00341)"
+P "Quando usar: ao encerrar o projeto, seja por conclusao, paralisacao ou cancelamento."
+Img "28_f09_novo.png" "Tela de novo TEP." 5.6
+Img "29_f09_lista.png" "TEPs cadastrados (estado vazio)." 5.6
+Bul "Preencha a identificacao e o programa vinculado, se houver; selecione o tipo de encerramento (Concluido, Paralisado ou Cancelado)."
+Bul "Se Paralisado ou Cancelado, o campo Justificativa aparece automaticamente."
+Bul "Registre entregas de resultados, atividades encerradas, o link da pasta do projeto e a analise de efetividade."
+P "Clique em `Registrar TEP` para gerar o protocolo."
+
+H2 "Passo 9 - RLA, Registro de Licoes Aprendidas (FORALF00342)"
+P "Quando usar: junto com o TEP, ao final do projeto (ou tambem em pontos intermediarios), para capturar o aprendizado organizacional."
+Img "30_f10_novo.png" "Tela de novo RLA." 5.6
+Img "31_f10_lista.png" "RLAs cadastrados (estado vazio)." 5.6
+Bul "Responda as perguntas abertas dos blocos Visao geral, Destaques, Desafios e Pos-projeto."
+Bul "Nos blocos de avaliacao estruturada, marque Sim/Nao/Parcial/N-A para cada afirmacao - cada bloco calcula automaticamente um placar percentual."
+P "Clique em `Registrar RLA`. O score global fica salvo junto com o registro."
+
+H2 "Passo 10 - Plano de Comunicacao de Projeto (FORALF00308)"
+P "Quando usar: para planejar o que sera comunicado, a quem e em qual momento do projeto. Diferente da versao 1.0 deste manual, este artefato ja tem uma ferramenta eletronica propria, organizada como uma tabela de referencia (tipo de comunicacao x o que comunicar), com abas Painel (visualizacao) e Editar dados."
+Img "27_f08_painel.png" "Painel do Plano de Comunicacao: cada linha da tabela e um tipo de comunicacao do projeto e o que deve ser comunicado nele." 5.6
+P "Use `Editar dados` para ajustar o conteudo de cada linha as necessidades do seu projeto, e `Painel` para visualizar, imprimir ou exportar o resultado."
+
+# ============================================================
+# 4. RELATORIOS FINAIS
+# ============================================================
+H1 "4. Gerando os relatorios finais"
+P "Esta secao detalha os dois relatorios que fecham o ciclo de uso da ferramenta: o Relatorio de Situacao de Projetos (visao de controle do portfolio) e o Relatorio de Entregas e Beneficios (ficha executiva de programa e projetos, base do Gate 2)."
+
+H2 "4.1 Relatorio de Situacao de Projetos (FORALF11)"
+P "Visao consolidada de todos os projetos do portfolio: status, percentual de execucao, marcos e pontos de atencao. Tem tres abas: Painel, Editar dados e Importar Project."
+Img "32_f11_painel.png" "Painel do Relatorio de Situacao (estado vazio, antes do primeiro preenchimento)." 5.6
+Img "33_f11_editar.png" "Aba Editar dados: cabecalho do relatorio e botao para adicionar projetos/marcos." 5.6
+Img "34_f11_importar.png" "Aba Importar Project: arraste uma exportacao do MS Project (Excel ou CSV) para preencher em lote." 5.6
+Bul "Preencha o cabecalho (mes/ano de referencia, responsavel, previsao financeira, entregas planejadas)."
+Bul "Adicione cada projeto do portfolio, com status, % execucao, datas e os campos `Merece atencao` e `Merece destaque`."
+Bul "Alternativa mais rapida: use `Importar Project` - o sistema detecta automaticamente as colunas de nome, % concluido, inicio, termino e responsavel."
+Bul "Clique em `Salvar e ver painel`. Use os botoes do rodape para Imprimir ou Exportar CSV."
+Nota "Este relatorio nao tem aprovacao/status formal - e uma ferramenta viva de acompanhamento, atualizada sempre que a situacao dos projetos mudar."
+
+H2 "4.2 Relatorio de Entregas e Beneficios (FORALF12)"
+P "O relatorio mais importante do ponto de vista de governanca: e sobre ele que ocorre o Gate 2 - Pactuacao, quando o Dono do Negocio assume formalmente, perante a Alta Gestao, o compromisso de que todo o trabalho planejado sera executado."
+Img "35_f12_painel.png" "Painel do Relatorio de Entregas e Beneficios (estado vazio)." 5.6
+Img "36_f12_editar.png" "Aba Editar dados: Ficha do Programa, o primeiro bloco a preencher." 5.6
+Bul "Preencha a Ficha do Programa (codigo, nome, unidade, responsavel, justificativa, objetivo, alinhamento estrategico)."
+Bul "Cadastre indicadores e valores estimados do programa, depois cada projeto vinculado (com suas proprias entregas, indicadores e valores)."
+Bul "Clique em `Salvar e ver painel`. Imprima ou exporte para levar a reuniao de pactuacao."
+Nota "So depois do Gate 2 pactuado o projeto deve avancar para a execucao. Um projeto que comeca a ser executado sem essa pactuacao corre o risco de ser questionado ou desautorizado em momentos criticos."
+
+# ============================================================
+# 5. VALIDADOR DE PROJETOS
+# ============================================================
+H1 "5. Validador de Projetos"
+P "O Validador de Projetos e uma ferramenta de apoio a decisao sobre Fatores Criticos de Sucesso (FCS) e Beneficios em instituicoes de ensino. Diferente dos 12 formularios de registro, ele nao gera um artefato FORALF - e um painel de reflexao e diagnostico."
+P "E a unica ferramenta, alem do Mapa de Diretrizes, que nao exige login. Todo o conteudo funciona livremente; login so e pedido para vincular uma avaliacao a um projeto e salvar o veredito no historico daquele projeto (secao 2.6 do documento Regras de Acesso detalha esse caso)."
+H2 "5.1 Quadro de conexoes"
+P "Mostra a matriz analitica entre 7 fatores criticos de sucesso (F1-F7) e 5 dimensoes de beneficio (B1-B5). Clique em um fator ou dimensao para ver as conexoes."
+Img "05_validador_quadro.png" "Quadro de conexoes com o fator F1 selecionado - o painel a direita mostra os beneficios que ele habilita." 5.8
+H2 "5.2 Simulador - e se...?"
+P "Ajuste o quanto cada fator esta presente no seu projeto (0-100%) e veja o potencial estimado de cada dimensao de beneficio recalcular em tempo real."
+Img "06_validador_simulador.png" "Simulador de fatores x beneficios. Abaixo dele, o aviso de login para quem quiser vincular a um projeto." 5.8
+H2 "5.3 Assistente de decisao em 8 perguntas"
+P "Responda a oito perguntas do semaforo de decisao, uma de cada vez. Ao final, o painel devolve um veredito com a regra aplicada."
+Img "07_validador_assistente.png" "Primeira pergunta do assistente de decisao." 5.8
+Img "08_validador_veredito.png" "Veredito final, com o placar de respostas verdes/amarelas/vermelhas." 5.8
+Nota "Regra aplicada: qualquer resposta vermelha leva a encerrar/repactuar; tres ou mais amarelas levam a replanejar; caso contrario, o veredito e concluir."
+
+# ============================================================
+# 6. ADMINISTRACAO DO SISTEMA
+# ============================================================
+H1 "6. Administracao do sistema"
+P "Pagina restrita a usuarios com papel Admin (secao 2.3). Reune tres abas: Usuarios, Equipes e Configuracoes."
+H2 "6.1 Usuarios"
+P "Lista todos os usuarios que ja fizeram login pelo menos uma vez, com o papel atual e um seletor para altera-lo."
+Img "09_admin_usuarios.png" "Aba Usuarios: papel atual e seletor de alteracao de papel por usuario." 5.8
+H2 "6.2 Equipes"
+P "Define quem faz parte da equipe de cada projeto - a base da restricao por equipe descrita na secao 2.5. Selecione um projeto, escolha um papel e clique em `+ Adicionar a equipe`."
+Img "10_admin_equipes.png" "Aba Equipes, com um projeto selecionado e um membro ja cadastrado." 5.8
+H2 "6.3 Configuracoes"
+P "Controla os dois interruptores de acesso sem login (Solicitacao de Demanda e Ata de Reuniao), descritos na secao 2.6."
+Img "11_admin_config.png" "Aba Configuracoes: os dois interruptores de acesso sem login, hoje desativados." 5.8
+
+# ============================================================
+# 7. PERGUNTAS FREQUENTES
+# ============================================================
+H1 "7. Perguntas frequentes"
+H3 "Como corrijo um registro que ja salvei?"
+P "Va ate a aba de registros cadastrados do formulario correspondente, clique na linha da tabela para abrir o painel de detalhes e clique em `Editar dados` (ou altere o status pelo seletor no rodape). Para os relatorios FORALF11 e FORALF12, volte para `Editar dados`, ajuste os campos e clique novamente em `Salvar e ver painel`."
+H3 "Como excluo um registro?"
+P "Abra o registro na tela de detalhes e clique em `Excluir`, no rodape. A acao pede confirmacao e nao pode ser desfeita depois de confirmada."
+H3 "Por que o botao de registrar/salvar esta desabilitado?"
+P "Nos 7 formularios com restricao por equipe (secao 2.5), o botao fica desabilitado se voce nao for membro da equipe do projeto selecionado - ou nao tiver selecionado um projeto vinculado ainda. Peca a um Admin para adiciona-lo a equipe em Administracao > Equipes."
+H3 "Por que nao consigo abrir um formulario?"
+P "Se aparecer a tela de login (secao 1.3), voce precisa se autenticar. Se depois de logado aparecer `Acesso restrito`, essa pagina (Administracao) e exclusiva para o papel Admin."
+H3 "Os dados ficam salvos onde?"
+P "Em um banco de dados real (Supabase/PostgreSQL), associados a sua conta. Nao e necessario salvar manualmente em outro lugar, mas recomenda-se exportar periodicamente em CSV os registros importantes, como backup."
+H3 "Preciso preencher tudo na mesma sessao?"
+P "Nao. Cada formulario pode ser preenchido e salvo em etapas diferentes - o registro fica disponivel na aba de consulta para ser retomado quando for necessario."
+
+# ============================================================
+# 8. ANEXO
+# ============================================================
+H1 "8. Anexo - Tabela de artefatos"
+$r8 = @(
+  @("#","Artefato","Codigo","Diretriz","Equipe?"),
+  @("1","Solicitacao de Demanda","FORALF00339","D01.1","Nao"),
+  @("2","Canvas de Projeto","FORALF00344","D01.6","Sim"),
+  @("3","TAP - Termo de Abertura","FORALF00338","D02.1","Sim"),
+  @("4","Planejamento e Desenvolvimento","FORALF00325","D02.2-D02.10","Sim"),
+  @("5","EAP - Estrutura Analitica","(sem codigo)","D02.9","Sim"),
+  @("6","Ata de Reuniao","FORALF00340","D01-D07 (transversal)","Nao"),
+  @("7","SMP - Solicitacao de Mudanca","FORALF00343","D04.4","Sim"),
+  @("8","TEP - Termo de Encerramento","FORALF00341","D05.1.9","Sim"),
+  @("9","RLA - Licoes Aprendidas","FORALF00342","D05.1.6","Sim"),
+  @("10","Plano de Comunicacao","FORALF00308","D03.5","Nao"),
+  @("11","Relatorio de Situacao","FORALF11","D04.3","Nao"),
+  @("12","Relatorio de Entregas e Beneficios","FORALF12","D06.1/D06.2","Nao"),
+  @("-","Reporte de Resultados","a construir","D06.5-D06.7 (sem formulario ainda)","-")
+)
+TableSimple $r8 @(1.0,5.2,3.2,4.6,2.0)
+P "Documento gerado a partir do estado atual do codigo do sistema, com capturas de tela reais coletadas em 28/07/2026." 9 $false $true $colMuted "left" 0
+
+# ============================================================
+# FINALIZAR
+# ============================================================
+$doc.TablesOfContents.Item(1).Update()
+$doc.Fields.Update()
+
+if (Test-Path $OutPath) { Remove-Item $OutPath -Force }
+$doc.SaveAs2($OutPath, 16)
+$doc.Close()
+$word.Quit()
+[System.Runtime.Interopservices.Marshal]::ReleaseComObject($word) | Out-Null
+Write-Output "SAVED: $OutPath"
