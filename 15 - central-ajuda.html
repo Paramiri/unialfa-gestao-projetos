@@ -1,0 +1,446 @@
+<!-- Central de Ajuda — UNIALFA Gerência de Projetos -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --red:#B91D2E; --red-deep:#8E1322; --red-light:#FEF2F2;
+  --ink:#0F0F0F; --muted:#6B7280; --muted-2:#9CA3AF;
+  --paper:#FFFFFF; --surface:#F8F8F9; --surface-2:#F1F2F4;
+  --line:#E5E7EB; --line-strong:#D1D5DB;
+  --ok:#059669; --ok-soft:#D1FAE5;
+  --warn:#D97706; --warn-soft:#FEF3C7;
+  --bad:#DC2626; --bad-soft:#FEE2E2;
+  --radius:10px; --shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);
+  --font:'Montserrat',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);color:var(--ink);background:var(--surface);-webkit-font-smoothing:antialiased;line-height:1.6;font-size:14px}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 72px}
+a{color:var(--red)}
+h1,h2,h3{font-weight:800;line-height:1.25}
+
+.page-head{background:var(--ink);color:#fff;border-radius:14px;padding:22px 28px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:24px}
+.head-logo{font-weight:900;font-size:22px;letter-spacing:.04em;border-right:2px solid rgba(255,255,255,.2);padding-right:20px;flex:none}
+.head-logo small{display:block;font-weight:600;font-size:9px;letter-spacing:.2em;opacity:.6;margin-top:3px}
+.head-title{flex:1}
+.head-title h1{font-size:18px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;line-height:1.2}
+.head-title p{font-size:11.5px;font-weight:500;opacity:.6;margin-top:3px}
+.head-badge{background:var(--red);color:#fff;border-radius:8px;padding:7px 15px;font-size:11.5px;font-weight:700;letter-spacing:.03em;white-space:nowrap;flex:none}
+
+.search-box{max-width:640px;margin:0 auto 28px}
+.search-box input{width:100%;font-family:var(--font);font-size:14px;border:1px solid var(--line-strong);border-radius:999px;padding:12px 20px;color:var(--ink);box-shadow:var(--shadow)}
+.search-box input:focus{outline:none;border-color:var(--red)}
+
+.tool-layout{display:flex;gap:24px;align-items:flex-start}
+.tool-nav{flex:none;width:250px;position:sticky;top:20px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;max-height:calc(100vh - 40px);overflow-y:auto}
+.tool-nav .grp{font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin:14px 8px 6px}
+.tool-nav .grp:first-child{margin-top:4px}
+.tool-nav a{display:block;padding:7px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:12.5px;font-weight:600;border:1px solid transparent}
+.tool-nav a:hover{background:var(--surface-2)}
+.tool-nav a.on{border-color:var(--red);background:var(--red-light);color:var(--red)}
+.tool-main{flex:1;min-width:0}
+
+.sec{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px 30px;margin-bottom:18px;scroll-margin-top:20px}
+.sec h2{font-size:19px;color:var(--ink);margin-bottom:4px}
+.sec .eyebrow{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--red);margin-bottom:6px}
+.sec p{font-size:13.5px;color:var(--ink);margin:10px 0}
+.sec p.lead{color:var(--muted);font-size:13.5px}
+.sec ul{margin:8px 0 14px 20px}
+.sec li{font-size:13.5px;margin-bottom:7px;line-height:1.55}
+.sec h3{font-size:14.5px;color:var(--red);margin:18px 0 6px}
+.sec .sub-h2{font-size:16px;color:var(--ink);margin:22px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.sec .sub-h2:first-of-type{border-top:none;padding-top:0;margin-top:6px}
+
+.tbl{width:100%;border-collapse:collapse;margin:12px 0 16px;font-size:12.5px}
+.tbl th{background:var(--ink);color:#fff;text-align:left;padding:8px 10px;font-size:11px;letter-spacing:.02em}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+
+.note{border-left:3px solid var(--red);background:var(--red-light);border-radius:0 8px 8px 0;padding:10px 14px;margin:12px 0;font-size:12.5px;color:var(--ink)}
+.tip{border-left:3px solid var(--ok);background:var(--ok-soft);border-radius:0 8px 8px 0;padding:10px 14px;margin:12px 0;font-size:12.5px;color:var(--ink)}
+.tag{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;margin-left:8px;vertical-align:middle}
+.tag.eq{background:var(--warn-soft);color:var(--warn)}
+.tag.nologin{background:var(--ok-soft);color:var(--ok)}
+
+.faq-q{font-weight:700;font-size:13.5px;margin-top:16px;margin-bottom:4px}
+.faq-q:first-child{margin-top:0}
+
+.back-top{display:inline-block;margin-top:8px;font-size:11.5px;color:var(--muted);text-decoration:none}
+.back-top:hover{color:var(--red)}
+
+@media (max-width:900px){
+  .tool-layout{flex-direction:column}
+  .tool-nav{position:static;width:100%;max-height:none}
+}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+</style>
+
+<style>
+.auth-topbar{position:fixed;top:0;left:0;right:0;background:var(--ink,#0F0F0F);color:#fff;font-size:11.5px;padding:8px 18px;display:flex;align-items:center;gap:10px;z-index:150;font-family:var(--font)}
+.auth-topbar b{font-weight:700}
+.auth-topbar .papel-tag{background:var(--red,#B91D2E);padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.auth-topbar .sair{margin-left:auto;background:none;border:none;color:#fff;opacity:.7;cursor:pointer;font-size:11px;text-decoration:underline;font-family:inherit}
+.auth-topbar .sair:hover{opacity:1}
+body.auth-ready{padding-top:34px}
+</style>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <div class="head-logo">UNIALFA<small>GRUPO JOSÉ ALVES</small></div>
+    <div class="head-title">
+      <h1>Central de Ajuda</h1>
+      <p>Como usar a Ferramenta de Gestão de Projetos · Escritório de Projetos</p>
+    </div>
+    <div class="head-badge">Sem login necessário</div>
+  </div>
+
+  <div class="search-box">
+    <input type="search" id="ajudaSearch" placeholder="Buscar por palavra-chave (ex.: gate, equipe, protocolo, sem login)..." oninput="filtrarAjuda()">
+  </div>
+
+  <div class="tool-layout">
+    <nav class="tool-nav" id="sbNav">
+      <div class="grp">Comece aqui</div>
+      <a href="#inicio" data-sec="inicio">Sobre esta ajuda</a>
+      <a href="#login" data-sec="login">Como fazer login</a>
+      <a href="#papeis" data-sec="papeis">Papéis de usuário</a>
+      <a href="#gates" data-sec="gates">Gates de aprovação</a>
+      <a href="#equipe" data-sec="equipe">Restrição por equipe</a>
+      <a href="#sem-login" data-sec="sem-login">Acesso sem login</a>
+      <div class="grp">Formulários</div>
+      <a href="#passo-1" data-sec="passo-1">1. Solicitação de Demanda</a>
+      <a href="#passo-2" data-sec="passo-2">2. Canvas de Projeto</a>
+      <a href="#passo-3" data-sec="passo-3">3. TAP</a>
+      <a href="#passo-4" data-sec="passo-4">4. Planejamento e Desenv.</a>
+      <a href="#passo-5" data-sec="passo-5">5. EAP</a>
+      <a href="#passo-6" data-sec="passo-6">6. Ata de Reunião</a>
+      <a href="#passo-7" data-sec="passo-7">7. SMP</a>
+      <a href="#passo-8" data-sec="passo-8">8. TEP</a>
+      <a href="#passo-9" data-sec="passo-9">9. RLA</a>
+      <a href="#passo-10" data-sec="passo-10">10. Plano de Comunicação</a>
+      <div class="grp">Relatórios finais</div>
+      <a href="#relatorio-situacao" data-sec="relatorio-situacao">Relatório de Situação</a>
+      <a href="#relatorio-entregas" data-sec="relatorio-entregas">Relatório de Entregas</a>
+      <div class="grp">Outras ferramentas</div>
+      <a href="#validador" data-sec="validador">Validador de Projetos</a>
+      <a href="#administracao" data-sec="administracao">Administração</a>
+      <div class="grp">Ajuda</div>
+      <a href="#faq" data-sec="faq">Perguntas frequentes</a>
+    </nav>
+
+    <div class="tool-main">
+
+      <section class="sec" id="inicio">
+        <div class="eyebrow">central de ajuda</div>
+        <h2>Sobre esta ajuda</h2>
+        <p class="lead">Esta página reúne, em um só lugar, o guia operacional de cada ferramenta do sistema — login, papéis, gates, restrição por equipe e o passo a passo de cada um dos 12 formulários. É a versão navegável do Manual de Uso da Ferramenta de Gestão de Projetos.</p>
+        <p>Use o menu à esquerda (ou a busca no topo) para ir direto ao assunto. Em qualquer formulário do sistema, clique no ícone <b>?</b> no cabeçalho para abrir esta central já na seção daquele formulário.</p>
+      </section>
+
+      <section class="sec" id="login">
+        <div class="eyebrow">acesso</div>
+        <h2>Como fazer login</h2>
+        <p>Todos os 12 formulários de registro e a página de Administração exigem login antes de carregar ou salvar qualquer dado. A página inicial (Mapa de Diretrizes) e o Validador de Projetos são as únicas que não exigem login.</p>
+        <p>O login pode ser feito de duas formas, sem necessidade de senha:</p>
+        <ul>
+          <li><b>Link mágico por e-mail</b> — digite seu e-mail e clique em <b>Enviar link de acesso</b>. Um link chega no seu e-mail; clique nele e a página de origem atualiza sozinha.</li>
+          <li><b>Microsoft (SSO)</b> — clique em <b>Entrar com Microsoft - UNIALFA</b> e autentique com a sua conta institucional.</li>
+        </ul>
+        <div class="tip">No primeiro login, você recebe automaticamente o papel <b>Solicitante</b>. Para obter outro papel, peça a um Admin para alterá-lo em Administração &gt; Usuários.</div>
+        <p>Depois de logado, uma barra preta no topo da página mostra <b>Conectado como [seu e-mail]</b> e o seu papel atual, com um botão <b>Sair</b>.</p>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="papeis">
+        <div class="eyebrow">acesso</div>
+        <h2>Papéis de usuário</h2>
+        <p>Cada pessoa que faz login recebe um papel, usado para liberar ou restringir ações específicas no sistema. Papéis são atribuídos e alterados por um Admin, em Administração &gt; Usuários.</p>
+        <table class="tbl">
+          <tr><th>Papel</th><th>Observação</th></tr>
+          <tr><td>Solicitante</td><td>Papel padrão, atribuído automaticamente a todo novo usuário no primeiro login.</td></tr>
+          <tr><td>Gerente de Projetos</td><td>Sem restrições adicionais além das descritas nesta página.</td></tr>
+          <tr><td>Gestor Responsável</td><td>Sem restrições adicionais além das descritas nesta página.</td></tr>
+          <tr><td>Dono do Negócio</td><td>Sem restrições adicionais além das descritas nesta página.</td></tr>
+          <tr><td>Alta Gestão</td><td>Sem restrições adicionais além das descritas nesta página.</td></tr>
+          <tr><td>Admin (PMO/Admin)</td><td>Papel de administração do sistema — único que pode executar as ações abaixo.</td></tr>
+        </table>
+        <h3>Ações exclusivas de Admin</h3>
+        <ul>
+          <li>Acessar a página de Administração (qualquer outro papel vê "Acesso restrito").</li>
+          <li>Alterar o papel de outros usuários.</li>
+          <li>Adicionar ou remover membros da equipe de um projeto.</li>
+          <li>Ativar ou desativar as opções de "sem login" da Solicitação de Demanda e da Ata de Reunião.</li>
+          <li>Aprovar ou reprovar o Gate 1 na Solicitação de Demanda.</li>
+        </ul>
+        <div class="tip">Um Admin é sempre considerado membro de qualquer equipe de projeto automaticamente.</div>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="gates">
+        <div class="eyebrow">acesso</div>
+        <h2>Gates de aprovação</h2>
+        <p>O sistema tem dois pontos de decisão formal no ciclo de vida de um projeto:</p>
+        <ul>
+          <li><b>Gate 1 — Triagem:</b> ocorre logo após o registro da demanda. Só o Admin consegue alterar o status da Solicitação de Demanda para Aprovada ou Reprovada; qualquer outro papel vê o campo travado.</li>
+          <li><b>Gate 2 — Pactuação:</b> ocorre ao final do planejamento, quando o Relatório de Entregas e Benefícios é apresentado e pactuado com o Dono do Negócio perante a Alta Gestão.</li>
+        </ul>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="equipe">
+        <div class="eyebrow">acesso</div>
+        <h2>Restrição por equipe do projeto</h2>
+        <p>Sete dos doze formulários exigem vincular o registro a um <b>Projeto vinculado</b> (um projeto já Aprovado no Gate 1): Canvas, TAP, Planejamento e Desenvolvimento, EAP, SMP, TEP e RLA. Nesses formulários, apenas quem faz parte da equipe daquele projeto — ou um Admin — pode criar ou editar um registro vinculado a ele.</p>
+        <ul>
+          <li>Se você não for da equipe do projeto selecionado (e não for Admin), aparece um aviso na tela e o botão de enviar/registrar fica desabilitado.</li>
+          <li>A equipe de cada projeto é definida por um Admin, em Administração &gt; Equipes.</li>
+        </ul>
+        <div class="note">Os outros 5 formulários (Solicitação de Demanda, Ata de Reunião, Plano de Comunicação, Relatório de Situação e Relatório de Entregas) não usam esse conceito — qualquer usuário autenticado pode criar/editar registros neles.</div>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="sem-login">
+        <div class="eyebrow">acesso</div>
+        <h2>Acesso sem login</h2>
+        <p>Dois formulários podem, opcionalmente, ser abertos por um Admin para aceitar registros sem login: <b>Solicitação de Demanda</b> e <b>Ata de Reunião</b>. Cada um tem um interruptor independente em Administração &gt; Configurações.</p>
+        <ul>
+          <li>Quando ativo, a tela de login ganha um terceiro caminho: <b>Continuar sem login</b> — a pessoa informa apenas nome completo e e-mail.</li>
+          <li>Quem usa esse caminho só consegue criar um registro novo — nunca editar, excluir ou alterar status, mesmo em um registro que ela mesma criou.</li>
+          <li>O registro criado sem login recebe um selo <b>Sem login</b> na listagem.</li>
+        </ul>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="passo-1">
+        <div class="eyebrow">formulário 1 de 12</div>
+        <h2>Solicitação de Demanda <span style="font-weight:600;font-size:13px;color:var(--muted)">FORALF00339</span></h2>
+        <p class="lead">Quando usar: no início de tudo, para registrar formalmente uma ideia, necessidade ou problema institucional.</p>
+        <table class="tbl">
+          <tr><th>Campo</th><th>Obrig.</th><th>Descrição</th></tr>
+          <tr><td>Nome do projeto</td><td>Sim</td><td>Nome que vai identificar a iniciativa em todos os registros futuros</td></tr>
+          <tr><td>Solicitante</td><td>Sim</td><td>Nome de quem está pedindo o projeto</td></tr>
+          <tr><td>Departamento / unidade</td><td>Sim</td><td>UNIALFA, FADISP, Colégio Alfa, TLA, Controladoria, TI ou Outro</td></tr>
+          <tr><td>Justificativa / necessidade</td><td>Sim</td><td>Por que o projeto é necessário</td></tr>
+          <tr><td>Objetivo / resultado esperado</td><td>Sim</td><td>O que deve ser entregue ao final</td></tr>
+          <tr><td>Escopo</td><td>Sim</td><td>O que está incluído e o que não está</td></tr>
+          <tr><td>Prazo desejado</td><td>Sim</td><td>Data limite desejada pelo solicitante</td></tr>
+          <tr><td>Partes interessadas</td><td>Sim</td><td>Áreas, equipes ou pessoas impactadas</td></tr>
+        </table>
+        <p>Clique em <b>Registrar solicitação</b> para gerar o protocolo. É neste ponto que ocorre o <a href="#gates">Gate 1 — Triagem</a>: só um Admin pode aprovar ou reprovar.</p>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="passo-2">
+        <div class="eyebrow">formulário 2 de 12</div>
+        <h2>Canvas de Projeto <span style="font-weight:600;font-size:13px;color:var(--muted)">FORALF00344</span><span class="tag eq">exige equipe</span></h2>
+        <p class="lead">Quando usar: assim que a demanda for aprovada. Reúne, em uma única tela, a motivação, o produto, os parceiros, as entregas, os riscos e os custos do projeto.</p>
+        <p>Exige selecionar um <a href="#equipe">Projeto vinculado</a> já Aprovado no Gate 1. Campos principais: Justificativas, Objetivo (SMART), Produto, Grupo de entregas (que depois vira a EAP), Riscos e Custos.</p>
+        <p>Clique em <b>Registrar canvas</b>. O status inicial é Pendente de aprovação.</p>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="passo-3">
+        <div class="eyebrow">formulário 3 de 12</div>
+        <h2>TAP — Termo de Abertura de Projeto <span style="font-weight:600;font-size:13px;color:var(--muted)">FORALF00338</span><span class="tag eq">exige equipe</span></h2>
+        <p class="lead">Quando usar: depois do Canvas aprovado, para autorizar formalmente a existência do projeto.</p>
+        <p>Campos principais: Justificativa, Objetivos, Público-alvo/Benefícios/Exclusões, Premissas/Restrições/Critérios/Riscos, cronograma de entregas macro, custo total estimado, equipe do projeto e indicadores de resultado.</p>
+        <p>Clique em <b>Registrar TAP</b>. Um projeto sem TAP aprovado não deve avançar para a execução.</p>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="passo-4">
+        <div class="eyebrow">formulário 4 de 12</div>
+        <h2>Planejamento e Desenvolvimento de Projeto <span style="font-weight:600;font-size:13px;color:var(--muted)">FORALF00325</span><span class="tag eq">exige equipe</span></h2>
+        <p class="lead">Quando usar: logo após o TAP, para detalhar o projeto em profundidade. É o dossiê mais extenso da ferramenta, organizado em 8 abas.</p>
+        <table class="tbl">
+          <tr><th>Aba</th><th>Conteúdo</th></tr>
+          <tr><td>1. Pré-projeto</td><td>Produtos impactados, escopo, contexto, objetivos, entregáveis, premissas, restrições, partes interessadas</td></tr>
+          <tr><td>2. Viabilidade</td><td>Situação atual, proposta de mudança, benefícios, alternativas, impactos, plano de implementação</td></tr>
+          <tr><td>3. Cronograma</td><td>Tabela de marcos: nome, responsável, duração, data de entrega</td></tr>
+          <tr><td>4. Entradas</td><td>Tabela de requisitos de entrada, com 7 categorias pré-preenchidas</td></tr>
+          <tr><td>5. Saídas</td><td>Tabela de entregáveis ligados a um requisito de entrada</td></tr>
+          <tr><td>6. Verificação</td><td>Tabela de verificação de conformidade de cada saída</td></tr>
+          <tr><td>7. Validação</td><td>Tabela de validação do uso pretendido</td></tr>
+          <tr><td>8. Análise crítica</td><td>Tabela de pontos de controle por etapa do projeto</td></tr>
+        </table>
+        <p>Preencha a capa (nome, unidade e gestor são obrigatórios), navegue pelas 8 abas e clique em <b>Registrar dossiê</b>.</p>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="passo-5">
+        <div class="eyebrow">formulário 5 de 12</div>
+        <h2>EAP — Estrutura Analítica do Projeto <span class="tag eq">exige equipe</span></h2>
+        <p class="lead">Quando usar: em paralelo ao planejamento, para decompor visualmente o escopo em pacotes de trabalho.</p>
+        <p>Use o construtor hierárquico de 3 níveis: <b>+ Adicionar pacote de trabalho</b>, depois <b>+ Adicionar entrega</b> dentro do pacote, depois <b>+ Atividade</b> dentro da entrega. Clique em <b>Visualizar árvore</b> a qualquer momento para conferir o diagrama antes de salvar.</p>
+        <p>Clique em <b>Registrar EAP</b> para gerar o protocolo.</p>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="passo-6">
+        <div class="eyebrow">formulário 6 de 12 · uso recorrente</div>
+        <h2>Ata de Reunião <span style="font-weight:600;font-size:13px;color:var(--muted)">FORALF00340</span><span class="tag nologin">sem login opcional</span></h2>
+        <p class="lead">Quando usar: a qualquer momento do projeto, para registrar formalmente qualquer reunião — não faz parte da esteira sequencial, fica sempre disponível.</p>
+        <p>Selecione a(s) unidade(s) envolvidas, preencha Pauta e Projeto (obrigatórios), participantes, resumo, encaminhamentos e entraves. Opcional: use <b>Preencher com Read AI</b> para tentar preencher automaticamente a partir do nome de uma reunião gravada — revise sempre os dados antes de registrar.</p>
+        <p>Clique em <b>Registrar ata</b> para gerar o protocolo.</p>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="passo-7">
+        <div class="eyebrow">formulário 7 de 12 · uso condicional</div>
+        <h2>SMP — Solicitação de Mudança de Projeto <span style="font-weight:600;font-size:13px;color:var(--muted)">FORALF00343</span><span class="tag eq">exige equipe</span></h2>
+        <p class="lead">Quando usar: sempre que for necessário alterar escopo, cronograma, custo ou qualidade de um projeto já em andamento.</p>
+        <p>Preencha a análise de impactos nas 8 dimensões (objetivo, cronograma, escopo, custo, alinhamento estratégico, qualidade, riscos, outros impactos) e marque a decisão: Aprovada, Não aprovada ou Pendente de avaliação.</p>
+        <p>Clique em <b>Registrar SMP</b> — o status do registro acompanha automaticamente a decisão marcada.</p>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="passo-8">
+        <div class="eyebrow">formulário 8 de 12</div>
+        <h2>TEP — Termo de Encerramento de Projeto <span style="font-weight:600;font-size:13px;color:var(--muted)">FORALF00341</span><span class="tag eq">exige equipe</span></h2>
+        <p class="lead">Quando usar: ao encerrar o projeto, seja por conclusão, paralisação ou cancelamento.</p>
+        <p>Selecione o tipo de encerramento (Concluído, Paralisado ou Cancelado — os dois últimos exigem justificativa), registre entregas de resultados, atividades encerradas e a análise de efetividade.</p>
+        <p>Clique em <b>Registrar TEP</b> para gerar o protocolo.</p>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="passo-9">
+        <div class="eyebrow">formulário 9 de 12</div>
+        <h2>RLA — Registro de Lições Aprendidas <span style="font-weight:600;font-size:13px;color:var(--muted)">FORALF00342</span><span class="tag eq">exige equipe</span></h2>
+        <p class="lead">Quando usar: junto com o TEP, ao final do projeto, para capturar o aprendizado organizacional.</p>
+        <p>Responda às perguntas abertas (Visão geral, Destaques, Desafios, Pós-projeto) e, nos blocos de avaliação estruturada, marque Sim/Não/Parcial/N-A para cada afirmação — cada bloco calcula automaticamente um placar percentual.</p>
+        <p>Clique em <b>Registrar RLA</b>. O score global fica salvo junto com o registro.</p>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="passo-10">
+        <div class="eyebrow">formulário 10 de 12</div>
+        <h2>Plano de Comunicação de Projeto <span style="font-weight:600;font-size:13px;color:var(--muted)">FORALF00308</span></h2>
+        <p class="lead">Quando usar: para planejar o que será comunicado, a quem e em qual momento do projeto.</p>
+        <p>É uma tabela de referência (tipo de comunicação × o que comunicar), com abas <b>Painel</b> (visualização) e <b>Editar dados</b>. Ajuste o conteúdo de cada linha às necessidades do seu projeto.</p>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="relatorio-situacao">
+        <div class="eyebrow">relatório final</div>
+        <h2>Relatório de Situação de Projetos <span style="font-weight:600;font-size:13px;color:var(--muted)">FORALF11</span></h2>
+        <p class="lead">Visão consolidada de todos os projetos do portfólio: status, percentual de execução, marcos e pontos de atenção.</p>
+        <p>Tem três abas: <b>Painel</b>, <b>Editar dados</b> e <b>Importar Project</b> (arraste uma exportação do MS Project em Excel ou CSV — o sistema detecta automaticamente as colunas de nome, % concluído, início, término e responsável).</p>
+        <div class="note">Este relatório não tem aprovação/status formal — é uma ferramenta viva de acompanhamento.</div>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="relatorio-entregas">
+        <div class="eyebrow">relatório final</div>
+        <h2>Relatório de Entregas e Benefícios <span style="font-weight:600;font-size:13px;color:var(--muted)">FORALF12</span></h2>
+        <p class="lead">O relatório mais importante do ponto de vista de governança: é sobre ele que ocorre o <a href="#gates">Gate 2 — Pactuação</a>.</p>
+        <p>Preencha a Ficha do Programa, indicadores e valores estimados, depois cada projeto vinculado (com suas próprias entregas, indicadores e valores). Clique em <b>Salvar e ver painel</b>.</p>
+        <div class="note">Só depois do Gate 2 pactuado o projeto deve avançar para a execução.</div>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="validador">
+        <div class="eyebrow">ferramenta de apoio</div>
+        <h2>Validador de Projetos <span class="tag nologin">sem login</span></h2>
+        <p class="lead">Ferramenta de apoio à decisão sobre Fatores Críticos de Sucesso (FCS) e Benefícios. Não gera um artefato FORALF — é um painel de reflexão e diagnóstico.</p>
+        <p>Reúne um quadro de conexões (fatores × benefícios), um simulador "e se?" e um assistente de decisão em 8 perguntas. É aberto sem login; login só é pedido para vincular uma avaliação a um projeto e salvar o veredito no histórico.</p>
+        <p><a href="14 - validador-projetos.html" target="_blank" rel="noopener">Abrir o Validador de Projetos →</a></p>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="administracao">
+        <div class="eyebrow">gestão</div>
+        <h2>Administração <span class="tag eq">exclusivo Admin</span></h2>
+        <p class="lead">Página restrita a usuários com papel Admin. Reúne três abas:</p>
+        <ul>
+          <li><b>Usuários</b> — lista quem já fez login, com o papel atual e um seletor para alterá-lo.</li>
+          <li><b>Equipes</b> — define quem faz parte da equipe de cada projeto (base da <a href="#equipe">restrição por equipe</a>).</li>
+          <li><b>Configurações</b> — controla os dois interruptores de <a href="#sem-login">acesso sem login</a>.</li>
+        </ul>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="faq">
+        <div class="eyebrow">dúvidas comuns</div>
+        <h2>Perguntas frequentes</h2>
+
+        <div class="faq-q">Como corrijo um registro que já salvei?</div>
+        <p>Vá até a aba de registros cadastrados do formulário correspondente, clique na linha da tabela para abrir o painel de detalhes e clique em <b>Editar dados</b> (ou altere o status pelo seletor no rodapé).</p>
+
+        <div class="faq-q">Como excluo um registro?</div>
+        <p>Abra o registro na tela de detalhes e clique em <b>Excluir</b>, no rodapé. A ação pede confirmação e não pode ser desfeita.</p>
+
+        <div class="faq-q">Por que o botão de registrar/salvar está desabilitado?</div>
+        <p>Nos 7 formulários com <a href="#equipe">restrição por equipe</a>, o botão fica desabilitado se você não for membro da equipe do projeto selecionado. Peça a um Admin para adicioná-lo à equipe em Administração &gt; Equipes.</p>
+
+        <div class="faq-q">Por que não consigo abrir um formulário?</div>
+        <p>Se aparecer a tela de <a href="#login">login</a>, você precisa se autenticar. Se depois de logado aparecer "Acesso restrito", essa página é exclusiva para o papel Admin.</p>
+
+        <div class="faq-q">Os dados ficam salvos onde?</div>
+        <p>Em um banco de dados real (Supabase/PostgreSQL), associados à sua conta. Recomenda-se exportar periodicamente em CSV os registros importantes, como backup.</p>
+
+        <div class="faq-q">Preciso preencher tudo na mesma sessão?</div>
+        <p>Não. Cada formulário pode ser preenchido e salvo em etapas diferentes — o registro fica disponível na aba de consulta para ser retomado quando for necessário.</p>
+
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* Marca no menu a seção visível e mostra a barra de login se houver sessão ativa (sem exigir login) */
+(function(){
+  var SUPABASE_URL = 'https://fiarntunpqteopwjkhjg.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+  var PAPEL_LABEL = { solicitante:'Solicitante', gerente_projetos:'Gerente de Projetos', gestor_responsavel:'Gestor Responsável', dono_negocio:'Dono do Negócio', alta_gestao:'Alta Gestão', admin:'PMO / Admin' };
+  function getSession(){ try{ return JSON.parse(localStorage.getItem('unialfa_session')); }catch(e){ return null; } }
+  async function mostrarTopbar(){
+    var s = getSession();
+    if(!s || !s.access_token) return;
+    if (s.expires_at && Date.now() > s.expires_at) { return; }
+    var r = await fetch(SUPABASE_URL + '/auth/v1/user', { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + s.access_token } });
+    if(!r.ok) return;
+    var user = await r.json();
+    var pr = await fetch(SUPABASE_URL + '/rest/v1/perfis?id=eq.' + user.id + '&select=papel', { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + s.access_token } });
+    var rows = pr.ok ? await pr.json() : [];
+    var papel = rows[0] ? rows[0].papel : 'solicitante';
+    document.body.classList.add('auth-ready');
+    var bar = document.createElement('div');
+    bar.className='auth-topbar';
+    bar.innerHTML = '<span>Conectado como <b>'+ (user.email||'') +'</b></span><span class="papel-tag">'+(PAPEL_LABEL[papel]||papel)+'</span><button class="sair" onclick="localStorage.removeItem(\'unialfa_session\');location.reload();">Sair</button>';
+    document.body.prepend(bar);
+  }
+  mostrarTopbar();
+})();
+
+const navLinks = [...document.querySelectorAll('#sbNav a')];
+const secs = navLinks.map(a=>document.getElementById(a.dataset.sec)).filter(Boolean);
+const spy = new IntersectionObserver(ents=>{
+  ents.forEach(e=>{
+    if(e.isIntersecting){ navLinks.forEach(a=>a.classList.toggle('on', a.dataset.sec===e.target.id)); }
+  });
+},{rootMargin:'-20% 0px -70% 0px'});
+secs.forEach(sc=>spy.observe(sc));
+
+function filtrarAjuda(){
+  const q = document.getElementById('ajudaSearch').value.trim().toLowerCase();
+  document.querySelectorAll('.sec').forEach(sec=>{
+    sec.style.display = (!q || sec.textContent.toLowerCase().includes(q)) ? '' : 'none';
+  });
+  document.querySelectorAll('#sbNav a').forEach(a=>{
+    const sec = document.getElementById(a.dataset.sec);
+    a.parentElement && (a.style.display = (sec && sec.style.display==='none') ? 'none' : '');
+  });
+}
+
+if (location.hash) {
+  const target = document.getElementById(location.hash.slice(1));
+  if (target) setTimeout(()=>target.scrollIntoView({behavior:'smooth', block:'start'}), 60);
+}
+</script>

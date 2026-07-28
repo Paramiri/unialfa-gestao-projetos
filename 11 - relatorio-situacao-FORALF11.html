@@ -154,6 +154,8 @@ textarea{resize:vertical;min-height:68px}
 
 @media(max-width:720px){.kpi-row{grid-template-columns:1fr 1fr}.atencao-destaque{grid-template-columns:1fr}.edit-grid{grid-template-columns:1fr}.head-meta{display:none}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.head-help{flex:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;text-decoration:none;border:1.5px solid rgba(255,255,255,.4)}
+.head-help:hover{background:rgba(255,255,255,.32)}
 </style>
 
 <!-- ==== AUTH GATE (HTML) ==== -->
@@ -387,6 +389,7 @@ function ensureAuthenticated(){
       <h1>Relatório de Situação de Projetos</h1>
       <p>Escritório de Projetos · Visão geral e por programa/projeto</p>
     </div>
+    <a class="head-help" href="15 - central-ajuda.html#relatorio-situacao" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
     <div class="head-meta">
       <div class="head-meta-item"><span>Referência</span><b id="hd-ref">—</b></div>
       <div class="head-meta-item"><span>Responsável</span><b id="hd-resp">—</b></div>

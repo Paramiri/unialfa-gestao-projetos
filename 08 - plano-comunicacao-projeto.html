@@ -100,6 +100,8 @@ textarea{resize:vertical;min-height:80px}
 
 @media(max-width:720px){.approv-grid,.approv-edit{grid-template-columns:1fr}.approv-cell{border-right:none;border-bottom:1px solid var(--line)}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.head-help{flex:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;text-decoration:none;border:1.5px solid rgba(255,255,255,.4)}
+.head-help:hover{background:rgba(255,255,255,.32)}
 </style>
 
 <!-- ==== AUTH GATE (HTML) ==== -->
@@ -332,6 +334,7 @@ function ensureAuthenticated(){
       <h1>Plano de Comunicação de Projeto</h1>
       <p>Tipos de comunicação e o que é comunicado em cada uma · Escritório de Projetos</p>
     </div>
+    <a class="head-help" href="15 - central-ajuda.html#passo-10" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
   </div>
 
   <div class="view-tabs">
