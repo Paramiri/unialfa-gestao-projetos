@@ -390,6 +390,14 @@ window.unialfaProjeto = {
       method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}), body: JSON.stringify({status:status, atualizado_em: new Date().toISOString()})
     });
   },
+  async registrarEvento(projetoId, campo, valorAnterior, valorNovo, formularioOrigem){
+    if(!projetoId) return;
+    var user = window.currentUser;
+    await fetch(unialfaAuth.REST_BASE + '/projeto_historico', {
+      method:'POST', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
+      body: JSON.stringify({ projeto_id: projetoId, campo: campo, valor_anterior: valorAnterior, valor_novo: valorNovo, formulario_origem: formularioOrigem, alterado_por: user?user.id:null, alterado_por_email: user?user.email:null })
+    });
+  },
   async historico(projetoId){
     var r = await fetch(unialfaAuth.REST_BASE + '/projeto_historico?projeto_id=eq.'+projetoId+'&select=*&order=criado_em.desc', { headers: unialfaAuth.authHeaders() });
     return r.ok ? await r.json() : [];
@@ -858,10 +866,11 @@ async function submitForm(){
   if(!projetoId){ toast('Selecione o projeto vinculado (deve estar Aprovado no Gate 1)', false); return; }
   if(!(await unialfaEquipe.souMembro(projetoId))){ toast('Você não faz parte da equipe deste projeto.', false); return; }
   const dec=document.querySelector('input[name="decisao"]:checked');
-  let rec, camposAntigos={}, registroAntigo=null;
+  let rec, camposAntigos={}, registroAntigo=null, statusAntigo=null;
   if(editId){
     rec = Object.assign({}, cache.find(x=>x.id===editId));
     registroAntigo = Object.assign({}, rec);
+    statusAntigo = rec.status;
     camposAntigos = { nome: rec.nomeProjeto, unidade: rec.unidade, gerente: rec.gerente };
   } else {
     const year=new Date().getFullYear();
@@ -879,6 +888,9 @@ async function submitForm(){
     if(registroAntigo){ await unialfaHistorico.registrar(KEY_PREFIX+rec.id, 'SMP - Solicitação de Mudança de Projeto (FORALF00343)', registroAntigo, rec); }
     const r=await window.storage.set(KEY_PREFIX+rec.id,JSON.stringify(rec));
     if(!r)throw new Error();
+    if(rec.status!==statusAntigo && (rec.status==='Aprovada'||rec.status==='Não aprovada')){
+      await unialfaProjeto.registrarEvento(projetoId, 'SMP: '+(rec.tituloMudanca||rec.protocolo), statusAntigo||'—', rec.status, 'SMP - Solicitação de Mudança de Projeto (FORALF00343)');
+    }
     if(editId){
       const idx=cache.findIndex(x=>x.id===rec.id);
       if(idx>-1) cache[idx]=rec; else cache.unshift(rec);
@@ -988,8 +1000,15 @@ async function toggleRegistroHistorico(){
 }
 async function changeStatus(){
   const r=cache.find(x=>x.id===currentId);if(!r)return;
+  const statusAntigo=r.status;
   r.status=document.getElementById('d-status').value;
-  try{await window.storage.set(KEY_PREFIX+r.id,JSON.stringify(r));renderList();toast('Status atualizado para "'+r.status+'"');}
+  try{
+    await window.storage.set(KEY_PREFIX+r.id,JSON.stringify(r));
+    if(r.projetoId && r.status!==statusAntigo && (r.status==='Aprovada'||r.status==='Não aprovada')){
+      await unialfaProjeto.registrarEvento(r.projetoId, 'SMP: '+(r.tituloMudanca||r.protocolo), statusAntigo, r.status, 'SMP - Solicitação de Mudança de Projeto (FORALF00343)');
+    }
+    renderList();toast('Status atualizado para "'+r.status+'"');
+  }
   catch(e){toast('Erro ao atualizar',false);}
 }
 async function deleteCurrent(){

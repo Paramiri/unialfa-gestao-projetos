@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.3 - 29 de julho de 2026 (substitui a versao 2.2 de 29/07/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.4 - 29 de julho de 2026 (substitui a versao 2.3 de 29/07/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -254,6 +254,7 @@ P "Esta e a versao 2.0 do manual. Em relacao a versao 1.0 (15/07/2026), foram ad
 P "Esta e a versao 2.1 do manual. Em relacao a versao 2.0 (28/07/2026), foram adicionadas as secoes sobre o registro vivo de riscos e as sugestoes de riscos recorrentes no TAP (Passo 3), a sinalizacao automatica de risco de atraso no Relatorio de Situacao (secao 4.1) e a prioridade leve (P0/P1/P2) das atividades da EAP (Passo 5)."
 P "Esta e a versao 2.2 do manual. Em relacao a versao 2.1 (29/07/2026), foi adicionada a implementacao tecnica do Gate 2 - Pactuacao no Relatorio de Entregas e Beneficios (secao 4.2): status controlado pelo Admin, data e aprovador preenchidos automaticamente, e trava de edicao do relatorio enquanto pactuado."
 P "Esta e a versao 2.3 do manual. Em relacao a versao 2.2 (29/07/2026), foi adicionada a Gestao de Entraves e Encaminhamentos no Relatorio de Situacao (secao 4.1): dois cartoes de registro (Descricao, Responsavel, Prazo, Status Aberto/Resolvido/Cancelado), exibidos lado a lado no Painel e incluidos no CSV exportado."
+P "Esta e a versao 2.4 do manual. Em relacao a versao 2.3 (29/07/2026), foi adicionada a propagacao automatica da decisao da SMP (Passo 7) para o historico compartilhado do projeto vinculado: toda vez que uma SMP e aprovada ou nao aprovada, o evento fica visivel em `Ver historico` em qualquer formulario ligado aquele projeto, sem alterar o Status de Gate 1."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -469,6 +470,7 @@ Bul "Identifique o projeto e a mudanca (titulo e solicitante sao obrigatorios); 
 Bul "Preencha a analise de impactos nas 8 dimensoes: objetivo, cronograma, escopo, custo, alinhamento estrategico, qualidade, riscos e outros impactos."
 Bul "Marque a decisao: Aprovada, Nao aprovada ou Pendente de avaliacao, com justificativa."
 P "Clique em `Registrar SMP` - o status do registro acompanha automaticamente a decisao marcada."
+Nota "Propagacao para o projeto vinculado: sempre que a decisao da SMP e finalizada como `Aprovada` ou `Nao aprovada` (seja ao registrar/editar a SMP ou ao trocar o Status na tela de detalhes), o sistema grava automaticamente um evento no historico compartilhado do projeto vinculado (o mesmo historico acessivel pelo botao `Ver historico` em qualquer formulario com `Projeto vinculado` - secao 2.5). Isso torna as decisoes de mudanca visiveis para quem estiver no Canvas, TAP, Planejamento, EAP, TEP ou RLA daquele projeto, sem precisar abrir a SMP. Essa propagacao apenas registra o evento no historico - ela nao altera o Status do projeto usado no Gate 1 (Aprovado/Reprovado)."
 
 H2 "Passo 8 - TEP, Termo de Encerramento de Projeto (FORALF00341)"
 P "Quando usar: ao encerrar o projeto, seja por conclusao, paralisacao ou cancelamento."
