@@ -153,6 +153,7 @@ Bul "Alterar o papel de outros usuarios."
 Bul "Adicionar ou remover membros da equipe de um projeto."
 Bul "Ativar/desativar as opcoes de `"sem login`" (Solicitacao de Demanda e Ata de Reuniao)."
 Bul "Aprovar ou reprovar o Gate 1 na Solicitacao de Demanda (ver secao 4)."
+Bul "Pactuar ou reabrir o Gate 2 no Relatorio de Entregas e Beneficios (ver secao 4)."
 P "Importante: um Admin sempre e considerado `"membro`" de qualquer equipe de projeto automaticamente - nao precisa ser adicionado manualmente para poder editar registros vinculados a um projeto (ver secao 5)."
 
 HR
@@ -168,7 +169,10 @@ Bul "Onde: no status da Solicitacao de Demanda - so o Admin consegue alterar o c
 
 H2 "4.2 Gate 2 - Pactuacao"
 P "Ocorre ao final do Planejamento (D02), antes do inicio da Execucao (D03). E o gate mais critico: autoriza formalmente o inicio da execucao do projeto."
-Bul "Quem decide: Dono do Negocio, perante a Alta Gestao (registrado institucionalmente; o sistema hoje nao implementa uma trava tecnica separada para este gate especificamente, alem do controle de papeis ja descrito)."
+Bul "Quem decide: Dono do Negocio, perante a Alta Gestao."
+Bul "Onde: no Relatorio de Entregas e Beneficios (FORALF12), aba Editar dados - campo Status (Pendente de pactuacao / Pactuado). So o Admin consegue alterar esse campo; qualquer outro papel ve o controle travado, com um aviso explicando que so o PMO/Admin pode pactuar."
+Bul "Ao marcar `"Pactuado`", o sistema preenche automaticamente a Data de pactuacao (hoje) e o Aprovador (nome de quem esta logado), ambos editaveis pelo Admin."
+Bul "Enquanto o status estiver `"Pactuado`", todos os demais campos do relatorio (ficha do programa, indicadores, projetos vinculados) ficam bloqueados para edicao - inclusive para o Admin - ate que o Gate 2 seja reaberto (status voltar para `"Pendente de pactuacao`")."
 
 HR
 
@@ -218,7 +222,7 @@ $rows = @(
   @("TEP","Sim","Sim","-"),
   @("RLA","Sim","Sim","-"),
   @("Relatorio de Situacao","Sim","Nao","-"),
-  @("Relatorio de Entregas","Sim","Nao","-"),
+  @("Relatorio de Entregas","Sim","Nao","Gate 2 (Admin)"),
   @("Administracao","Sim (so Admin acessa)","-","-"),
   @("Validador de Projetos","Nao (so p/ vincular projeto)","Nao","-")
 )

@@ -114,6 +114,18 @@ textarea{resize:vertical;min-height:68px}
 .empty-state h3{font-size:15px;color:var(--ink);font-weight:700;margin-bottom:6px}
 .empty-state p{font-size:13px}
 
+/* gate 2 — pactuação */
+.gate2-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px}
+.gate2-head{background:var(--ink);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.gate2-head h3{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;flex:1}
+.gate2-badge{font-size:11px;font-weight:800;padding:5px 12px;border-radius:999px;white-space:nowrap}
+.gate2-badge.pend{background:var(--warn-soft);color:var(--warn)}
+.gate2-badge.ok{background:var(--ok-soft);color:var(--ok)}
+.gate2-body{padding:14px 20px;font-size:12.5px;color:var(--ink)}
+.gate2-aviso{padding:0 20px 14px;font-size:11px;color:var(--muted)}
+.gate2-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px 18px;padding:16px 20px}
+@media(max-width:720px){.gate2-grid{grid-template-columns:1fr}}
+
 /* toast */
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 12px 40px rgba(0,0,0,.25);display:flex;align-items:center;gap:10px;opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.2,.8,.2,1);z-index:50;max-width:90vw}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -366,6 +378,10 @@ function ensureAuthenticated(){
 
   <!-- ===== PAINEL ===== -->
   <div id="view-painel">
+    <div class="gate2-card">
+      <div class="gate2-head"><h3>Gate 2 — Pactuação</h3><span class="gate2-badge" id="gate2-painel-badge">—</span></div>
+      <div class="gate2-body" id="gate2-painel-body">—</div>
+    </div>
     <div id="painel-content">
       <div class="empty-state"><h3>Nenhum dado cadastrado</h3><p>Clique em <b>Editar dados</b> para preencher o programa e seus projetos.</p></div>
     </div>
@@ -378,6 +394,19 @@ function ensureAuthenticated(){
 
   <!-- ===== EDITOR ===== -->
   <div id="view-editar" style="display:none">
+
+    <!-- Gate 2 — Pactuação -->
+    <div class="gate2-card">
+      <div class="gate2-head"><h3>Gate 2 — Pactuação</h3></div>
+      <div class="gate2-grid">
+        <div class="field"><label>Status</label><select id="gate2-status" onchange="changeGate2Status()"><option value="Pendente de pactuação">Pendente de pactuação</option><option value="Pactuado">Pactuado</option></select></div>
+        <div class="field"><label>Data de pactuação</label><input id="gate2-data" type="date" onchange="saveGate2Fields()"></div>
+        <div class="field"><label>Aprovador (Dono do Negócio)</label><input id="gate2-aprovador" type="text" placeholder="Nome de quem pactuou" onchange="saveGate2Fields()"></div>
+      </div>
+      <div class="gate2-aviso" id="gate2-aviso" style="display:none">Apenas PMO/Admin pode pactuar este relatório (Gate 2). Enquanto pactuado, os demais campos ficam travados para edição.</div>
+    </div>
+
+    <div id="editable-content">
 
     <!-- Ficha do Programa -->
     <div class="edit-card">
@@ -415,9 +444,12 @@ function ensureAuthenticated(){
     <div id="proj-editor-list"></div>
     <button class="add-proj-btn" onclick="addProjeto()">＋ Adicionar projeto</button>
 
+    </div><!-- /editable-content -->
+
     <div class="action-bar" style="border-radius:var(--radius);border:1px solid var(--line)">
-      <button class="btn btn-primary" onclick="saveAndPreview()">✓ Salvar e ver painel</button>
+      <button class="btn btn-primary" id="btnSalvarPainel" onclick="saveAndPreview()">✓ Salvar e ver painel</button>
       <button class="btn btn-ghost" onclick="showView('painel')">Cancelar</button>
+      <div class="ml" id="gate2-locked-msg" style="display:none;font-size:11px;color:var(--warn);font-weight:700">🔒 Relatório pactuado — reabra o Gate 2 acima para editar.</div>
     </div>
   </div>
 </div>
@@ -465,14 +497,15 @@ function ensureAuthenticated(){
 </script>
 <script>
 const KEY='relent_data';
-let data={prog:{cod:'',nome:'',unidade:'',resp:'',just:'',obj:'',impacto:'',alinhamento:'',parceiros:'',restricoes:'',indicadores:[],valores:[]},projetos:[]};
+function novoGate2(){return{status:'Pendente de pactuação',data:'',aprovador:''};}
+let data={prog:{cod:'',nome:'',unidade:'',resp:'',just:'',obj:'',impacto:'',alinhamento:'',parceiros:'',restricoes:'',indicadores:[],valores:[]},projetos:[],gate2:novoGate2()};
 
 function toast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3000);}
 function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function nl(s){return esc(s).replace(/\n/g,'<br>')}
 
 /* ── storage ── */
-async function loadData(){try{const r=await window.storage.get(KEY);if(r&&r.value)data=JSON.parse(r.value);}catch(e){console.warn(e);}}
+async function loadData(){try{const r=await window.storage.get(KEY);if(r&&r.value)data=JSON.parse(r.value);}catch(e){console.warn(e);}if(!data.gate2)data.gate2=novoGate2();}
 async function saveData(){try{await window.storage.set(KEY,JSON.stringify(data));}catch(e){toast('Erro ao salvar');}}
 
 /* ── views ── */
@@ -485,7 +518,21 @@ function showView(v){
 }
 
 /* ── PAINEL ── */
+function renderGate2Painel(){
+  const g=data.gate2||novoGate2();
+  const ok=g.status==='Pactuado';
+  const badge=document.getElementById('gate2-painel-badge');
+  badge.textContent=g.status;
+  badge.className='gate2-badge '+(ok?'ok':'pend');
+  const body=document.getElementById('gate2-painel-body');
+  body.textContent=ok
+    ? 'Pactuado em '+(g.data?fmtDataBR(g.data):'—')+' por '+(g.aprovador||'—')+'. O trabalho planejado está autorizado a avançar para a execução.'
+    : 'Ainda não pactuado com a Alta Gestão. Vá em Editar dados para registrar a pactuação (Gate 2) quando o programa estiver pronto.';
+}
+function fmtDataBR(iso){if(!iso)return'—';const[y,m,d]=iso.split('-');return d+'/'+m+'/'+y;}
+
 function renderPainel(){
+  renderGate2Painel();
   const p=data.prog;
   const projs=data.projetos||[];
   if(!p.nome&&!projs.length){document.getElementById('painel-content').innerHTML='<div class="empty-state"><h3>Nenhum dado cadastrado</h3><p>Clique em <b>Editar dados</b> para preencher o programa e seus projetos.</p></div>';return;}
@@ -578,6 +625,54 @@ function renderEditor(){
   rebuildTable('ind-prog',['indicador','valor','meta'],p.indicadores||[]);
   rebuildTable('val-prog',['tipo','a1','a2','a3'],p.valores||[]);
   renderProjEditor();
+  renderGate2Editor();
+}
+
+/* ── GATE 2 — pactuação ── */
+function souAdmin(){return!!(window.currentProfile&&window.currentProfile.papel==='admin');}
+function renderGate2Editor(){
+  const g=data.gate2||novoGate2();
+  document.getElementById('gate2-status').value=g.status;
+  document.getElementById('gate2-data').value=g.data||'';
+  document.getElementById('gate2-aprovador').value=g.aprovador||'';
+  const admin=souAdmin();
+  document.getElementById('gate2-status').disabled=!admin;
+  document.getElementById('gate2-data').disabled=!admin;
+  document.getElementById('gate2-aprovador').disabled=!admin;
+  document.getElementById('gate2-aviso').style.display=admin?'none':'block';
+  applyGate2Lock();
+}
+function applyGate2Lock(){
+  const locked=data.gate2&&data.gate2.status==='Pactuado';
+  document.getElementById('editable-content').querySelectorAll('input,select,textarea,button').forEach(el=>{el.disabled=locked;});
+  document.getElementById('btnSalvarPainel').disabled=locked;
+  document.getElementById('gate2-locked-msg').style.display=locked?'inline':'none';
+}
+async function changeGate2Status(){
+  if(!souAdmin()){
+    document.getElementById('gate2-status').value=(data.gate2&&data.gate2.status)||'Pendente de pactuação';
+    toast('Apenas PMO/Admin pode pactuar este relatório (Gate 2).',false);
+    return;
+  }
+  if(!data.gate2)data.gate2=novoGate2();
+  const novo=document.getElementById('gate2-status').value;
+  data.gate2.status=novo;
+  if(novo==='Pactuado'){
+    if(!data.gate2.data)data.gate2.data=new Date().toISOString().slice(0,10);
+    if(!data.gate2.aprovador&&window.currentProfile)data.gate2.aprovador=window.currentProfile.nome||(window.currentUser&&window.currentUser.email)||'';
+  }
+  document.getElementById('gate2-data').value=data.gate2.data||'';
+  document.getElementById('gate2-aprovador').value=data.gate2.aprovador||'';
+  await saveData();
+  applyGate2Lock();
+  toast(novo==='Pactuado'?'Relatório pactuado (Gate 2)':'Pactuação revertida — relatório reaberto para edição');
+}
+async function saveGate2Fields(){
+  if(!souAdmin())return;
+  if(!data.gate2)data.gate2=novoGate2();
+  data.gate2.data=document.getElementById('gate2-data').value;
+  data.gate2.aprovador=document.getElementById('gate2-aprovador').value.trim();
+  await saveData();
 }
 
 function readProg(){
