@@ -16,6 +16,20 @@ Como atualizar:
 
 Motivo de usar Word COM em vez do pacote `docx` (Node.js) da skill padrão: este ambiente não tem Node.js, pandoc, nem LibreOffice instalados — apenas o Microsoft Word está disponível localmente.
 
+## Manual de Uso da ferramenta
+
+`Manual de Uso - Ferramenta de Gestao de Projetos.docx` (na raiz do repositório) é o **manual oficial** e versionado de uso do sistema, com prints de tela e passo a passo de cada formulário, papéis, gates e relatórios.
+
+**Regra permanente:** sempre que uma funcionalidade for incluída, alterada ou removida no código — novo formulário, novo campo relevante, nova regra de negócio (ex.: registro de riscos, sinalização automática, prioridade da EAP), mudança de fluxo — este manual deve ser atualizado no mesmo commit (ou logo em seguida) para continuar refletindo o estado real do sistema. Isso vale tanto para mudanças feitas por mim quanto pelo usuário.
+
+Como atualizar:
+1. Editar o conteúdo em `gerar-manual-uso.ps1` (raiz do repo) — inclui capa (com changelog de versão), TOC automático, seções por formulário com tabelas de campos e prints.
+2. Rodar o script via PowerShell: `powershell -File "gerar-manual-uso.ps1" -ImgDir "<pasta com os prints>"` — **atenção**: `-ImgDir` precisa apontar para a pasta que já contém os prints existentes (não uma pasta vazia/nova), senão o regenerado perde todas as imagens antigas silenciosamente. Se novos prints forem necessários, tirar antes e colocar nessa mesma pasta.
+3. Conferir o resultado (exportar para PDF via `$doc.SaveAs2($pdfPath, 17)` e ler o PDF) antes de commitar — comparar a contagem de páginas com a versão anterior como sinal rápido de que nenhuma imagem foi perdida.
+4. Commitar o `.docx` e o `.ps1` junto com a mudança de código que motivou a atualização.
+
+Se essa atualização for delegada a um agente, a verificação do passo 3 (conferir o PDF de fato, não só o texto) deve ser feita antes de reportar a tarefa como concluída — uma checagem só de texto (ex. `pdftotext`) não detecta perda de imagens.
+
 ## Padrão de deploy
 
 `git add` dos arquivos específicos → commit em português com `Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>` → `git push` → confirmar publicação fazendo polling no GitHub Pages (`https://paramiri.github.io/unialfa-gestao-projetos/...`) até o conteúdo novo aparecer.
