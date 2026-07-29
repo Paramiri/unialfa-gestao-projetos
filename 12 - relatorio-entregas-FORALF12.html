@@ -176,6 +176,10 @@ textarea{resize:vertical;min-height:68px}
 .auth-topbar .sair{margin-left:auto;background:none;border:none;color:#fff;opacity:.7;cursor:pointer;font-size:11px;text-decoration:underline;font-family:inherit}
 .auth-topbar .sair:hover{opacity:1}
 body.auth-ready{padding-top:34px}
+.hist-panel{background:var(--surface-2,#F1F2F4);border:1px solid var(--line,#E5E7EB);border-radius:8px;margin-top:8px;padding:12px 14px;font-size:12px;max-height:220px;overflow-y:auto}
+.hist-panel .hi{padding:6px 0;border-bottom:1px solid var(--line,#E5E7EB)}
+.hist-panel .hi:last-child{border-bottom:none}
+.hist-panel .hi b{color:var(--red,#B91D2E)}
 </style>
 
 <script>
@@ -298,6 +302,36 @@ body.auth-ready{padding-top:34px}
     signOut: function(){ clearSession(); location.reload(); },
   };
 })();
+
+/* ---- Projeto compartilhado + historico ---- */
+window.unialfaProjeto = {
+  async listarAprovados(){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projetos?status=eq.Aprovado&select=id,nome,unidade,gerente,solicitacao_id&order=nome', { headers: unialfaAuth.authHeaders() });
+    return r.ok ? await r.json() : [];
+  },
+  async buscar(id){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projetos?id=eq.'+id+'&select=*', { headers: unialfaAuth.authHeaders() });
+    var rows = r.ok ? await r.json() : [];
+    return rows[0] || null;
+  },
+  async historico(projetoId){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projeto_historico?projeto_id=eq.'+projetoId+'&select=*&order=criado_em.desc', { headers: unialfaAuth.authHeaders() });
+    return r.ok ? await r.json() : [];
+  },
+  async mostrarHistorico(projetoId, hostEl){
+    var itens = await this.historico(projetoId);
+    var labels = {nome:'Nome do projeto', unidade:'Unidade', gerente:'Gerente de projeto', status:'Status'};
+    if(!itens.length){ hostEl.innerHTML = '<div class="hist-panel"><i>Nenhuma alteração registrada ainda.</i></div>'; hostEl.style.display='block'; return; }
+    var html = '<div class="hist-panel">';
+    itens.forEach(function(h){
+      var d = new Date(h.criado_em);
+      html += '<div class="hi"><b>'+(labels[h.campo]||h.campo)+'</b>: "'+(h.valor_anterior||'—')+'" → "'+(h.valor_novo||'—')+'"<br>'+
+        '<span style="color:var(--muted-2,#9CA3AF)">'+d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+(h.formulario_origem||'')+' · '+(h.alterado_por_email||'—')+'</span></div>';
+    });
+    html += '</div>';
+    hostEl.innerHTML = html; hostEl.style.display='block';
+  },
+};
 
 var unialfaAuthUI = {
   sendLink: async function(){
@@ -499,6 +533,29 @@ function ensureAuthenticated(){
 const KEY='relent_data';
 function novoGate2(){return{status:'Pendente de pactuação',data:'',aprovador:''};}
 let data={prog:{cod:'',nome:'',unidade:'',resp:'',just:'',obj:'',impacto:'',alinhamento:'',parceiros:'',restricoes:'',indicadores:[],valores:[]},projetos:[],gate2:novoGate2()};
+
+let projetosAprovados=[];
+async function carregarProjetosAprovados(){ projetosAprovados = await unialfaProjeto.listarAprovados(); }
+function onProjRowProjetoSelect(i){
+  const id=document.getElementById('projVinc-'+i).value;
+  document.getElementById('histBtn-'+i).style.display=id?'inline-flex':'none';
+  document.getElementById('projRowHist-'+i).style.display='none';
+  if(id){
+    const pa=projetosAprovados.find(x=>x.id===id);
+    if(pa){
+      const nomeEl=document.getElementById('pr'+i+'-nome');
+      if(nomeEl && !nomeEl.value.trim()) nomeEl.value=pa.nome;
+    }
+  }
+}
+let projRowHistAberto={};
+async function toggleProjRowHistorico(i){
+  const id=document.getElementById('projVinc-'+i).value; if(!id) return;
+  const panel=document.getElementById('projRowHist-'+i);
+  projRowHistAberto[i]=!projRowHistAberto[i];
+  if(projRowHistAberto[i]) await unialfaProjeto.mostrarHistorico(id, panel);
+  else panel.style.display='none';
+}
 
 function toast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3000);}
 function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
@@ -728,6 +785,17 @@ function buildProjEditor(pr,i){
       <button class="btn btn-sm btn-danger" onclick="removeProj(${i})">Remover</button>
     </div>
     <div class="edit-grid">
+      <div class="field full">
+        <label>Projeto vinculado (Gate 1) <span style="font-weight:500;color:var(--muted)">— opcional</span></label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="projVinc-${i}" style="flex:1" onchange="onProjRowProjetoSelect(${i})">
+            <option value="">Nenhum — usar dados digitados abaixo</option>
+            ${projetosAprovados.map(pa=>`<option value="${pa.id}" ${pr.projetoId===pa.id?'selected':''}>${esc(pa.nome)}</option>`).join('')}
+          </select>
+          <button type="button" class="btn btn-sm btn-ghost" id="histBtn-${i}" style="display:${pr.projetoId?'inline-flex':'none'}" onclick="toggleProjRowHistorico(${i})">Ver histórico</button>
+        </div>
+        <div id="projRowHist-${i}" style="display:none"></div>
+      </div>
       <div class="field"><label>Código da ação</label><input id="pr${i}-codAcao" value="${esc(pr.codAcao||'')}" placeholder="Ex: ACT-001"></div>
       <div class="field full"><label>Nome do projeto</label><input id="pr${i}-nome" value="${esc(pr.nome||'')}" placeholder="Nome do projeto"></div>
       <div class="field"><label>Unidade responsável</label><select id="pr${i}-unidade"><option value="">Selecione…</option>${['Superintendência Reitoria','Ouvidoria','CPA','Comitê da Qualidade','Diretoria Educação Executiva','Diretoria de Escola Business','Diretoria de Escola de Direito','Diretoria de Operações EAD','Diretoria de Marketing e Vendas','Coord. Curso Lato Sensu','Coord. Pós-Graduação Stricto Sensu','Coord. Curso Graduação, Técnico e Ensino Médio','Coord. Curso Graduação','Coord. Operações Acadêmicas EAD','Coord. Gestão de Polos','Corpo Docente','Corpo Docente (PJ)','Marketing','Vendas','Relacionamento','Planej. e Operações','RH','Secretaria Geral','Asseg. Qualidade','Segurança','ADM e Infraestrutura','GPTI','Controladoria','Gerência de Controladoria'].map(u=>`<option ${pr.unidade===u?'selected':''}>${u}</option>`).join('')}</select></div>
@@ -778,6 +846,7 @@ function addDynRow(tbodyId,keys){
 
 function readProjetos(){
   return(data.projetos||[]).map((_,i)=>({
+    projetoId:v(`projVinc-${i}`),
     codAcao:v(`pr${i}-codAcao`),nome:v(`pr${i}-nome`),unidade:v(`pr${i}-unidade`),
     resp:v(`pr${i}-resp`),obj:v(`pr${i}-obj`),publico:v(`pr${i}-publico`),
     riscos:v(`pr${i}-riscos`),impacto:v(`pr${i}-impacto`),
@@ -824,5 +893,5 @@ function exportCSV(){
   toast('CSV exportado');
 }
 
-(async()=>{ await ensureAuthenticated(); await loadData(); renderPainel(); })();
+(async()=>{ await ensureAuthenticated(); await loadData(); await carregarProjetosAprovados(); renderPainel(); })();
 </script>

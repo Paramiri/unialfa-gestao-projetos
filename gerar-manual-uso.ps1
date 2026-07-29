@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.4 - 29 de julho de 2026 (substitui a versao 2.3 de 29/07/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.5 - 29 de julho de 2026 (substitui a versao 2.4 de 29/07/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -255,6 +255,7 @@ P "Esta e a versao 2.1 do manual. Em relacao a versao 2.0 (28/07/2026), foram ad
 P "Esta e a versao 2.2 do manual. Em relacao a versao 2.1 (29/07/2026), foi adicionada a implementacao tecnica do Gate 2 - Pactuacao no Relatorio de Entregas e Beneficios (secao 4.2): status controlado pelo Admin, data e aprovador preenchidos automaticamente, e trava de edicao do relatorio enquanto pactuado."
 P "Esta e a versao 2.3 do manual. Em relacao a versao 2.2 (29/07/2026), foi adicionada a Gestao de Entraves e Encaminhamentos no Relatorio de Situacao (secao 4.1): dois cartoes de registro (Descricao, Responsavel, Prazo, Status Aberto/Resolvido/Cancelado), exibidos lado a lado no Painel e incluidos no CSV exportado."
 P "Esta e a versao 2.4 do manual. Em relacao a versao 2.3 (29/07/2026), foi adicionada a propagacao automatica da decisao da SMP (Passo 7) para o historico compartilhado do projeto vinculado: toda vez que uma SMP e aprovada ou nao aprovada, o evento fica visivel em `Ver historico` em qualquer formulario ligado aquele projeto, sem alterar o Status de Gate 1."
+P "Esta e a versao 2.5 do manual. Em relacao a versao 2.4 (29/07/2026), foi adicionado o campo opcional `Projeto vinculado (Gate 1)` a cada projeto listado no Relatorio de Situacao (secao 4.1) e no Relatorio de Entregas e Beneficios (secao 4.2): a selecao preenche o nome automaticamente e libera o `Ver historico` compartilhado, sem aplicar a restricao por equipe usada nos outros 7 formularios vinculados."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -341,7 +342,7 @@ P "Sete dos doze formularios exigem vincular o registro a um `Projeto vinculado`
 Img "17_f03_novo.png" "TAP com um projeto vinculado selecionado: unidade, gerente e status sao preenchidos automaticamente a partir do projeto." 5.6
 Bul "Se a pessoa nao for da equipe daquele projeto (e nao for Admin), aparece um aviso na tela e o botao de enviar/registrar fica desabilitado."
 Bul "A equipe de cada projeto e definida por um Admin, em Administracao > Equipes (secao 6)."
-Nota "Os outros 5 formularios (Solicitacao de Demanda, Ata de Reuniao, Plano de Comunicacao, Relatorio de Situacao e Relatorio de Entregas) nao usam esse conceito - qualquer usuario autenticado pode criar/editar registros neles."
+Nota "Os outros 5 formularios (Solicitacao de Demanda, Ata de Reuniao, Plano de Comunicacao, Relatorio de Situacao e Relatorio de Entregas) nao usam esse conceito de forma obrigatoria - qualquer usuario autenticado pode criar/editar registros neles, sem restricao por equipe. O Relatorio de Situacao e o Relatorio de Entregas ganharam, no entanto, um campo opcional `Projeto vinculado (Gate 1)` em cada projeto listado (secoes 4.1 e 4.2) - ele so serve para ligar aquele projeto ao historico compartilhado, sem aplicar a trava de equipe."
 
 H2 "2.6 Acesso sem login - Solicitacao de Demanda e Ata de Reuniao"
 P "Dois formularios podem, opcionalmente, ser abertos por um Admin para aceitar registros sem login: Solicitacao de Demanda e Ata de Reuniao. Cada um tem um interruptor independente em Administracao > Configuracoes (secao 6) - podem estar ligados, desligados ou so um dos dois."
@@ -507,6 +508,8 @@ Img "33_f11_editar.png" "Aba Editar dados: cabecalho do relatorio e botao para a
 Img "34_f11_importar.png" "Aba Importar Project: arraste uma exportacao do MS Project (Excel ou CSV) para preencher em lote." 5.6
 Bul "Preencha o cabecalho (mes/ano de referencia, responsavel, previsao financeira, entregas planejadas)."
 Bul "Adicione cada projeto do portfolio, com status, % execucao, datas e os campos `Merece atencao` e `Merece destaque`."
+Nota "Projeto vinculado (Gate 1) - opcional: cada linha de projeto pode, opcionalmente, ser associada a um Projeto ja Aprovado no Gate 1 (o mesmo cadastro compartilhado usado pelo Canvas, TAP, Planejamento, EAP, SMP, TEP e RLA - secao 2.5). Ao selecionar um projeto na lista, o campo Nome do projeto e preenchido automaticamente (se ainda estiver vazio) e aparece o botao `Ver historico`, que mostra as alteracoes desse projeto vindas de qualquer outro formulario vinculado a ele. Deixar em `Nenhum` mantem o comportamento anterior - o projeto do Relatorio de Situacao continua sendo texto livre, sem vinculo."
+Img "42_f11_projeto_vinculado.png" "Projeto vinculado selecionado, com o nome preenchido automaticamente e o historico compartilhado exibido." 5.6
 Bul "Alternativa mais rapida: use `Importar Project` - o sistema detecta automaticamente as colunas de nome, % concluido, inicio, termino e responsavel."
 Bul "Clique em `Salvar e ver painel`. Use os botoes do rodape para Imprimir ou Exportar CSV."
 Nota "Sinalizacao automatica: a tabela de projetos do Painel ganhou a coluna `Sinalizacao` e o quadro de indicadores ganhou o card `Em risco de atraso`. E um calculo automatico, independente do campo Status manual: compara o % Execucao informado com o % que seria esperado pelo tempo ja decorrido entre o Inicio previsto e o Termino previsto do projeto. Se a defasagem for de 15 pontos percentuais ou mais, aparece `Risco de atraso`; se o Termino previsto ja passou e o projeto nao esta em 100%, aparece `Prazo vencido`. Projetos Concluido, Cancelado ou Paralisado ficam fora desse calculo. O resultado tambem sai no CSV exportado."
@@ -522,6 +525,8 @@ Img "35_f12_painel.png" "Painel do Relatorio de Entregas e Beneficios (estado va
 Img "36_f12_editar.png" "Aba Editar dados: Ficha do Programa, o primeiro bloco a preencher." 5.6
 Bul "Preencha a Ficha do Programa (codigo, nome, unidade, responsavel, justificativa, objetivo, alinhamento estrategico)."
 Bul "Cadastre indicadores e valores estimados do programa, depois cada projeto vinculado (com suas proprias entregas, indicadores e valores)."
+Nota "Projeto vinculado (Gate 1) - opcional: assim como no Relatorio de Situacao (secao 4.1), cada projeto cadastrado aqui pode ser associado a um Projeto ja Aprovado no Gate 1. A selecao preenche automaticamente o Nome do projeto (se ainda estiver vazio) e libera o botao `Ver historico`, mostrando as alteracoes feitas nesse projeto em qualquer outro formulario vinculado a ele - incluindo decisoes de SMP (Passo 7)."
+Img "43_f12_projeto_vinculado.png" "Projeto vinculado selecionado no Relatorio de Entregas, com nome e historico preenchidos." 5.6
 Bul "Clique em `Salvar e ver painel`. Imprima ou exporte para levar a reuniao de pactuacao."
 Nota "Gate 2 - Pactuacao: no topo da aba Editar dados ha um cartao `Gate 2 - Pactuacao` com Status (Pendente de pactuacao / Pactuado), Data de pactuacao e Aprovador. Assim como o Gate 1 da Solicitacao de Demanda, so o Admin consegue alterar o Status - qualquer outro papel ve o controle travado com um aviso. Ao marcar `Pactuado`, a Data e o Aprovador sao preenchidos automaticamente (editaveis). Enquanto o status estiver `Pactuado`, todos os demais campos do relatorio ficam bloqueados para edicao, inclusive para o Admin, ate que o Gate 2 seja reaberto (status volte para `Pendente de pactuacao`)."
 Img "40_f12_gate2.png" "Cartao Gate 2 - Pactuacao preenchido, com o relatorio travado apos a pactuacao." 5.6

@@ -203,6 +203,7 @@ Bul "Ata de Reuniao (tem a opcao de sem login, descrita acima)."
 Bul "Plano de Comunicacao de Projeto"
 Bul "Relatorio de Situacao de Projetos"
 Bul "Relatorio de Entregas e Beneficios"
+P "O Relatorio de Situacao e o Relatorio de Entregas tem, cada um, um campo opcional `"Projeto vinculado (Gate 1)`" em cada projeto listado - diferente do conceito desta secao, ele nao aplica nenhuma restricao de edicao por equipe. Serve apenas para ligar aquele item ao historico compartilhado do projeto (a mesma trilha de auditoria usada pelos 7 formularios com restricao por equipe), visivel pelo botao `"Ver historico`". Deixar sem selecionar mantem o comportamento anterior: qualquer usuario autenticado continua podendo criar/editar esses registros livremente."
 
 HR
 
