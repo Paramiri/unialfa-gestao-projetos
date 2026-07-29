@@ -153,7 +153,7 @@ textarea{resize:vertical;min-height:68px}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast .dot{width:7px;height:7px;border-radius:50%;background:#5BE49B;flex:none}
 
-@media(max-width:720px){.kpi-row{grid-template-columns:1fr 1fr}.atencao-destaque{grid-template-columns:1fr}.edit-grid{grid-template-columns:1fr}.head-meta{display:none}}
+@media(max-width:720px){.kpi-row{grid-template-columns:1fr 1fr}.atencao-destaque{grid-template-columns:1fr}.entr-enc-grid{grid-template-columns:1fr}.edit-grid{grid-template-columns:1fr}.head-meta{display:none}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 .head-help{flex:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;text-decoration:none;border:1.5px solid rgba(255,255,255,.4)}
 .head-help:hover{background:rgba(255,255,255,.32)}
@@ -434,6 +434,18 @@ function ensureAuthenticated(){
       <div style="padding:28px;text-align:center;color:var(--muted);font-size:13px">Adicione projetos para ver a tabela por ano.</div>
     </div>
 
+    <div class="sec-title">Entraves e encaminhamentos</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px" class="entr-enc-grid">
+      <div>
+        <div style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">⛔ Entraves</div>
+        <div class="proj-table-wrap" id="entraves-table-wrap"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">➜ Encaminhamentos</div>
+        <div class="proj-table-wrap" id="encaminhamentos-table-wrap"></div>
+      </div>
+    </div>
+
     <div class="sec-title" id="sec-programas-title" style="display:none">Detalhe por programa / projeto</div>
     <div id="prog-cards"></div>
 
@@ -463,6 +475,20 @@ function ensureAuthenticated(){
       <div class="prog-card-head"><h3>Projetos / marcos</h3><button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)" onclick="addProjeto()">+ Adicionar projeto</button></div>
       <div id="proj-editor"></div>
       <div class="action-bar"><div style="font-size:11px;color:var(--muted)">Cada projeto pode ter um programa vinculado, % execução, status, marcos, atenção e destaque.</div></div>
+    </div>
+
+    <!-- Entraves -->
+    <div class="prog-card" style="margin-top:14px">
+      <div class="prog-card-head"><h3>Entraves</h3><button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)" onclick="addEntrave()">+ Adicionar entrave</button></div>
+      <div id="entraves-editor" style="padding:14px 20px"></div>
+      <div class="action-bar"><div style="font-size:11px;color:var(--muted)">Registre bloqueios que impedem o avanço do portfólio, com responsável e prazo para resolução.</div></div>
+    </div>
+
+    <!-- Encaminhamentos -->
+    <div class="prog-card" style="margin-top:14px">
+      <div class="prog-card-head"><h3>Encaminhamentos</h3><button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)" onclick="addEncaminhamento()">+ Adicionar encaminhamento</button></div>
+      <div id="encaminhamentos-editor" style="padding:14px 20px"></div>
+      <div class="action-bar"><div style="font-size:11px;color:var(--muted)">Registre próximos passos e decisões acordadas, com responsável e prazo.</div></div>
     </div>
 
     <div class="action-bar" style="margin-top:14px;border-radius:var(--radius);border:1px solid var(--line)">
@@ -547,7 +573,10 @@ let importedRows=[];
 const STATUS_OPTS=['A iniciar','No prazo','Atrasado','Paralisado','Concluído','Cancelado'];
 const STATUS_CLASS={'A iniciar':'s-a-iniciar','No prazo':'s-no-prazo','Atrasado':'s-atrasado','Paralisado':'s-paralisado','Concluído':'s-concluido','Cancelado':'s-cancelado'};
 
-let data={ref:'',resp:'',fin:'',entr:'',projetos:[]};
+const GOV_STATUS_OPTS=['Aberto','Resolvido','Cancelado'];
+const GOV_STATUS_CLASS={'Aberto':'s-atrasado','Resolvido':'s-no-prazo','Cancelado':'s-cancelado'};
+
+let data={ref:'',resp:'',fin:'',entr:'',projetos:[],entraves:[],encaminhamentos:[]};
 
 /* ── helpers ── */
 function toast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3000);}
@@ -598,6 +627,8 @@ function showView(v){
 /* ── storage ── */
 async function loadData(){
   try{const r=await window.storage.get(KEY);if(r&&r.value){data=JSON.parse(r.value);}}catch(e){console.warn(e);}
+  if(!data.entraves) data.entraves=[];
+  if(!data.encaminhamentos) data.encaminhamentos=[];
 }
 async function saveData(){
   try{await window.storage.set(KEY,JSON.stringify(data));}catch(e){toast('Erro ao salvar');}
@@ -617,6 +648,10 @@ function renderPainel(){
   document.getElementById('kpi-entr').textContent=data.entr||'—';
   document.getElementById('kpi-fin').textContent=data.fin?fmtBRL(data.fin):'—';
   document.getElementById('kpi-risco').textContent=projs.filter(p=>calcSinalizacao(p)).length;
+
+  // entraves / encaminhamentos (independentes da lista de projetos)
+  renderGovTable('entraves-table-wrap',data.entraves||[],'Nenhum entrave registrado.');
+  renderGovTable('encaminhamentos-table-wrap',data.encaminhamentos||[],'Nenhum encaminhamento registrado.');
 
   // project table
   const wrap=document.getElementById('proj-table-wrap');
@@ -643,6 +678,18 @@ function renderPainel(){
 
   // program cards
   renderProgCards(projs,programs);
+}
+
+function renderGovTable(wrapId,items,emptyMsg){
+  const wrap=document.getElementById(wrapId);
+  if(!wrap) return;
+  if(!items.length){wrap.innerHTML=`<div style="padding:24px;text-align:center;color:var(--muted);font-size:12.5px">${emptyMsg}</div>`;return;}
+  let html='<table class="proj-t"><thead><tr><th>Descrição</th><th>Responsável</th><th>Prazo</th><th>Status</th></tr></thead><tbody>';
+  items.forEach(it=>{
+    html+=`<tr><td>${esc(it.desc||'—')}</td><td>${esc(it.resp||'—')}</td><td>${esc(it.prazo||'—')}</td><td><span class="s-badge ${GOV_STATUS_CLASS[it.status]||''}">${esc(it.status||'—')}</span></td></tr>`;
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
 }
 
 function renderYearTable(projs){
@@ -720,7 +767,54 @@ function renderEditor(){
   const ed=document.getElementById('proj-editor');
   ed.innerHTML='';
   (data.projetos||[]).forEach((p,i)=>ed.appendChild(buildProjCard(p,i)));
+  renderEntravesEditor();
+  renderEncaminhamentosEditor();
 }
+
+/* ── entraves / encaminhamentos ── */
+function buildGovRow(item,idx,removeFn){
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap';
+  row.innerHTML=`<input style="flex:3;min-width:200px" placeholder="Descrição" value="${esc(item.desc||'')}">
+    <input style="flex:1;min-width:130px" placeholder="Responsável" value="${esc(item.resp||'')}">
+    <input style="flex:1;min-width:110px" placeholder="Prazo dd/mm/aaaa" value="${esc(item.prazo||'')}">
+    <select style="flex:1;min-width:120px">${GOV_STATUS_OPTS.map(s=>`<option ${item.status===s?'selected':''}>${s}</option>`).join('')}</select>
+    <button class="btn btn-sm btn-ghost" style="color:var(--bad);flex:none" onclick="${removeFn}(${idx})">×</button>`;
+  row.querySelectorAll('input,select').forEach((el,j)=>{
+    el.addEventListener('input',()=>{
+      const keys=['desc','resp','prazo','status'];
+      item[keys[j]]=el.value;
+    });
+  });
+  return row;
+}
+function renderEntravesEditor(){
+  const host=document.getElementById('entraves-editor');
+  if(!host) return;
+  host.innerHTML='';
+  if(!data.entraves) data.entraves=[];
+  data.entraves.forEach((it,i)=>host.appendChild(buildGovRow(it,i,'removeEntrave')));
+}
+function addEntrave(){
+  if(!data.entraves) data.entraves=[];
+  data.entraves.push({desc:'',resp:'',prazo:'',status:'Aberto'});
+  renderEntravesEditor();
+}
+function removeEntrave(i){data.entraves.splice(i,1);renderEntravesEditor();}
+
+function renderEncaminhamentosEditor(){
+  const host=document.getElementById('encaminhamentos-editor');
+  if(!host) return;
+  host.innerHTML='';
+  if(!data.encaminhamentos) data.encaminhamentos=[];
+  data.encaminhamentos.forEach((it,i)=>host.appendChild(buildGovRow(it,i,'removeEncaminhamento')));
+}
+function addEncaminhamento(){
+  if(!data.encaminhamentos) data.encaminhamentos=[];
+  data.encaminhamentos.push({desc:'',resp:'',prazo:'',status:'Aberto'});
+  renderEncaminhamentosEditor();
+}
+function removeEncaminhamento(i){data.encaminhamentos.splice(i,1);renderEncaminhamentosEditor();}
 
 function buildProjCard(p,i){
   const div=document.createElement('div');
@@ -888,6 +982,14 @@ function exportCSV(){
   const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
   let csv='"Código";"Nome";"Programa";"Responsável";"Status";"% Execução";"Sinalização automática";"Início";"Término";"Atenção";"Destaque"\r\n';
   projs.forEach(p=>{const sig=calcSinalizacao(p);csv+=`${q(p.cod)};${q(p.nome)};${q(p.programa)};${q(p.resp)};${q(p.status)};${q(p.pct)};${q(sig?sig.label.replace(/^[^ ]+ /,''):'')};${q(p.inicio)};${q(p.termino)};${q(p.atencao)};${q(p.destaque)}\r\n`;});
+  if((data.entraves||[]).length){
+    csv+='\r\n"Entraves"\r\n"Descri\u00e7\u00e3o";"Respons\u00e1vel";"Prazo";"Status"\r\n';
+    data.entraves.forEach(it=>{csv+=`${q(it.desc)};${q(it.resp)};${q(it.prazo)};${q(it.status)}\r\n`;});
+  }
+  if((data.encaminhamentos||[]).length){
+    csv+='\r\n"Encaminhamentos"\r\n"Descri\u00e7\u00e3o";"Respons\u00e1vel";"Prazo";"Status"\r\n';
+    data.encaminhamentos.forEach(it=>{csv+=`${q(it.desc)};${q(it.resp)};${q(it.prazo)};${q(it.status)}\r\n`;});
+  }
   const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=url;a.download='relatorio_situacao_FORALF11.csv';a.click();URL.revokeObjectURL(url);

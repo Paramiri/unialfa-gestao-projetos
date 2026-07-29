@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.2 - 29 de julho de 2026 (substitui a versao 2.1 de 29/07/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.3 - 29 de julho de 2026 (substitui a versao 2.2 de 29/07/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -253,6 +253,7 @@ P "Este manual explica, passo a passo, como usar as ferramentas eletronicas que 
 P "Esta e a versao 2.0 do manual. Em relacao a versao 1.0 (15/07/2026), foram adicionadas as secoes sobre login obrigatorio, acesso sem login, papeis de usuario, os dois gates de aprovacao, restricao por equipe do projeto, o Validador de Projetos e a pagina de Administracao - alem de capturas de tela reais de cada ferramenta."
 P "Esta e a versao 2.1 do manual. Em relacao a versao 2.0 (28/07/2026), foram adicionadas as secoes sobre o registro vivo de riscos e as sugestoes de riscos recorrentes no TAP (Passo 3), a sinalizacao automatica de risco de atraso no Relatorio de Situacao (secao 4.1) e a prioridade leve (P0/P1/P2) das atividades da EAP (Passo 5)."
 P "Esta e a versao 2.2 do manual. Em relacao a versao 2.1 (29/07/2026), foi adicionada a implementacao tecnica do Gate 2 - Pactuacao no Relatorio de Entregas e Beneficios (secao 4.2): status controlado pelo Admin, data e aprovador preenchidos automaticamente, e trava de edicao do relatorio enquanto pactuado."
+P "Esta e a versao 2.3 do manual. Em relacao a versao 2.2 (29/07/2026), foi adicionada a Gestao de Entraves e Encaminhamentos no Relatorio de Situacao (secao 4.1): dois cartoes de registro (Descricao, Responsavel, Prazo, Status Aberto/Resolvido/Cancelado), exibidos lado a lado no Painel e incluidos no CSV exportado."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -508,6 +509,9 @@ Bul "Alternativa mais rapida: use `Importar Project` - o sistema detecta automat
 Bul "Clique em `Salvar e ver painel`. Use os botoes do rodape para Imprimir ou Exportar CSV."
 Nota "Sinalizacao automatica: a tabela de projetos do Painel ganhou a coluna `Sinalizacao` e o quadro de indicadores ganhou o card `Em risco de atraso`. E um calculo automatico, independente do campo Status manual: compara o % Execucao informado com o % que seria esperado pelo tempo ja decorrido entre o Inicio previsto e o Termino previsto do projeto. Se a defasagem for de 15 pontos percentuais ou mais, aparece `Risco de atraso`; se o Termino previsto ja passou e o projeto nao esta em 100%, aparece `Prazo vencido`. Projetos Concluido, Cancelado ou Paralisado ficam fora desse calculo. O resultado tambem sai no CSV exportado."
 Img "38_f11_sinalizacao.png" "Painel com o card `Em risco de atraso` e a coluna Sinalizacao mostrando os selos Risco de atraso e Prazo vencido." 5.6
+Bul "Na aba Editar dados, alem dos projetos, ha dois cartoes independentes: `Entraves` e `Encaminhamentos`. Cada item tem Descricao, Responsavel, Prazo e Status (Aberto / Resolvido / Cancelado)."
+Nota "Gestao de Entraves e Encaminhamentos: entraves sao bloqueios que impedem o avanco do portfolio (ex.: dependencia externa, aprovacao pendente); encaminhamentos sao os proximos passos e decisoes acordadas para desbloquear ou avancar o trabalho. Os dois sao listas simples, independentes dos projetos cadastrados - continuam visiveis no Painel mesmo que nenhum projeto tenha sido informado ainda. No Painel, aparecem lado a lado na secao `Entraves e encaminhamentos`, com o Status de cada item destacado por selo colorido, e tambem saem no CSV exportado."
+Img "41_f11_entraves_encaminhamentos.png" "Secao Entraves e encaminhamentos no Painel, com itens Aberto e Resolvido lado a lado." 5.6
 Nota "Este relatorio nao tem aprovacao/status formal - e uma ferramenta viva de acompanhamento, atualizada sempre que a situacao dos projetos mudar."
 
 H2 "4.2 Relatorio de Entregas e Beneficios (FORALF12)"
