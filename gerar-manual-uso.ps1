@@ -418,6 +418,7 @@ $r3 = @(
 TableSimple $r3 @(5.6,1.6,8.8)
 P "Registro de riscos (secao 9 do formulario): diferente dos demais campos do TAP, o registro de riscos e vivo - pode ser reaberto e atualizado a qualquer momento do projeto pelo botao `Editar dados`, sem se limitar ao preenchimento inicial. Cada linha da tabela tem Risco, Status (Aberto, Monitorando, Mitigado, Materializado ou Encerrado, exibido como selo colorido), Responsavel e Ultima revisao (data)."
 P "Sugestoes de riscos recorrentes: ao selecionar um Projeto vinculado, o formulario analisa automaticamente o campo Entraves de todas as Atas de Reuniao ja registradas para aquele projeto e destaca, logo abaixo da tabela de riscos, qualquer entrave que se repita em 2 ou mais atas diferentes - com a contagem de atas e um botao `+ Adicionar ao registro` que insere a sugestao direto na tabela (status Aberto, revisao com a data de hoje). E uma regra automatica de comparacao de texto, sem chamar nenhuma IA - ela so aproveita entraves ja registrados nas atas, inclusive os que tiverem sido transcritos com o `Preencher com Read AI` (Passo 6)."
+Img "37_f03_riscos.png" "Registro de riscos preenchido, com selos de status coloridos e a caixa de sugestoes de riscos recorrentes vindas das atas do projeto." 5.6
 Img "18_f03_lista.png" "TAPs cadastrados." 5.6
 P "Como salvar: clique em `Registrar TAP`. Um projeto sem TAP aprovado nao deve avancar para a execucao."
 
@@ -447,6 +448,7 @@ Bul "Informe o nome do projeto (obrigatorio), a unidade e o gerente."
 Bul "Use o construtor hierarquico de 3 niveis: `+ Adicionar pacote de trabalho`, depois `+ Adicionar entrega` dentro do pacote, depois `+ Atividade` dentro da entrega."
 Bul "Clique em `Visualizar arvore` a qualquer momento para conferir o diagrama antes de salvar."
 Bul "Cada Atividade (nivel 3) pode receber, de forma opcional, uma prioridade: `P0 - Critica`, `P1 - Alta` ou `P2 - Normal` (ou nenhuma), exibida como selo colorido no construtor, na `Visualizar arvore` e no painel de detalhes. Serve para repriorizar o trabalho no dia a dia sem precisar abrir uma SMP - Solicitacao de Mudanca de Projeto (Passo 7). EAPs que ja existiam sem prioridade definida continuam funcionando normalmente."
+Img "39_f05_prioridade.png" "Atividades de nivel 3 com os tres niveis de prioridade (P0, P1 e P2), exibidos como selo colorido ao lado de cada atividade." 5.6
 P "Clique em `Registrar EAP` para gerar o protocolo."
 
 H2 "Passo 6 - Ata de Reuniao (FORALF00340) - uso recorrente"
@@ -504,6 +506,7 @@ Bul "Adicione cada projeto do portfolio, com status, % execucao, datas e os camp
 Bul "Alternativa mais rapida: use `Importar Project` - o sistema detecta automaticamente as colunas de nome, % concluido, inicio, termino e responsavel."
 Bul "Clique em `Salvar e ver painel`. Use os botoes do rodape para Imprimir ou Exportar CSV."
 Nota "Sinalizacao automatica: a tabela de projetos do Painel ganhou a coluna `Sinalizacao` e o quadro de indicadores ganhou o card `Em risco de atraso`. E um calculo automatico, independente do campo Status manual: compara o % Execucao informado com o % que seria esperado pelo tempo ja decorrido entre o Inicio previsto e o Termino previsto do projeto. Se a defasagem for de 15 pontos percentuais ou mais, aparece `Risco de atraso`; se o Termino previsto ja passou e o projeto nao esta em 100%, aparece `Prazo vencido`. Projetos Concluido, Cancelado ou Paralisado ficam fora desse calculo. O resultado tambem sai no CSV exportado."
+Img "38_f11_sinalizacao.png" "Painel com o card `Em risco de atraso` e a coluna Sinalizacao mostrando os selos Risco de atraso e Prazo vencido." 5.6
 Nota "Este relatorio nao tem aprovacao/status formal - e uma ferramenta viva de acompanhamento, atualizada sempre que a situacao dos projetos mudar."
 
 H2 "4.2 Relatorio de Entregas e Beneficios (FORALF12)"
@@ -586,7 +589,7 @@ $r8 = @(
   @("-","Reporte de Resultados","a construir","D06.5-D06.7 (sem formulario ainda)","-")
 )
 TableSimple $r8 @(1.0,5.2,3.2,4.6,2.0)
-P "Documento gerado a partir do estado atual do codigo do sistema, com capturas de tela reais coletadas em 28/07/2026." 9 $false $true $colMuted "left" 0
+P "Documento gerado a partir do estado atual do codigo do sistema, com capturas de tela reais coletadas em 28 e 29/07/2026." 9 $false $true $colMuted "left" 0
 
 # ============================================================
 # FINALIZAR
