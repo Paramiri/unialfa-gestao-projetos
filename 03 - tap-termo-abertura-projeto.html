@@ -1014,7 +1014,7 @@ function recalc(name){
 }
 function roTable(name, rows){
   const cfg=TABLES[name];
-  if(!rows||!rows.length) return '<dd>—</dd>';
+  if(!Array.isArray(rows)||!rows.length) return '<dd>—</dd>';
   let h='<dd><div class="ro-wrap"><table class="ro-t"><thead><tr>'+cfg.cols.map(c=>`<th>${c.label}</th>`).join('')+'</tr></thead><tbody>';
   rows.forEach(r=>{ h+='<tr>'+cfg.cols.map(c=>{
     let v=r[c.key]||'';
@@ -1113,7 +1113,7 @@ async function editCurrent(){
   FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el) el.value = r[id]||''; });
   TABLE_KEYS.forEach(k=>{
     document.querySelector(`#tbl-${k} tbody`).innerHTML='';
-    const rows=r[k]||[];
+    const rows=Array.isArray(r[k])?r[k]:[];
     if(rows.length){ rows.forEach(row=>addRow(k,row)); } else { addRow(k); }
     if(TABLES[k].sum) recalc(k);
   });
@@ -1216,7 +1216,7 @@ async function deleteCurrent(){
 }
 
 function tableToText(name, rows){
-  if(!rows||!rows.length) return '';
+  if(!Array.isArray(rows)||!rows.length) return '';
   const cfg=TABLES[name];
   return rows.map(r=>cfg.cols.map(c=>{let v=r[c.key]||''; if(c.type==='date'&&v) v=fmtDate(v); return c.label+': '+v;}).join(' | ')).join('\n');
 }
