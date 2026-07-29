@@ -69,6 +69,14 @@
   table.dyn-t tbody tr:last-child td{border-bottom:none}
   table.dyn-t input{border:1px solid transparent; border-radius:6px; padding:8px 8px; font-size:12.5px; background:var(--surface-2)}
   table.dyn-t input:focus{background:#fff; border-color:var(--red); box-shadow:none}
+  table.dyn-t select{border:1px solid transparent; border-radius:6px; padding:8px 6px; font-size:12.5px; background:var(--surface-2); font-family:var(--font); color:var(--ink)}
+  table.dyn-t select:focus{background:#fff; border-color:var(--red); box-shadow:none}
+  .risk-status{display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px}
+  .risk-status.aberto{background:var(--bad-soft); color:var(--bad)}
+  .risk-status.monitorando{background:var(--warn-soft); color:var(--warn)}
+  .risk-status.mitigado{background:var(--ok-soft); color:var(--ok)}
+  .risk-status.materializado{background:#3730A3; color:#fff}
+  .risk-status.encerrado{background:var(--surface-2); color:var(--muted)}
   .row-x{appearance:none; border:none; background:transparent; color:var(--muted); font-size:18px; cursor:pointer; width:28px; height:28px; border-radius:6px; line-height:1}
   .row-x:hover{background:var(--bad-soft); color:var(--bad)}
   .dyn-foot{display:flex; align-items:center; gap:14px; margin-top:12px}
@@ -658,9 +666,9 @@ window.unialfaEquipe = {
       </div>
     </div>
 
-    <!-- 6-9 Condicionantes -->
+    <!-- 6-8 Condicionantes -->
     <div class="card">
-      <div class="section-h"><div class="n">6–9</div><h2>Premissas, restrições e riscos</h2><p>Condicionantes do projeto</p></div>
+      <div class="section-h"><div class="n">6–8</div><h2>Premissas, restrições e critérios</h2><p>Condicionantes do projeto</p></div>
       <div class="grid">
         <div class="field full">
           <label><span class="ref">6 ·</span>Premissas</label>
@@ -677,12 +685,13 @@ window.unialfaEquipe = {
           <div class="hint">Condições (funcionais, técnicas, de usabilidade ou desempenho) para validação pelos stakeholders.</div>
           <textarea id="criterios" placeholder="Liste os critérios de aceitação"></textarea>
         </div>
-        <div class="field full">
-          <label><span class="ref">9 ·</span>Riscos</label>
-          <div class="hint">Eventos incertos que, se ocorrerem, terão efeito negativo no objetivo do projeto.</div>
-          <textarea id="riscos" placeholder="Liste os principais riscos"></textarea>
-        </div>
       </div>
+    </div>
+
+    <!-- 9 Registro de riscos -->
+    <div class="card">
+      <div class="section-h"><div class="n">9</div><h2>Registro de riscos</h2><p>Vivo — pode ser revisitado e atualizado a qualquer momento do projeto</p></div>
+      <div class="dyn" id="dyn-riscos"></div>
     </div>
 
     <!-- 10 Cronograma -->
@@ -811,11 +820,18 @@ const KEY_PREFIX='tap:';
 let cache=[]; let currentId=null; let currentKey=null; let editId=null;
 function realKey(r){ return (r&&r.__key) || (KEY_PREFIX+(r&&r.id)); }
 
-const FIELDS=['nomeProjeto','unidade','gerente','dataElab','alinhamento','programa','justificativa','objetivos','publico','beneficios','exclusoes','premissas','restricoes','criterios','riscos'];
+const FIELDS=['nomeProjeto','unidade','gerente','dataElab','alinhamento','programa','justificativa','objetivos','publico','beneficios','exclusoes','premissas','restricoes','criterios'];
 const REQUIRED=['nomeProjeto','unidade','gerente','dataElab','justificativa','objetivos'];
-const TABLE_KEYS=['cronograma','custos','interessadas','equipe','indicadores'];
+const TABLE_KEYS=['riscos','cronograma','custos','interessadas','equipe','indicadores'];
+const RISCO_STATUS=['Aberto','Monitorando','Mitigado','Materializado','Encerrado'];
 
 const TABLES={
+  riscos:{cols:[
+    {key:'risco',label:'Risco',type:'text'},
+    {key:'status',label:'Status',type:'select',options:RISCO_STATUS},
+    {key:'resp',label:'Responsável',type:'text'},
+    {key:'revisao',label:'Última revisão',type:'date'},
+  ]},
   cronograma:{cols:[
     {key:'marco',label:'Marcos / Entregas',type:'text'},
     {key:'resp',label:'Responsável',type:'text'},
@@ -861,7 +877,7 @@ const DETAIL=[
   {grp:'Condicionantes', k:'premissas', l:'Premissas'},
   {k:'restricoes', l:'Restrições'},
   {k:'criterios', l:'Critérios de aceitação'},
-  {k:'riscos', l:'Riscos'},
+  {grp:'Registro de riscos', k:'riscos', l:'Riscos', table:true},
   {grp:'Cronograma de entregas macro', k:'cronograma', l:'Cronograma', table:true},
   {grp:'Custo total estimado', k:'custos', l:'Custos', table:true, total:true},
   {grp:'Partes envolvidas', k:'interessadas', l:'Partes interessadas', table:true},
@@ -964,6 +980,11 @@ function addRow(name, vals){
   let cells='';
   cfg.cols.forEach(c=>{
     const v=vals?(vals[c.key]||''):'';
+    if(c.type==='select'){
+      const opts=c.options.map(o=>`<option value="${esc(o)}"${o===v?' selected':''}>${esc(o)}</option>`).join('');
+      cells+=`<td><select data-k="${c.key}">${opts}</select></td>`;
+      return;
+    }
     const t=c.type==='date'?'date':(c.type==='number'?'number':'text');
     const oninput=(cfg.sum&&c.key===cfg.sum)?` oninput="recalc('${name}')"`:'';
     cells+=`<td><input data-k="${c.key}" type="${t}" value="${esc(v)}"${oninput}></td>`;
@@ -975,7 +996,11 @@ function readTable(name){
   const rows=[];
   document.querySelectorAll(`#tbl-${name} tbody tr`).forEach(tr=>{
     const obj={}; let any=false;
-    tr.querySelectorAll('input').forEach(inp=>{ const val=inp.value.trim(); obj[inp.dataset.k]=val; if(val) any=true; });
+    tr.querySelectorAll('input,select').forEach(inp=>{
+      const val=inp.value.trim();
+      obj[inp.dataset.k]=val;
+      if(val && inp.tagName!=='SELECT') any=true;
+    });
     if(any) rows.push(obj);
   });
   return rows;
@@ -991,7 +1016,12 @@ function roTable(name, rows){
   const cfg=TABLES[name];
   if(!rows||!rows.length) return '<dd>—</dd>';
   let h='<dd><div class="ro-wrap"><table class="ro-t"><thead><tr>'+cfg.cols.map(c=>`<th>${c.label}</th>`).join('')+'</tr></thead><tbody>';
-  rows.forEach(r=>{ h+='<tr>'+cfg.cols.map(c=>{let v=r[c.key]||''; if(c.type==='date'&&v) v=fmtDate(v); return `<td>${esc(v||'—')}</td>`;}).join('')+'</tr>'; });
+  rows.forEach(r=>{ h+='<tr>'+cfg.cols.map(c=>{
+    let v=r[c.key]||'';
+    if(c.type==='date'&&v) v=fmtDate(v);
+    if(c.type==='select'&&v) return `<td><span class="risk-status ${v.toLowerCase()}">${esc(v)}</span></td>`;
+    return `<td>${esc(v||'—')}</td>`;
+  }).join('')+'</tr>'; });
   h+='</tbody></table></div></dd>'; return h;
 }
 
@@ -1034,7 +1064,7 @@ function validate(){
   return !firstBad;
 }
 
-const HIST_LABELS = { nomeProjeto:'Nome do projeto', unidade:'Unidade responsável', gerente:'Gerente de projeto', dataElab:'Data de elaboração', alinhamento:'Alinhamento estratégico', programa:'Programa vinculado', justificativa:'Justificativa', objetivos:'Objetivos', publico:'Público-alvo', beneficios:'Benefícios esperados', exclusoes:'Exclusões (fora do escopo)', premissas:'Premissas', restricoes:'Restrições', criterios:'Critérios de aceitação', riscos:'Riscos' };
+const HIST_LABELS = { nomeProjeto:'Nome do projeto', unidade:'Unidade responsável', gerente:'Gerente de projeto', dataElab:'Data de elaboração', alinhamento:'Alinhamento estratégico', programa:'Programa vinculado', justificativa:'Justificativa', objetivos:'Objetivos', publico:'Público-alvo', beneficios:'Benefícios esperados', exclusoes:'Exclusões (fora do escopo)', premissas:'Premissas', restricoes:'Restrições', criterios:'Critérios de aceitação' };
 
 async function submitForm(){
   if(!validate()){ toast('Revise os campos obrigatórios destacados', false); return; }
@@ -1192,8 +1222,8 @@ function tableToText(name, rows){
 }
 function exportCSV(){
   if(!cache.length){ toast('Não há TAPs para exportar', false); return; }
-  const simple=[['protocolo','Protocolo'],['nomeProjeto','Projeto'],['unidade','Unidade'],['gerente','Gerente'],['dataElab','Data de elaboração'],['alinhamento','Alinhamento'],['programa','Programa'],['justificativa','Justificativa'],['objetivos','Objetivos'],['publico','Publico-alvo'],['beneficios','Beneficios'],['exclusoes','Exclusoes'],['premissas','Premissas'],['restricoes','Restricoes'],['criterios','Criterios'],['riscos','Riscos'],['status','Status']];
-  const tableCols=[['cronograma','Cronograma macro'],['custos','Custos'],['interessadas','Partes interessadas'],['equipe','Equipe'],['indicadores','Indicadores']];
+  const simple=[['protocolo','Protocolo'],['nomeProjeto','Projeto'],['unidade','Unidade'],['gerente','Gerente'],['dataElab','Data de elaboração'],['alinhamento','Alinhamento'],['programa','Programa'],['justificativa','Justificativa'],['objetivos','Objetivos'],['publico','Publico-alvo'],['beneficios','Beneficios'],['exclusoes','Exclusoes'],['premissas','Premissas'],['restricoes','Restricoes'],['criterios','Criterios'],['status','Status']];
+  const tableCols=[['riscos','Registro de riscos'],['cronograma','Cronograma macro'],['custos','Custos'],['interessadas','Partes interessadas'],['equipe','Equipe'],['indicadores','Indicadores']];
   const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
   let header=simple.map(c=>q(c[1])).concat(tableCols.map(c=>q(c[1])));
   let csv=header.join(';')+'\r\n';
@@ -1212,6 +1242,7 @@ function exportCSV(){
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
 
 /* ---------- init ---------- */
+mountTable('riscos', document.getElementById('dyn-riscos'));
 mountTable('cronograma', document.getElementById('dyn-cronograma'));
 mountTable('custos', document.getElementById('dyn-custos'));
 mountTable('interessadas', document.getElementById('dyn-interessadas'));
