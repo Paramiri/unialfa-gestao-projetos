@@ -77,6 +77,15 @@
   .risk-status.mitigado{background:var(--ok-soft); color:var(--ok)}
   .risk-status.materializado{background:#3730A3; color:#fff}
   .risk-status.encerrado{background:var(--surface-2); color:var(--muted)}
+  .sugestoes-riscos{margin:0 24px 20px; padding:14px 16px; background:var(--surface-2); border:1px dashed var(--line-strong); border-radius:8px}
+  .sugestoes-head{font-size:11px; font-weight:700; color:var(--muted); margin-bottom:10px; display:flex; align-items:center; gap:6px}
+  .sugestoes-head .ai-dot{width:6px; height:6px; border-radius:50%; background:#7C3AED; flex:none}
+  .sugestao-risco{display:flex; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--line)}
+  .sugestao-risco:first-of-type{border-top:none}
+  .sugestao-risco .sr-txt{flex:1; font-size:12.5px; color:var(--ink)}
+  .sugestao-risco .sr-count{flex:none; font-size:10px; font-weight:700; color:#7C3AED; background:#EDE9FE; padding:2px 8px; border-radius:999px; white-space:nowrap}
+  .sugestao-risco.added{opacity:.55}
+  .sugestao-risco button{flex:none}
   .row-x{appearance:none; border:none; background:transparent; color:var(--muted); font-size:18px; cursor:pointer; width:28px; height:28px; border-radius:6px; line-height:1}
   .row-x:hover{background:var(--bad-soft); color:var(--bad)}
   .dyn-foot{display:flex; align-items:center; gap:14px; margin-top:12px}
@@ -692,6 +701,7 @@ window.unialfaEquipe = {
     <div class="card">
       <div class="section-h"><div class="n">9</div><h2>Registro de riscos</h2><p>Vivo — pode ser revisitado e atualizado a qualquer momento do projeto</p></div>
       <div class="dyn" id="dyn-riscos"></div>
+      <div id="sugestoesRiscos" class="sugestoes-riscos" style="display:none"></div>
     </div>
 
     <!-- 10 Cronograma -->
@@ -899,11 +909,12 @@ async function onProjetoSelect(preencherCampos=true){
   document.getElementById('btnHistorico').style.display = id ? 'inline' : 'none';
   document.getElementById('historicoPanel').style.display='none'; historicoAberto=false;
   const p=projetosAprovados.find(x=>x.id===id);
-  if(!p){ info.style.display='none'; document.getElementById('equipeAviso').style.display='none'; atualizarBotaoEquipe(true); return; }
+  if(!p){ info.style.display='none'; document.getElementById('equipeAviso').style.display='none'; atualizarBotaoEquipe(true); carregarSugestoesRiscos(null); return; }
   document.getElementById('pi-unidade').textContent=p.unidade||'—';
   document.getElementById('pi-gerente').textContent=p.gerente||'—';
   document.getElementById('pi-status').textContent='Aprovado';
   info.style.display='flex';
+  carregarSugestoesRiscos(id);
   const souMembro = await unialfaEquipe.souMembro(id);
   document.getElementById('equipeAviso').style.display = souMembro ? 'none' : 'block';
   atualizarBotaoEquipe(souMembro);
@@ -914,6 +925,65 @@ async function onProjetoSelect(preencherCampos=true){
     clearError('nomeProjeto'); clearError('unidade'); clearError('gerente');
     carregarDadosDaSolicitacao(p.solicitacao_id);
   }
+}
+/* ---------- sugestoes de riscos recorrentes (a partir dos entraves das atas do projeto) ----------
+   Extensao do Read AI: a Ata de Reuniao ja registra "Entraves" por reuniao (preenchidos manualmente
+   ou via Read AI). Aqui cruzamos os entraves de todas as atas de um mesmo projeto e sinalizamos os
+   que se repetem em 2 ou mais atas distintas como sugestao de risco - sem chamar nenhuma IA de novo,
+   so analisando o que ja foi registrado. */
+function normalizarTexto(s){
+  return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w\s]/g,' ').replace(/\s+/g,' ').trim();
+}
+let sugestoesRiscosAtual=[];
+async function carregarSugestoesRiscos(projetoId){
+  const host=document.getElementById('sugestoesRiscos');
+  sugestoesRiscosAtual=[];
+  if(!projetoId){ host.style.display='none'; host.innerHTML=''; return; }
+  host.style.display='block';
+  host.innerHTML='<div class="sugestoes-head"><span class="ai-dot"></span>Analisando entraves registrados nas atas deste projeto…</div>';
+  try{
+    const res=await window.storage.list('ata:');
+    const keys=(res&&res.keys)?res.keys:[];
+    const atas=[];
+    for(const k of keys){
+      try{ const r=await window.storage.get(k); if(r&&r.value){ const at=JSON.parse(r.value); if(at.projetoId===projetoId) atas.push(at); } }catch(e){}
+    }
+    const grupos={};
+    atas.forEach(at=>{
+      (at.entraves||[]).forEach(e=>{
+        const texto=(e&&e.entrave||'').trim(); if(!texto) return;
+        const norm=normalizarTexto(texto); if(!norm) return;
+        if(!grupos[norm]) grupos[norm]={original:texto, atas:new Set()};
+        grupos[norm].atas.add(at.protocolo||at.id);
+      });
+    });
+    const recorrentes=Object.values(grupos).filter(g=>g.atas.size>=2).sort((a,b)=>b.atas.size-a.atas.size);
+    if(!atas.length){
+      host.style.display='none'; host.innerHTML=''; return;
+    }
+    if(!recorrentes.length){
+      host.innerHTML='<div class="sugestoes-head"><span class="ai-dot"></span>Nenhum entrave recorrente nas atas deste projeto ainda (precisa aparecer em 2 ou mais atas diferentes).</div>';
+      return;
+    }
+    sugestoesRiscosAtual=recorrentes;
+    host.innerHTML='<div class="sugestoes-head"><span class="ai-dot"></span>Entraves recorrentes nas atas deste projeto - sugestao de risco:</div>'+
+      recorrentes.map((g,i)=>`<div class="sugestao-risco" data-i="${i}">
+        <span class="sr-txt">${esc(g.original)}</span>
+        <span class="sr-count">${g.atas.size} atas</span>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="adicionarSugestaoRisco(${i})">+ Adicionar ao registro</button>
+      </div>`).join('');
+  }catch(e){
+    console.warn('nao foi possivel carregar sugestoes de riscos', e);
+    host.style.display='none'; host.innerHTML='';
+  }
+}
+function adicionarSugestaoRisco(i){
+  const g=sugestoesRiscosAtual[i]; if(!g) return;
+  const hoje=new Date().toISOString().slice(0,10);
+  addRow('riscos', {risco:g.original, status:'Aberto', resp:'', revisao:hoje});
+  const el=document.querySelector(`.sugestao-risco[data-i="${i}"]`);
+  if(el){ el.classList.add('added'); const b=el.querySelector('button'); b.disabled=true; b.textContent='✓ Adicionado'; }
+  toast('Risco adicionado ao registro (seção 9) - revise antes de registrar o TAP.');
 }
 function atualizarBotaoEquipe(souMembro){
   const btn=document.getElementById('submitBtn');
