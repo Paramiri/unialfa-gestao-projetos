@@ -75,8 +75,17 @@ input:focus, select:focus{outline:none; border-color:var(--red); box-shadow:0 0 
 .n3-badge{background:var(--n3); color:#fff; font-size:9px; font-weight:800; letter-spacing:.04em; padding:2px 7px; border-radius:4px; white-space:nowrap; flex:none}
 .n3-row input{flex:1; background:transparent; border:1px solid transparent; font-size:12.5px; color:var(--ink); padding:5px 7px; border-radius:5px; width:auto;}
 .n3-row input:focus{background:#fff; border-color:var(--n3); outline:none;}
+.n3-prio{flex:none; width:auto; font-size:10.5px; font-weight:700; padding:4px 6px; border-radius:5px; border:1px solid var(--line-strong); background:#fff; color:var(--muted); cursor:pointer}
+.n3-prio:focus{outline:none; border-color:var(--n3)}
+.n3-prio[data-p="P0"]{color:var(--bad); border-color:var(--bad); background:var(--bad-soft)}
+.n3-prio[data-p="P1"]{color:var(--warn); border-color:var(--warn); background:var(--warn-soft)}
+.n3-prio[data-p="P2"]{color:var(--ok); border-color:var(--ok); background:var(--ok-soft)}
 .n3-del{appearance:none; border:none; background:transparent; color:var(--n3); font-size:15px; cursor:pointer; width:24px; height:24px; border-radius:4px; flex:none; display:flex; align-items:center; justify-content:center;}
 .n3-del:hover{background:#CCFBF1}
+.prio-tag{display:inline-block; font-size:8.5px; font-weight:800; letter-spacing:.03em; padding:1px 6px; border-radius:4px; margin-left:6px; vertical-align:middle; white-space:nowrap}
+.prio-tag.P0{color:var(--bad); background:var(--bad-soft)}
+.prio-tag.P1{color:var(--warn); background:var(--warn-soft)}
+.prio-tag.P2{color:var(--ok); background:var(--ok-soft)}
 .add-btn{appearance:none; border:1.5px dashed; border-radius:7px; background:transparent; font-family:var(--font); font-weight:600; font-size:12px; cursor:pointer; padding:7px 14px; transition:all .15s; margin-top:6px; display:inline-flex; align-items:center; gap:6px;}
 .add-n2{border-color:#93C5FD; color:var(--n2)} .add-n2:hover{background:#EFF6FF}
 .add-n3{border-color:#5EEAD4; color:var(--n3)} .add-n3:hover{background:#F0FDFA}
@@ -600,6 +609,7 @@ window.unialfaHistorico = {
         <div class="leg"><div class="dot l1"></div>Nível 1 — Pacote de trabalho</div>
         <div class="leg"><div class="dot l2"></div>Nível 2 — Entrega</div>
         <div class="leg"><div class="dot l3"></div>Nível 3 — Atividade</div>
+        <div class="leg" style="margin-left:auto">Prioridade da atividade (opcional): <span class="prio-tag P0" style="margin-left:6px">P0</span> crítica <span class="prio-tag P1">P1</span> alta <span class="prio-tag P2">P2</span> normal</div>
       </div>
       <div class="builder" id="builder">
         <div class="add-n1-wrap"><button class="add-btn add-n1" id="btn-add-n1" onclick="addN1Block()">+ Adicionar pacote de trabalho (nível 1)</button></div>
@@ -800,7 +810,8 @@ function addN2Block(n1id,val=''){
   addN3Row(id);
 }
 
-function addN3Row(n2id,val=''){
+const PRIO_OPTS=[['','—'],['P0','P0 · Crítica'],['P1','P1 · Alta'],['P2','P2 · Normal']];
+function addN3Row(n2id,val='',prio=''){
   _n3c[n2id]=(_n3c[n2id]||0)+1;
   const n=_n3c[n2id];
   const id='n3_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
@@ -808,6 +819,7 @@ function addN3Row(n2id,val=''){
   div.className='n3-row'; div.id=id;
   div.innerHTML=`<span class="n3-badge">N3·${n}</span>
     <input type="text" placeholder="Nome da atividade" value="${esc(val)}">
+    <select class="n3-prio" data-p="${esc(prio)}" title="Prioridade (opcional)" onchange="this.dataset.p=this.value">${PRIO_OPTS.map(o=>`<option value="${o[0]}"${o[0]===prio?' selected':''}>${o[1]}</option>`).join('')}</select>
     <button class="n3-del" onclick="document.getElementById('${id}').remove()">×</button>`;
   document.getElementById('n3list_'+n2id).appendChild(div);
 }
@@ -820,13 +832,21 @@ function readForm(){
     b.querySelectorAll('.n2-block').forEach(b2=>{
       const n2name=(b2.querySelector('.n2-head input').value||'').trim();
       const n3s=[];
-      b2.querySelectorAll('.n3-row input').forEach(i=>{const v=(i.value||'').trim(); if(v) n3s.push(v);});
+      b2.querySelectorAll('.n3-row').forEach(row=>{
+        const v=(row.querySelector('input').value||'').trim();
+        const prioridade=row.querySelector('.n3-prio').value||'';
+        if(v) n3s.push({nome:v, prioridade});
+      });
       n2s.push({name:n2name,n3s});
     });
     n1s.push({name,n2s});
   });
   return n1s;
 }
+/* Nível 3 podia ser salvo como string simples (antes da prioridade existir) ou como
+   {nome, prioridade}. Esta função normaliza os dois formatos para leitura. */
+function n3Nome(n3){ return typeof n3==='string' ? n3 : (n3&&n3.nome)||''; }
+function n3Prio(n3){ return (n3&&typeof n3==='object'&&n3.prioridade)||''; }
 
 function renderTree(nome,n1s,host){
   if(!n1s||!n1s.length){host.innerHTML='<p style="color:var(--muted);font-size:13px;text-align:center">Nenhum pacote de trabalho cadastrado.</p>'; return;}
@@ -839,7 +859,10 @@ function renderTree(nome,n1s,host){
         html+=`<div class="t-col2"><div class="t-n2">${esc(n2.name||'(sem nome)')}<div class="t-code">${i+1}.${j+1}</div></div>`;
         if(n2.n3s&&n2.n3s.length){
           html+=`<div class="t-n3list">`;
-          n2.n3s.forEach((n3,k)=>{ html+=`<div class="t-n3">${esc(n3||'(sem nome)')}<div class="t-code">${i+1}.${j+1}.${k+1}</div></div>`; });
+          n2.n3s.forEach((n3,k)=>{
+            const nome=n3Nome(n3), prio=n3Prio(n3);
+            html+=`<div class="t-n3">${esc(nome||'(sem nome)')}${prio?`<span class="prio-tag ${prio}">${prio}</span>`:''}<div class="t-code">${i+1}.${j+1}.${k+1}</div></div>`;
+          });
           html+=`</div>`;
         }
         html+=`</div>`;
@@ -922,7 +945,7 @@ function rebuildTree(n1sData){
       const n2id=n2els[n2els.length-1].id;
       document.getElementById('n3list_'+n2id).innerHTML='';
       _n3c[n2id]=0;
-      (n2.n3s||[]).forEach(n3name=>{ addN3Row(n2id, n3name); });
+      (n2.n3s||[]).forEach(n3=>{ addN3Row(n2id, n3Nome(n3), n3Prio(n3)); });
     });
   });
   if(!n1sData || !n1sData.length){ addN1Block(); }
@@ -1051,7 +1074,10 @@ function exportCSV(){
       linhas.push(`N1.${i+1}: ${n1.name||''}`);
       (n1.n2s||[]).forEach((n2,j)=>{
         linhas.push(`  N2.${i+1}.${j+1}: ${n2.name||''}`);
-        (n2.n3s||[]).forEach((n3,k)=>linhas.push(`    N3.${i+1}.${j+1}.${k+1}: ${n3||''}`));
+        (n2.n3s||[]).forEach((n3,k)=>{
+          const nome=n3Nome(n3), prio=n3Prio(n3);
+          linhas.push(`    N3.${i+1}.${j+1}.${k+1}: ${nome}${prio?' ['+prio+']':''}`);
+        });
       });
     });
     csv+=`${q(r.protocolo)};${q(r.nomeProjeto)};${q(r.unidade)};${q(r.gerente)};${q(r.status)};${q(linhas.join('\n'))}\r\n`;
