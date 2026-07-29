@@ -42,7 +42,8 @@ body{font-family:var(--font);color:var(--ink);background:var(--surface);-webkit-
 .sec-title::after{content:'';flex:1;height:1px;background:var(--line)}
 
 /* ── KPI cards ── */
-.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:6px}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:6px}
+.kpi.bad::before{background:var(--bad)}
 .kpi{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
 .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red)}
 .kpi.ok::before{background:var(--ok)}
@@ -412,6 +413,7 @@ function ensureAuthenticated(){
       <div class="kpi"><div class="kpi-label">Projetos</div><div class="kpi-value" id="kpi-proj">—</div><div class="kpi-sub">cadastrados</div></div>
       <div class="kpi ok"><div class="kpi-label">Entregas</div><div class="kpi-value" id="kpi-entr">—</div><div class="kpi-sub">planejadas</div></div>
       <div class="kpi warn"><div class="kpi-label">Previsão financeira</div><div class="kpi-value" id="kpi-fin" style="font-size:20px;margin-top:4px">—</div><div class="kpi-sub">total estimado</div></div>
+      <div class="kpi bad"><div class="kpi-label">Em risco de atraso</div><div class="kpi-value" id="kpi-risco">—</div><div class="kpi-sub">sinalização automática</div></div>
     </div>
 
     <div class="sec-title">Status dos projetos</div>
@@ -554,6 +556,38 @@ function fmtBRL(s){if(!s)return '—';return 'R$ '+String(s).replace(/\B(?=(\d{3
 function fmtRef(ym){if(!ym)return '—';const[y,m]=ym.split('-');const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return meses[parseInt(m)-1]+' / '+y;}
 function progClass(p){const n=parseInt(p)||0;return n>=75?'':'n>=40?warn:bad'.split(':')[n>=40?1:2]||'';}
 
+/* ── sinalização automática de risco de atraso ──
+   Regra simples (sem IA): compara % execução informado vs. % esperado pelo tempo
+   já decorrido entre início e término previstos. Não depende do status manual. */
+function parseBRDate(s){
+  if(!s) return null;
+  const m=String(s).trim().match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if(!m) return null;
+  let[,d,mo,y]=m; d=parseInt(d); mo=parseInt(mo); if(y.length===2) y='20'+y; y=parseInt(y);
+  if(mo<1||mo>12||d<1||d>31) return null;
+  const dt=new Date(y,mo-1,d);
+  return (isNaN(dt.getTime())||dt.getMonth()!==mo-1)?null:dt;
+}
+const RISCO_GAP_MIN=15; // pontos percentuais de defasagem para acender o alerta
+function calcSinalizacao(p){
+  if(['Concluído','Cancelado','Paralisado'].includes(p.status)) return null;
+  const ini=parseBRDate(p.inicio), fim=parseBRDate(p.termino);
+  if(!ini||!fim||fim<=ini) return null;
+  const pct=parseInt(p.pct)||0;
+  const hoje=new Date();
+  if(hoje>fim && pct<100) return {level:'bad', label:'⛔ Prazo vencido'};
+  const elapsedRatio=Math.max(0,Math.min(1,(hoje-ini)/(fim-ini)));
+  const esperado=Math.round(elapsedRatio*100);
+  if(esperado-pct>=RISCO_GAP_MIN) return {level:'warn', label:'⚠ Risco de atraso', esperado};
+  return null;
+}
+function sinalizacaoBadge(sig){
+  if(!sig) return '<span style="color:var(--muted-2,#9CA3AF);font-size:11px">—</span>';
+  const cls=sig.level==='bad'?'s-atrasado':'s-paralisado';
+  const title=sig.esperado?` title="Esperado ~${sig.esperado}% concluído nesta data, considerando início e término previstos"`:'';
+  return `<span class="s-badge ${cls}"${title}>${sig.label}</span>`;
+}
+
 function showView(v){
   ['painel','editar','importar'].forEach(x=>{document.getElementById('view-'+x).style.display=x===v?'block':'none';});
   document.querySelectorAll('.vtab').forEach((b,i)=>b.setAttribute('aria-selected',['painel','editar','importar'][i]===v));
@@ -582,11 +616,12 @@ function renderPainel(){
   document.getElementById('kpi-proj').textContent=projs.length;
   document.getElementById('kpi-entr').textContent=data.entr||'—';
   document.getElementById('kpi-fin').textContent=data.fin?fmtBRL(data.fin):'—';
+  document.getElementById('kpi-risco').textContent=projs.filter(p=>calcSinalizacao(p)).length;
 
   // project table
   const wrap=document.getElementById('proj-table-wrap');
   if(!projs.length){wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted);font-size:13px;font-weight:600">Nenhum projeto. Use <b>Editar dados</b> ou <b>Importar Project</b>.</div>';return;}
-  let html='<table class="proj-t"><thead><tr><th>Projeto</th><th>Programa</th><th>Status</th><th>Execução</th><th>Responsável</th><th>Previsão término</th></tr></thead><tbody>';
+  let html='<table class="proj-t"><thead><tr><th>Projeto</th><th>Programa</th><th>Status</th><th>Execução</th><th>Sinalização</th><th>Responsável</th><th>Previsão término</th></tr></thead><tbody>';
   projs.forEach(p=>{
     const pct=parseInt(p.pct)||0;
     const cls=pct>=75?'':'pct>=40?warn:bad'.split(':')[pct>=40?1:2]||'';
@@ -595,6 +630,7 @@ function renderPainel(){
       <td>${esc(p.programa||'—')}</td>
       <td><span class="s-badge ${STATUS_CLASS[p.status]||''}">${esc(p.status||'—')}</span></td>
       <td><div class="prog-bar-wrap"><div class="prog-bar"><div class="prog-fill ${cls}" style="width:${pct}%"></div></div><span class="prog-pct">${pct}%</span></div></td>
+      <td>${sinalizacaoBadge(calcSinalizacao(p))}</td>
       <td>${esc(p.resp||'—')}</td>
       <td>${esc(p.termino||'—')}</td>
     </tr>`;
@@ -850,8 +886,8 @@ function exportCSV(){
   const projs=data.projetos||[];
   if(!projs.length){toast('Nenhum projeto para exportar');return;}
   const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
-  let csv='"Código";"Nome";"Programa";"Responsável";"Status";"% Execução";"Início";"Término";"Atenção";"Destaque"\r\n';
-  projs.forEach(p=>csv+=`${q(p.cod)};${q(p.nome)};${q(p.programa)};${q(p.resp)};${q(p.status)};${q(p.pct)};${q(p.inicio)};${q(p.termino)};${q(p.atencao)};${q(p.destaque)}\r\n`);
+  let csv='"Código";"Nome";"Programa";"Responsável";"Status";"% Execução";"Sinalização automática";"Início";"Término";"Atenção";"Destaque"\r\n';
+  projs.forEach(p=>{const sig=calcSinalizacao(p);csv+=`${q(p.cod)};${q(p.nome)};${q(p.programa)};${q(p.resp)};${q(p.status)};${q(p.pct)};${q(sig?sig.label.replace(/^[^ ]+ /,''):'')};${q(p.inicio)};${q(p.termino)};${q(p.atencao)};${q(p.destaque)}\r\n`;});
   const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=url;a.download='relatorio_situacao_FORALF11.csv';a.click();URL.revokeObjectURL(url);
