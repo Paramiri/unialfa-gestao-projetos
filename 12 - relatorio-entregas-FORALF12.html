@@ -540,6 +540,8 @@ function onProjRowProjetoSelect(i){
   const id=document.getElementById('projVinc-'+i).value;
   document.getElementById('histBtn-'+i).style.display=id?'inline-flex':'none';
   document.getElementById('projRowHist-'+i).style.display='none';
+  const importBtn=document.getElementById('importTapBtn-'+i);
+  if(importBtn) importBtn.style.display=id?'inline-flex':'none';
   if(id){
     const pa=projetosAprovados.find(x=>x.id===id);
     if(pa){
@@ -547,6 +549,36 @@ function onProjRowProjetoSelect(i){
       if(nomeEl && !nomeEl.value.trim()) nomeEl.value=pa.nome;
     }
   }
+}
+async function importarIndicadoresTAP(i){
+  const projetoId=document.getElementById('projVinc-'+i).value;
+  if(!projetoId){ toast('Selecione um Projeto vinculado (Gate 1) primeiro.',false); return; }
+  const res=await window.storage.list('tap:');
+  const keys=(res&&res.keys)?res.keys:[];
+  let indicadores=[];
+  for(const k of keys){
+    try{
+      const r=await window.storage.get(k);
+      if(r&&r.value){
+        const tap=JSON.parse(r.value);
+        if(tap.projetoId===projetoId&&Array.isArray(tap.indicadores)) indicadores=indicadores.concat(tap.indicadores);
+      }
+    }catch(e){}
+  }
+  if(!indicadores.length){ toast('Nenhum indicador de TAP encontrado para este projeto.',false); return; }
+  const tbody=document.getElementById('tbody-ind-pr-'+i);
+  const existentes=new Set(Array.from(tbody.querySelectorAll('input[data-k="indicador"]')).map(el=>el.value.trim().toLowerCase()).filter(Boolean));
+  let importados=0;
+  indicadores.forEach(ind=>{
+    const nome=(ind.indicador||'').trim();
+    if(!nome||existentes.has(nome.toLowerCase())) return;
+    addDynRow('tbody-ind-pr-'+i,['indicador','valor','meta']);
+    const inputs=tbody.lastElementChild.querySelectorAll('input');
+    inputs[0].value=nome; inputs[1].value=ind.vi||''; inputs[2].value=ind.vf||'';
+    existentes.add(nome.toLowerCase());
+    importados++;
+  });
+  toast(importados?`${importados} indicador(es) importado(s) do TAP`:'Todos os indicadores do TAP já estão na lista');
 }
 let projRowHistAberto={};
 async function toggleProjRowHistorico(i){
@@ -813,7 +845,7 @@ function buildProjEditor(pr,i){
     <div style="padding:0 20px 8px">
       <div class="sec-title" style="margin-top:8px">Indicadores do projeto</div>
       <table class="dyn-mini" id="tbl-ind-pr-${i}"><thead><tr><th>Indicador</th><th>Valor atual</th><th>Meta</th><th style="width:32px"></th></tr></thead><tbody id="tbody-ind-pr-${i}"></tbody></table>
-      <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addIndPr(${i})">+ Indicador</button></div>
+      <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addIndPr(${i})">+ Indicador</button> <button type="button" class="btn btn-ghost btn-sm" id="importTapBtn-${i}" style="display:${pr.projetoId?'inline-flex':'none'}" onclick="importarIndicadoresTAP(${i})">↓ Importar do TAP</button></div>
     </div>
     <div style="padding:0 20px 20px">
       <div class="sec-title" style="margin-top:8px">Valores estimados do projeto</div>
