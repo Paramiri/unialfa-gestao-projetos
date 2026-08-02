@@ -405,6 +405,12 @@ function ensureAuthenticated(){
     <div class="head-badge">FORALF12</div>
   </div>
 
+  <!-- Banner de versão histórica -->
+  <div id="hist-banner" style="display:none;background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:12px 18px;margin-bottom:16px;align-items:center;gap:12px;flex-wrap:wrap">
+    <span style="font-size:12px;font-weight:700;color:#92400E">🕓 <span id="hist-banner-label"></span></span>
+    <button class="btn btn-sm btn-primary" style="margin-left:auto" onclick="voltarVersaoAtual()">Voltar à versão atual</button>
+  </div>
+
   <div class="view-tabs">
     <button class="vtab" aria-selected="true" onclick="showView('painel')">📋 Painel</button>
     <button class="vtab" aria-selected="false" onclick="showView('editar')">✏️ Editar dados</button>
@@ -422,8 +428,10 @@ function ensureAuthenticated(){
     <div class="action-bar" style="margin-top:18px;border-radius:var(--radius);border:1px solid var(--line)">
       <button class="btn btn-ghost" onclick="window.print()">🖨 Imprimir</button>
       <button class="btn btn-ghost" onclick="exportCSV()">📥 Exportar CSV</button>
+      <button class="btn btn-ghost" onclick="toggleHistVersoes()">🕓 Histórico de versões</button>
       <div class="ml" style="font-size:11px;color:var(--muted)">FORALF12 · UNIALFA</div>
     </div>
+    <div id="hist-versoes-panel" style="display:none;margin-top:10px"></div>
   </div>
 
   <!-- ===== EDITOR ===== -->
@@ -597,8 +605,63 @@ function nl(s){return esc(s).replace(/\n/g,'<br>')}
 async function loadData(){try{const r=await window.storage.get(KEY);if(r&&r.value)data=JSON.parse(r.value);}catch(e){console.warn(e);}if(!data.gate2)data.gate2=novoGate2();}
 async function saveData(){try{await window.storage.set(KEY,JSON.stringify(data));}catch(e){toast('Erro ao salvar');}}
 
+/* ── histórico de versões ── */
+const HIST_PREFIX='relent_hist:';
+let __liveData=null;
+function fmtDataHoraBR(iso){const d=new Date(iso);return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+async function saveSnapshot(){
+  try{
+    const ts=new Date().toISOString();
+    const user=window.currentUser;
+    const snap={savedAt:ts,savedBy:user?user.email:null,ref:(data.prog&&data.prog.nome)||'',data:JSON.parse(JSON.stringify(data))};
+    await window.storage.set(HIST_PREFIX+ts,JSON.stringify(snap));
+  }catch(e){console.warn('Não foi possível salvar o snapshot de histórico',e);}
+}
+async function listarVersoes(){
+  const res=await window.storage.list(HIST_PREFIX);
+  const keys=(res&&res.keys)?res.keys:[];
+  const snaps=[];
+  for(const k of keys){try{const r=await window.storage.get(k);if(r&&r.value)snaps.push(JSON.parse(r.value));}catch(e){}}
+  snaps.sort((a,b)=>new Date(b.savedAt)-new Date(a.savedAt));
+  return snaps;
+}
+let histVersoesAberto=false;
+async function toggleHistVersoes(){
+  const panel=document.getElementById('hist-versoes-panel');
+  histVersoesAberto=!histVersoesAberto;
+  if(!histVersoesAberto){panel.style.display='none';return;}
+  panel.innerHTML='<div style="padding:16px;text-align:center;color:var(--muted);font-size:12.5px">Carregando…</div>';
+  panel.style.display='block';
+  const snaps=await listarVersoes();
+  window.__histSnaps=snaps;
+  if(!snaps.length){panel.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:12.5px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius)">Nenhuma versão anterior salva ainda.</div>';return;}
+  let html='<div style="background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden"><table class="mini-table"><thead><tr><th>Salvo em</th><th>Programa</th><th>Salvo por</th><th></th></tr></thead><tbody>';
+  snaps.forEach((s,i)=>{
+    html+=`<tr><td>${fmtDataHoraBR(s.savedAt)}</td><td>${esc(s.ref||'—')}</td><td>${esc(s.savedBy||'—')}</td><td><button class="btn btn-sm btn-ghost" onclick="abrirVersaoHistorica(${i})">Visualizar</button></td></tr>`;
+  });
+  html+='</tbody></table></div>';
+  panel.innerHTML=html;
+}
+function abrirVersaoHistorica(i){
+  const snap=(window.__histSnaps||[])[i];
+  if(!snap)return;
+  if(!__liveData)__liveData=data;
+  data=snap.data;
+  document.getElementById('hist-banner').style.display='flex';
+  document.getElementById('hist-banner-label').textContent='Visualizando versão salva em '+fmtDataHoraBR(snap.savedAt)+(snap.savedBy?(' · por '+snap.savedBy):'')+' — somente leitura.';
+  document.getElementById('hist-versoes-panel').style.display='none';
+  histVersoesAberto=false;
+  showView('painel');
+}
+function voltarVersaoAtual(){
+  if(__liveData){data=__liveData;__liveData=null;}
+  document.getElementById('hist-banner').style.display='none';
+  showView('painel');
+}
+
 /* ── views ── */
 function showView(v){
+  if(__liveData && v!=='painel'){ toast('Volte à versão atual para editar (botão no aviso amarelo).',false); return; }
   document.getElementById('view-painel').style.display=v==='painel'?'block':'none';
   document.getElementById('view-editar').style.display=v==='editar'?'block':'none';
   document.querySelectorAll('.vtab').forEach((b,i)=>b.setAttribute('aria-selected',['painel','editar'][i]===v));
@@ -892,6 +955,7 @@ async function saveAndPreview(){
   data.prog=readProg();
   data.projetos=readProjetos();
   await saveData();
+  await saveSnapshot();
   toast('Dados salvos');
   showView('painel');
 }

@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.6 - 30 de julho de 2026 (substitui a versao 2.5 de 29/07/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.7 - 01 de agosto de 2026 (substitui a versao 2.6 de 30/07/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -257,6 +257,7 @@ P "Esta e a versao 2.3 do manual. Em relacao a versao 2.2 (29/07/2026), foi adic
 P "Esta e a versao 2.4 do manual. Em relacao a versao 2.3 (29/07/2026), foi adicionada a propagacao automatica da decisao da SMP (Passo 7) para o historico compartilhado do projeto vinculado: toda vez que uma SMP e aprovada ou nao aprovada, o evento fica visivel em `Ver historico` em qualquer formulario ligado aquele projeto, sem alterar o Status de Gate 1."
 P "Esta e a versao 2.5 do manual. Em relacao a versao 2.4 (29/07/2026), foi adicionado o campo opcional `Projeto vinculado (Gate 1)` a cada projeto listado no Relatorio de Situacao (secao 4.1) e no Relatorio de Entregas e Beneficios (secao 4.2): a selecao preenche o nome automaticamente e libera o `Ver historico` compartilhado, sem aplicar a restricao por equipe usada nos outros 7 formularios vinculados."
 P "Esta e a versao 2.6 do manual. Em relacao a versao 2.5 (29/07/2026), foi adicionado o botao `Importar do TAP` na secao Indicadores do projeto do Relatorio de Entregas e Beneficios (secao 4.2): reaproveita os indicadores de resultado ja preenchidos no TAP do mesmo Projeto vinculado, evitando redigitacao, com protecao contra indicadores duplicados."
+P "Esta e a versao 2.7 do manual. Em relacao a versao 2.6 (30/07/2026), foi adicionado o versionamento historico ao Relatorio de Situacao (secao 4.1) e ao Relatorio de Entregas e Beneficios (secao 4.2): cada `Salvar e ver painel` arquiva uma copia completa dos dados, consultavel pelo botao `Historico de versoes` no rodape do Painel, com visualizacao somente leitura de versoes antigas e trava de edicao ate voltar a versao atual."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -518,6 +519,9 @@ Img "38_f11_sinalizacao.png" "Painel com o card `Em risco de atraso` e a coluna 
 Bul "Na aba Editar dados, alem dos projetos, ha dois cartoes independentes: `Entraves` e `Encaminhamentos`. Cada item tem Descricao, Responsavel, Prazo e Status (Aberto / Resolvido / Cancelado)."
 Nota "Gestao de Entraves e Encaminhamentos: entraves sao bloqueios que impedem o avanco do portfolio (ex.: dependencia externa, aprovacao pendente); encaminhamentos sao os proximos passos e decisoes acordadas para desbloquear ou avancar o trabalho. Os dois sao listas simples, independentes dos projetos cadastrados - continuam visiveis no Painel mesmo que nenhum projeto tenha sido informado ainda. No Painel, aparecem lado a lado na secao `Entraves e encaminhamentos`, com o Status de cada item destacado por selo colorido, e tambem saem no CSV exportado."
 Img "41_f11_entraves_encaminhamentos.png" "Secao Entraves e encaminhamentos no Painel, com itens Aberto e Resolvido lado a lado." 5.6
+Bul "No rodape do Painel, o botao `Historico de versoes` mostra todas as vezes que este relatorio foi salvo, com data/hora e quem salvou."
+Nota "Versionamento: toda vez que o relatorio e salvo (`Salvar e ver painel`), o sistema arquiva uma copia completa dos dados daquele momento, alem de atualizar a versao atual. Isso preserva as referencias mensais anteriores, que antes eram sobrescritas a cada novo salvamento. Ao clicar em `Visualizar` numa versao antiga, o Painel passa a mostrar aquele instantaneo, com um aviso amarelo no topo (`Visualizando versao... - somente leitura`) e um botao `Voltar a versao atual`. Enquanto uma versao antiga esta sendo visualizada, as abas `Editar dados` e `Importar Project` ficam bloqueadas - e preciso voltar a versao atual antes de editar."
+Img "46_f11_versao_historica_banner.png" "Aviso de versao historica (somente leitura), com o botao para voltar a versao atual." 5.6
 Nota "Este relatorio nao tem aprovacao/status formal - e uma ferramenta viva de acompanhamento, atualizada sempre que a situacao dos projetos mudar."
 
 H2 "4.2 Relatorio de Entregas e Beneficios (FORALF12)"
@@ -534,6 +538,9 @@ Bul "Clique em `Salvar e ver painel`. Imprima ou exporte para levar a reuniao de
 Nota "Gate 2 - Pactuacao: no topo da aba Editar dados ha um cartao `Gate 2 - Pactuacao` com Status (Pendente de pactuacao / Pactuado), Data de pactuacao e Aprovador. Assim como o Gate 1 da Solicitacao de Demanda, so o Admin consegue alterar o Status - qualquer outro papel ve o controle travado com um aviso. Ao marcar `Pactuado`, a Data e o Aprovador sao preenchidos automaticamente (editaveis). Enquanto o status estiver `Pactuado`, todos os demais campos do relatorio ficam bloqueados para edicao, inclusive para o Admin, ate que o Gate 2 seja reaberto (status volte para `Pendente de pactuacao`)."
 Img "40_f12_gate2.png" "Cartao Gate 2 - Pactuacao preenchido, com o relatorio travado apos a pactuacao." 5.6
 Nota "So depois do Gate 2 pactuado o projeto deve avancar para a execucao. Um projeto que comeca a ser executado sem essa pactuacao corre o risco de ser questionado ou desautorizado em momentos criticos."
+Bul "No rodape do Painel, o botao `Historico de versoes` lista todas as vezes que este relatorio foi salvo."
+Nota "Versionamento: assim como no Relatorio de Situacao (secao 4.1), toda vez que este relatorio e salvo, uma copia completa fica arquivada com data/hora e quem salvou - util para reconstituir o programa como ele estava em uma pactuacao (Gate 2) anterior. Clicar em `Visualizar` numa versao antiga mostra o mesmo aviso de somente leitura e bloqueia a edicao ate voltar a versao atual."
+Img "45_f12_historico_versoes.png" "Lista de versoes salvas do Relatorio de Entregas, com data, programa e quem salvou." 5.6
 
 # ============================================================
 # 5. VALIDADOR DE PROJETOS
