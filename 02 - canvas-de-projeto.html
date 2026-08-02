@@ -319,6 +319,36 @@ body.auth-ready{padding-top:34px}
   };
 })();
 
+window.unialfaNotificar = {
+  async enviar(destinatarios, subject, html){
+    try{
+      var emails = Array.from(new Set((destinatarios||[]).filter(Boolean)));
+      if(!emails.length) return;
+      await fetch(unialfaAuth.REST_BASE.replace('/rest/v1','/functions/v1') + '/send-notification', {
+        method:'POST', headers: unialfaAuth.authHeaders(),
+        body: JSON.stringify({ to: emails, subject: subject, html: html }),
+      });
+    }catch(e){ console.warn('Notificação por e-mail não pôde ser enviada', e); }
+  },
+  async emailsAdmins(){
+    try{
+      var r = await fetch(unialfaAuth.REST_BASE + '/perfis?papel=eq.admin&select=email', { headers: unialfaAuth.authHeaders() });
+      if(!r.ok) return [];
+      var rows = await r.json();
+      return rows.map(function(p){return p.email;}).filter(Boolean);
+    }catch(e){ return []; }
+  },
+  async emailsEquipe(projetoId){
+    if(!projetoId) return [];
+    try{
+      var r = await fetch(unialfaAuth.REST_BASE + '/projeto_equipe?projeto_id=eq.'+projetoId+'&select=usuario_email', { headers: unialfaAuth.authHeaders() });
+      if(!r.ok) return [];
+      var rows = await r.json();
+      return rows.map(function(p){return p.usuario_email;}).filter(Boolean);
+    }catch(e){ return []; }
+  },
+};
+
 var unialfaAuthUI = {
   sendLink: async function(){
     var email = document.getElementById('authEmail').value.trim();
@@ -928,7 +958,7 @@ async function submitForm(){
     registroAntigo = Object.assign({}, rec);
     camposAntigos = { nome: rec.nomeProjeto, unidade: rec.unidade, gerente: rec.gerente };
   } else {
-    rec = { id:'c_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo: await nextProtocol(), status:'Pendente de aprovação', createdAt:Date.now() };
+    rec = { id:'c_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo: await nextProtocol(), status:'Pendente de aprovação', createdAt:Date.now(), criadoPorEmail: window.currentUser?window.currentUser.email:null };
   }
   FIELDS.forEach(id=>{ rec[id]=document.getElementById(id).value.trim?document.getElementById(id).value.trim():document.getElementById(id).value; });
   rec.projetoId=projetoId;
@@ -1023,8 +1053,19 @@ async function toggleRegistroHistorico(){
 }
 async function changeStatus(){
   const r=cache.find(x=>x.id===currentId); if(!r) return;
+  const statusAntigo=r.status;
   r.status=document.getElementById('d-status').value;
-  try{ await window.storage.set(KEY_PREFIX+r.id, JSON.stringify(r)); renderList(); toast('Status atualizado para "'+r.status+'"'); }
+  try{
+    await window.storage.set(KEY_PREFIX+r.id, JSON.stringify(r));
+    if(r.status!==statusAntigo && r.status==='Aprovado'){
+      Promise.all([unialfaNotificar.emailsEquipe(r.projetoId), unialfaNotificar.emailsAdmins()]).then(([equipe,admins])=>{
+        unialfaNotificar.enviar([r.criadoPorEmail].concat(equipe,admins),
+          'Canvas de Projeto aprovado — '+(r.nomeProjeto||r.protocolo),
+          '<p>O Canvas de Projeto <b>'+esc(r.nomeProjeto||r.protocolo)+'</b> ('+esc(r.protocolo)+') foi <b>aprovado</b>.</p>');
+      });
+    }
+    renderList(); toast('Status atualizado para "'+r.status+'"');
+  }
   catch(e){ toast('Não foi possível atualizar o status', false); }
 }
 async function deleteCurrent(){

@@ -461,6 +461,45 @@ window.unialfaEquipe = {
   },
 };
 
+window.unialfaNotificar = {
+  async enviar(destinatarios, subject, html){
+    try{
+      var emails = Array.from(new Set((destinatarios||[]).filter(Boolean)));
+      if(!emails.length) return;
+      await fetch(unialfaAuth.REST_BASE.replace('/rest/v1','/functions/v1') + '/send-notification', {
+        method:'POST', headers: unialfaAuth.authHeaders(),
+        body: JSON.stringify({ to: emails, subject: subject, html: html }),
+      });
+    }catch(e){ console.warn('Notificação por e-mail não pôde ser enviada', e); }
+  },
+  async emailsAdmins(){
+    try{
+      var r = await fetch(unialfaAuth.REST_BASE + '/perfis?papel=eq.admin&select=email', { headers: unialfaAuth.authHeaders() });
+      if(!r.ok) return [];
+      var rows = await r.json();
+      return rows.map(function(p){return p.email;}).filter(Boolean);
+    }catch(e){ return []; }
+  },
+  async emailsEquipe(projetoId){
+    if(!projetoId) return [];
+    try{
+      var r = await fetch(unialfaAuth.REST_BASE + '/projeto_equipe?projeto_id=eq.'+projetoId+'&select=usuario_email', { headers: unialfaAuth.authHeaders() });
+      if(!r.ok) return [];
+      var rows = await r.json();
+      return rows.map(function(p){return p.usuario_email;}).filter(Boolean);
+    }catch(e){ return []; }
+  },
+};
+
+function notificarDecisaoSMP(rec){
+  Promise.all([unialfaNotificar.emailsEquipe(rec.projetoId), unialfaNotificar.emailsAdmins()]).then(function(res){
+    var equipe=res[0], admins=res[1];
+    unialfaNotificar.enviar([rec.criadoPorEmail].concat(equipe,admins),
+      'SMP '+rec.status.toLowerCase()+' — '+(rec.tituloMudanca||rec.protocolo),
+      '<p>A Solicitação de Mudança de Projeto <b>'+esc(rec.tituloMudanca||rec.protocolo)+'</b> ('+esc(rec.protocolo)+') foi <b>'+esc(rec.status.toLowerCase())+'</b>.</p>');
+  });
+}
+
 /* ---- Historico de alteracoes por registro (conteudo do proprio documento) ---- */
 window.unialfaHistorico = {
   async registrar(registroKey, formulario, camposAntigos, camposNovos){
@@ -875,7 +914,7 @@ async function submitForm(){
   } else {
     const year=new Date().getFullYear();
     const seq=String(cache.length+1).padStart(3,'0');
-    rec={id:'s_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),protocolo:`FORALF00343-${year}-${seq}`,status:'Pendente de avaliação',createdAt:Date.now()};
+    rec={id:'s_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),protocolo:`FORALF00343-${year}-${seq}`,status:'Pendente de avaliação',createdAt:Date.now(),criadoPorEmail:window.currentUser?window.currentUser.email:null};
   }
   SIMPLE_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)rec[id]=(el.value||'').trim();});
   rec.decisao=dec?dec.value:'Pendente de avaliação';
@@ -890,6 +929,7 @@ async function submitForm(){
     if(!r)throw new Error();
     if(rec.status!==statusAntigo && (rec.status==='Aprovada'||rec.status==='Não aprovada')){
       await unialfaProjeto.registrarEvento(projetoId, 'SMP: '+(rec.tituloMudanca||rec.protocolo), statusAntigo||'—', rec.status, 'SMP - Solicitação de Mudança de Projeto (FORALF00343)');
+      notificarDecisaoSMP(rec);
     }
     if(editId){
       const idx=cache.findIndex(x=>x.id===rec.id);
@@ -1006,6 +1046,7 @@ async function changeStatus(){
     await window.storage.set(KEY_PREFIX+r.id,JSON.stringify(r));
     if(r.projetoId && r.status!==statusAntigo && (r.status==='Aprovada'||r.status==='Não aprovada')){
       await unialfaProjeto.registrarEvento(r.projetoId, 'SMP: '+(r.tituloMudanca||r.protocolo), statusAntigo, r.status, 'SMP - Solicitação de Mudança de Projeto (FORALF00343)');
+      notificarDecisaoSMP(r);
     }
     renderList();toast('Status atualizado para "'+r.status+'"');
   }

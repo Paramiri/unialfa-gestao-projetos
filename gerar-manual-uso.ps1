@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.8 - 01 de agosto de 2026 (substitui a versao 2.7 de 01/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.9 - 01 de agosto de 2026 (substitui a versao 2.8 de 01/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -259,6 +259,7 @@ P "Esta e a versao 2.5 do manual. Em relacao a versao 2.4 (29/07/2026), foi adic
 P "Esta e a versao 2.6 do manual. Em relacao a versao 2.5 (29/07/2026), foi adicionado o botao `Importar do TAP` na secao Indicadores do projeto do Relatorio de Entregas e Beneficios (secao 4.2): reaproveita os indicadores de resultado ja preenchidos no TAP do mesmo Projeto vinculado, evitando redigitacao, com protecao contra indicadores duplicados."
 P "Esta e a versao 2.7 do manual. Em relacao a versao 2.6 (30/07/2026), foi adicionado o versionamento historico ao Relatorio de Situacao (secao 4.1) e ao Relatorio de Entregas e Beneficios (secao 4.2): cada `Salvar e ver painel` arquiva uma copia completa dos dados, consultavel pelo botao `Historico de versoes` no rodape do Painel, com visualizacao somente leitura de versoes antigas e trava de edicao ate voltar a versao atual."
 P "Esta e a versao 2.8 do manual. Em relacao a versao 2.7 (01/08/2026), foi adicionado o cartao `Resultados alcancados` ao Relatorio de Situacao (secao 4.1): registra indicadores, entregas e beneficios de fato alcancados frente ao planejado, atendendo o Reporte de Resultados (D06.5) sem exigir um 13o formulario separado. A tabela de artefatos (secao 8) e o texto sobre cobertura das Diretrizes (secao 1.4) foram atualizados de acordo."
+P "Esta e a versao 2.9 do manual. Em relacao a versao 2.8 (01/08/2026), foi adicionada a nova secao 2.8 - Notificacoes por e-mail em transicoes de estado: seis transicoes (Gate 1, Canvas aprovado, TAP aprovado, decisao da SMP, registro de TEP e Gate 2 pactuado) agora disparam automaticamente um e-mail via Resend para quem criou o registro, a equipe do projeto vinculado e os Admins."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -358,6 +359,16 @@ H2 "2.7 Onde os dados ficam armazenados"
 P "Todos os 12 formularios de registro gravam os dados em um banco de dados real (PostgreSQL, hospedado no Supabase), associados a conta autenticada de quem salvou o registro (ou ao nome/e-mail informado, no caso de registro sem login). Nao ha mais uma chave unica compartilhada por todos: cada sessao usa o token da propria conta, e o acesso as ferramentas segue as regras de login, papel e equipe descritas neste capitulo."
 P "Cada formulario ainda grava seus registros de forma independente - nao existe herenca automatica de informacoes entre eles. Ao preencher o TAP logo depois do Canvas, por exemplo, e preciso informar novamente o nome do projeto, a unidade e o gerente (ou selecionar o mesmo `Projeto vinculado`, quando o formulario tiver esse campo). Preencha os dados de identificacao da mesma forma em todos os formularios de um mesmo projeto, para manter a rastreabilidade entre eles."
 
+H2 "2.8 Notificacoes por e-mail em transicoes de estado"
+P "Seis momentos de decisao do sistema disparam automaticamente um e-mail de notificacao, enviado via Resend por uma Supabase Edge Function (a chave da API fica guardada no servidor, nunca no navegador):"
+Bul "Gate 1 - Solicitacao de Demanda: quando o Admin muda o status para `Aprovada` ou `Reprovada`."
+Bul "Canvas de Projeto: quando o status muda para `Aprovado`."
+Bul "TAP: quando o status muda para `Aprovado`."
+Bul "SMP: quando a decisao e finalizada como `Aprovada` ou `Nao aprovada`."
+Bul "TEP: ao registrar um novo Termo de Encerramento."
+Bul "Gate 2 - Relatorio de Entregas: quando o status muda para `Pactuado`."
+P "Em todos os casos, os destinatarios sao: quem criou o registro (e-mail capturado no login, ou informado no registro sem login), todos os e-mails cadastrados na equipe do Projeto vinculado (Administracao > Equipes) e todos os usuarios com papel Admin. Se o envio falhar por qualquer motivo (ex.: instabilidade do provedor de e-mail), o registro e salvo normalmente mesmo assim - a notificacao nunca bloqueia o fluxo de trabalho."
+
 # ============================================================
 # 3. PASSO A PASSO DO FLUXO DE UM PROJETO
 # ============================================================
@@ -384,7 +395,7 @@ Img "12_f01_novo.png" "Tela de novo registro da Solicitacao de Demanda." 5.6
 Img "13_f01_lista.png" "Demandas cadastradas, com protocolo, projeto, prazo e status." 5.6
 Exemplo "`Automatizacao de servicos` - solicitante Hudson Lucas Aleixo, unidade Relacionamento, justificativa: reduzir o tempo de espera dos alunos e desafogar o atendimento presencial/manual da secretaria, oferecendo disponibilidade 24/7 para solicitacoes basicas."
 P "Como salvar: clique em `Registrar solicitacao`. O sistema gera o protocolo e leva voce para `Demandas cadastradas`. Clique em qualquer linha da tabela para abrir o registro e revisar os dados."
-Nota "E neste ponto que ocorre o Gate 1 - Triagem: so um Admin pode mudar o status para Aprovada ou Reprovada (secao 2.4). So avance para o Passo 2 depois que o status estiver Aprovada."
+Nota "E neste ponto que ocorre o Gate 1 - Triagem: so um Admin pode mudar o status para Aprovada ou Reprovada (secao 2.4). So avance para o Passo 2 depois que o status estiver Aprovada. Essa mudanca de status dispara um e-mail de notificacao (secao 2.8)."
 
 H2 "Passo 2 - Canvas de Projeto (FORALF00344)"
 P "Quando usar: assim que a demanda for aprovada. O Canvas e o primeiro documento estruturado do projeto - reune, em uma unica tela, a motivacao, o produto, os parceiros, as entregas, os riscos e os custos. Exige selecionar um `Projeto vinculado` ja Aprovado no Gate 1, e so membros da equipe daquele projeto (ou Admin) podem registrar (secao 2.5)."
@@ -404,7 +415,7 @@ $r2 = @(
 TableSimple $r2 @(5.0,1.8,9.2)
 Img "15_f02_novo.png" "Tela de novo Canvas, com o seletor de Projeto vinculado no topo." 5.6
 Img "16_f02_lista.png" "Canvas cadastrados." 5.6
-P "Como salvar: clique em `Registrar canvas`. O status inicial e Pendente de aprovacao; altere para Aprovado ao validar o Canvas com o Dono do Negocio e o Gerente de Projetos."
+P "Como salvar: clique em `Registrar canvas`. O status inicial e Pendente de aprovacao; altere para Aprovado ao validar o Canvas com o Dono do Negocio e o Gerente de Projetos. Ao marcar Aprovado, um e-mail de notificacao e disparado automaticamente (secao 2.8)."
 
 H2 "Passo 3 - TAP, Termo de Abertura de Projeto (FORALF00338)"
 P "Quando usar: depois do Canvas aprovado, para autorizar formalmente a existencia do projeto. Tambem exige `Projeto vinculado` e segue a restricao por equipe (secao 2.5) - a figura da secao 2.5 mostra este formulario com um projeto ja selecionado."
@@ -427,7 +438,7 @@ P "Registro de riscos (secao 9 do formulario): diferente dos demais campos do TA
 P "Sugestoes de riscos recorrentes: ao selecionar um Projeto vinculado, o formulario analisa automaticamente o campo Entraves de todas as Atas de Reuniao ja registradas para aquele projeto e destaca, logo abaixo da tabela de riscos, qualquer entrave que se repita em 2 ou mais atas diferentes - com a contagem de atas e um botao `+ Adicionar ao registro` que insere a sugestao direto na tabela (status Aberto, revisao com a data de hoje). E uma regra automatica de comparacao de texto, sem chamar nenhuma IA - ela so aproveita entraves ja registrados nas atas, inclusive os que tiverem sido transcritos com o `Preencher com Read AI` (Passo 6)."
 Img "37_f03_riscos.png" "Registro de riscos preenchido, com selos de status coloridos e a caixa de sugestoes de riscos recorrentes vindas das atas do projeto." 5.6
 Img "18_f03_lista.png" "TAPs cadastrados." 5.6
-P "Como salvar: clique em `Registrar TAP`. Um projeto sem TAP aprovado nao deve avancar para a execucao."
+P "Como salvar: clique em `Registrar TAP`. Um projeto sem TAP aprovado nao deve avancar para a execucao. Ao marcar Aprovado, um e-mail de notificacao e disparado automaticamente (secao 2.8)."
 
 H2 "Passo 4 - Planejamento e Desenvolvimento de Projeto (FORALF00325)"
 P "Quando usar: logo apos o TAP, para detalhar o projeto em profundidade. E o dossie mais extenso da ferramenta, organizado em 8 abas internas, navegaveis pela barra de estagios no topo."
@@ -474,7 +485,7 @@ Bul "Identifique o projeto e a mudanca (titulo e solicitante sao obrigatorios); 
 Bul "Preencha a analise de impactos nas 8 dimensoes: objetivo, cronograma, escopo, custo, alinhamento estrategico, qualidade, riscos e outros impactos."
 Bul "Marque a decisao: Aprovada, Nao aprovada ou Pendente de avaliacao, com justificativa."
 P "Clique em `Registrar SMP` - o status do registro acompanha automaticamente a decisao marcada."
-Nota "Propagacao para o projeto vinculado: sempre que a decisao da SMP e finalizada como `Aprovada` ou `Nao aprovada` (seja ao registrar/editar a SMP ou ao trocar o Status na tela de detalhes), o sistema grava automaticamente um evento no historico compartilhado do projeto vinculado (o mesmo historico acessivel pelo botao `Ver historico` em qualquer formulario com `Projeto vinculado` - secao 2.5). Isso torna as decisoes de mudanca visiveis para quem estiver no Canvas, TAP, Planejamento, EAP, TEP ou RLA daquele projeto, sem precisar abrir a SMP. Essa propagacao apenas registra o evento no historico - ela nao altera o Status do projeto usado no Gate 1 (Aprovado/Reprovado)."
+Nota "Propagacao para o projeto vinculado: sempre que a decisao da SMP e finalizada como `Aprovada` ou `Nao aprovada` (seja ao registrar/editar a SMP ou ao trocar o Status na tela de detalhes), o sistema grava automaticamente um evento no historico compartilhado do projeto vinculado (o mesmo historico acessivel pelo botao `Ver historico` em qualquer formulario com `Projeto vinculado` - secao 2.5). Isso torna as decisoes de mudanca visiveis para quem estiver no Canvas, TAP, Planejamento, EAP, TEP ou RLA daquele projeto, sem precisar abrir a SMP. Essa propagacao apenas registra o evento no historico - ela nao altera o Status do projeto usado no Gate 1 (Aprovado/Reprovado). A mesma decisao (Aprovada ou Nao aprovada) tambem dispara um e-mail de notificacao (secao 2.8)."
 
 H2 "Passo 8 - TEP, Termo de Encerramento de Projeto (FORALF00341)"
 P "Quando usar: ao encerrar o projeto, seja por conclusao, paralisacao ou cancelamento."
@@ -483,7 +494,7 @@ Img "29_f09_lista.png" "TEPs cadastrados (estado vazio)." 5.6
 Bul "Preencha a identificacao e o programa vinculado, se houver; selecione o tipo de encerramento (Concluido, Paralisado ou Cancelado)."
 Bul "Se Paralisado ou Cancelado, o campo Justificativa aparece automaticamente."
 Bul "Registre entregas de resultados, atividades encerradas, o link da pasta do projeto e a analise de efetividade."
-P "Clique em `Registrar TEP` para gerar o protocolo."
+P "Clique em `Registrar TEP` para gerar o protocolo. O registro de um novo TEP dispara um e-mail de notificacao (secao 2.8)."
 
 H2 "Passo 9 - RLA, Registro de Licoes Aprendidas (FORALF00342)"
 P "Quando usar: junto com o TEP, ao final do projeto (ou tambem em pontos intermediarios), para capturar o aprendizado organizacional."
@@ -541,7 +552,7 @@ Img "44_f12_importar_tap.png" "Indicadores do projeto apos importar do TAP - Val
 Bul "Clique em `Salvar e ver painel`. Imprima ou exporte para levar a reuniao de pactuacao."
 Nota "Gate 2 - Pactuacao: no topo da aba Editar dados ha um cartao `Gate 2 - Pactuacao` com Status (Pendente de pactuacao / Pactuado), Data de pactuacao e Aprovador. Assim como o Gate 1 da Solicitacao de Demanda, so o Admin consegue alterar o Status - qualquer outro papel ve o controle travado com um aviso. Ao marcar `Pactuado`, a Data e o Aprovador sao preenchidos automaticamente (editaveis). Enquanto o status estiver `Pactuado`, todos os demais campos do relatorio ficam bloqueados para edicao, inclusive para o Admin, ate que o Gate 2 seja reaberto (status volte para `Pendente de pactuacao`)."
 Img "40_f12_gate2.png" "Cartao Gate 2 - Pactuacao preenchido, com o relatorio travado apos a pactuacao." 5.6
-Nota "So depois do Gate 2 pactuado o projeto deve avancar para a execucao. Um projeto que comeca a ser executado sem essa pactuacao corre o risco de ser questionado ou desautorizado em momentos criticos."
+Nota "So depois do Gate 2 pactuado o projeto deve avancar para a execucao. Um projeto que comeca a ser executado sem essa pactuacao corre o risco de ser questionado ou desautorizado em momentos criticos. Ao marcar Pactuado, um e-mail de notificacao e disparado automaticamente (secao 2.8)."
 Bul "No rodape do Painel, o botao `Historico de versoes` lista todas as vezes que este relatorio foi salvo."
 Nota "Versionamento: assim como no Relatorio de Situacao (secao 4.1), toda vez que este relatorio e salvo, uma copia completa fica arquivada com data/hora e quem salvou - util para reconstituir o programa como ele estava em uma pactuacao (Gate 2) anterior. Clicar em `Visualizar` numa versao antiga mostra o mesmo aviso de somente leitura e bloqueia a edicao ate voltar a versao atual."
 Img "45_f12_historico_versoes.png" "Lista de versoes salvas do Relatorio de Entregas, com data, programa e quem salvou." 5.6

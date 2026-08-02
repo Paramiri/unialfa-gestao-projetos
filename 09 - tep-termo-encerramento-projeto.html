@@ -312,6 +312,36 @@ body.auth-ready{padding-top:34px}
   };
 })();
 
+window.unialfaNotificar = {
+  async enviar(destinatarios, subject, html){
+    try{
+      var emails = Array.from(new Set((destinatarios||[]).filter(Boolean)));
+      if(!emails.length) return;
+      await fetch(unialfaAuth.REST_BASE.replace('/rest/v1','/functions/v1') + '/send-notification', {
+        method:'POST', headers: unialfaAuth.authHeaders(),
+        body: JSON.stringify({ to: emails, subject: subject, html: html }),
+      });
+    }catch(e){ console.warn('Notificação por e-mail não pôde ser enviada', e); }
+  },
+  async emailsAdmins(){
+    try{
+      var r = await fetch(unialfaAuth.REST_BASE + '/perfis?papel=eq.admin&select=email', { headers: unialfaAuth.authHeaders() });
+      if(!r.ok) return [];
+      var rows = await r.json();
+      return rows.map(function(p){return p.email;}).filter(Boolean);
+    }catch(e){ return []; }
+  },
+  async emailsEquipe(projetoId){
+    if(!projetoId) return [];
+    try{
+      var r = await fetch(unialfaAuth.REST_BASE + '/projeto_equipe?projeto_id=eq.'+projetoId+'&select=usuario_email', { headers: unialfaAuth.authHeaders() });
+      if(!r.ok) return [];
+      var rows = await r.json();
+      return rows.map(function(p){return p.usuario_email;}).filter(Boolean);
+    }catch(e){ return []; }
+  },
+};
+
 var unialfaAuthUI = {
   sendLink: async function(){
     var email = document.getElementById('authEmail').value.trim();
@@ -891,7 +921,7 @@ async function submitForm(){
     camposAntigos = { nome: rec.nomeProjeto, unidade: rec.unidade, gerente: rec.gerente };
   } else {
     const year=new Date().getFullYear();const seq=String(cache.length+1).padStart(3,'0');
-    rec={id:'tep_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),protocolo:`FORALF00341-${year}-${seq}`,status:'Pendente de aprovação',createdAt:Date.now()};
+    rec={id:'tep_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),protocolo:`FORALF00341-${year}-${seq}`,status:'Pendente de aprovação',createdAt:Date.now(),criadoPorEmail:window.currentUser?window.currentUser.email:null};
   }
   rec.tipo=tipoSelecionado||'(não selecionado)';
   SIMPLE.forEach(id=>{const el=document.getElementById(id);if(el)rec[id]=(el.value||'').trim();});
@@ -913,6 +943,11 @@ async function submitForm(){
     } else {
       cache.unshift(rec);
       toast('TEP '+rec.protocolo+' registrado');
+      Promise.all([unialfaNotificar.emailsEquipe(rec.projetoId), unialfaNotificar.emailsAdmins()]).then(([equipe,admins])=>{
+        unialfaNotificar.enviar([rec.criadoPorEmail].concat(equipe,admins),
+          'Projeto encerrado ('+rec.tipo+') — '+(rec.nomeProjeto||rec.protocolo),
+          '<p>O Termo de Encerramento de Projeto (TEP) <b>'+esc(rec.nomeProjeto||rec.protocolo)+'</b> ('+esc(rec.protocolo)+') foi registrado com tipo de encerramento <b>'+esc(rec.tipo)+'</b>.</p>');
+      });
     }
     document.getElementById('count').textContent=cache.length;
     editId=null;

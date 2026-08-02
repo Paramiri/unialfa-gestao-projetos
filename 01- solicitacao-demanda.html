@@ -427,6 +427,36 @@ body.auth-ready{padding-top:34px}
   };
 })();
 
+window.unialfaNotificar = {
+  async enviar(destinatarios, subject, html){
+    try{
+      var emails = Array.from(new Set((destinatarios||[]).filter(Boolean)));
+      if(!emails.length) return;
+      await fetch(unialfaAuth.REST_BASE.replace('/rest/v1','/functions/v1') + '/send-notification', {
+        method:'POST', headers: unialfaAuth.authHeaders(),
+        body: JSON.stringify({ to: emails, subject: subject, html: html }),
+      });
+    }catch(e){ console.warn('Notificação por e-mail não pôde ser enviada', e); }
+  },
+  async emailsAdmins(){
+    try{
+      var r = await fetch(unialfaAuth.REST_BASE + '/perfis?papel=eq.admin&select=email', { headers: unialfaAuth.authHeaders() });
+      if(!r.ok) return [];
+      var rows = await r.json();
+      return rows.map(function(p){return p.email;}).filter(Boolean);
+    }catch(e){ return []; }
+  },
+  async emailsEquipe(projetoId){
+    if(!projetoId) return [];
+    try{
+      var r = await fetch(unialfaAuth.REST_BASE + '/projeto_equipe?projeto_id=eq.'+projetoId+'&select=usuario_email', { headers: unialfaAuth.authHeaders() });
+      if(!r.ok) return [];
+      var rows = await r.json();
+      return rows.map(function(p){return p.usuario_email;}).filter(Boolean);
+    }catch(e){ return []; }
+  },
+};
+
 var unialfaAuthUI = {
   sendLink: async function(){
     var email = document.getElementById('authEmail').value.trim();
@@ -973,7 +1003,7 @@ async function submitForm(){
     registroAntigo = Object.assign({}, rec);
     camposAntigos = { nome: rec.projeto, unidade: rec.departamento };
   } else {
-    rec = { id:'d_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo: await nextProtocol(), status:'Pendente de aprovação', createdAt:Date.now() };
+    rec = { id:'d_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo: await nextProtocol(), status:'Pendente de aprovação', createdAt:Date.now(), criadoPorEmail: window.currentUser?window.currentUser.email:null };
   }
   rec.projeto=document.getElementById('projeto').value.trim();
   rec.solicitante=document.getElementById('solicitante').value.trim();
@@ -1139,12 +1169,21 @@ async function changeStatus(){
     toast('Apenas PMO/Admin pode aprovar ou reprovar (Gate 1).', false);
     return;
   }
+  const statusAntigo=r.status;
   r.status=document.getElementById('d-status').value;
   try{
     await window.storage.set(KEY_PREFIX+r.id, JSON.stringify(r));
     if(r.projetoId){
       if(r.status==='Aprovada') await unialfaProjeto.marcarStatus(r.projetoId, 'Aprovado');
       else if(r.status==='Reprovada') await unialfaProjeto.marcarStatus(r.projetoId, 'Reprovado');
+    }
+    if(r.status!==statusAntigo && (r.status==='Aprovada'||r.status==='Reprovada')){
+      const destinatario = r.semLogin ? r.guestEmail : r.criadoPorEmail;
+      Promise.all([unialfaNotificar.emailsEquipe(r.projetoId), unialfaNotificar.emailsAdmins()]).then(([equipe,admins])=>{
+        unialfaNotificar.enviar([destinatario].concat(equipe,admins),
+          'Solicitação de Demanda '+r.status.toLowerCase()+' — '+(r.projeto||r.protocolo),
+          '<p>A Solicitação de Demanda <b>'+esc(r.projeto||r.protocolo)+'</b> ('+esc(r.protocolo)+') foi <b>'+esc(r.status.toLowerCase())+'</b> no Gate 1 — Triagem.</p>');
+      });
     }
     renderList(); toast('Status atualizado para "'+r.status+'"');
   }catch(e){ toast('Não foi possível atualizar o status', false); }

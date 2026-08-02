@@ -333,6 +333,36 @@ window.unialfaProjeto = {
   },
 };
 
+window.unialfaNotificar = {
+  async enviar(destinatarios, subject, html){
+    try{
+      var emails = Array.from(new Set((destinatarios||[]).filter(Boolean)));
+      if(!emails.length) return;
+      await fetch(unialfaAuth.REST_BASE.replace('/rest/v1','/functions/v1') + '/send-notification', {
+        method:'POST', headers: unialfaAuth.authHeaders(),
+        body: JSON.stringify({ to: emails, subject: subject, html: html }),
+      });
+    }catch(e){ console.warn('Notificação por e-mail não pôde ser enviada', e); }
+  },
+  async emailsAdmins(){
+    try{
+      var r = await fetch(unialfaAuth.REST_BASE + '/perfis?papel=eq.admin&select=email', { headers: unialfaAuth.authHeaders() });
+      if(!r.ok) return [];
+      var rows = await r.json();
+      return rows.map(function(p){return p.email;}).filter(Boolean);
+    }catch(e){ return []; }
+  },
+  async emailsEquipe(projetoId){
+    if(!projetoId) return [];
+    try{
+      var r = await fetch(unialfaAuth.REST_BASE + '/projeto_equipe?projeto_id=eq.'+projetoId+'&select=usuario_email', { headers: unialfaAuth.authHeaders() });
+      if(!r.ok) return [];
+      var rows = await r.json();
+      return rows.map(function(p){return p.usuario_email;}).filter(Boolean);
+    }catch(e){ return []; }
+  },
+};
+
 var unialfaAuthUI = {
   sendLink: async function(){
     var email = document.getElementById('authEmail').value.trim();
@@ -807,8 +837,20 @@ async function changeGate2Status(){
     return;
   }
   if(!data.gate2)data.gate2=novoGate2();
+  const statusAntigo=data.gate2.status;
   const novo=document.getElementById('gate2-status').value;
   data.gate2.status=novo;
+  if(novo!==statusAntigo && novo==='Pactuado'){
+    const idsProjetos=Array.from(new Set((data.projetos||[]).map(p=>p.projetoId).filter(Boolean)));
+    Promise.all(idsProjetos.map(id=>unialfaNotificar.emailsEquipe(id))).then(listas=>{
+      const equipe=[].concat(...listas);
+      unialfaNotificar.emailsAdmins().then(admins=>{
+        unialfaNotificar.enviar(equipe.concat(admins),
+          'Relatório de Entregas pactuado (Gate 2) — '+((data.prog&&data.prog.nome)||'Programa'),
+          '<p>O Relatório de Entregas e Benefícios do programa <b>'+esc((data.prog&&data.prog.nome)||'')+'</b> foi <b>pactuado</b> (Gate 2) com a Alta Gestão.</p>');
+      });
+    });
+  }
   if(novo==='Pactuado'){
     if(!data.gate2.data)data.gate2.data=new Date().toISOString().slice(0,10);
     if(!data.gate2.aprovador&&window.currentProfile)data.gate2.aprovador=window.currentProfile.nome||(window.currentUser&&window.currentUser.email)||'';
