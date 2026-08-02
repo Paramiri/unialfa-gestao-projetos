@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.7 - 01 de agosto de 2026 (substitui a versao 2.6 de 30/07/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.8 - 01 de agosto de 2026 (substitui a versao 2.7 de 01/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -258,6 +258,7 @@ P "Esta e a versao 2.4 do manual. Em relacao a versao 2.3 (29/07/2026), foi adic
 P "Esta e a versao 2.5 do manual. Em relacao a versao 2.4 (29/07/2026), foi adicionado o campo opcional `Projeto vinculado (Gate 1)` a cada projeto listado no Relatorio de Situacao (secao 4.1) e no Relatorio de Entregas e Beneficios (secao 4.2): a selecao preenche o nome automaticamente e libera o `Ver historico` compartilhado, sem aplicar a restricao por equipe usada nos outros 7 formularios vinculados."
 P "Esta e a versao 2.6 do manual. Em relacao a versao 2.5 (29/07/2026), foi adicionado o botao `Importar do TAP` na secao Indicadores do projeto do Relatorio de Entregas e Beneficios (secao 4.2): reaproveita os indicadores de resultado ja preenchidos no TAP do mesmo Projeto vinculado, evitando redigitacao, com protecao contra indicadores duplicados."
 P "Esta e a versao 2.7 do manual. Em relacao a versao 2.6 (30/07/2026), foi adicionado o versionamento historico ao Relatorio de Situacao (secao 4.1) e ao Relatorio de Entregas e Beneficios (secao 4.2): cada `Salvar e ver painel` arquiva uma copia completa dos dados, consultavel pelo botao `Historico de versoes` no rodape do Painel, com visualizacao somente leitura de versoes antigas e trava de edicao ate voltar a versao atual."
+P "Esta e a versao 2.8 do manual. Em relacao a versao 2.7 (01/08/2026), foi adicionado o cartao `Resultados alcancados` ao Relatorio de Situacao (secao 4.1): registra indicadores, entregas e beneficios de fato alcancados frente ao planejado, atendendo o Reporte de Resultados (D06.5) sem exigir um 13o formulario separado. A tabela de artefatos (secao 8) e o texto sobre cobertura das Diretrizes (secao 1.4) foram atualizados de acordo."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -279,7 +280,7 @@ Nota "No primeiro login, cada pessoa recebe automaticamente o papel Solicitante.
 P "Depois de logado, uma barra preta no topo da pagina mostra `Conectado como [seu e-mail]` e o seu papel atual, com um botao `Sair`."
 
 H2 "1.4 Como a ferramenta se relaciona com as Diretrizes (D01-D07)"
-P "Os 12 formularios cobrem 12 dos 13 artefatos previstos nas Diretrizes. Apenas o Reporte de Resultados ainda nao tem formulario eletronico proprio."
+P "Os 12 formularios cobrem os 13 artefatos previstos nas Diretrizes. O Reporte de Resultados (D06.5) nao tem um formulario proprio - e atendido pela secao `Resultados alcancados` do Relatorio de Situacao (FORALF11, secao 4.1)."
 $rows = @(
   @("Passo","Formulario","Diretriz / Estrategia"),
   @("1","Solicitacao de Demanda (FORALF00339)","D01.1 - Recebimento e Registro de Demandas"),
@@ -519,6 +520,9 @@ Img "38_f11_sinalizacao.png" "Painel com o card `Em risco de atraso` e a coluna 
 Bul "Na aba Editar dados, alem dos projetos, ha dois cartoes independentes: `Entraves` e `Encaminhamentos`. Cada item tem Descricao, Responsavel, Prazo e Status (Aberto / Resolvido / Cancelado)."
 Nota "Gestao de Entraves e Encaminhamentos: entraves sao bloqueios que impedem o avanco do portfolio (ex.: dependencia externa, aprovacao pendente); encaminhamentos sao os proximos passos e decisoes acordadas para desbloquear ou avancar o trabalho. Os dois sao listas simples, independentes dos projetos cadastrados - continuam visiveis no Painel mesmo que nenhum projeto tenha sido informado ainda. No Painel, aparecem lado a lado na secao `Entraves e encaminhamentos`, com o Status de cada item destacado por selo colorido, e tambem saem no CSV exportado."
 Img "41_f11_entraves_encaminhamentos.png" "Secao Entraves e encaminhamentos no Painel, com itens Aberto e Resolvido lado a lado." 5.6
+Bul "Ainda em Editar dados, o cartao `Resultados alcancados` registra o desempenho real do portfolio: Descricao, Tipo (Indicador / Entrega / Beneficio), Planejado e Alcancado."
+Nota "Reporte de Resultados (D06.5): este cartao e a base do momento em que o Gerente de Projetos e o Dono do Negocio apresentam as instancias de decisao no que o projeto foi alcancado - nao so o que foi planejado, mas indicadores, entregas e beneficios de fato realizados, lado a lado com a meta original. E uma lista simples, independente dos projetos cadastrados, com o mesmo comportamento de Entraves e Encaminhamentos: continua visivel no Painel mesmo sem nenhum projeto informado, e sai no CSV exportado. Junto com os Entraves e Encaminhamentos (D06.6/D06.7), completa os tres artefatos de governanca da Diretriz D06 sem exigir um 13o formulario separado - o Reporte de Resultados e atendido dentro do proprio Relatorio de Situacao."
+Img "47_f11_resultados_alcancados.png" "Secao Resultados alcancados no Painel, com selos coloridos por Indicador, Entrega e Beneficio." 5.6
 Bul "No rodape do Painel, o botao `Historico de versoes` mostra todas as vezes que este relatorio foi salvo, com data/hora e quem salvou."
 Nota "Versionamento: toda vez que o relatorio e salvo (`Salvar e ver painel`), o sistema arquiva uma copia completa dos dados daquele momento, alem de atualizar a versao atual. Isso preserva as referencias mensais anteriores, que antes eram sobrescritas a cada novo salvamento. Ao clicar em `Visualizar` numa versao antiga, o Painel passa a mostrar aquele instantaneo, com um aviso amarelo no topo (`Visualizando versao... - somente leitura`) e um botao `Voltar a versao atual`. Enquanto uma versao antiga esta sendo visualizada, as abas `Editar dados` e `Importar Project` ficam bloqueadas - e preciso voltar a versao atual antes de editar."
 Img "46_f11_versao_historica_banner.png" "Aviso de versao historica (somente leitura), com o botao para voltar a versao atual." 5.6
@@ -608,9 +612,8 @@ $r8 = @(
   @("8","TEP - Termo de Encerramento","FORALF00341","D05.1.9","Sim"),
   @("9","RLA - Licoes Aprendidas","FORALF00342","D05.1.6","Sim"),
   @("10","Plano de Comunicacao","FORALF00308","D03.5","Nao"),
-  @("11","Relatorio de Situacao","FORALF11","D04.3","Nao"),
-  @("12","Relatorio de Entregas e Beneficios","FORALF12","D06.1/D06.2","Nao"),
-  @("-","Reporte de Resultados","a construir","D06.5-D06.7 (sem formulario ainda)","-")
+  @("11","Relatorio de Situacao","FORALF11","D04.3 / D06.5-D06.7","Nao"),
+  @("12","Relatorio de Entregas e Beneficios","FORALF12","D06.1/D06.2","Nao")
 )
 TableSimple $r8 @(1.0,5.2,3.2,4.6,2.0)
 P "Documento gerado a partir do estado atual do codigo do sistema, com capturas de tela reais coletadas em 28 e 29/07/2026." 9 $false $true $colMuted "left" 0
