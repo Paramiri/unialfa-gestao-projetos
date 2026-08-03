@@ -1,0 +1,501 @@
+<!-- Painel Executivo (Admin/PMO) / UNIALFA -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --red:#B91D2E; --red-deep:#8E1322; --ink:#1A1A1A; --muted:#6A6A70;
+    --paper:#FFFFFF; --surface:#F6F6F7; --surface-2:#FAFAFB;
+    --line:#E4E4E7; --line-strong:#D4D4D8;
+    --ok:#1B7F4B; --ok-soft:#E6F4EC; --warn:#B45309; --warn-soft:#FBF1E3; --bad:#9F1239; --bad-soft:#FBE7EC; --blue:#1D4ED8; --blue-soft:#EAF0FE;
+    --radius:10px; --shadow:0 1px 2px rgba(20,20,20,.04), 0 8px 28px rgba(20,20,20,.06);
+    --font:'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:var(--font); color:var(--ink); background:var(--surface); -webkit-font-smoothing:antialiased; line-height:1.5;}
+  .wrap{max-width:1080px; margin:0 auto; padding:28px 20px 64px}
+  .doc-head{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);}
+  .doc-band{background:var(--red); color:#fff; padding:18px 24px; display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+  .doc-logo{font-weight:800; font-size:22px; letter-spacing:.04em; line-height:1; padding-right:18px; border-right:2px solid rgba(255,255,255,.35);}
+  .doc-logo small{display:block; font-weight:600; font-size:10px; letter-spacing:.22em; margin-top:5px; opacity:.85}
+  .doc-title{flex:1; min-width:220px}
+  .doc-title h1{margin:0; font-size:17px; font-weight:700; letter-spacing:.06em; text-transform:uppercase}
+  .doc-title p{margin:3px 0 0; font-size:12px; font-weight:500; opacity:.9; letter-spacing:.02em}
+  .doc-help{flex:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;text-decoration:none;border:1.5px solid rgba(255,255,255,.4)}
+  .doc-help:hover{background:rgba(255,255,255,.32)}
+
+  .sec-title{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:6px}
+  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red)}
+  .kpi.ok::before{background:var(--ok)}
+  .kpi.warn::before{background:var(--warn)}
+  .kpi.blue::before{background:var(--blue)}
+  .kpi.bad::before{background:var(--bad)}
+  .kpi-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .kpi-value{font-size:30px;font-weight:900;line-height:1;color:var(--ink)}
+  .kpi-sub{font-size:11px;color:var(--muted);margin-top:6px;font-weight:500}
+  .kpi-breakdown{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+
+  .s-badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+  .s-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+  .s-ok{background:var(--ok-soft);color:var(--ok)}
+  .s-bad{background:var(--bad-soft);color:var(--bad)}
+  .s-warn{background:var(--warn-soft);color:var(--warn)}
+  .s-neutral{background:var(--surface-2);color:var(--muted);border:1px solid var(--line-strong)}
+
+  .card{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-top:0;}
+  .table-wrap{overflow-x:auto}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{text-align:left; font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding:10px 20px; border-bottom:1px solid var(--line); background:var(--surface-2); white-space:nowrap}
+  td{padding:12px 20px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tr:last-child td{border-bottom:none}
+  td b{font-weight:700}
+  .empty{padding:40px 24px; text-align:center; color:var(--muted); font-size:13px;}
+  .denied{padding:48px 24px; text-align:center;}
+  .denied h2{font-size:16px; margin:0 0 8px}
+  .denied p{color:var(--muted); font-size:13px; margin:0}
+  .status-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .refresh-bar{display:flex;align-items:center;justify-content:space-between;margin-top:26px 0 10px;gap:12px;flex-wrap:wrap}
+  .btn{appearance:none; font-family:var(--font); font-weight:700; font-size:12.5px; border-radius:8px; padding:9px 16px; cursor:pointer; border:1px solid var(--line-strong); background:var(--paper); color:var(--ink);}
+  .btn:hover{border-color:var(--ink)}
+  .loading{padding:40px 24px;text-align:center;color:var(--muted);font-size:13px}
+
+  @media (max-width:720px){.kpi-row{grid-template-columns:1fr}}
+</style>
+
+<!-- ==== AUTH GATE (HTML) ==== -->
+<div class="auth-gate" id="authGate" style="display:none">
+  <div class="auth-card">
+    <div class="auth-logo">UNIALFA<small>GRUPO JOSÉ ALVES</small></div>
+    <h2>Entrar</h2>
+    <p>Digite seu e-mail para receber um link de acesso — sem senha.</p>
+    <div id="authStep1">
+      <input type="email" id="authEmail" placeholder="seu.nome@email.com.br">
+      <button class="btn btn-primary" onclick="unialfaAuthUI.sendLink()">Enviar link de acesso</button>
+    </div>
+    <div style="text-align:center;margin:14px 0;color:var(--muted,#6B7280);font-size:11px;font-weight:600">— ou —</div>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="unialfaAuthUI.signInWithAzure()">Entrar com Microsoft - UNIALFA</button>
+    <div id="authStep2" style="display:none">
+      <p>✓ Link enviado para <b id="authEmailSent"></b>. Verifique seu e-mail e clique no link — esta página atualiza sozinha.</p>
+      <button class="btn btn-ghost btn-sm" onclick="unialfaAuthUI.reset()">Usar outro e-mail</button>
+    </div>
+    <div id="authMsg" class="auth-msg" style="display:none"></div>
+  </div>
+</div>
+
+<style>
+.auth-gate{position:fixed;inset:0;background:rgba(15,15,15,.92);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-card{background:var(--paper,#fff);border-radius:14px;padding:32px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.auth-logo{font-weight:900;font-size:20px;letter-spacing:.04em;color:var(--red,#B91D2E);margin-bottom:18px}
+.auth-logo small{display:block;font-weight:600;font-size:9px;letter-spacing:.2em;color:var(--muted,#6B7280);margin-top:3px}
+.auth-card h2{font-size:17px;font-weight:800;margin-bottom:6px;color:var(--ink,#0F0F0F)}
+.auth-card p{font-size:12.5px;color:var(--muted,#6B7280);margin-bottom:16px;line-height:1.5}
+.auth-card input{width:100%;font-family:inherit;font-size:13.5px;border:1px solid var(--line-strong,#D1D5DB);border-radius:8px;padding:10px 12px;margin-bottom:10px;color:var(--ink,#0F0F0F)}
+.auth-card input:focus{outline:none;border-color:var(--red,#B91D2E);box-shadow:0 0 0 3px rgba(185,29,46,.12)}
+.auth-card .btn{width:100%;justify-content:center; appearance:none; font-family:var(--font); font-weight:700; font-size:13px; letter-spacing:.02em; border-radius:8px; padding:11px 22px; cursor:pointer; border:1px solid transparent; display:inline-flex; align-items:center; gap:8px;}
+.btn-primary{background:var(--red); color:#fff}
+.btn-primary:hover{background:var(--red-deep)}
+.btn-ghost{background:var(--paper); color:var(--ink); border-color:var(--line-strong)}
+.btn-ghost:hover{border-color:var(--ink)}
+.btn-sm{padding:7px 14px; font-size:12px}
+.auth-msg{margin-top:10px;font-size:12px;font-weight:600;padding:8px 10px;border-radius:7px}
+.auth-msg.err{background:#FEE2E2;color:#DC2626}
+.auth-msg.ok{background:#D1FAE5;color:#059669}
+.auth-topbar{position:fixed;top:0;left:0;right:0;background:var(--ink,#0F0F0F);color:#fff;font-size:11.5px;padding:8px 18px;display:flex;align-items:center;gap:10px;z-index:150;font-family:var(--font)}
+.auth-topbar b{font-weight:700}
+.auth-topbar .papel-tag{background:var(--red,#B91D2E);padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.auth-topbar .sair{margin-left:auto;background:none;border:none;color:#fff;opacity:.7;cursor:pointer;font-size:11px;text-decoration:underline;font-family:inherit}
+.auth-topbar .sair:hover{opacity:1}
+body.auth-ready{padding-top:34px}
+</style>
+
+<script>
+/* ---- Autenticacao (magic link) ---- */
+(function(){
+  var SUPABASE_URL = 'https://fiarntunpqteopwjkhjg.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+  var AUTH_BASE = SUPABASE_URL + '/auth/v1';
+  var REST_BASE = SUPABASE_URL + '/rest/v1';
+  var SESSION_KEY = 'unialfa_session';
+
+  function saveSession(s){ localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
+  function getSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)); }catch(e){ return null; } }
+  function clearSession(){ localStorage.removeItem(SESSION_KEY); }
+
+  function captureRedirect(){
+    if (location.hash && location.hash.indexOf('access_token') > -1) {
+      var params = new URLSearchParams(location.hash.slice(1));
+      if (params.get('access_token')) {
+        saveSession({
+          access_token: params.get('access_token'),
+          refresh_token: params.get('refresh_token'),
+          expires_at: Date.now() + (parseInt(params.get('expires_in')||'3600',10)*1000),
+        });
+        if (params.get('provider_token')) { localStorage.setItem('unialfa_provider_token', params.get('provider_token')); }
+        history.replaceState(null, '', location.pathname + location.search);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async function sendMagicLink(email){
+    var r = await fetch(AUTH_BASE + '/otp', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, create_user: true }),
+    });
+    return r.ok;
+  }
+
+  async function fetchUser(){
+    var s = getSession();
+    if(!s || !s.access_token) return null;
+    if (s.expires_at && Date.now() > s.expires_at) { clearSession(); return null; }
+    var r = await fetch(AUTH_BASE + '/user', { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + s.access_token } });
+    if(!r.ok) { clearSession(); return null; }
+    return await r.json();
+  }
+
+  function authHeaders(extra){
+    var s = getSession();
+    var token = (s && s.access_token) ? s.access_token : SUPABASE_ANON_KEY;
+    var h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+    if (extra) for (var k in extra) h[k]=extra[k];
+    return h;
+  }
+
+  async function fetchProfile(userId){
+    var r = await fetch(REST_BASE + '/perfis?id=eq.' + userId + '&select=*', { headers: authHeaders() });
+    if(!r.ok) return null;
+    var rows = await r.json();
+    return rows[0] || null;
+  }
+
+  async function ensureProfile(user){
+    var p = await fetchProfile(user.id);
+    var meta = user.user_metadata || {};
+    var nome = meta.name || [meta.given_name, meta.family_name].filter(Boolean).join(' ') || null;
+    if(p){
+      if(nome && !p.nome){
+        await fetch(REST_BASE + '/perfis?id=eq.' + user.id, {
+          method: 'PATCH', headers: authHeaders({ 'Prefer': 'return=minimal' }),
+          body: JSON.stringify({ nome: nome }),
+        });
+        p.nome = nome;
+      }
+      return p;
+    }
+    await fetch(REST_BASE + '/perfis', {
+      method: 'POST', headers: authHeaders({ 'Prefer': 'return=minimal' }),
+      body: JSON.stringify({ id: user.id, email: user.email, nome: nome, papel: 'solicitante' }),
+    });
+    return await fetchProfile(user.id);
+  }
+
+  var PAPEL_LABEL = {
+    solicitante: 'Solicitante', gerente_projetos: 'Gerente de Projetos', gestor_responsavel: 'Gestor Responsável',
+    dono_negocio: 'Dono do Negócio', alta_gestao: 'Alta Gestão', admin: 'PMO / Admin',
+  };
+
+  async function tentarNomeViaGraph(profile){
+    var token = localStorage.getItem('unialfa_provider_token');
+    if(!token) return profile;
+    localStorage.removeItem('unialfa_provider_token');
+    if(!profile || profile.nome) return profile;
+    try{
+      var r = await fetch('https://graph.microsoft.com/v1.0/me', { headers: { 'Authorization': 'Bearer ' + token } });
+      if(!r.ok) return profile;
+      var me = await r.json();
+      var nome = me.displayName || [me.givenName, me.surname].filter(Boolean).join(' ');
+      if(nome){
+        await fetch(REST_BASE + '/perfis?id=eq.' + profile.id, {
+          method:'PATCH', headers: authHeaders({'Prefer':'return=minimal'}),
+          body: JSON.stringify({ nome: nome })
+        });
+        profile.nome = nome;
+      }
+    }catch(e){ console.warn('Nao foi possivel buscar nome via Microsoft Graph', e); }
+    return profile;
+  }
+
+  window.unialfaAuth = {
+    REST_BASE: REST_BASE,
+    AUTH_BASE: AUTH_BASE,
+    getSession: getSession, clearSession: clearSession, captureRedirect: captureRedirect,
+    sendMagicLink: sendMagicLink, fetchUser: fetchUser, authHeaders: authHeaders,
+    fetchProfile: fetchProfile, ensureProfile: ensureProfile, tentarNomeViaGraph: tentarNomeViaGraph,
+    papelLabel: function(p){ return PAPEL_LABEL[p]||p; },
+    signOut: function(){ clearSession(); location.reload(); },
+  };
+})();
+
+var unialfaAuthUI = {
+  sendLink: async function(){
+    var email = document.getElementById('authEmail').value.trim();
+    var msg = document.getElementById('authMsg');
+    if(!email || email.indexOf('@')<0){ msg.textContent='Digite um e-mail válido.'; msg.className='auth-msg err'; msg.style.display='block'; return; }
+    msg.style.display='none';
+    var ok = await unialfaAuth.sendMagicLink(email);
+    if(ok){
+      document.getElementById('authStep1').style.display='none';
+      document.getElementById('authStep2').style.display='block';
+      document.getElementById('authEmailSent').textContent=email;
+    } else {
+      msg.textContent='Não foi possível enviar o link. Tente novamente.'; msg.className='auth-msg err'; msg.style.display='block';
+    }
+  },
+  signInWithAzure: function(){ location.href = unialfaAuth.AUTH_BASE + '/authorize?provider=azure&scopes=openid%20email%20profile%20User.Read'; },
+  reset: function(){
+    document.getElementById('authStep1').style.display='block';
+    document.getElementById('authStep2').style.display='none';
+    document.getElementById('authEmail').value='';
+  },
+};
+
+window.currentUser = null;
+window.currentProfile = null;
+
+function ensureAuthenticated(){
+  return new Promise(function(resolve){
+    async function trySetup(){
+      var user = await unialfaAuth.fetchUser();
+      if(!user) return null;
+      var profile = await unialfaAuth.ensureProfile(user);
+      profile = await unialfaAuth.tentarNomeViaGraph(profile);
+      window.currentUser = user; window.currentProfile = profile;
+      var gate = document.getElementById('authGate');
+      if(gate) gate.style.display='none';
+      document.body.classList.add('auth-ready');
+      if(!document.querySelector('.auth-topbar')){
+        var bar = document.createElement('div');
+        bar.className='auth-topbar';
+        bar.innerHTML = '<span>Conectado como <b>'+ (user.email||'') +'</b></span><span class="papel-tag">'+unialfaAuth.papelLabel(profile?profile.papel:'solicitante')+'</span><button class="sair" onclick="unialfaAuth.signOut()">Sair</button>';
+        document.body.prepend(bar);
+      }
+      return {user:user, profile:profile};
+    }
+    (async function(){
+      unialfaAuth.captureRedirect();
+      var result = await trySetup();
+      if(result){ resolve(result); return; }
+      var gate = document.getElementById('authGate');
+      if(gate) gate.style.display='flex';
+      var iv = setInterval(async function(){
+        var r = await trySetup();
+        if(r){ clearInterval(iv); resolve(r); }
+      }, 3000);
+    })();
+  });
+}
+</script>
+
+<div class="wrap">
+  <div class="doc-head">
+    <div class="doc-band">
+      <div class="doc-logo">UNIALFA<small>GRUPO JOSÉ ALVES</small></div>
+      <div class="doc-title">
+        <h1>Painel Executivo</h1>
+        <p>Visão consolidada do sistema · Escritório de Projetos</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="deniedBox" style="display:none" class="card"><div class="denied">
+    <h2>Acesso restrito</h2>
+    <p id="deniedMsg"></p>
+  </div></div>
+
+  <div id="painelBox" style="display:none">
+    <div class="refresh-bar">
+      <div style="font-size:11px;color:var(--muted)">Dados agregados em tempo real a partir dos 10 formulários de registro e dos 2 relatórios.</div>
+      <button class="btn" onclick="carregarPainel()">↻ Atualizar</button>
+    </div>
+
+    <div id="loadingBox" class="loading">Carregando dados de todos os formulários…</div>
+
+    <div id="conteudo" style="display:none">
+      <div class="sec-title">Gates de aprovação</div>
+      <div class="kpi-row" style="grid-template-columns:1fr 1fr">
+        <div class="kpi warn" id="kpi-gate1">
+          <div class="kpi-label">Gate 1 — Solicitação de Demanda</div>
+          <div class="kpi-value" id="g1-total">—</div>
+          <div class="kpi-sub">solicitações registradas</div>
+          <div class="kpi-breakdown" id="g1-breakdown"></div>
+        </div>
+        <div class="kpi blue" id="kpi-gate2">
+          <div class="kpi-label">Gate 2 — Relatório de Entregas</div>
+          <div class="kpi-value" id="g2-status" style="font-size:20px">—</div>
+          <div class="kpi-sub" id="g2-sub">—</div>
+        </div>
+      </div>
+
+      <div class="sec-title">Governança (Relatório de Situação — FORALF11)</div>
+      <div class="kpi-row">
+        <div class="kpi bad">
+          <div class="kpi-label">Entraves abertos</div>
+          <div class="kpi-value" id="kpi-entraves">—</div>
+          <div class="kpi-sub">bloqueios ativos no portfólio</div>
+        </div>
+        <div class="kpi ok">
+          <div class="kpi-label">Encaminhamentos abertos</div>
+          <div class="kpi-value" id="kpi-encaminhamentos">—</div>
+          <div class="kpi-sub">próximos passos em aberto</div>
+        </div>
+        <div class="kpi blue">
+          <div class="kpi-label">Resultados alcançados</div>
+          <div class="kpi-value" id="kpi-resultados">—</div>
+          <div class="kpi-sub">indicadores/entregas/benefícios registrados</div>
+        </div>
+      </div>
+
+      <div class="sec-title">Registros por formulário</div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Formulário</th><th>Código</th><th>Total</th><th>Status</th></tr></thead>
+            <tbody id="tbody-formularios"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sec-title">Portfólio de projetos (Gate 1 aprovados)</div>
+      <div class="kpi-row" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi ok"><div class="kpi-label">Aprovados</div><div class="kpi-value" id="kpi-proj-aprovado">—</div></div>
+        <div class="kpi bad"><div class="kpi-label">Reprovados</div><div class="kpi-value" id="kpi-proj-reprovado">—</div></div>
+        <div class="kpi warn"><div class="kpi-label">Em avaliação</div><div class="kpi-value" id="kpi-proj-avaliacao">—</div></div>
+        <div class="kpi blue"><div class="kpi-label">Total no portfólio</div><div class="kpi-value" id="kpi-proj-total">—</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---- Formulários de registro (10 artefatos com múltiplos registros) ---- */
+const FORM_DEFS = [
+  { prefix:'demanda:', nome:'Solicitação de Demanda', codigo:'FORALF00339' },
+  { prefix:'canvas:',  nome:'Canvas de Projeto',       codigo:'FORALF00344' },
+  { prefix:'tap:',     nome:'TAP — Termo de Abertura',  codigo:'FORALF00338' },
+  { prefix:'plan:',    nome:'Planejamento e Desenvolvimento', codigo:'FORALF00325' },
+  { prefix:'eap:',     nome:'EAP — Estrutura Analítica', codigo:'—' },
+  { prefix:'smp:',     nome:'SMP — Solicitação de Mudança', codigo:'FORALF00343' },
+  { prefix:'ata:',     nome:'Ata de Reunião',           codigo:'FORALF00340' },
+  { prefix:'tep:',     nome:'TEP — Termo de Encerramento', codigo:'FORALF00341' },
+  { prefix:'rla:',     nome:'RLA — Lições Aprendidas',  codigo:'FORALF00342' },
+];
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+function statusClass(status){
+  var s = String(status||'');
+  if(/aprovad|pactuad|public/i.test(s) && !/n[ãa]o aprovad/i.test(s)) return 's-ok';
+  if(/reprovad|n[ãa]o aprovad|cancelad/i.test(s)) return 's-bad';
+  if(/pendente|rascunho|elabora|planejamento|revis[ãa]o|avalia/i.test(s)) return 's-warn';
+  return 's-neutral';
+}
+
+/* Busca todos os valores (registros) de um prefixo em UMA consulta REST, em vez de listar chaves e buscar um a um. */
+async function listarValoresPorPrefixo(prefix){
+  try{
+    var r = await fetch(unialfaAuth.REST_BASE + '/kv_store?key=like.' + encodeURIComponent(prefix) + '*&select=value', { headers: unialfaAuth.authHeaders() });
+    if(!r.ok) return [];
+    var rows = await r.json();
+    return rows.map(function(x){ try{ return JSON.parse(x.value); }catch(e){ return null; } }).filter(Boolean);
+  }catch(e){ console.warn('Falha ao buscar '+prefix, e); return []; }
+}
+
+async function buscarDocumentoUnico(key){
+  try{
+    var r = await fetch(unialfaAuth.REST_BASE + '/kv_store?key=eq.' + encodeURIComponent(key) + '&select=value', { headers: unialfaAuth.authHeaders() });
+    if(!r.ok) return null;
+    var rows = await r.json();
+    if(!rows.length) return null;
+    return JSON.parse(rows[0].value);
+  }catch(e){ console.warn('Falha ao buscar '+key, e); return null; }
+}
+
+function contarPorStatus(registros){
+  var out = {};
+  registros.forEach(function(rec){
+    var s = rec.status || '—';
+    out[s] = (out[s]||0) + 1;
+  });
+  return out;
+}
+
+function renderBreakdown(hostId, counts){
+  var host = document.getElementById(hostId);
+  var entries = Object.entries(counts);
+  if(!entries.length){ host.innerHTML = '<span class="s-badge s-neutral">Nenhum registro</span>'; return; }
+  host.innerHTML = entries.map(function(e){
+    return '<span class="s-badge '+statusClass(e[0])+'">'+esc(e[0])+' ('+e[1]+')</span>';
+  }).join('');
+}
+
+async function carregarPainel(){
+  document.getElementById('conteudo').style.display = 'none';
+  document.getElementById('loadingBox').style.display = 'block';
+
+  // 1) Contagem por formulário
+  var tbody = document.getElementById('tbody-formularios');
+  tbody.innerHTML = '';
+  var demandaRegistros = [];
+  for(var i=0; i<FORM_DEFS.length; i++){
+    var def = FORM_DEFS[i];
+    var registros = await listarValoresPorPrefixo(def.prefix);
+    if(def.prefix === 'demanda:') demandaRegistros = registros;
+    var counts = contarPorStatus(registros);
+    var chipsHtml = Object.entries(counts).map(function(e){
+      return '<span class="s-badge '+statusClass(e[0])+'">'+esc(e[0])+' ('+e[1]+')</span>';
+    }).join('');
+    tbody.innerHTML += '<tr><td><b>'+esc(def.nome)+'</b></td><td>'+esc(def.codigo)+'</td><td>'+registros.length+'</td><td><div class="status-chips">'+(chipsHtml||'<span class="s-badge s-neutral">Nenhum registro</span>')+'</div></td></tr>';
+  }
+
+  // 2) Gate 1 — a partir dos registros de Solicitação de Demanda já buscados
+  var g1counts = contarPorStatus(demandaRegistros);
+  document.getElementById('g1-total').textContent = demandaRegistros.length;
+  renderBreakdown('g1-breakdown', g1counts);
+
+  // 3) Gate 2 — documento único do Relatório de Entregas (FORALF12)
+  var relent = await buscarDocumentoUnico('relent_data');
+  var g2status = (relent && relent.gate2 && relent.gate2.status) || 'Sem relatório registrado';
+  document.getElementById('g2-status').textContent = g2status;
+  document.getElementById('g2-sub').textContent = (relent && relent.prog && relent.prog.nome) ? relent.prog.nome : '—';
+  document.getElementById('kpi-gate2').className = 'kpi ' + (g2status === 'Pactuado' ? 'ok' : 'warn');
+
+  // 4) Entraves / Encaminhamentos / Resultados — documento único do Relatório de Situação (FORALF11)
+  var relsit = await buscarDocumentoUnico('relsit_data');
+  var entraves = (relsit && relsit.entraves) || [];
+  var encaminhamentos = (relsit && relsit.encaminhamentos) || [];
+  var resultados = (relsit && relsit.resultados) || [];
+  document.getElementById('kpi-entraves').textContent = entraves.filter(function(x){ return x.status === 'Aberto'; }).length;
+  document.getElementById('kpi-encaminhamentos').textContent = encaminhamentos.filter(function(x){ return x.status === 'Aberto'; }).length;
+  document.getElementById('kpi-resultados').textContent = resultados.length;
+
+  // 5) Portfólio de projetos (tabela compartilhada `projetos`)
+  var rProj = await fetch(unialfaAuth.REST_BASE + '/projetos?select=status', { headers: unialfaAuth.authHeaders() });
+  var projetos = rProj.ok ? await rProj.json() : [];
+  var pCounts = contarPorStatus(projetos.map(function(p){ return { status: p.status }; }));
+  document.getElementById('kpi-proj-aprovado').textContent = pCounts['Aprovado'] || 0;
+  document.getElementById('kpi-proj-reprovado').textContent = pCounts['Reprovado'] || 0;
+  document.getElementById('kpi-proj-avaliacao').textContent = (pCounts['Em avaliação']||0) + Object.keys(pCounts).filter(function(k){return k!=='Aprovado'&&k!=='Reprovado'&&k!=='Em avaliação';}).reduce(function(a,k){return a+pCounts[k];},0);
+  document.getElementById('kpi-proj-total').textContent = projetos.length;
+
+  document.getElementById('loadingBox').style.display = 'none';
+  document.getElementById('conteudo').style.display = 'block';
+}
+
+(async()=>{
+  await ensureAuthenticated();
+  if(!window.currentProfile || window.currentProfile.papel!=='admin'){
+    document.getElementById('deniedMsg').textContent = 'Esta página é exclusiva para usuários com papel PMO / Admin. Seu papel atual é "'+unialfaAuth.papelLabel(window.currentProfile?window.currentProfile.papel:'solicitante')+'". Solicite a um administrador para alterar seu acesso.';
+    document.getElementById('deniedBox').style.display = 'block';
+    return;
+  }
+  document.getElementById('painelBox').style.display = 'block';
+  await carregarPainel();
+})();
+</script>

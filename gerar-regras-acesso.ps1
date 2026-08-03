@@ -97,7 +97,7 @@ HR
 
 # ---- 1 ----
 H1 "1. Login obrigatorio (regra geral)"
-P "A maioria dos 14 formularios do sistema exige login antes de carregar ou salvar qualquer dado. O login pode ser feito de duas formas:"
+P "A maioria das 15 paginas do sistema exige login antes de carregar ou salvar qualquer dado. O login pode ser feito de duas formas:"
 Bul "Link magico por e-mail - o usuario informa o e-mail e recebe um link de acesso, sem senha."
 Bul "Microsoft (SSO) - `"Entrar com Microsoft - UNIALFA`", usando a conta institucional."
 P "As paginas abertas sem exigir login sao a pagina inicial (index.html, mapa de diretrizes) e o Validador de Projetos (ferramenta de apoio a decisao) - ambas mostram o conteudo livremente e so exibem a barra `"Conectado como...`" caso ja exista uma sessao ativa. Diferente da Solicitacao de Demanda e da Ata de Reuniao (secao 2), o acesso sem login do Validador nao depende de nenhuma ativacao pelo Admin - e sempre aberto."
@@ -148,7 +148,7 @@ Bul "Admin - papel de administracao do sistema, atribuido manualmente por quem j
 
 H2 "3.1 Acoes exclusivas de Admin"
 P "Somente usuarios com papel Admin podem:"
-Bul "Acessar a pagina de Administracao (qualquer outro papel ve a mensagem `"Acesso restrito`")."
+Bul "Acessar a pagina de Administracao e o Painel Executivo (qualquer outro papel ve a mensagem `"Acesso restrito`" em ambas)."
 Bul "Alterar o papel de outros usuarios."
 Bul "Adicionar ou remover membros da equipe de um projeto."
 Bul "Ativar/desativar as opcoes de `"sem login`" (Solicitacao de Demanda e Ata de Reuniao)."
@@ -225,6 +225,7 @@ $rows = @(
   @("Relatorio de Situacao","Sim","Nao","-"),
   @("Relatorio de Entregas","Sim","Nao","Gate 2 (Admin)"),
   @("Administracao","Sim (so Admin acessa)","-","-"),
+  @("Painel Executivo","Sim (so Admin acessa)","-","-"),
   @("Validador de Projetos","Nao (so p/ vincular projeto)","Nao","-")
 )
 

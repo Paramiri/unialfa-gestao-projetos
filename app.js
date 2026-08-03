@@ -90,6 +90,9 @@
             <span class="tag">?</span><span class="lbl">Central de Ajuda</span>
           </a>
           <div class="sidebar-section-label">Gestão</div>
+          <a class="nav-item" href="16 - painel-executivo.html" target="_blank" rel="noopener">
+            <span class="tag">▤</span><span class="lbl">Painel Executivo</span>
+          </a>
           <a class="nav-item" href="13 - administracao-usuarios.html" target="_blank" rel="noopener">
             <span class="tag">⚙</span><span class="lbl">Administração</span>
           </a>

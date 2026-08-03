@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.9 - 01 de agosto de 2026 (substitui a versao 2.8 de 01/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.10 - 03 de agosto de 2026 (substitui a versao 2.9 de 01/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -260,13 +260,15 @@ P "Esta e a versao 2.6 do manual. Em relacao a versao 2.5 (29/07/2026), foi adic
 P "Esta e a versao 2.7 do manual. Em relacao a versao 2.6 (30/07/2026), foi adicionado o versionamento historico ao Relatorio de Situacao (secao 4.1) e ao Relatorio de Entregas e Beneficios (secao 4.2): cada `Salvar e ver painel` arquiva uma copia completa dos dados, consultavel pelo botao `Historico de versoes` no rodape do Painel, com visualizacao somente leitura de versoes antigas e trava de edicao ate voltar a versao atual."
 P "Esta e a versao 2.8 do manual. Em relacao a versao 2.7 (01/08/2026), foi adicionado o cartao `Resultados alcancados` ao Relatorio de Situacao (secao 4.1): registra indicadores, entregas e beneficios de fato alcancados frente ao planejado, atendendo o Reporte de Resultados (D06.5) sem exigir um 13o formulario separado. A tabela de artefatos (secao 8) e o texto sobre cobertura das Diretrizes (secao 1.4) foram atualizados de acordo."
 P "Esta e a versao 2.9 do manual. Em relacao a versao 2.8 (01/08/2026), foi adicionada a nova secao 2.8 - Notificacoes por e-mail em transicoes de estado: seis transicoes (Gate 1, Canvas aprovado, TAP aprovado, decisao da SMP, registro de TEP e Gate 2 pactuado) agora disparam automaticamente um e-mail via Resend para quem criou o registro, a equipe do projeto vinculado e os Admins."
+P "Esta e a versao 2.10 do manual. Em relacao a versao 2.9 (01/08/2026), foi adicionada a nova secao 6.4 - Painel Executivo: uma 15a pagina, restrita a Admin, que agrega em tempo real os 10 formularios de registro e os 2 relatorios numa unica tela (gates de aprovacao, entraves/encaminhamentos/resultados, contagem por formulario e portfolio de projetos), sem exigir nenhuma mudanca no banco de dados."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
-P "A ferramenta e composta por 14 paginas eletronicas independentes:"
+P "A ferramenta e composta por 15 paginas eletronicas independentes:"
 Bul "12 formularios de registro (codigo FORALF), cada um correspondendo a um artefato institucional - da Solicitacao de Demanda ao Relatorio de Entregas e Beneficios."
 Bul "1 ferramenta de apoio a decisao, o Validador de Projetos, que nao gera registros de artefato mas ajuda a avaliar projetos."
 Bul "1 pagina de Administracao, restrita a Admin, para gerenciar usuarios, equipes e configuracoes do sistema."
+Bul "1 Painel Executivo, tambem restrito a Admin, com a visao agregada de todo o sistema (secao 6.4)."
 P "Cada formulario de registro tem duas partes: uma tela de preenchimento (`+Novo...`) e uma tela de consulta (`...cadastrados`), onde ficam listados todos os registros ja salvos, com opcao de abrir, editar o status ou excluir cada um."
 P "O Mapa de Diretrizes (pagina inicial) apresenta visualmente as 7 diretrizes (D01 a D07) e mostra, para cada etapa do processo, quais ferramentas usar. E o ponto de partida recomendado para quem quer entender o processo antes de preencher os formularios - e a unica pagina, junto com o Validador de Projetos, que nao exige login."
 Img "00_home.png" "Mapa de diretrizes - pagina inicial. Nao exige login." 5.8
@@ -578,8 +580,8 @@ Nota "Regra aplicada: qualquer resposta vermelha leva a encerrar/repactuar; tres
 # ============================================================
 # 6. ADMINISTRACAO DO SISTEMA
 # ============================================================
-H1 "6. Administracao do sistema"
-P "Pagina restrita a usuarios com papel Admin (secao 2.3). Reune tres abas: Usuarios, Equipes e Configuracoes."
+H1 "6. Administracao e Painel Executivo"
+P "Duas paginas independentes, ambas restritas a usuarios com papel Admin (secao 2.3) e listadas no menu lateral em `Gestao`: a Administracao (gerencia usuarios, equipes e configuracoes) e o Painel Executivo (visao consolidada e agregada de todo o sistema)."
 H2 "6.1 Usuarios"
 P "Lista todos os usuarios que ja fizeram login pelo menos uma vez, com o papel atual e um seletor para altera-lo."
 Img "09_admin_usuarios.png" "Aba Usuarios: papel atual e seletor de alteracao de papel por usuario." 5.8
@@ -589,6 +591,15 @@ Img "10_admin_equipes.png" "Aba Equipes, com um projeto selecionado e um membro 
 H2 "6.3 Configuracoes"
 P "Controla os dois interruptores de acesso sem login (Solicitacao de Demanda e Ata de Reuniao), descritos na secao 2.6."
 Img "11_admin_config.png" "Aba Configuracoes: os dois interruptores de acesso sem login, hoje desativados." 5.8
+H2 "6.4 Painel Executivo"
+P "Pagina nova, tambem restrita a Admin, que agrega em tempo real dados de todos os 10 formularios de registro e dos 2 relatorios - sem exigir nenhuma mudanca no banco de dados, apenas consultando o que ja esta salvo. Pensada para dar ao PMO uma visao geral do sistema inteiro em uma unica tela, sem precisar abrir cada formulario individualmente."
+Bul "Gates de aprovacao: contagem de Solicitacoes de Demanda por status (Gate 1) e o status atual do Relatorio de Entregas (Gate 2 - Pactuacao)."
+Bul "Governanca (dados do Relatorio de Situacao - secao 4.1): quantidade de Entraves e Encaminhamentos ainda `Aberto`, e quantos Resultados alcancados ja foram registrados."
+Bul "Registros por formulario: uma linha por artefato (Canvas, TAP, Planejamento, EAP, SMP, Ata de Reuniao, TEP, RLA, alem da propria Solicitacao de Demanda), com o total e a contagem por status de cada um."
+Bul "Portfolio de projetos: contagem de projetos Aprovados, Reprovados e em avaliacao no Gate 1, a partir do cadastro compartilhado (secao 2.5)."
+Img "48_painel_executivo.png" "Painel Executivo: Gates de aprovacao e indicadores de governanca do Relatorio de Situacao." 5.8
+Img "49_painel_executivo_tabela.png" "Registros por formulario e portfolio de projetos, com contagem por status." 5.8
+Nota "Por reunir dados de varios formularios numa unica tela, o carregamento faz uma consulta para cada um dos 10 formularios de registro - pode levar alguns segundos a mais que os outros formularios da ferramenta. Clique em `Atualizar` para recarregar os numeros mais recentes a qualquer momento."
 
 # ============================================================
 # 7. PERGUNTAS FREQUENTES
