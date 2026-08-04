@@ -8,17 +8,27 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="app.css?v=9">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-apple-touch.png">
+<meta name="theme-color" content="#B91D2E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="UNIALFA GP">
 <style>
 .auth-topbar{position:fixed;top:0;left:0;right:0;background:#0F0F0F;color:#fff;font-size:11.5px;padding:8px 18px;display:flex;align-items:center;gap:10px;z-index:150;font-family:'Montserrat',sans-serif}
 .auth-topbar b{font-weight:700}
 .auth-topbar .papel-tag{background:#B91D2E;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
 .auth-topbar .sair{margin-left:auto;background:none;border:none;color:#fff;opacity:.7;cursor:pointer;font-size:11px;text-decoration:underline;font-family:inherit}
 .auth-topbar .sair:hover{opacity:1}
+.auth-topbar .push-btn{background:none;border:1px solid rgba(255,255,255,.35);color:#fff;padding:3px 10px;border-radius:999px;cursor:pointer;font-size:10.5px;font-family:inherit}
+.auth-topbar .push-btn:hover{background:rgba(255,255,255,.12)}
+.auth-topbar .push-btn.ativo{border-color:#1B7F4B;background:rgba(27,127,75,.25)}
 body.auth-ready{padding-top:34px}
 </style>
 </head>
 <body>
 <div class="app" id="app"></div>
+<script src="push-notifications.js?v=1"></script>
 <script>
 /* Captura o token de login caso o Supabase redirecione a confirmação de e-mail para esta página (raiz), em vez do formulário de origem. */
 (function(){
@@ -65,8 +75,29 @@ body.auth-ready{padding-top:34px}
     document.body.classList.add('auth-ready');
     var bar = document.createElement('div');
     bar.className='auth-topbar';
-    bar.innerHTML = '<span>Conectado como <b>'+ (user.email||'') +'</b></span><span class="papel-tag">'+(PAPEL_LABEL[papel]||papel)+'</span><button class="sair" onclick="localStorage.removeItem(\'unialfa_session\');location.reload();">Sair</button>';
+    bar.innerHTML = '<span>Conectado como <b>'+ (user.email||'') +'</b></span><span class="papel-tag">'+(PAPEL_LABEL[papel]||papel)+'</span><button class="push-btn" id="pushBtn">🔔 Lembretes no celular</button><button class="sair" onclick="localStorage.removeItem(\'unialfa_session\');location.reload();">Sair</button>';
     document.body.prepend(bar);
+    if (window.unialfaPush) configurarBotaoPush(user.email, s.access_token);
+  }
+  async function configurarBotaoPush(email, accessToken){
+    var btn = document.getElementById('pushBtn');
+    async function atualizar(){
+      var st = await window.unialfaPush.status();
+      if(st==='ativo'){ btn.textContent='🔔 Lembretes ativos'; btn.classList.add('ativo'); btn.disabled=false; }
+      else if(st==='negado'){ btn.textContent='🔕 Notificações bloqueadas'; btn.disabled=true; }
+      else if(st==='indisponivel'){ btn.textContent='🔕 Indisponível neste navegador'; btn.disabled=true; }
+      else if(st==='precisa_instalar_ios'){ btn.textContent='🔔 Ativar (adicione à Tela de Início)'; btn.classList.remove('ativo'); btn.disabled=false; }
+      else { btn.textContent='🔔 Ativar lembretes no celular'; btn.classList.remove('ativo'); btn.disabled=false; }
+      return st;
+    }
+    var estadoAtual = await atualizar();
+    btn.addEventListener('click', async function(){
+      try{
+        if(estadoAtual==='ativo'){ await window.unialfaPush.desativar(accessToken); }
+        else { await window.unialfaPush.ativar(email, accessToken); }
+      }catch(err){ alert(err.message || 'Não foi possível ativar as notificações.'); }
+      estadoAtual = await atualizar();
+    });
   }
   document.addEventListener('DOMContentLoaded', mostrarTopbar);
 })();

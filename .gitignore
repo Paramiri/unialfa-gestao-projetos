@@ -14,3 +14,7 @@
 
 # Exceção: manual de uso da ferramenta, versionado a pedido do usuário
 !Manual de Uso - Ferramenta de Gestao de Projetos.docx
+
+# Exceção: ícones do app (PWA/manifest, notificações push) — fazem parte do app web
+!icons/
+!icons/*.png
