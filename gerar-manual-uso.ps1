@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.10 - 03 de agosto de 2026 (substitui a versao 2.9 de 01/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.11 - 04 de agosto de 2026 (substitui a versao 2.10 de 03/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -261,6 +261,7 @@ P "Esta e a versao 2.7 do manual. Em relacao a versao 2.6 (30/07/2026), foi adic
 P "Esta e a versao 2.8 do manual. Em relacao a versao 2.7 (01/08/2026), foi adicionado o cartao `Resultados alcancados` ao Relatorio de Situacao (secao 4.1): registra indicadores, entregas e beneficios de fato alcancados frente ao planejado, atendendo o Reporte de Resultados (D06.5) sem exigir um 13o formulario separado. A tabela de artefatos (secao 8) e o texto sobre cobertura das Diretrizes (secao 1.4) foram atualizados de acordo."
 P "Esta e a versao 2.9 do manual. Em relacao a versao 2.8 (01/08/2026), foi adicionada a nova secao 2.8 - Notificacoes por e-mail em transicoes de estado: seis transicoes (Gate 1, Canvas aprovado, TAP aprovado, decisao da SMP, registro de TEP e Gate 2 pactuado) agora disparam automaticamente um e-mail via Resend para quem criou o registro, a equipe do projeto vinculado e os Admins."
 P "Esta e a versao 2.10 do manual. Em relacao a versao 2.9 (01/08/2026), foi adicionada a nova secao 6.4 - Painel Executivo: uma 15a pagina, restrita a Admin, que agrega em tempo real os 10 formularios de registro e os 2 relatorios numa unica tela (gates de aprovacao, entraves/encaminhamentos/resultados, contagem por formulario e portfolio de projetos), sem exigir nenhuma mudanca no banco de dados."
+P "Esta e a versao 2.11 do manual. Em relacao a versao 2.10 (03/08/2026), foi adicionada a nova secao 2.9 - Lembretes por notificacao push no celular: um segundo canal de aviso, alem do e-mail, ativado por cada usuario individualmente na pagina inicial. Dispara nos mesmos seis momentos de decisao ja descritos na secao 2.8."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -370,6 +371,14 @@ Bul "SMP: quando a decisao e finalizada como `Aprovada` ou `Nao aprovada`."
 Bul "TEP: ao registrar um novo Termo de Encerramento."
 Bul "Gate 2 - Relatorio de Entregas: quando o status muda para `Pactuado`."
 P "Em todos os casos, os destinatarios sao: quem criou o registro (e-mail capturado no login, ou informado no registro sem login), todos os e-mails cadastrados na equipe do Projeto vinculado (Administracao > Equipes) e todos os usuarios com papel Admin. Se o envio falhar por qualquer motivo (ex.: instabilidade do provedor de e-mail), o registro e salvo normalmente mesmo assim - a notificacao nunca bloqueia o fluxo de trabalho."
+
+H2 "2.9 Lembretes por notificacao push no celular"
+P "Alem do e-mail (secao 2.8), o sistema oferece um segundo canal de aviso: uma notificacao push, que aparece no celular ou no computador mesmo com o navegador fechado, igual a uma notificacao de aplicativo. E opcional e ativada individualmente por cada usuario - nao existe um interruptor geral do Admin para isso."
+Bul "Onde ativar: na pagina inicial (mapa de diretrizes), logado, aparece o botao `Ativar lembretes no celular` na barra preta do topo."
+Bul "Ao tocar no botao, o navegador pede permissao para mostrar notificacoes - aceite para concluir a ativacao. O botao muda para `Lembretes ativos`."
+Bul "Para desativar, basta tocar novamente no botao ja ativo."
+Bul "Dispara nos mesmos seis momentos de decisao da secao 2.8 (Gate 1, Canvas aprovado, TAP aprovado, decisao da SMP, registro de TEP e Gate 2 pactuado), para os mesmos destinatarios - mas so quem tiver ativado o push naquele navegador/celular recebe a notificacao."
+Nota "No iPhone/iPad, a Apple so libera notificacao push para sites adicionados a Tela de Inicio. Antes de tocar em `Ativar lembretes no celular`, va em Compartilhar > Adicionar a Tela de Inicio no Safari, abra o sistema pelo icone criado, e so entao ative - num navegador comum (aba do Safari) o botao explica essa limitacao em vez de ativar direto. Em Android e computador nao ha essa exigencia."
 
 # ============================================================
 # 3. PASSO A PASSO DO FLUXO DE UM PROJETO
