@@ -1,6 +1,6 @@
 # UNIALFA — Sistema de Gestão de Projetos
 
-Site estático (HTML/CSS/JS) publicado no GitHub Pages, com Supabase como backend (auth, tabelas via REST). Repositório: `https://github.com/Paramiri/unialfa-gestao-projetos`. Todas as regras de acesso são aplicadas no JS de cada formulário — não há políticas RLS documentadas no Supabase.
+Site estático (HTML/CSS/JS) publicado no GitHub Pages, com Supabase como backend (auth, tabelas via REST). Repositório: `https://github.com/Paramiri/unialfa-gestao-projetos`. Todas as regras de acesso são aplicadas no JS de cada formulário — nenhuma tabela usa RLS, **exceto `push_subscriptions`** (guarda endpoint/chaves de notificação push por usuário — dado sensível o suficiente para justificar RLS de verdade): 4 políticas (`select`/`insert`/`update`/`delete`_own_subscription) restringem cada linha a `auth.email() = user_email`, e o grant para `anon` foi revogado. A Edge Function `send-notification` continua enxergando todas as assinaturas normalmente porque usa a `SUPABASE_SERVICE_ROLE_KEY`, que sempre ignora RLS.
 
 ## Documentação oficial de regras de acesso
 
