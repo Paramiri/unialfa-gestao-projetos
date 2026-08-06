@@ -36,6 +36,8 @@ Se essa atualização for delegada a um agente, a verificação do passo 3 (conf
 
 **Regra permanente:** sempre que o Manual de Uso ou as Regras de Acesso forem atualizados por uma mudança de funcionalidade, checar se `15 - central-ajuda.html` também precisa de uma seção nova/ajustada (adicionar `<a>` no menu lateral `#sbNav` + `<section class="sec" id="...">` correspondente) — no mesmo commit da mudança de código, junto com os `.docx`.
 
+Diferente de `app.css`/`app.js`, essa página não é referenciada por `<link>`/`<script>` num único lugar, e sim por um link `?` (`class="doc-help"`/`"head-help"`) em cada um dos 12 formulários + o item de menu em `app.js` — todos com cache-busting `?v=N` (ex.: `href="15 - central-ajuda.html?v=1#passo-1"`). Sempre que o conteúdo de `15 - central-ajuda.html` mudar, incrementar o `N` em **todos** esses links (não só no arquivo em si), senão o GitHub Pages/CDN pode continuar servindo a versão em cache por até 10 minutos.
+
 ## Padrão de deploy
 
 `git add` dos arquivos específicos → commit em português com `Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>` → `git push` → confirmar publicação fazendo polling no GitHub Pages (`https://paramiri.github.io/unialfa-gestao-projetos/...`) até o conteúdo novo aparecer.
