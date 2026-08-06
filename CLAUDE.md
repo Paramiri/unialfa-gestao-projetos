@@ -30,6 +30,12 @@ Como atualizar:
 
 Se essa atualização for delegada a um agente, a verificação do passo 3 (conferir o PDF de fato, não só o texto) deve ser feita antes de reportar a tarefa como concluída — uma checagem só de texto (ex. `pdftotext`) não detecta perda de imagens.
 
+## Central de Ajuda (in-app)
+
+`15 - central-ajuda.html` é uma **terceira superfície de documentação**, independente dos dois `.docx` acima — é a versão navegável (com busca e menu lateral) do Manual de Uso, publicada como página do próprio site, e é a que os usuários realmente abrem a partir do ícone `?` em cada formulário. Uma mudança de funcionalidade documentada no Manual de Uso ou nas Regras de Acesso e esquecida aqui deixa o `?` do sistema desatualizado mesmo com os `.docx` corretos — já aconteceu uma vez (notificações push).
+
+**Regra permanente:** sempre que o Manual de Uso ou as Regras de Acesso forem atualizados por uma mudança de funcionalidade, checar se `15 - central-ajuda.html` também precisa de uma seção nova/ajustada (adicionar `<a>` no menu lateral `#sbNav` + `<section class="sec" id="...">` correspondente) — no mesmo commit da mudança de código, junto com os `.docx`.
+
 ## Padrão de deploy
 
 `git add` dos arquivos específicos → commit em português com `Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>` → `git push` → confirmar publicação fazendo polling no GitHub Pages (`https://paramiri.github.io/unialfa-gestao-projetos/...`) até o conteúdo novo aparecer.

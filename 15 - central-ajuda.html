@@ -112,6 +112,7 @@ body.auth-ready{padding-top:34px}
       <a href="#gates" data-sec="gates">Gates de aprovação</a>
       <a href="#equipe" data-sec="equipe">Restrição por equipe</a>
       <a href="#sem-login" data-sec="sem-login">Acesso sem login</a>
+      <a href="#push" data-sec="push">Lembretes no celular</a>
       <div class="grp">Formulários</div>
       <a href="#passo-1" data-sec="passo-1">1. Solicitação de Demanda</a>
       <a href="#passo-2" data-sec="passo-2">2. Canvas de Projeto</a>
@@ -129,6 +130,7 @@ body.auth-ready{padding-top:34px}
       <div class="grp">Outras ferramentas</div>
       <a href="#validador" data-sec="validador">Validador de Projetos</a>
       <a href="#administracao" data-sec="administracao">Administração</a>
+      <a href="#painel-executivo" data-sec="painel-executivo">Painel Executivo</a>
       <div class="grp">Ajuda</div>
       <a href="#faq" data-sec="faq">Perguntas frequentes</a>
     </nav>
@@ -213,6 +215,16 @@ body.auth-ready{padding-top:34px}
           <li>Quem usa esse caminho só consegue criar um registro novo — nunca editar, excluir ou alterar status, mesmo em um registro que ela mesma criou.</li>
           <li>O registro criado sem login recebe um selo <b>Sem login</b> na listagem.</li>
         </ul>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="push">
+        <div class="eyebrow">acesso</div>
+        <h2>Lembretes por notificação push no celular</h2>
+        <p class="lead">Além do e-mail, o sistema pode avisar você diretamente no celular ou no computador, mesmo com o navegador fechado — igual a uma notificação de aplicativo. É opcional e ativado individualmente por cada pessoa, sem depender de nenhuma configuração do Admin.</p>
+        <p>Para ativar: na página inicial (Mapa de Diretrizes), já logado, toque no botão <b>Ativar lembretes no celular</b> na barra preta do topo, e aceite a permissão de notificação pedida pelo navegador. O botão passa a mostrar <b>Lembretes ativos</b>; para desativar, toque nele de novo.</p>
+        <p>Os lembretes disparam nos mesmos seis momentos de decisão do <a href="#gates">Gate 1</a>, Canvas aprovado, TAP aprovado, decisão da SMP, registro de TEP e <a href="#gates">Gate 2</a> — para os mesmos destinatários do e-mail, mas só quem tiver ativado o push naquele navegador/celular recebe a notificação.</p>
+        <div class="note">No iPhone/iPad, a Apple só libera notificação push para sites adicionados à Tela de Início. Antes de ativar, toque em Compartilhar → <b>Adicionar à Tela de Início</b> no Safari, abra o sistema pelo ícone criado, e só então ative. Em Android e computador não há essa exigência.</div>
         <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
       </section>
 
@@ -365,6 +377,20 @@ body.auth-ready{padding-top:34px}
           <li><b>Equipes</b> — define quem faz parte da equipe de cada projeto (base da <a href="#equipe">restrição por equipe</a>).</li>
           <li><b>Configurações</b> — controla os dois interruptores de <a href="#sem-login">acesso sem login</a>.</li>
         </ul>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="painel-executivo">
+        <div class="eyebrow">gestão</div>
+        <h2>Painel Executivo <span class="tag eq">exclusivo Admin</span></h2>
+        <p class="lead">Página restrita a Admin que agrega em tempo real dados dos 10 formulários de registro e dos 2 relatórios numa única tela — visão geral do sistema inteiro sem precisar abrir cada formulário individualmente.</p>
+        <ul>
+          <li><b>Gates de aprovação:</b> contagem de Solicitações de Demanda por status (Gate 1) e o status atual do Relatório de Entregas (Gate 2 — Pactuação).</li>
+          <li><b>Governança:</b> quantidade de Entraves e Encaminhamentos ainda Aberto, e quantos Resultados alcançados já foram registrados no Relatório de Situação.</li>
+          <li><b>Registros por formulário:</b> total e contagem por status de cada artefato.</li>
+          <li><b>Portfólio de projetos:</b> contagem de projetos Aprovados, Reprovados e em avaliação no Gate 1.</li>
+        </ul>
+        <div class="tip">Por reunir dados de vários formulários numa única tela, o carregamento faz uma consulta para cada um dos 10 formulários de registro — pode levar alguns segundos a mais. Use o botão <b>Atualizar</b> para recarregar os números mais recentes.</div>
         <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
       </section>
 
