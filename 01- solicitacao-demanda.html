@@ -177,6 +177,10 @@
   .b-pend{background:var(--warn-soft); color:var(--warn)}
   .b-apr{background:var(--ok-soft); color:var(--ok)}
   .b-rep{background:var(--bad-soft); color:var(--bad)}
+  .b-prio-critica{background:var(--bad-soft); color:var(--bad)}
+  .b-prio-alta{background:var(--warn-soft); color:var(--warn)}
+  .b-prio-media{background:var(--surface); color:var(--muted)}
+  .b-prio-baixa{background:var(--ok-soft); color:var(--ok)}
 
   .empty{padding:56px 24px; text-align:center; color:var(--muted)}
   .empty svg{width:42px; height:42px; opacity:.4; margin-bottom:12px}
@@ -692,7 +696,7 @@ window.unialfaEquipe = {
         <h1>Solicitação de Demanda de Projetos</h1>
         <p>Formulário de entrada de demandas · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=1#passo-1" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=2#passo-1" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00339</b></div>
@@ -789,6 +793,18 @@ window.unialfaEquipe = {
           <label>Prazo desejado<span class="req">*</span></label>
           <input id="prazo" type="date">
           <div class="err-msg">Informe o prazo desejado.</div>
+        </div>
+        <div class="field" data-for="prioridade">
+          <label>Prioridade<span class="req">*</span></label>
+          <div class="hint">Urgência da demanda — ajuda o Admin a priorizar a triagem do Gate 1.</div>
+          <select id="prioridade">
+            <option value="">Selecione…</option>
+            <option value="Crítica">Crítica</option>
+            <option value="Alta">Alta</option>
+            <option value="Média">Média</option>
+            <option value="Baixa">Baixa</option>
+          </select>
+          <div class="err-msg">Selecione a prioridade.</div>
         </div>
         <div class="field" data-for="orcamento">
           <label>Orçamento estimado</label>
@@ -934,6 +950,12 @@ function badgeClass(s){
   if(s==='Reprovada') return 'b-rep';
   return 'b-pend';
 }
+function prioClass(p){
+  if(p==='Crítica') return 'b-prio-critica';
+  if(p==='Alta') return 'b-prio-alta';
+  if(p==='Baixa') return 'b-prio-baixa';
+  return 'b-prio-media';
+}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 
 /* ---------- view switching ---------- */
@@ -969,7 +991,7 @@ async function nextProtocol(){
 }
 
 /* ---------- form ---------- */
-const REQUIRED=['projeto','solicitante','departamento','justificativa','objetivo','escopo','prazo','partes'];
+const REQUIRED=['projeto','solicitante','departamento','justificativa','objetivo','escopo','prazo','prioridade','partes'];
 
 function clearError(id){
   const f=document.querySelector(`.field[data-for="${id}"]`);
@@ -992,7 +1014,7 @@ function validate(){
   return !firstBad;
 }
 
-const HIST_LABELS = { projeto:'Nome do projeto', solicitante:'Solicitante', departamento:'Departamento/unidade', justificativa:'Justificativa/necessidade', objetivo:'Objetivo/resultado esperado', escopo:'Escopo', prazo:'Prazo desejado', orcamento:'Orçamento estimado', partes:'Partes interessadas', anexos:'Anexos' };
+const HIST_LABELS = { projeto:'Nome do projeto', solicitante:'Solicitante', departamento:'Departamento/unidade', justificativa:'Justificativa/necessidade', objetivo:'Objetivo/resultado esperado', escopo:'Escopo', prazo:'Prazo desejado', prioridade:'Prioridade', orcamento:'Orçamento estimado', partes:'Partes interessadas', anexos:'Anexos' };
 
 async function submitForm(){
   if(!validate()){ toast('Revise os campos obrigatórios destacados', false); return; }
@@ -1012,6 +1034,7 @@ async function submitForm(){
   rec.objetivo=document.getElementById('objetivo').value.trim();
   rec.escopo=document.getElementById('escopo').value.trim();
   rec.prazo=document.getElementById('prazo').value;
+  rec.prioridade=document.getElementById('prioridade').value;
   rec.orcamento=document.getElementById('orcamento').value.trim();
   rec.partes=document.getElementById('partes').value.trim();
   rec.anexos=document.getElementById('anexos').value.trim();
@@ -1066,6 +1089,7 @@ function editCurrent(){
   document.getElementById('objetivo').value=r.objetivo||'';
   document.getElementById('escopo').value=r.escopo||'';
   document.getElementById('prazo').value=r.prazo||'';
+  document.getElementById('prioridade').value=r.prioridade||'';
   document.getElementById('orcamento').value=r.orcamento||'';
   document.getElementById('partes').value=r.partes||'';
   document.getElementById('anexos').value=r.anexos||'';
@@ -1081,7 +1105,7 @@ function updateEditBanner(){
 }
 
 function clearForm(){
-  ['projeto','solicitante','departamento','justificativa','objetivo','escopo','prazo','orcamento','partes','anexos']
+  ['projeto','solicitante','departamento','justificativa','objetivo','escopo','prazo','prioridade','orcamento','partes','anexos']
     .forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
   document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
   editId=null;
@@ -1108,13 +1132,14 @@ function renderList(){
 
   let html=`<table><thead><tr>
     <th>Protocolo</th><th>Projeto</th><th class="hide-sm">Departamento</th>
-    <th class="hide-sm">Prazo</th><th>Status</th></tr></thead><tbody>`;
+    <th class="hide-sm">Prazo</th><th>Prioridade</th><th>Status</th></tr></thead><tbody>`;
   for(const r of rows){
     html+=`<tr onclick="openDrawer('${r.id}')">
       <td><div class="proto">${esc(r.protocolo)}<small>${fmtStamp(r.createdAt)}</small></div></td>
       <td><div class="proj">${esc(r.projeto)}${r.semLogin?' <span class="badge" style="background:var(--warn-soft);color:var(--warn)">Sem login</span>':''}<small>${esc(r.solicitante)}</small></div></td>
       <td class="hide-sm">${esc(r.departamento)}</td>
       <td class="hide-sm">${fmtDate(r.prazo)}</td>
+      <td>${r.prioridade?`<span class="badge ${prioClass(r.prioridade)}">${esc(r.prioridade)}</span>`:'—'}</td>
       <td><span class="badge ${badgeClass(r.status)}">${esc(r.status)}</span></td>
     </tr>`;
   }
@@ -1143,6 +1168,7 @@ function openDrawer(id){
     ['Objetivo / resultado esperado',r.objetivo],
     ['Escopo',r.escopo],
     ['Prazo desejado',fmtDate(r.prazo)],
+    ['Prioridade',r.prioridade||'—'],
     ['Orçamento estimado',r.orcamento||'—'],
     ['Partes interessadas',r.partes],
     ['Anexos',r.anexos||'—'],

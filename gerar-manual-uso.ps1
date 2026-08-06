@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.12 - 06 de agosto de 2026 (substitui a versao 2.11 de 04/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.13 - 06 de agosto de 2026 (substitui a versao 2.12 de 06/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -263,6 +263,7 @@ P "Esta e a versao 2.9 do manual. Em relacao a versao 2.8 (01/08/2026), foi adic
 P "Esta e a versao 2.10 do manual. Em relacao a versao 2.9 (01/08/2026), foi adicionada a nova secao 6.4 - Painel Executivo: uma 15a pagina, restrita a Admin, que agrega em tempo real os 10 formularios de registro e os 2 relatorios numa unica tela (gates de aprovacao, entraves/encaminhamentos/resultados, contagem por formulario e portfolio de projetos), sem exigir nenhuma mudanca no banco de dados."
 P "Esta e a versao 2.11 do manual. Em relacao a versao 2.10 (03/08/2026), foi adicionada a nova secao 2.9 - Lembretes por notificacao push no celular: um segundo canal de aviso, alem do e-mail, ativado por cada usuario individualmente na pagina inicial. Dispara nos mesmos seis momentos de decisao ja descritos na secao 2.8."
 P "Esta e a versao 2.12 do manual. Em relacao a versao 2.11 (04/08/2026), foi adicionado um setimo momento de notificacao (secao 2.8): ao registrar uma nova Solicitacao de Demanda, os Admins agora recebem um aviso imediato (e-mail e push) de que ha um Gate 1 - Triagem pendente, em vez de depender de alguem checar a lista manualmente."
+P "Esta e a versao 2.13 do manual. Em relacao a versao 2.12 (06/08/2026), foi adicionado o campo obrigatorio Prioridade (Critica/Alta/Media/Baixa) a Solicitacao de Demanda (Passo 1): exibido como selo colorido na lista de demandas cadastradas e no detalhe do registro, ajudando o Admin a priorizar a triagem do Gate 1."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -399,6 +400,7 @@ $r1 = @(
   @("Objetivo / resultado esperado","Sim","O que deve ser entregue ao final"),
   @("Escopo","Sim","O que esta incluido e o que nao esta"),
   @("Prazo desejado","Sim","Data limite desejada pelo solicitante"),
+  @("Prioridade","Sim","Critica, Alta, Media ou Baixa - urgencia da demanda, ajuda o Admin a priorizar a triagem do Gate 1"),
   @("Orcamento estimado","Nao","Valor aproximado, se ja houver"),
   @("Partes interessadas","Sim","Areas, equipes ou pessoas impactadas"),
   @("Anexos","Nao","Nomes de documentos ou links de apoio")
