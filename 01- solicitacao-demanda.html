@@ -1039,6 +1039,11 @@ async function submitForm(){
     } else {
       cache.unshift(rec);
       toast('Demanda '+rec.protocolo+' registrada');
+      unialfaNotificar.emailsAdmins().then(admins=>{
+        unialfaNotificar.enviar(admins,
+          'Nova Solicitação de Demanda aguardando Gate 1 — '+(rec.projeto||rec.protocolo),
+          '<p>Uma nova Solicitação de Demanda foi registrada e está <b>aguardando aprovação no Gate 1 — Triagem</b>.</p><p><b>Projeto:</b> '+esc(rec.projeto||'')+'<br><b>Protocolo:</b> '+esc(rec.protocolo)+'<br><b>Solicitante:</b> '+esc(rec.solicitante||'')+'</p>');
+      });
     }
     document.getElementById('count').textContent=cache.length;
     editId=null;

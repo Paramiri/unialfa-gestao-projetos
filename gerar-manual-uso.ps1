@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.11 - 04 de agosto de 2026 (substitui a versao 2.10 de 03/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.12 - 06 de agosto de 2026 (substitui a versao 2.11 de 04/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -262,6 +262,7 @@ P "Esta e a versao 2.8 do manual. Em relacao a versao 2.7 (01/08/2026), foi adic
 P "Esta e a versao 2.9 do manual. Em relacao a versao 2.8 (01/08/2026), foi adicionada a nova secao 2.8 - Notificacoes por e-mail em transicoes de estado: seis transicoes (Gate 1, Canvas aprovado, TAP aprovado, decisao da SMP, registro de TEP e Gate 2 pactuado) agora disparam automaticamente um e-mail via Resend para quem criou o registro, a equipe do projeto vinculado e os Admins."
 P "Esta e a versao 2.10 do manual. Em relacao a versao 2.9 (01/08/2026), foi adicionada a nova secao 6.4 - Painel Executivo: uma 15a pagina, restrita a Admin, que agrega em tempo real os 10 formularios de registro e os 2 relatorios numa unica tela (gates de aprovacao, entraves/encaminhamentos/resultados, contagem por formulario e portfolio de projetos), sem exigir nenhuma mudanca no banco de dados."
 P "Esta e a versao 2.11 do manual. Em relacao a versao 2.10 (03/08/2026), foi adicionada a nova secao 2.9 - Lembretes por notificacao push no celular: um segundo canal de aviso, alem do e-mail, ativado por cada usuario individualmente na pagina inicial. Dispara nos mesmos seis momentos de decisao ja descritos na secao 2.8."
+P "Esta e a versao 2.12 do manual. Em relacao a versao 2.11 (04/08/2026), foi adicionado um setimo momento de notificacao (secao 2.8): ao registrar uma nova Solicitacao de Demanda, os Admins agora recebem um aviso imediato (e-mail e push) de que ha um Gate 1 - Triagem pendente, em vez de depender de alguem checar a lista manualmente."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -363,21 +364,22 @@ P "Todos os 12 formularios de registro gravam os dados em um banco de dados real
 P "Cada formulario ainda grava seus registros de forma independente - nao existe herenca automatica de informacoes entre eles. Ao preencher o TAP logo depois do Canvas, por exemplo, e preciso informar novamente o nome do projeto, a unidade e o gerente (ou selecionar o mesmo `Projeto vinculado`, quando o formulario tiver esse campo). Preencha os dados de identificacao da mesma forma em todos os formularios de um mesmo projeto, para manter a rastreabilidade entre eles."
 
 H2 "2.8 Notificacoes por e-mail em transicoes de estado"
-P "Seis momentos de decisao do sistema disparam automaticamente um e-mail de notificacao, enviado via Resend por uma Supabase Edge Function (a chave da API fica guardada no servidor, nunca no navegador):"
+P "Sete momentos do sistema disparam automaticamente um e-mail de notificacao, enviado via Resend por uma Supabase Edge Function (a chave da API fica guardada no servidor, nunca no navegador):"
+Bul "Registro de nova Solicitacao de Demanda: assim que a demanda e salva, antes de qualquer decisao - avisa os Admins que ha um Gate 1 - Triagem pendente de analise."
 Bul "Gate 1 - Solicitacao de Demanda: quando o Admin muda o status para `Aprovada` ou `Reprovada`."
 Bul "Canvas de Projeto: quando o status muda para `Aprovado`."
 Bul "TAP: quando o status muda para `Aprovado`."
 Bul "SMP: quando a decisao e finalizada como `Aprovada` ou `Nao aprovada`."
 Bul "TEP: ao registrar um novo Termo de Encerramento."
 Bul "Gate 2 - Relatorio de Entregas: quando o status muda para `Pactuado`."
-P "Em todos os casos, os destinatarios sao: quem criou o registro (e-mail capturado no login, ou informado no registro sem login), todos os e-mails cadastrados na equipe do Projeto vinculado (Administracao > Equipes) e todos os usuarios com papel Admin. Se o envio falhar por qualquer motivo (ex.: instabilidade do provedor de e-mail), o registro e salvo normalmente mesmo assim - a notificacao nunca bloqueia o fluxo de trabalho."
+P "Nos seis momentos de decisao (todos exceto o registro de nova demanda), os destinatarios sao: quem criou o registro (e-mail capturado no login, ou informado no registro sem login), todos os e-mails cadastrados na equipe do Projeto vinculado (Administracao > Equipes) e todos os usuarios com papel Admin. Ja o aviso de registro de nova demanda vai somente para os Admins, ja que ainda nao ha Gate 1 aprovado nem equipe designada nesse momento. Se o envio falhar por qualquer motivo (ex.: instabilidade do provedor de e-mail), o registro e salvo normalmente mesmo assim - a notificacao nunca bloqueia o fluxo de trabalho."
 
 H2 "2.9 Lembretes por notificacao push no celular"
 P "Alem do e-mail (secao 2.8), o sistema oferece um segundo canal de aviso: uma notificacao push, que aparece no celular ou no computador mesmo com o navegador fechado, igual a uma notificacao de aplicativo. E opcional e ativada individualmente por cada usuario - nao existe um interruptor geral do Admin para isso."
 Bul "Onde ativar: na pagina inicial (mapa de diretrizes), logado, aparece o botao `Ativar lembretes no celular` na barra preta do topo."
 Bul "Ao tocar no botao, o navegador pede permissao para mostrar notificacoes - aceite para concluir a ativacao. O botao muda para `Lembretes ativos`."
 Bul "Para desativar, basta tocar novamente no botao ja ativo."
-Bul "Dispara nos mesmos seis momentos de decisao da secao 2.8 (Gate 1, Canvas aprovado, TAP aprovado, decisao da SMP, registro de TEP e Gate 2 pactuado), para os mesmos destinatarios - mas so quem tiver ativado o push naquele navegador/celular recebe a notificacao."
+Bul "Dispara nos mesmos sete momentos da secao 2.8 (registro de nova demanda, Gate 1, Canvas aprovado, TAP aprovado, decisao da SMP, registro de TEP e Gate 2 pactuado), para os mesmos destinatarios - mas so quem tiver ativado o push naquele navegador/celular recebe a notificacao."
 Nota "No iPhone/iPad, a Apple so libera notificacao push para sites adicionados a Tela de Inicio. Antes de tocar em `Ativar lembretes no celular`, va em Compartilhar > Adicionar a Tela de Inicio no Safari, abra o sistema pelo icone criado, e so entao ative - num navegador comum (aba do Safari) o botao explica essa limitacao em vez de ativar direto. Em Android e computador nao ha essa exigencia."
 
 # ============================================================
@@ -405,7 +407,7 @@ TableSimple $r1 @(5.0,1.8,9.2)
 Img "12_f01_novo.png" "Tela de novo registro da Solicitacao de Demanda." 5.6
 Img "13_f01_lista.png" "Demandas cadastradas, com protocolo, projeto, prazo e status." 5.6
 Exemplo "`Automatizacao de servicos` - solicitante Hudson Lucas Aleixo, unidade Relacionamento, justificativa: reduzir o tempo de espera dos alunos e desafogar o atendimento presencial/manual da secretaria, oferecendo disponibilidade 24/7 para solicitacoes basicas."
-P "Como salvar: clique em `Registrar solicitacao`. O sistema gera o protocolo e leva voce para `Demandas cadastradas`. Clique em qualquer linha da tabela para abrir o registro e revisar os dados."
+P "Como salvar: clique em `Registrar solicitacao`. O sistema gera o protocolo e leva voce para `Demandas cadastradas`. Clique em qualquer linha da tabela para abrir o registro e revisar os dados. Ao salvar, todos os Admins recebem um aviso automatico (e-mail e, se ativado, push) de que ha um Gate 1 pendente de analise (secao 2.8)."
 Nota "E neste ponto que ocorre o Gate 1 - Triagem: so um Admin pode mudar o status para Aprovada ou Reprovada (secao 2.4). So avance para o Passo 2 depois que o status estiver Aprovada. Essa mudanca de status dispara um e-mail de notificacao (secao 2.8)."
 
 H2 "Passo 2 - Canvas de Projeto (FORALF00344)"
