@@ -154,7 +154,16 @@ Bul "Adicionar ou remover membros da equipe de um projeto."
 Bul "Ativar/desativar as opcoes de `"sem login`" (Solicitacao de Demanda e Ata de Reuniao)."
 Bul "Aprovar ou reprovar o Gate 1 na Solicitacao de Demanda (ver secao 4)."
 Bul "Pactuar ou reabrir o Gate 2 no Relatorio de Entregas e Beneficios (ver secao 4)."
+Bul "Pre-cadastrar uma pessoa que ainda nao fez login, informando nome, telefone, e-mail e papel (ver 3.2)."
 P "Importante: um Admin sempre e considerado `"membro`" de qualquer equipe de projeto automaticamente - nao precisa ser adicionado manualmente para poder editar registros vinculados a um projeto (ver secao 5)."
+
+H2 "3.2 Pre-cadastro de usuario (antes do primeiro login)"
+P "Normalmente uma pessoa so aparece na aba `"Usuarios`" da Administracao depois de fazer login pela primeira vez (o perfil e criado automaticamente, com papel `"Solicitante`"). O pre-cadastro permite ao Admin adiantar esse processo:"
+Bul "Na aba Usuarios, o Admin preenche nome, telefone (opcional), e-mail e papel e clica em `"+ Adicionar usuario`"."
+Bul "A pessoa aparece na lista com o selo `"Pendente - 1o login`", com nome/telefone/papel ja editaveis pelo Admin mesmo antes de ela logar."
+Bul "Quando essa pessoa faz o primeiro login (link magico ou Microsoft), o sistema aplica automaticamente o nome, telefone e papel definidos no pre-cadastro ao perfil recem-criado, e o pre-cadastro pendente e removido."
+Bul "Se o Admin nao quiser mais aguardar aquele pre-cadastro, pode remove-lo a qualquer momento pelo botao `"Remover`" - a pessoa continua podendo logar normalmente depois, so que sem os dados pre-preenchidos (entra como `"Solicitante`", papel padrao)."
+P "Controle de acesso ao pre-cadastro (Row Level Security no Supabase, tabela `perfis_pendentes`): somente Admin pode criar, editar ou alterar o papel de um pre-cadastro. A propria pessoa so enxerga e pode remover o pre-cadastro que corresponde ao seu proprio e-mail - e exatamente essa permissao restrita que permite o autopreenchimento no momento do primeiro login, sem abrir a tabela para qualquer usuario autenticado."
 
 HR
 

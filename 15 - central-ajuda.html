@@ -374,10 +374,13 @@ body.auth-ready{padding-top:34px}
         <h2>Administração <span class="tag eq">exclusivo Admin</span></h2>
         <p class="lead">Página restrita a usuários com papel Admin. Reúne três abas:</p>
         <ul>
-          <li><b>Usuários</b> — lista quem já fez login, com o papel atual e um seletor para alterá-lo.</li>
+          <li><b>Usuários</b> — lista quem já fez login, com nome, telefone (editável direto na lista) e um seletor para alterar o papel.</li>
           <li><b>Equipes</b> — define quem faz parte da equipe de cada projeto (base da <a href="#equipe">restrição por equipe</a>).</li>
           <li><b>Configurações</b> — controla os dois interruptores de <a href="#sem-login">acesso sem login</a>.</li>
         </ul>
+        <p class="lead">Pré-cadastro de usuário (antes do primeiro login)</p>
+        <p>No topo da aba Usuários, o Admin pode preencher nome, telefone (opcional), e-mail e papel e clicar em <b>+ Adicionar usuário</b> para cadastrar alguém que ainda não fez login. Essa pessoa aparece na lista com o selo <b>Pendente — 1º login</b>, e o Admin ainda pode ajustar telefone/papel ou remover o pré-cadastro a qualquer momento.</p>
+        <div class="tip">Quando a pessoa pré-cadastrada faz o primeiro login (link mágico ou Microsoft), o nome, telefone e papel definidos pelo Admin são aplicados automaticamente ao perfil dela — em vez de entrar como "Solicitante" por padrão — e o pré-cadastro pendente desaparece da lista.</div>
         <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
       </section>
 

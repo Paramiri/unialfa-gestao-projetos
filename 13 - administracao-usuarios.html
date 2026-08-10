@@ -44,6 +44,12 @@
   .denied p{color:var(--muted); font-size:13px; margin:0}
   .role-tag{display:inline-block; font-size:10px; font-weight:700; letter-spacing:.03em; padding:3px 9px; border-radius:999px; background:var(--surface-2); border:1px solid var(--line-strong); color:var(--muted);}
   .role-tag.admin{background:var(--bad-soft); color:var(--bad); border-color:transparent}
+  .pending-tag{display:inline-block; font-size:10px; font-weight:700; letter-spacing:.03em; padding:3px 9px; border-radius:999px; background:var(--warn-soft); color:var(--warn); margin-top:4px;}
+  .user-add{padding:16px 24px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:var(--surface-2);}
+  .user-add input, .user-add select{flex:1; min-width:150px; font-family:var(--font); font-size:12.5px; font-weight:600; color:var(--ink); border:1px solid var(--line-strong); border-radius:7px; padding:8px 10px; background:var(--paper);}
+  .user-add input:focus, .user-add select:focus{outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(185,29,46,.12);}
+  .tel-input{font-family:var(--font); font-size:12.5px; font-weight:600; color:var(--ink); border:1px solid var(--line-strong); border-radius:7px; padding:6px 9px; width:140px;}
+  .tel-input:focus{outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(185,29,46,.12);}
 
   .vtabs{display:flex; gap:8px; margin-top:18px}
   .vtab{appearance:none; border:1px solid var(--line); background:var(--paper); color:var(--muted); font-family:var(--font); font-weight:700; font-size:12px; padding:9px 18px; border-radius:999px; cursor:pointer;}
@@ -188,10 +194,23 @@ body.auth-ready{padding-top:34px}
       }
       return p;
     }
+    var pendente = null;
+    try{
+      var rPend = await fetch(REST_BASE + '/perfis_pendentes?email=eq.' + encodeURIComponent(user.email) + '&select=*', { headers: authHeaders() });
+      if(rPend.ok){ var linhas = await rPend.json(); pendente = linhas[0] || null; }
+    }catch(e){}
     await fetch(REST_BASE + '/perfis', {
       method: 'POST', headers: authHeaders({ 'Prefer': 'return=minimal' }),
-      body: JSON.stringify({ id: user.id, email: user.email, nome: nome, papel: 'solicitante' }),
+      body: JSON.stringify({
+        id: user.id, email: user.email,
+        nome: (pendente && pendente.nome) || nome,
+        telefone: pendente ? pendente.telefone : null,
+        papel: (pendente && pendente.papel) || 'solicitante',
+      }),
     });
+    if(pendente){
+      await fetch(REST_BASE + '/perfis_pendentes?email=eq.' + encodeURIComponent(user.email), { method: 'DELETE', headers: authHeaders() });
+    }
     return await fetchProfile(user.id);
   }
 
@@ -325,7 +344,7 @@ window.unialfaEquipe = {
         <h1>Administração de Usuários</h1>
         <p>Controle de acesso · Papéis e permissões · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=2#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=3#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
     </div>
   </div>
 
@@ -337,6 +356,13 @@ window.unialfaEquipe = {
 
   <div class="card" id="content-card">
     <div class="section-h"><h2>Usuários cadastrados</h2><p id="count-label"></p></div>
+    <div class="user-add" id="userAddRow">
+      <input type="text" id="novoNome" placeholder="Nome completo">
+      <input type="tel" id="novoTelefone" placeholder="Telefone (opcional)">
+      <input type="email" id="novoEmail" placeholder="E-mail institucional">
+      <select id="novoPapel"></select>
+      <button class="btn" onclick="adicionarUsuario()">+ Adicionar usuário</button>
+    </div>
     <div id="content-body"><div class="empty">Carregando…</div></div>
   </div>
 
@@ -391,23 +417,43 @@ function toast(msg, ok=true){
 function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 
 let todosUsuarios=[];
+let usuariosPendentes=[];
 
 async function carregarUsuarios(){
   const body=document.getElementById('content-body');
-  const r=await fetch(unialfaAuth.REST_BASE+'/perfis?select=*&order=email', { headers: unialfaAuth.authHeaders() });
+  const [r, rPend]=await Promise.all([
+    fetch(unialfaAuth.REST_BASE+'/perfis?select=*&order=email', { headers: unialfaAuth.authHeaders() }),
+    fetch(unialfaAuth.REST_BASE+'/perfis_pendentes?select=*&order=email', { headers: unialfaAuth.authHeaders() }),
+  ]);
   const rows = r.ok ? await r.json() : [];
+  const pend = rPend.ok ? await rPend.json() : [];
   todosUsuarios = rows;
-  document.getElementById('count-label').textContent = rows.length+' usuário(s)';
-  if(!rows.length){ body.innerHTML='<div class="empty">Nenhum usuário cadastrado ainda. Usuários aparecem aqui após o primeiro login via link mágico.</div>'; return; }
-  let html='<table><thead><tr><th>E-mail</th><th>Nome</th><th>Papel atual</th><th>Alterar papel</th></tr></thead><tbody>';
+  usuariosPendentes = pend;
+  document.getElementById('count-label').textContent = rows.length+' usuário(s)'+(pend.length?' · '+pend.length+' pré-cadastro(s) pendente(s)':'');
+  if(!rows.length && !pend.length){ body.innerHTML='<div class="empty">Nenhum usuário cadastrado ainda. Use "+ Adicionar usuário" acima ou aguarde o primeiro login via link mágico.</div>'; return; }
+  let html='<table><thead><tr><th>E-mail</th><th>Nome</th><th>Telefone</th><th>Papel atual</th><th>Alterar papel</th><th></th></tr></thead><tbody>';
   rows.forEach(u=>{
     html+=`<tr>
       <td><b>${esc(u.email)}</b>${u.id===window.currentUser.id?'<small>Você</small>':''}</td>
       <td>${esc(u.nome)||'—'}</td>
+      <td><input class="tel-input" type="tel" value="${esc(u.telefone)||''}" placeholder="—" onblur="alterarTelefone('${u.id}', this.value, this)"></td>
       <td><span class="role-tag ${u.papel==='admin'?'admin':''}">${esc(unialfaAuth.papelLabel(u.papel))}</span></td>
       <td><select onchange="alterarPapel('${u.id}', this.value, this)">
         ${PAPEIS.map(p=>`<option value="${p}" ${p===u.papel?'selected':''}>${unialfaAuth.papelLabel(p)}</option>`).join('')}
       </select></td>
+      <td></td>
+    </tr>`;
+  });
+  pend.forEach(u=>{
+    html+=`<tr style="opacity:.8">
+      <td><b>${esc(u.email)}</b><br><span class="pending-tag">Pendente — 1º login</span></td>
+      <td>${esc(u.nome)||'—'}</td>
+      <td><input class="tel-input" type="tel" value="${esc(u.telefone)||''}" placeholder="—" onblur="alterarTelefonePendente('${esc(u.email)}', this.value, this)"></td>
+      <td><span class="role-tag ${u.papel==='admin'?'admin':''}">${esc(unialfaAuth.papelLabel(u.papel))}</span></td>
+      <td><select onchange="alterarPapelPendente('${esc(u.email)}', this.value, this)">
+        ${PAPEIS.map(p=>`<option value="${p}" ${p===u.papel?'selected':''}>${unialfaAuth.papelLabel(p)}</option>`).join('')}
+      </select></td>
+      <td><button class="btn-remove" onclick="removerPendente('${esc(u.email)}')">Remover</button></td>
     </tr>`;
   });
   html+='</tbody></table>';
@@ -428,6 +474,97 @@ async function alterarPapel(userId, novoPapel, selectEl){
     toast('Não foi possível atualizar o papel. Verifique se você ainda tem permissão de administrador.', false);
   }finally{
     selectEl.disabled=false;
+  }
+}
+
+async function alterarTelefone(userId, novoTelefone, inputEl){
+  inputEl.disabled=true;
+  try{
+    const r=await fetch(unialfaAuth.REST_BASE+'/perfis?id=eq.'+userId, {
+      method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
+      body: JSON.stringify({ telefone: novoTelefone.trim()||null })
+    });
+    if(!r.ok) throw new Error();
+    toast('Telefone atualizado');
+  }catch(e){
+    toast('Não foi possível atualizar o telefone', false);
+  }finally{
+    inputEl.disabled=false;
+  }
+}
+
+async function alterarTelefonePendente(email, novoTelefone, inputEl){
+  inputEl.disabled=true;
+  try{
+    const r=await fetch(unialfaAuth.REST_BASE+'/perfis_pendentes?email=eq.'+encodeURIComponent(email), {
+      method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
+      body: JSON.stringify({ telefone: novoTelefone.trim()||null })
+    });
+    if(!r.ok) throw new Error();
+    toast('Telefone atualizado');
+  }catch(e){
+    toast('Não foi possível atualizar o telefone', false);
+  }finally{
+    inputEl.disabled=false;
+  }
+}
+
+async function alterarPapelPendente(email, novoPapel, selectEl){
+  selectEl.disabled=true;
+  try{
+    const r=await fetch(unialfaAuth.REST_BASE+'/perfis_pendentes?email=eq.'+encodeURIComponent(email), {
+      method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
+      body: JSON.stringify({ papel: novoPapel })
+    });
+    if(!r.ok) throw new Error();
+    toast('Papel do pré-cadastro atualizado para "'+unialfaAuth.papelLabel(novoPapel)+'"');
+  }catch(e){
+    toast('Não foi possível atualizar o papel', false);
+  }finally{
+    selectEl.disabled=false;
+  }
+}
+
+async function removerPendente(email){
+  if(!confirm('Remover este pré-cadastro? A pessoa deixará de ter nome/telefone/papel pré-definidos ao logar pela primeira vez.')) return;
+  try{
+    const r=await fetch(unialfaAuth.REST_BASE+'/perfis_pendentes?email=eq.'+encodeURIComponent(email), {
+      method:'DELETE', headers: unialfaAuth.authHeaders()
+    });
+    if(!r.ok) throw new Error();
+    toast('Pré-cadastro removido');
+    await carregarUsuarios();
+  }catch(e){
+    toast('Não foi possível remover', false);
+  }
+}
+
+async function adicionarUsuario(){
+  const nome=document.getElementById('novoNome').value.trim();
+  const telefone=document.getElementById('novoTelefone').value.trim();
+  const email=document.getElementById('novoEmail').value.trim().toLowerCase();
+  const papel=document.getElementById('novoPapel').value;
+  if(!email || email.indexOf('@')<0){ toast('Informe um e-mail válido', false); return; }
+  if(todosUsuarios.some(u=>u.email.toLowerCase()===email)){ toast('Este e-mail já tem uma conta ativa', false); return; }
+  if(usuariosPendentes.some(u=>u.email.toLowerCase()===email)){ toast('Este e-mail já está pré-cadastrado', false); return; }
+  const btn=document.querySelector('#userAddRow .btn');
+  btn.disabled=true;
+  try{
+    const r=await fetch(unialfaAuth.REST_BASE+'/perfis_pendentes', {
+      method:'POST', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
+      body: JSON.stringify({ email: email, nome: nome||null, telefone: telefone||null, papel: papel, criado_por: window.currentUser.id })
+    });
+    if(!r.ok) throw new Error();
+    toast('Pré-cadastro criado — os dados se aplicam no primeiro login de '+email);
+    document.getElementById('novoNome').value='';
+    document.getElementById('novoTelefone').value='';
+    document.getElementById('novoEmail').value='';
+    document.getElementById('novoPapel').value='solicitante';
+    await carregarUsuarios();
+  }catch(e){
+    toast('Não foi possível criar o pré-cadastro', false);
+  }finally{
+    btn.disabled=false;
   }
 }
 
@@ -518,6 +655,7 @@ async function removerMembro(projetoId, usuarioId){
     return;
   }
   document.getElementById('vtabs').style.display='flex';
+  document.getElementById('novoPapel').innerHTML = PAPEIS.map(p=>`<option value="${p}">${unialfaAuth.papelLabel(p)}</option>`).join('');
   await carregarUsuarios();
   await carregarProjetosEquipe();
 })();

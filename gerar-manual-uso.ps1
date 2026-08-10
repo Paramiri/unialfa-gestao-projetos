@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.13 - 06 de agosto de 2026 (substitui a versao 2.12 de 06/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.14 - 10 de agosto de 2026 (substitui a versao 2.13 de 06/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -264,6 +264,7 @@ P "Esta e a versao 2.10 do manual. Em relacao a versao 2.9 (01/08/2026), foi adi
 P "Esta e a versao 2.11 do manual. Em relacao a versao 2.10 (03/08/2026), foi adicionada a nova secao 2.9 - Lembretes por notificacao push no celular: um segundo canal de aviso, alem do e-mail, ativado por cada usuario individualmente na pagina inicial. Dispara nos mesmos seis momentos de decisao ja descritos na secao 2.8."
 P "Esta e a versao 2.12 do manual. Em relacao a versao 2.11 (04/08/2026), foi adicionado um setimo momento de notificacao (secao 2.8): ao registrar uma nova Solicitacao de Demanda, os Admins agora recebem um aviso imediato (e-mail e push) de que ha um Gate 1 - Triagem pendente, em vez de depender de alguem checar a lista manualmente."
 P "Esta e a versao 2.13 do manual. Em relacao a versao 2.12 (06/08/2026), foi adicionado o campo obrigatorio Prioridade (Critica/Alta/Media/Baixa) a Solicitacao de Demanda (Passo 1): exibido como selo colorido na lista de demandas cadastradas e no detalhe do registro, ajudando o Admin a priorizar a triagem do Gate 1."
+P "Esta e a versao 2.14 do manual. Em relacao a versao 2.13 (06/08/2026), foi adicionado o pre-cadastro de usuario e o campo Telefone a aba Usuarios da Administracao (secao 6.1 e 3.2 das Regras de Acesso): o Admin pode informar nome, telefone, e-mail e papel de uma pessoa antes do primeiro login dela, e os dados sao aplicados automaticamente ao perfil assim que ela loga pela primeira vez."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -596,8 +597,10 @@ Nota "Regra aplicada: qualquer resposta vermelha leva a encerrar/repactuar; tres
 H1 "6. Administracao e Painel Executivo"
 P "Duas paginas independentes, ambas restritas a usuarios com papel Admin (secao 2.3) e listadas no menu lateral em `Gestao`: a Administracao (gerencia usuarios, equipes e configuracoes) e o Painel Executivo (visao consolidada e agregada de todo o sistema)."
 H2 "6.1 Usuarios"
-P "Lista todos os usuarios que ja fizeram login pelo menos uma vez, com o papel atual e um seletor para altera-lo."
-Img "09_admin_usuarios.png" "Aba Usuarios: papel atual e seletor de alteracao de papel por usuario." 5.8
+P "Lista todos os usuarios que ja fizeram login pelo menos uma vez, com nome, telefone (editavel diretamente na lista) e um seletor para alterar o papel."
+Img "09_admin_usuarios.png" "Aba Usuarios: nome, telefone, papel atual e seletor de alteracao de papel por usuario." 5.8
+P "No topo da lista, o Admin pode pre-cadastrar uma pessoa que ainda nao fez login, preenchendo nome, telefone (opcional), e-mail e papel e clicando em `+ Adicionar usuario`. Enquanto a pessoa nao faz o primeiro login, ela aparece na lista com o selo `Pendente - 1o login`, e o Admin ainda pode ajustar telefone e papel ou remover o pre-cadastro pelo botao `Remover`."
+Nota "Quando a pessoa pre-cadastrada faz o primeiro login, o sistema aplica automaticamente o nome, telefone e papel definidos pelo Admin ao perfil recem-criado - ela nao entra mais como `Solicitante` por padrao, e o pre-cadastro pendente desaparece da lista."
 H2 "6.2 Equipes"
 P "Define quem faz parte da equipe de cada projeto - a base da restricao por equipe descrita na secao 2.5. Selecione um projeto, escolha um papel e clique em `+ Adicionar a equipe`."
 Img "10_admin_equipes.png" "Aba Equipes, com um projeto selecionado e um membro ja cadastrado." 5.8

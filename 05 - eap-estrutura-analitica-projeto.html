@@ -298,10 +298,23 @@ body.auth-ready{padding-top:34px}
       }
       return p;
     }
+    var pendente = null;
+    try{
+      var rPend = await fetch(REST_BASE + '/perfis_pendentes?email=eq.' + encodeURIComponent(user.email) + '&select=*', { headers: authHeaders() });
+      if(rPend.ok){ var linhas = await rPend.json(); pendente = linhas[0] || null; }
+    }catch(e){}
     await fetch(REST_BASE + '/perfis', {
       method: 'POST', headers: authHeaders({ 'Prefer': 'return=minimal' }),
-      body: JSON.stringify({ id: user.id, email: user.email, nome: nome, papel: 'solicitante' }),
+      body: JSON.stringify({
+        id: user.id, email: user.email,
+        nome: (pendente && pendente.nome) || nome,
+        telefone: pendente ? pendente.telefone : null,
+        papel: (pendente && pendente.papel) || 'solicitante',
+      }),
     });
+    if(pendente){
+      await fetch(REST_BASE + '/perfis_pendentes?email=eq.' + encodeURIComponent(user.email), { method: 'DELETE', headers: authHeaders() });
+    }
     return await fetchProfile(user.id);
   }
 
@@ -543,7 +556,7 @@ window.unialfaHistorico = {
         <h1>Estrutura Analítica de Projeto — EAP</h1>
         <p>Work Breakdown Structure (WBS) · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=2#passo-5" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=3#passo-5" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Referência</span><b>EAP / WBS</b></div>
