@@ -155,6 +155,7 @@ Bul "Ativar/desativar as opcoes de `"sem login`" (Solicitacao de Demanda e Ata d
 Bul "Aprovar ou reprovar o Gate 1 na Solicitacao de Demanda (ver secao 4)."
 Bul "Pactuar ou reabrir o Gate 2 no Relatorio de Entregas e Beneficios (ver secao 4)."
 Bul "Pre-cadastrar uma pessoa que ainda nao fez login, informando nome, telefone, e-mail e papel (ver 3.2)."
+Bul "Remover da lista um usuario que nunca teve nenhuma relacao com projetos nem registros no sistema (ver 3.3)."
 P "Importante: um Admin sempre e considerado `"membro`" de qualquer equipe de projeto automaticamente - nao precisa ser adicionado manualmente para poder editar registros vinculados a um projeto (ver secao 5)."
 
 H2 "3.2 Pre-cadastro de usuario (antes do primeiro login)"
@@ -164,6 +165,16 @@ Bul "A pessoa aparece na lista com o selo `"Pendente - 1o login`", com nome/tele
 Bul "Quando essa pessoa faz o primeiro login (link magico ou Microsoft), o sistema aplica automaticamente o nome, telefone e papel definidos no pre-cadastro ao perfil recem-criado, e o pre-cadastro pendente e removido."
 Bul "Se o Admin nao quiser mais aguardar aquele pre-cadastro, pode remove-lo a qualquer momento pelo botao `"Remover`" - a pessoa continua podendo logar normalmente depois, so que sem os dados pre-preenchidos (entra como `"Solicitante`", papel padrao)."
 P "Controle de acesso ao pre-cadastro (Row Level Security no Supabase, tabela `perfis_pendentes`): somente Admin pode criar, editar ou alterar o papel de um pre-cadastro. A propria pessoa so enxerga e pode remover o pre-cadastro que corresponde ao seu proprio e-mail - e exatamente essa permissao restrita que permite o autopreenchimento no momento do primeiro login, sem abrir a tabela para qualquer usuario autenticado."
+
+H2 "3.3 Remocao de usuario"
+P "Na aba Usuarios, cada pessoa ja cadastrada (exceto o proprio Admin logado) tem um botao `"Remover`". Ao clicar, o sistema verifica automaticamente, na hora, se a pessoa tem algum vinculo:"
+Bul "E membro da equipe de algum projeto (secao 5)."
+Bul "E quem criou algum projeto (a partir de uma Solicitacao de Demanda aprovada)."
+Bul "Tem algum registro criado em seu nome em um dos 9 formularios que gravam quem criou o registro: Solicitacao de Demanda, Canvas, TAP, Planejamento e Desenvolvimento, EAP, SMP, Ata de Reuniao, TEP e RLA."
+P "Se qualquer um desses vinculos existir, a remocao e bloqueada e o Admin ve a lista dos motivos especificos. So quando a pessoa nao tem nenhum vinculo o sistema pede confirmacao final antes de remover."
+P "Limitacao conhecida: os tres formularios que sao documentos unicos e compartilhados de todo o sistema - Plano de Comunicacao de Projeto, Relatorio de Situacao de Projetos e Relatorio de Entregas e Beneficios - nao tem o conceito de `"quem criou o registro`" (sao editados coletivamente, sem dono individual), entao nao entram nessa checagem automatica."
+P "Controle de acesso (Row Level Security no Supabase): remover um perfil e uma acao restrita por politica `"perfis_delete_admin`" a usuarios com papel Admin - qualquer tentativa de exclusao por outro papel e recusada pelo proprio banco de dados, mesmo que alguem tente contornar a interface."
+P "Remover aqui apaga apenas o perfil (papel, nome, telefone) do sistema de gestao de projetos - a pessoa continua podendo fazer login depois; se fizer, um perfil novo e criado do zero, com o papel padrao Solicitante."
 
 HR
 

@@ -567,7 +567,7 @@ window.unialfaHistorico = {
         <h1>Ata de Reunião para Projetos</h1>
         <p>Registro de reuniões · Escritório de Projetos · Integração Read AI</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=3#passo-6" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=4#passo-6" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00340</b></div>
@@ -975,7 +975,7 @@ async function submitForm(){
     registroAntigo = Object.assign({}, rec);
   } else {
     const year=new Date().getFullYear(); const seq=String(cache.length+1).padStart(3,'0');
-    rec={ id:'a_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo:`FORALF00340-${year}-${seq}`, status:'Rascunho', createdAt:Date.now() };
+    rec={ id:'a_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo:`FORALF00340-${year}-${seq}`, status:'Rascunho', createdAt:Date.now(), criadoPorEmail: window.currentUser?window.currentUser.email:null };
   }
   rec.unidades=getUnidades();
   rec.pauta=document.getElementById('pauta').value.trim();

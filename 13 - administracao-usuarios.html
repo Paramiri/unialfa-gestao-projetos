@@ -344,7 +344,7 @@ window.unialfaEquipe = {
         <h1>Administração de Usuários</h1>
         <p>Controle de acesso · Papéis e permissões · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=3#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=4#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
     </div>
   </div>
 
@@ -441,7 +441,7 @@ async function carregarUsuarios(){
       <td><select onchange="alterarPapel('${u.id}', this.value, this)">
         ${PAPEIS.map(p=>`<option value="${p}" ${p===u.papel?'selected':''}>${unialfaAuth.papelLabel(p)}</option>`).join('')}
       </select></td>
-      <td></td>
+      <td>${u.id===window.currentUser.id?'':`<button class="btn-remove" onclick="removerUsuario('${u.id}','${esc(u.email)}', this)">Remover</button>`}</td>
     </tr>`;
   });
   pend.forEach(u=>{
@@ -536,6 +536,63 @@ async function removerPendente(email){
     await carregarUsuarios();
   }catch(e){
     toast('Não foi possível remover', false);
+  }
+}
+
+const FORM_LABELS={
+  demanda:'Solicitação de Demanda', canvas:'Canvas de Projeto', tap:'TAP - Termo de Abertura de Projeto',
+  plan:'Planejamento e Desenvolvimento de Projeto', eap:'EAP - Estrutura Analítica de Projeto',
+  smp:'SMP - Solicitação de Mudança de Projeto', ata:'Ata de Reunião',
+  tep:'TEP - Termo de Encerramento de Projeto', rla:'RLA - Registro de Lições Aprendidas',
+};
+
+async function verificarVinculosUsuario(usuario){
+  const motivos=[];
+  const [rEquipe, rProjetos, rKv]=await Promise.all([
+    fetch(unialfaAuth.REST_BASE+'/projeto_equipe?usuario_id=eq.'+usuario.id+'&select=projeto_id', { headers: unialfaAuth.authHeaders() }),
+    fetch(unialfaAuth.REST_BASE+'/projetos?criado_por=eq.'+usuario.id+'&select=id,nome', { headers: unialfaAuth.authHeaders() }),
+    fetch(unialfaAuth.REST_BASE+'/kv_store?select=key,value', { headers: unialfaAuth.authHeaders() }),
+  ]);
+
+  const equipe = rEquipe.ok ? await rEquipe.json() : [];
+  if(equipe.length) motivos.push('É membro da equipe de '+equipe.length+' projeto(s).');
+
+  const projetosCriados = rProjetos.ok ? await rProjetos.json() : [];
+  if(projetosCriados.length) motivos.push('Criou o(s) projeto(s): '+projetosCriados.map(p=>p.nome).join(', ')+'.');
+
+  const kvRows = rKv.ok ? await rKv.json() : [];
+  const formsEncontrados = new Set();
+  kvRows.forEach(row=>{
+    try{
+      const v = JSON.parse(row.value);
+      if(v && v.criadoPorEmail && String(v.criadoPorEmail).toLowerCase()===usuario.email.toLowerCase()){
+        const prefixo = row.key.split(':')[0];
+        formsEncontrados.add(FORM_LABELS[prefixo] || prefixo);
+      }
+    }catch(e){}
+  });
+  if(formsEncontrados.size) motivos.push('Tem registro criado em: '+[...formsEncontrados].join(', ')+'.');
+
+  return motivos;
+}
+
+async function removerUsuario(id, email, btnEl){
+  btnEl.disabled=true;
+  try{
+    const motivos = await verificarVinculosUsuario({ id, email });
+    if(motivos.length){
+      alert('Não é possível remover '+email+':\n\n- '+motivos.join('\n- '));
+      return;
+    }
+    if(!confirm('Remover '+email+' do sistema?\n\nA pessoa não tem equipe, projeto nem registro vinculado. Se ela fizer login de novo depois, o perfil é recriado do zero (papel Solicitante).')) return;
+    const r=await fetch(unialfaAuth.REST_BASE+'/perfis?id=eq.'+id, { method:'DELETE', headers: unialfaAuth.authHeaders() });
+    if(!r.ok) throw new Error();
+    toast('Usuário removido');
+    await carregarUsuarios();
+  }catch(e){
+    toast('Não foi possível remover o usuário', false);
+  }finally{
+    btnEl.disabled=false;
   }
 }
 

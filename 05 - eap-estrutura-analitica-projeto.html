@@ -556,7 +556,7 @@ window.unialfaHistorico = {
         <h1>Estrutura Analítica de Projeto — EAP</h1>
         <p>Work Breakdown Structure (WBS) · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=3#passo-5" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=4#passo-5" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Referência</span><b>EAP / WBS</b></div>
@@ -919,7 +919,7 @@ async function submitForm(){
   } else {
     const year=new Date().getFullYear();
     const seq=String(cache.length+1).padStart(3,'0');
-    rec={ id:'e_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo:`EAP-${year}-${seq}`, status:'Em elaboração', createdAt:Date.now() };
+    rec={ id:'e_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo:`EAP-${year}-${seq}`, status:'Em elaboração', createdAt:Date.now(), criadoPorEmail: window.currentUser?window.currentUser.email:null };
   }
   rec.nomeProjeto=document.getElementById('nomeProjeto').value.trim();
   rec.unidade=document.getElementById('unidade').value;

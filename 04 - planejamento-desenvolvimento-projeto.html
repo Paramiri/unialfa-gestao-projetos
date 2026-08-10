@@ -550,7 +550,7 @@ window.unialfaHistorico = {
         <h1>Planejamento e Desenvolvimento de Projeto</h1>
         <p>Dossiê de ciclo de vida do projeto · Gerência de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=3#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=4#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00325</b></div>
@@ -1010,7 +1010,7 @@ async function submitForm(){
     registroAntigo = Object.assign({}, rec);
     camposAntigos = { nome: rec.nomeProjeto, unidade: rec.unidade, gerente: rec.gestor };
   } else {
-    rec = { id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo: await nextProtocol(), status:'Em planejamento', createdAt:Date.now() };
+    rec = { id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo: await nextProtocol(), status:'Em planejamento', createdAt:Date.now(), criadoPorEmail: window.currentUser?window.currentUser.email:null };
   }
   FIELD_KEYS.forEach(id=>{ const el=document.getElementById(id); if(el) rec[id]=(el.value||'').trim(); });
   Object.keys(TABLE_DEFS).forEach(k=>{ rec[k]=readTable(k); });

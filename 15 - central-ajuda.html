@@ -381,6 +381,9 @@ body.auth-ready{padding-top:34px}
         <p class="lead">Pré-cadastro de usuário (antes do primeiro login)</p>
         <p>No topo da aba Usuários, o Admin pode preencher nome, telefone (opcional), e-mail e papel e clicar em <b>+ Adicionar usuário</b> para cadastrar alguém que ainda não fez login. Essa pessoa aparece na lista com o selo <b>Pendente — 1º login</b>, e o Admin ainda pode ajustar telefone/papel ou remover o pré-cadastro a qualquer momento.</p>
         <div class="tip">Quando a pessoa pré-cadastrada faz o primeiro login (link mágico ou Microsoft), o nome, telefone e papel definidos pelo Admin são aplicados automaticamente ao perfil dela — em vez de entrar como "Solicitante" por padrão — e o pré-cadastro pendente desaparece da lista.</div>
+        <p class="lead">Remover um usuário</p>
+        <p>Cada usuário já cadastrado (menos o próprio Admin logado) tem um botão <b>Remover</b> na última coluna. Ao clicar, o sistema checa na hora se a pessoa faz parte da equipe de algum projeto, criou algum projeto, ou tem registro criado em seu nome em algum dos 9 formulários que gravam essa informação (Solicitação de Demanda, Canvas, TAP, Planejamento, EAP, SMP, Ata de Reunião, TEP e RLA). Se algum desses vínculos existir, a remoção é recusada e o Admin vê exatamente qual foi o motivo; caso contrário, pede confirmação final antes de excluir o perfil.</p>
+        <div class="tip">Remover aqui apaga só o perfil (papel, nome, telefone) — a pessoa pode logar de novo depois normalmente, só que entra como "Solicitante", como se fosse a primeira vez. Os três formulários que são documentos únicos e compartilhados (Plano de Comunicação, Relatório de Situação e Relatório de Entregas) não entram nessa checagem automática, por não terem um "dono" individual do registro.</div>
         <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
       </section>
 

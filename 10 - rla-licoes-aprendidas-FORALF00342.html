@@ -532,7 +532,7 @@ window.unialfaHistorico = {
         <h1>Registro de Lições Aprendidas — RLA</h1>
         <p>Aprendizado organizacional · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=3#passo-9" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=4#passo-9" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00342</b></div>
@@ -947,7 +947,7 @@ async function submitForm(){
     camposAntigos = { nome: rec.nomeProjeto, unidade: rec.unidade, gerente: rec.gerente };
   } else {
     const year=new Date().getFullYear();const seq=String(cache.length+1).padStart(3,'0');
-    rec={id:'rla_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),protocolo:`FORALF00342-${year}-${seq}`,status:'Pendente de aprovação',createdAt:Date.now()};
+    rec={id:'rla_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),protocolo:`FORALF00342-${year}-${seq}`,status:'Pendente de aprovação',createdAt:Date.now(),criadoPorEmail:window.currentUser?window.currentUser.email:null};
   }
   SIMPLE_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)rec[id]=(el.value||'').trim();});
   rec.licoes=readLicoes();
