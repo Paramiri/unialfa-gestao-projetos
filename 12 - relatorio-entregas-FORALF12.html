@@ -41,6 +41,9 @@ body{font-family:var(--font);color:var(--ink);background:var(--surface);-webkit-
 
 /* ficha cards — painel */
 .ficha-prog{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px}
+.denied{padding:48px 24px;text-align:center}
+.denied h2{font-size:16px;margin:0 0 8px}
+.denied p{color:var(--muted);font-size:13px;margin:0}
 .ficha-prog-head{background:var(--ink);color:#fff;padding:20px 24px;display:flex;align-items:flex-start;gap:16px}
 .ficha-prog-head .left{flex:1}
 .ficha-prog-head h2{font-size:17px;font-weight:900;letter-spacing:.03em;line-height:1.2}
@@ -444,7 +447,7 @@ function ensureAuthenticated(){
       <h1>Relatório de Entregas e Benefícios</h1>
       <p>Ficha de programa e projetos vinculados · Escritório de Projetos</p>
     </div>
-    <a class="head-help" href="15 - central-ajuda.html?v=4#relatorio-entregas" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
+    <a class="head-help" href="15 - central-ajuda.html?v=5#relatorio-entregas" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
     <div class="head-badge">FORALF12</div>
   </div>
 
@@ -454,6 +457,12 @@ function ensureAuthenticated(){
     <button class="btn btn-sm btn-primary" style="margin-left:auto" onclick="voltarVersaoAtual()">Voltar à versão atual</button>
   </div>
 
+  <div id="deniedBox" style="display:none" class="ficha-prog"><div class="denied">
+    <h2>Acesso restrito</h2>
+    <p id="deniedMsg"></p>
+  </div></div>
+
+  <div id="conteudoRelatorio" style="display:none">
   <div class="view-tabs">
     <button class="vtab" aria-selected="true" onclick="showView('painel')">📋 Painel</button>
     <button class="vtab" aria-selected="false" onclick="showView('editar')">✏️ Editar dados</button>
@@ -536,6 +545,7 @@ function ensureAuthenticated(){
       <button class="btn btn-ghost" onclick="showView('painel')">Cancelar</button>
       <div class="ml" id="gate2-locked-msg" style="display:none;font-size:11px;color:var(--warn);font-weight:700">🔒 Relatório pactuado — reabra o Gate 2 acima para editar.</div>
     </div>
+  </div>
   </div>
 </div>
 
@@ -1044,5 +1054,24 @@ function exportCSV(){
   toast('CSV exportado');
 }
 
-(async()=>{ await ensureAuthenticated(); await loadData(); await carregarProjetosAprovados(); renderPainel(); })();
+async function papelPermitido(chave){
+  if(window.currentProfile && window.currentProfile.papel==='admin') return true;
+  try{
+    const r = await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=eq.'+chave+'&select=valor', { headers: unialfaAuth.authHeaders() });
+    const rows = r.ok ? await r.json() : [];
+    const permitidos = (rows[0] && Array.isArray(rows[0].valor)) ? rows[0].valor : [];
+    return window.currentProfile ? permitidos.includes(window.currentProfile.papel) : false;
+  }catch(e){ return false; }
+}
+
+(async()=>{
+  await ensureAuthenticated();
+  if(!(await papelPermitido('papeis_relatorio_entregas'))){
+    document.getElementById('deniedMsg').textContent = 'Esta página não está liberada para o seu papel atual ("'+unialfaAuth.papelLabel(window.currentProfile?window.currentProfile.papel:'solicitante')+'"). Solicite a um administrador para ajustar quem pode ver esta página em Administração > Configurações.';
+    document.getElementById('deniedBox').style.display = 'block';
+    return;
+  }
+  document.getElementById('conteudoRelatorio').style.display = 'block';
+  await loadData(); await carregarProjetosAprovados(); renderPainel();
+})();
 </script>

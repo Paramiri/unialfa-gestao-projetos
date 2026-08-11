@@ -84,6 +84,9 @@ table.proj-t tbody tr:hover{background:var(--surface)}
 
 /* ── program detail cards ── */
 .prog-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.denied{padding:48px 24px;text-align:center}
+.denied h2{font-size:16px;margin:0 0 8px}
+.denied p{color:var(--muted);font-size:13px;margin:0}
 .prog-card-head{display:flex;align-items:center;gap:14px;padding:16px 20px;background:var(--ink);color:#fff}
 .prog-card-head h3{font-size:14px;font-weight:800;letter-spacing:.03em;flex:1}
 .prog-card-head .prog-pct-big{font-size:22px;font-weight:900}
@@ -437,7 +440,7 @@ function ensureAuthenticated(){
       <h1>Relatório de Situação de Projetos</h1>
       <p>Escritório de Projetos · Visão geral e por programa/projeto</p>
     </div>
-    <a class="head-help" href="15 - central-ajuda.html?v=4#relatorio-situacao" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
+    <a class="head-help" href="15 - central-ajuda.html?v=5#relatorio-situacao" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
     <div class="head-meta">
       <div class="head-meta-item"><span>Referência</span><b id="hd-ref">—</b></div>
       <div class="head-meta-item"><span>Responsável</span><b id="hd-resp">—</b></div>
@@ -451,6 +454,12 @@ function ensureAuthenticated(){
     <button class="btn btn-sm btn-primary" style="margin-left:auto" onclick="voltarVersaoAtual()">Voltar à versão atual</button>
   </div>
 
+  <div id="deniedBox" style="display:none" class="prog-card"><div class="denied">
+    <h2>Acesso restrito</h2>
+    <p id="deniedMsg"></p>
+  </div></div>
+
+  <div id="conteudoRelatorio" style="display:none">
   <!-- View tabs -->
   <div class="view-tabs">
     <button class="vtab" aria-selected="true" onclick="showView('painel')">📊 Painel</button>
@@ -586,6 +595,7 @@ function ensureAuthenticated(){
         </div>
       </div>
     </div>
+  </div>
   </div>
 </div>
 
@@ -1204,5 +1214,24 @@ function exportCSV(){
   toast('CSV exportado');
 }
 
-(async()=>{ await ensureAuthenticated(); await loadData(); await carregarProjetosAprovados(); renderPainel(); })();
+async function papelPermitido(chave){
+  if(window.currentProfile && window.currentProfile.papel==='admin') return true;
+  try{
+    const r = await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=eq.'+chave+'&select=valor', { headers: unialfaAuth.authHeaders() });
+    const rows = r.ok ? await r.json() : [];
+    const permitidos = (rows[0] && Array.isArray(rows[0].valor)) ? rows[0].valor : [];
+    return window.currentProfile ? permitidos.includes(window.currentProfile.papel) : false;
+  }catch(e){ return false; }
+}
+
+(async()=>{
+  await ensureAuthenticated();
+  if(!(await papelPermitido('papeis_relatorio_situacao'))){
+    document.getElementById('deniedMsg').textContent = 'Esta página não está liberada para o seu papel atual ("'+unialfaAuth.papelLabel(window.currentProfile?window.currentProfile.papel:'solicitante')+'"). Solicite a um administrador para ajustar quem pode ver esta página em Administração > Configurações.';
+    document.getElementById('deniedBox').style.display = 'block';
+    return;
+  }
+  document.getElementById('conteudoRelatorio').style.display = 'block';
+  await loadData(); await carregarProjetosAprovados(); renderPainel();
+})();
 </script>

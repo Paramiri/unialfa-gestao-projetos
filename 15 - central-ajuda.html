@@ -347,6 +347,7 @@ body.auth-ready{padding-top:34px}
         <p class="lead">Visão consolidada de todos os projetos do portfólio: status, percentual de execução, marcos e pontos de atenção.</p>
         <p>Tem três abas: <b>Painel</b>, <b>Editar dados</b> e <b>Importar Project</b> (arraste uma exportação do MS Project em Excel ou CSV — o sistema detecta automaticamente as colunas de nome, % concluído, início, término e responsável).</p>
         <div class="note">Este relatório não tem aprovação/status formal — é uma ferramenta viva de acompanhamento.</div>
+        <div class="tip">Por padrão, qualquer usuário autenticado pode ver este relatório — mas o Admin pode restringir a visualização a papéis específicos em <a href="#administracao">Administração &gt; Configurações</a>. Se aparecer "Acesso restrito" ao abrir esta página, seu papel atual não está entre os marcados.</div>
         <div class="tip"><b>Sinalização automática de risco de atraso:</b> uma coluna calculada compara o % de execução informado com o % esperado pelo tempo já decorrido entre início e término previstos — independente do status marcado manualmente. Mostra <b>⚠ Risco de atraso</b> quando a defasagem é grande, ou <b>⛔ Prazo vencido</b> quando o término já passou e o projeto não está 100%. É uma regra de cálculo simples (não é IA) e não substitui o status manual.</div>
         <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
       </section>
@@ -357,6 +358,7 @@ body.auth-ready{padding-top:34px}
         <p class="lead">O relatório mais importante do ponto de vista de governança: é sobre ele que ocorre o <a href="#gates">Gate 2 — Pactuação</a>.</p>
         <p>Preencha a Ficha do Programa, indicadores e valores estimados, depois cada projeto vinculado (com suas próprias entregas, indicadores e valores). Clique em <b>Salvar e ver painel</b>.</p>
         <div class="note">Só depois do Gate 2 pactuado o projeto deve avançar para a execução.</div>
+        <div class="tip">Por padrão, qualquer usuário autenticado pode ver este relatório — mas o Admin pode restringir a visualização a papéis específicos em <a href="#administracao">Administração &gt; Configurações</a>. Se aparecer "Acesso restrito" ao abrir esta página, seu papel atual não está entre os marcados.</div>
         <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
       </section>
 
@@ -376,7 +378,7 @@ body.auth-ready{padding-top:34px}
         <ul>
           <li><b>Usuários</b> — lista quem já fez login, com nome, telefone (editável direto na lista) e um seletor para alterar o papel.</li>
           <li><b>Equipes</b> — define quem faz parte da equipe de cada projeto (base da <a href="#equipe">restrição por equipe</a>).</li>
-          <li><b>Configurações</b> — controla os dois interruptores de <a href="#sem-login">acesso sem login</a>.</li>
+          <li><b>Configurações</b> — controla os dois interruptores de <a href="#sem-login">acesso sem login</a> e quais papéis podem ver o Painel Executivo, o Relatório de Situação e o Relatório de Entregas.</li>
         </ul>
         <p class="lead">Pré-cadastro de usuário (antes do primeiro login)</p>
         <p>No topo da aba Usuários, o Admin pode preencher nome, telefone (opcional), e-mail e papel e clicar em <b>+ Adicionar usuário</b> para cadastrar alguém que ainda não fez login. Essa pessoa aparece na lista com o selo <b>Pendente — 1º login</b>, e o Admin ainda pode ajustar telefone/papel ou remover o pré-cadastro a qualquer momento.</p>
@@ -389,8 +391,8 @@ body.auth-ready{padding-top:34px}
 
       <section class="sec" id="painel-executivo">
         <div class="eyebrow">gestão</div>
-        <h2>Painel Executivo <span class="tag eq">exclusivo Admin</span></h2>
-        <p class="lead">Página restrita a Admin que agrega em tempo real dados dos 10 formulários de registro e dos 2 relatórios numa única tela — visão geral do sistema inteiro sem precisar abrir cada formulário individualmente.</p>
+        <h2>Painel Executivo <span class="tag eq">acesso por papel</span></h2>
+        <p class="lead">Agrega em tempo real dados dos 10 formulários de registro e dos 2 relatórios numa única tela — visão geral do sistema inteiro sem precisar abrir cada formulário individualmente. Por padrão só o Admin vê esta página, mas o Admin pode liberar outros papéis em <a href="#administracao">Administração &gt; Configurações</a>.</p>
         <ul>
           <li><b>Gates de aprovação:</b> contagem de Solicitações de Demanda por status (Gate 1) e o status atual do Relatório de Entregas (Gate 2 — Pactuação).</li>
           <li><b>Governança:</b> quantidade de Entraves e Encaminhamentos ainda Aberto, e quantos Resultados alcançados já foram registrados no Relatório de Situação.</li>

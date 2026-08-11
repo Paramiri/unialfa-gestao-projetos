@@ -501,10 +501,20 @@ async function carregarPainel(){
   document.getElementById('conteudo').style.display = 'block';
 }
 
+async function papelPermitido(chave){
+  if(window.currentProfile && window.currentProfile.papel==='admin') return true;
+  try{
+    const r = await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=eq.'+chave+'&select=valor', { headers: unialfaAuth.authHeaders() });
+    const rows = r.ok ? await r.json() : [];
+    const permitidos = (rows[0] && Array.isArray(rows[0].valor)) ? rows[0].valor : [];
+    return window.currentProfile ? permitidos.includes(window.currentProfile.papel) : false;
+  }catch(e){ return false; }
+}
+
 (async()=>{
   await ensureAuthenticated();
-  if(!window.currentProfile || window.currentProfile.papel!=='admin'){
-    document.getElementById('deniedMsg').textContent = 'Esta página é exclusiva para usuários com papel PMO / Admin. Seu papel atual é "'+unialfaAuth.papelLabel(window.currentProfile?window.currentProfile.papel:'solicitante')+'". Solicite a um administrador para alterar seu acesso.';
+  if(!(await papelPermitido('papeis_painel_executivo'))){
+    document.getElementById('deniedMsg').textContent = 'Esta página não está liberada para o seu papel atual ("'+unialfaAuth.papelLabel(window.currentProfile?window.currentProfile.papel:'solicitante')+'"). Solicite a um administrador para ajustar quem pode ver esta página em Administração > Configurações.';
     document.getElementById('deniedBox').style.display = 'block';
     return;
   }

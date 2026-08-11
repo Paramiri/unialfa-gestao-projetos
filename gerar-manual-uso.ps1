@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.15 - 10 de agosto de 2026 (substitui a versao 2.14 de 10/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.16 - 11 de agosto de 2026 (substitui a versao 2.15 de 10/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -266,6 +266,7 @@ P "Esta e a versao 2.12 do manual. Em relacao a versao 2.11 (04/08/2026), foi ad
 P "Esta e a versao 2.13 do manual. Em relacao a versao 2.12 (06/08/2026), foi adicionado o campo obrigatorio Prioridade (Critica/Alta/Media/Baixa) a Solicitacao de Demanda (Passo 1): exibido como selo colorido na lista de demandas cadastradas e no detalhe do registro, ajudando o Admin a priorizar a triagem do Gate 1."
 P "Esta e a versao 2.14 do manual. Em relacao a versao 2.13 (06/08/2026), foi adicionado o pre-cadastro de usuario e o campo Telefone a aba Usuarios da Administracao (secao 6.1 e 3.2 das Regras de Acesso): o Admin pode informar nome, telefone, e-mail e papel de uma pessoa antes do primeiro login dela, e os dados sao aplicados automaticamente ao perfil assim que ela loga pela primeira vez."
 P "Esta e a versao 2.15 do manual. Em relacao a versao 2.14 (10/08/2026), foi adicionado o botao Remover a aba Usuarios da Administracao (secao 6.1 e 3.3 das Regras de Acesso): o Admin so consegue excluir um usuario que nao tenha nenhum vinculo com projetos ou registros no sistema, checado automaticamente antes de confirmar a remocao."
+P "Esta e a versao 2.16 do manual. Em relacao a versao 2.15 (10/08/2026), foi adicionada a restricao de acesso por papel ao Painel Executivo, ao Relatorio de Situacao e ao Relatorio de Entregas (secao 6.3 e 3.4 das Regras de Acesso): o Admin marca, por caixas de selecao, quais papeis podem ver cada uma dessas tres paginas, podendo marcar mais de um papel por pagina."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -596,7 +597,7 @@ Nota "Regra aplicada: qualquer resposta vermelha leva a encerrar/repactuar; tres
 # 6. ADMINISTRACAO DO SISTEMA
 # ============================================================
 H1 "6. Administracao e Painel Executivo"
-P "Duas paginas independentes, ambas restritas a usuarios com papel Admin (secao 2.3) e listadas no menu lateral em `Gestao`: a Administracao (gerencia usuarios, equipes e configuracoes) e o Painel Executivo (visao consolidada e agregada de todo o sistema)."
+P "Duas paginas independentes, listadas no menu lateral em `Gestao`: a Administracao (gerencia usuarios, equipes e configuracoes, sempre restrita a Admin - secao 2.3) e o Painel Executivo (visao consolidada e agregada de todo o sistema, com acesso configuravel por papel - secao 6.3)."
 H2 "6.1 Usuarios"
 P "Lista todos os usuarios que ja fizeram login pelo menos uma vez, com nome, telefone (editavel diretamente na lista) e um seletor para alterar o papel."
 Img "09_admin_usuarios.png" "Aba Usuarios: nome, telefone, papel atual e seletor de alteracao de papel por usuario." 5.8
@@ -610,8 +611,10 @@ Img "10_admin_equipes.png" "Aba Equipes, com um projeto selecionado e um membro 
 H2 "6.3 Configuracoes"
 P "Controla os dois interruptores de acesso sem login (Solicitacao de Demanda e Ata de Reuniao), descritos na secao 2.6."
 Img "11_admin_config.png" "Aba Configuracoes: os dois interruptores de acesso sem login, hoje desativados." 5.8
+P "Logo abaixo, tres grupos de caixas de selecao controlam quem pode ver o Painel Executivo, o Relatorio de Situacao de Projetos e o Relatorio de Entregas e Beneficios: o Admin marca um ou mais papeis por pagina, e quem tiver um papel fora da lista marcada ve `Acesso restrito` ao tentar abrir aquela pagina. Por padrao, o Painel Executivo comeca marcado so para Admin (mesmo comportamento de antes), e os dois relatorios comecam com todos os papeis marcados (acesso livre, tambem o comportamento de antes) - a restricao so entra em vigor se o Admin desmarcar algum papel."
+Nota "O papel Admin sempre tem acesso as tres paginas, mesmo que fique desmarcado por engano - isso evita que o proprio Admin perca o acesso e fique sem como reverter a configuracao."
 H2 "6.4 Painel Executivo"
-P "Pagina nova, tambem restrita a Admin, que agrega em tempo real dados de todos os 10 formularios de registro e dos 2 relatorios - sem exigir nenhuma mudanca no banco de dados, apenas consultando o que ja esta salvo. Pensada para dar ao PMO uma visao geral do sistema inteiro em uma unica tela, sem precisar abrir cada formulario individualmente."
+P "Agrega em tempo real dados de todos os 10 formularios de registro e dos 2 relatorios - sem exigir nenhuma mudanca no banco de dados, apenas consultando o que ja esta salvo. Pensada para dar ao PMO uma visao geral do sistema inteiro em uma unica tela, sem precisar abrir cada formulario individualmente. Por padrao so o Admin ve esta pagina, mas isso pode ser ampliado para outros papeis em Administracao > Configuracoes (secao 6.3)."
 Bul "Gates de aprovacao: contagem de Solicitacoes de Demanda por status (Gate 1) e o status atual do Relatorio de Entregas (Gate 2 - Pactuacao)."
 Bul "Governanca (dados do Relatorio de Situacao - secao 4.1): quantidade de Entraves e Encaminhamentos ainda `Aberto`, e quantos Resultados alcancados ja foram registrados."
 Bul "Registros por formulario: uma linha por artefato (Canvas, TAP, Planejamento, EAP, SMP, Ata de Reuniao, TEP, RLA, alem da propria Solicitacao de Demanda), com o total e a contagem por status de cada um."
