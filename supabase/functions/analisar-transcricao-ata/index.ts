@@ -157,6 +157,6 @@ Deno.serve(async (req: Request) => {
     return json({ ok: true, dados: parsed });
   } catch (e) {
     console.error("Falha ao chamar a API da Claude:", e);
-    return json({ error: "Falha ao analisar a transcrição" }, 502);
+    return json({ error: "Falha ao analisar a transcrição", debug: String(e && (e as any).stack || e) }, 502);
   }
 });

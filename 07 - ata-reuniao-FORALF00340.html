@@ -905,7 +905,7 @@ async function analisarTranscricao(){
     });
     const data=await resp.json();
     if(!resp.ok || data.error){
-      setAIStatus('err','⚠ '+(data.error||'Não foi possível analisar a transcrição'));
+      setAIStatus('err','⚠ '+(data.error||'Não foi possível analisar a transcrição')+(data.debug?(' — DEBUG: '+data.debug):''));
       btn.disabled=false; return;
     }
 
