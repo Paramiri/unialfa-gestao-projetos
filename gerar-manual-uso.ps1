@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.17 - 12 de agosto de 2026 (substitui a versao 2.16 de 11/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.18 - 12 de agosto de 2026 (substitui a versao 2.17 de 12/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -268,6 +268,7 @@ P "Esta e a versao 2.14 do manual. Em relacao a versao 2.13 (06/08/2026), foi ad
 P "Esta e a versao 2.15 do manual. Em relacao a versao 2.14 (10/08/2026), foi adicionado o botao Remover a aba Usuarios da Administracao (secao 6.1 e 3.3 das Regras de Acesso): o Admin so consegue excluir um usuario que nao tenha nenhum vinculo com projetos ou registros no sistema, checado automaticamente antes de confirmar a remocao."
 P "Esta e a versao 2.16 do manual. Em relacao a versao 2.15 (10/08/2026), foi adicionada a restricao de acesso por papel ao Painel Executivo, ao Relatorio de Situacao e ao Relatorio de Entregas (secao 6.3 e 3.4 das Regras de Acesso): o Admin marca, por caixas de selecao, quais papeis podem ver cada uma dessas tres paginas, podendo marcar mais de um papel por pagina."
 P "Esta e a versao 2.17 do manual. Em relacao a versao 2.16 (11/08/2026), foi adicionada a importacao de transcricao por IA na Ata de Reuniao (secao 2.10, Passo 6 e 6.3 - substitui o antigo painel `Preencher com Read AI`, que nunca funcionou em producao): o usuario cola a transcricao de uma reuniao e a IA sugere pauta, participantes, resumo, encaminhamentos e entraves para revisao, com interruptor geral e lista de papeis permitidos configuraveis pelo Admin."
+P "Esta e a versao 2.18 do manual. Em relacao a versao 2.17 (12/08/2026), a importacao de transcricao por IA (secao 2.10) passou a aceitar tambem arquivo `.txt`, `.docx` ou `.pdf` anexado, alem de colar o texto diretamente - o sistema extrai o texto do arquivo automaticamente para revisao antes de analisar."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -388,7 +389,9 @@ Bul "Dispara nos mesmos sete momentos da secao 2.8 (registro de nova demanda, Ga
 Nota "No iPhone/iPad, a Apple so libera notificacao push para sites adicionados a Tela de Inicio. Antes de tocar em `Ativar lembretes no celular`, va em Compartilhar > Adicionar a Tela de Inicio no Safari, abra o sistema pelo icone criado, e so entao ative - num navegador comum (aba do Safari) o botao explica essa limitacao em vez de ativar direto. Em Android e computador nao ha essa exigencia."
 
 H2 "2.10 Importacao de transcricao por IA (Ata de Reuniao)"
-P "A Ata de Reuniao pode, opcionalmente, preencher pauta, data/horario, participantes, resumo, encaminhamentos e entraves automaticamente a partir da transcricao de uma reuniao colada pelo usuario - o texto e analisado por IA (Claude, via uma Supabase Edge Function; a chave da API fica guardada no servidor, nunca no navegador) e os campos sugeridos ficam disponiveis para revisao antes de salvar. O usuario nunca perde o controle: nada e enviado ao Supabase automaticamente, so o preenchimento do formulario."
+P "A Ata de Reuniao pode, opcionalmente, preencher pauta, data/horario, participantes, resumo, encaminhamentos e entraves automaticamente a partir da transcricao de uma reuniao - o texto e analisado por IA (Claude, via uma Supabase Edge Function; a chave da API fica guardada no servidor, nunca no navegador) e os campos sugeridos ficam disponiveis para revisao antes de salvar. O usuario nunca perde o controle: nada e enviado ao Supabase automaticamente, so o preenchimento do formulario."
+P "O texto pode ser fornecido de duas formas: colando diretamente na caixa de texto, ou anexando um arquivo `.txt`, `.docx` (Word) ou `.pdf` pelo botao `Anexar arquivo` - o sistema extrai o texto do arquivo e preenche a caixa automaticamente para revisao antes de clicar em `Analisar e preencher`. Limite de 15 MB por arquivo."
+Nota "PDFs escaneados (so imagem, sem texto real por tras) nao sao suportados - a extracao depende do PDF ter texto selecionavel. Nesse caso, copie e cole o texto manualmente."
 P "Diferente do envio de e-mail e do push (secoes 2.8 e 2.9), essa funcionalidade tem um interruptor geral do Admin, desligado por padrao - cada analise tem um custo real de API. Em Administracao > Configuracoes (secao 6.3), o Admin:"
 Bul "Liga ou desliga a importacao para o sistema inteiro - desligada, ninguem tem acesso ao painel, nem o proprio Admin."
 Bul "Com a importacao ligada, marca quais papeis podem usa-la (pode marcar mais de um) - PMO/Admin sempre tem acesso quando a importacao esta ligada, mesmo sem estar marcado na lista."
@@ -497,7 +500,7 @@ P "Quando usar: a qualquer momento do projeto, para registrar formalmente qualqu
 Img "25_f07_novo.png" "Tela de nova ata, com o painel `Importar transcricao da reuniao` para preenchimento automatico por IA." 5.6
 Img "26_f07_lista.png" "Atas cadastradas (estado vazio)." 5.6
 Bul "Selecione a(s) unidade(s) envolvidas, preencha Pauta e Projeto (obrigatorios), participantes, resumo, encaminhamentos e entraves."
-Bul "Opcional, quando habilitado pelo Admin: cole a transcricao da reuniao em `Importar transcricao da reuniao` e clique em `Analisar e preencher` - a IA sugere pauta, data/horario (se mencionados), participantes, resumo, encaminhamentos e entraves. Revise sempre os dados sugeridos antes de registrar (secao 2.10)."
+Bul "Opcional, quando habilitado pelo Admin: em `Importar transcricao da reuniao`, cole o texto ou anexe um arquivo `.txt`/`.docx`/`.pdf`, depois clique em `Analisar e preencher` - a IA sugere pauta, data/horario (se mencionados), participantes, resumo, encaminhamentos e entraves. Revise sempre os dados sugeridos antes de registrar (secao 2.10)."
 P "Clique em `Registrar ata` para gerar o protocolo."
 
 H2 "Passo 7 - SMP, Solicitacao de Mudanca de Projeto (FORALF00343) - uso condicional"

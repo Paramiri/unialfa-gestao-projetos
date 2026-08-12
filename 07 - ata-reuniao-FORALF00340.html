@@ -567,7 +567,7 @@ window.unialfaHistorico = {
         <h1>Ata de Reunião para Projetos</h1>
         <p>Registro de reuniões · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=6#passo-6" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=7#passo-6" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00340</b></div>
@@ -601,7 +601,14 @@ window.unialfaHistorico = {
         <div class="field">
           <label>Cole aqui a transcrição da reunião</label>
           <div class="hint">A IA identifica pauta, data/horário (se mencionados), participantes, um resumo dos pontos discutidos, encaminhamentos e entraves — sempre para você revisar e completar antes de salvar.</div>
-          <textarea id="transcricaoInput" rows="8" placeholder="Cole o texto completo da transcrição aqui…" style="width:100%;font-family:var(--font);font-size:13px;padding:10px 12px;border:1px solid var(--line-strong,#D1D5DB);border-radius:8px;resize:vertical"></textarea>
+          <div style="display:flex; align-items:center; gap:10px; margin:8px 0 10px">
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer; margin:0">
+              📎 Anexar arquivo (.txt, .docx, .pdf)
+              <input type="file" id="transcricaoArquivo" accept=".txt,.docx,.pdf" style="display:none" onchange="lerArquivoTranscricao(this.files[0])">
+            </label>
+            <span id="transcricaoArquivoStatus" style="font-size:12px; color:var(--muted)"></span>
+          </div>
+          <textarea id="transcricaoInput" rows="8" placeholder="Cole o texto completo da transcrição aqui, ou anexe um arquivo acima…" style="width:100%;font-family:var(--font);font-size:13px;padding:10px 12px;border:1px solid var(--line-strong,#D1D5DB);border-radius:8px;resize:vertical"></textarea>
         </div>
         <div class="ai-row" style="margin-top:10px;justify-content:flex-end">
           <button class="btn-ai" id="btnAnalisarIA" onclick="analisarTranscricao()">✦ Analisar e preencher</button>
@@ -878,6 +885,66 @@ function roTable(name,rows){
 }
 
 /* ---------- Importação de transcrição por IA ---------- */
+function carregarScript(src, nomeGlobal){
+  return new Promise((resolve, reject)=>{
+    if(window[nomeGlobal]){ resolve(); return; }
+    const s=document.createElement('script');
+    s.src=src;
+    s.onload=()=>resolve();
+    s.onerror=()=>reject(new Error('Falha ao carregar '+src));
+    document.head.appendChild(s);
+  });
+}
+
+async function lerArquivoTranscricao(file){
+  if(!file) return;
+  const statusEl=document.getElementById('transcricaoArquivoStatus');
+  if(file.size > 15*1024*1024){
+    statusEl.textContent='⚠ Arquivo muito grande (máximo 15 MB)';
+    document.getElementById('transcricaoArquivo').value='';
+    return;
+  }
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  statusEl.textContent='Lendo '+file.name+'…';
+  try{
+    let texto='';
+    if(ext==='txt'){
+      texto=await file.text();
+    }else if(ext==='docx'){
+      await carregarScript('https://cdn.jsdelivr.net/npm/mammoth@1/mammoth.browser.min.js', 'mammoth');
+      const buf=await file.arrayBuffer();
+      const resultado=await mammoth.extractRawText({ arrayBuffer: buf });
+      texto=resultado.value;
+    }else if(ext==='pdf'){
+      await carregarScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js', 'pdfjsLib');
+      pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const buf=await file.arrayBuffer();
+      const pdf=await pdfjsLib.getDocument({ data: buf }).promise;
+      const partes=[];
+      for(let i=1;i<=pdf.numPages;i++){
+        const page=await pdf.getPage(i);
+        const conteudo=await page.getTextContent();
+        partes.push(conteudo.items.map(it=>it.str).join(' '));
+      }
+      texto=partes.join('\n\n');
+    }else{
+      statusEl.textContent='⚠ Formato não suportado. Use .txt, .docx ou .pdf';
+      document.getElementById('transcricaoArquivo').value='';
+      return;
+    }
+    texto=texto.trim();
+    if(!texto){
+      statusEl.textContent='⚠ Não foi possível extrair texto deste arquivo (PDF escaneado sem texto real não é suportado)';
+      return;
+    }
+    document.getElementById('transcricaoInput').value=texto;
+    statusEl.textContent='✓ '+file.name+' — '+texto.length+' caracteres extraídos. Revise abaixo antes de analisar.';
+  }catch(e){
+    console.error(e);
+    statusEl.textContent='⚠ Não foi possível ler este arquivo';
+  }
+}
+
 async function transcricaoImportPermitida(){
   try{
     const r = await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=in.(permitir_importar_transcricao_ata,papeis_importar_transcricao_ata)&select=chave,valor', { headers: unialfaAuth.authHeaders() });
@@ -1044,6 +1111,8 @@ function clearForm(){
   ['part','saidas','entraves'].forEach(clearTable);
   document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
   const transcInput=document.getElementById('transcricaoInput'); if(transcInput) transcInput.value='';
+  const transcArquivo=document.getElementById('transcricaoArquivo'); if(transcArquivo) transcArquivo.value='';
+  const transcArquivoStatus=document.getElementById('transcricaoArquivoStatus'); if(transcArquivoStatus) transcArquivoStatus.textContent='';
   document.getElementById('aiStatus').style.display='none';
   document.getElementById('aiFilled').classList.remove('show');
   document.getElementById('projetoSelect').value=''; projetoSelecionadoId='';
