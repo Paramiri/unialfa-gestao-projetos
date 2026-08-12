@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.16 - 11 de agosto de 2026 (substitui a versao 2.15 de 10/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.17 - 12 de agosto de 2026 (substitui a versao 2.16 de 11/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -267,6 +267,7 @@ P "Esta e a versao 2.13 do manual. Em relacao a versao 2.12 (06/08/2026), foi ad
 P "Esta e a versao 2.14 do manual. Em relacao a versao 2.13 (06/08/2026), foi adicionado o pre-cadastro de usuario e o campo Telefone a aba Usuarios da Administracao (secao 6.1 e 3.2 das Regras de Acesso): o Admin pode informar nome, telefone, e-mail e papel de uma pessoa antes do primeiro login dela, e os dados sao aplicados automaticamente ao perfil assim que ela loga pela primeira vez."
 P "Esta e a versao 2.15 do manual. Em relacao a versao 2.14 (10/08/2026), foi adicionado o botao Remover a aba Usuarios da Administracao (secao 6.1 e 3.3 das Regras de Acesso): o Admin so consegue excluir um usuario que nao tenha nenhum vinculo com projetos ou registros no sistema, checado automaticamente antes de confirmar a remocao."
 P "Esta e a versao 2.16 do manual. Em relacao a versao 2.15 (10/08/2026), foi adicionada a restricao de acesso por papel ao Painel Executivo, ao Relatorio de Situacao e ao Relatorio de Entregas (secao 6.3 e 3.4 das Regras de Acesso): o Admin marca, por caixas de selecao, quais papeis podem ver cada uma dessas tres paginas, podendo marcar mais de um papel por pagina."
+P "Esta e a versao 2.17 do manual. Em relacao a versao 2.16 (11/08/2026), foi adicionada a importacao de transcricao por IA na Ata de Reuniao (secao 2.10, Passo 6 e 6.3 - substitui o antigo painel `Preencher com Read AI`, que nunca funcionou em producao): o usuario cola a transcricao de uma reuniao e a IA sugere pauta, participantes, resumo, encaminhamentos e entraves para revisao, com interruptor geral e lista de papeis permitidos configuraveis pelo Admin."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -386,8 +387,12 @@ Bul "Para desativar, basta tocar novamente no botao ja ativo."
 Bul "Dispara nos mesmos sete momentos da secao 2.8 (registro de nova demanda, Gate 1, Canvas aprovado, TAP aprovado, decisao da SMP, registro de TEP e Gate 2 pactuado), para os mesmos destinatarios - mas so quem tiver ativado o push naquele navegador/celular recebe a notificacao."
 Nota "No iPhone/iPad, a Apple so libera notificacao push para sites adicionados a Tela de Inicio. Antes de tocar em `Ativar lembretes no celular`, va em Compartilhar > Adicionar a Tela de Inicio no Safari, abra o sistema pelo icone criado, e so entao ative - num navegador comum (aba do Safari) o botao explica essa limitacao em vez de ativar direto. Em Android e computador nao ha essa exigencia."
 
-# ============================================================
-# 3. PASSO A PASSO DO FLUXO DE UM PROJETO
+H2 "2.10 Importacao de transcricao por IA (Ata de Reuniao)"
+P "A Ata de Reuniao pode, opcionalmente, preencher pauta, data/horario, participantes, resumo, encaminhamentos e entraves automaticamente a partir da transcricao de uma reuniao colada pelo usuario - o texto e analisado por IA (Claude, via uma Supabase Edge Function; a chave da API fica guardada no servidor, nunca no navegador) e os campos sugeridos ficam disponiveis para revisao antes de salvar. O usuario nunca perde o controle: nada e enviado ao Supabase automaticamente, so o preenchimento do formulario."
+P "Diferente do envio de e-mail e do push (secoes 2.8 e 2.9), essa funcionalidade tem um interruptor geral do Admin, desligado por padrao - cada analise tem um custo real de API. Em Administracao > Configuracoes (secao 6.3), o Admin:"
+Bul "Liga ou desliga a importacao para o sistema inteiro - desligada, ninguem tem acesso ao painel, nem o proprio Admin."
+Bul "Com a importacao ligada, marca quais papeis podem usa-la (pode marcar mais de um) - PMO/Admin sempre tem acesso quando a importacao esta ligada, mesmo sem estar marcado na lista."
+Nota "Quem nao tem permissao simplesmente nao ve o painel `Importar transcricao da reuniao` na Ata - nao ha mensagem de erro, o painel so aparece para quem pode usa-lo."
 # ============================================================
 H1 "3. Passo a passo do fluxo de um projeto"
 P "Esta secao percorre os 12 formularios de registro na ordem em que normalmente sao usados ao longo da vida de um projeto. Os Passos 1 a 5 e 8 a 9 seguem a esteira sequencial do projeto; os Passos 6, 7 e 10 sao de uso recorrente ou condicional; os relatorios finais (Passos 11 e 12) sao detalhados na secao 4."
@@ -453,7 +458,7 @@ $r3 = @(
 )
 TableSimple $r3 @(5.6,1.6,8.8)
 P "Registro de riscos (secao 9 do formulario): diferente dos demais campos do TAP, o registro de riscos e vivo - pode ser reaberto e atualizado a qualquer momento do projeto pelo botao `Editar dados`, sem se limitar ao preenchimento inicial. Cada linha da tabela tem Risco, Status (Aberto, Monitorando, Mitigado, Materializado ou Encerrado, exibido como selo colorido), Responsavel e Ultima revisao (data)."
-P "Sugestoes de riscos recorrentes: ao selecionar um Projeto vinculado, o formulario analisa automaticamente o campo Entraves de todas as Atas de Reuniao ja registradas para aquele projeto e destaca, logo abaixo da tabela de riscos, qualquer entrave que se repita em 2 ou mais atas diferentes - com a contagem de atas e um botao `+ Adicionar ao registro` que insere a sugestao direto na tabela (status Aberto, revisao com a data de hoje). E uma regra automatica de comparacao de texto, sem chamar nenhuma IA - ela so aproveita entraves ja registrados nas atas, inclusive os que tiverem sido transcritos com o `Preencher com Read AI` (Passo 6)."
+P "Sugestoes de riscos recorrentes: ao selecionar um Projeto vinculado, o formulario analisa automaticamente o campo Entraves de todas as Atas de Reuniao ja registradas para aquele projeto e destaca, logo abaixo da tabela de riscos, qualquer entrave que se repita em 2 ou mais atas diferentes - com a contagem de atas e um botao `+ Adicionar ao registro` que insere a sugestao direto na tabela (status Aberto, revisao com a data de hoje). E uma regra automatica de comparacao de texto, sem chamar nenhuma IA - ela so aproveita entraves ja registrados nas atas, inclusive os que tiverem sido preenchidos via `Importar transcricao da reuniao` (Passo 6, secao 2.10)."
 Img "37_f03_riscos.png" "Registro de riscos preenchido, com selos de status coloridos e a caixa de sugestoes de riscos recorrentes vindas das atas do projeto." 5.6
 Img "18_f03_lista.png" "TAPs cadastrados." 5.6
 P "Como salvar: clique em `Registrar TAP`. Um projeto sem TAP aprovado nao deve avancar para a execucao. Ao marcar Aprovado, um e-mail de notificacao e disparado automaticamente (secao 2.8)."
@@ -489,10 +494,10 @@ P "Clique em `Registrar EAP` para gerar o protocolo."
 
 H2 "Passo 6 - Ata de Reuniao (FORALF00340) - uso recorrente"
 P "Quando usar: a qualquer momento do projeto, para registrar formalmente qualquer reuniao - nao faz parte da esteira sequencial, fica sempre disponivel. Pode ser preenchida com login normal ou, se a opcao estiver ativa, sem login (ver secao 2.6)."
-Img "25_f07_novo.png" "Tela de nova ata, com o painel `Preencher com Read AI` para preenchimento automatico a partir de uma reuniao gravada." 5.6
+Img "25_f07_novo.png" "Tela de nova ata, com o painel `Importar transcricao da reuniao` para preenchimento automatico por IA." 5.6
 Img "26_f07_lista.png" "Atas cadastradas (estado vazio)." 5.6
 Bul "Selecione a(s) unidade(s) envolvidas, preencha Pauta e Projeto (obrigatorios), participantes, resumo, encaminhamentos e entraves."
-Bul "Opcional: use `Preencher com Read AI` para tentar preencher automaticamente a partir do nome de uma reuniao gravada - revise sempre os dados antes de registrar."
+Bul "Opcional, quando habilitado pelo Admin: cole a transcricao da reuniao em `Importar transcricao da reuniao` e clique em `Analisar e preencher` - a IA sugere pauta, data/horario (se mencionados), participantes, resumo, encaminhamentos e entraves. Revise sempre os dados sugeridos antes de registrar (secao 2.10)."
 P "Clique em `Registrar ata` para gerar o protocolo."
 
 H2 "Passo 7 - SMP, Solicitacao de Mudanca de Projeto (FORALF00343) - uso condicional"
@@ -613,6 +618,7 @@ P "Controla os dois interruptores de acesso sem login (Solicitacao de Demanda e 
 Img "11_admin_config.png" "Aba Configuracoes: os dois interruptores de acesso sem login, hoje desativados." 5.8
 P "Logo abaixo, tres grupos de caixas de selecao controlam quem pode ver o Painel Executivo, o Relatorio de Situacao de Projetos e o Relatorio de Entregas e Beneficios: o Admin marca um ou mais papeis por pagina, e quem tiver um papel fora da lista marcada ve `Acesso restrito` ao tentar abrir aquela pagina. Por padrao, o Painel Executivo comeca marcado so para Admin (mesmo comportamento de antes), e os dois relatorios comecam com todos os papeis marcados (acesso livre, tambem o comportamento de antes) - a restricao so entra em vigor se o Admin desmarcar algum papel."
 Nota "O papel Admin sempre tem acesso as tres paginas, mesmo que fique desmarcado por engano - isso evita que o proprio Admin perca o acesso e fique sem como reverter a configuracao."
+P "Por ultimo, um interruptor liga/desliga a importacao de transcricao por IA na Ata de Reuniao (secao 2.10) - desligado por padrao, ja que cada analise tem custo real de API. Diferente dos tres grupos de papel acima, esse interruptor vale para todo mundo sem excecao, inclusive Admin: desligado, ninguem ve o painel de importar transcricao. Ligado, o grupo de papeis logo abaixo controla quem pode usar, com Admin sempre incluido."
 H2 "6.4 Painel Executivo"
 P "Agrega em tempo real dados de todos os 10 formularios de registro e dos 2 relatorios - sem exigir nenhuma mudanca no banco de dados, apenas consultando o que ja esta salvo. Pensada para dar ao PMO uma visao geral do sistema inteiro em uma unica tela, sem precisar abrir cada formulario individualmente. Por padrao so o Admin ve esta pagina, mas isso pode ser ampliado para outros papeis em Administracao > Configuracoes (secao 6.3)."
 Bul "Gates de aprovacao: contagem de Solicitacoes de Demanda por status (Gate 1) e o status atual do Relatorio de Entregas (Gate 2 - Pactuacao)."

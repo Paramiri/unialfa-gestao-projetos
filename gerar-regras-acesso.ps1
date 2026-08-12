@@ -156,6 +156,7 @@ Bul "Aprovar ou reprovar o Gate 1 na Solicitacao de Demanda (ver secao 4)."
 Bul "Pactuar ou reabrir o Gate 2 no Relatorio de Entregas e Beneficios (ver secao 4)."
 Bul "Pre-cadastrar uma pessoa que ainda nao fez login, informando nome, telefone, e-mail e papel (ver 3.2)."
 Bul "Remover da lista um usuario que nunca teve nenhuma relacao com projetos nem registros no sistema (ver 3.3)."
+Bul "Ligar/desligar a importacao de transcricao por IA na Ata de Reuniao e definir quais papeis podem usa-la (ver 3.5)."
 P "Importante: um Admin sempre e considerado `"membro`" de qualquer equipe de projeto automaticamente - nao precisa ser adicionado manualmente para poder editar registros vinculados a um projeto (ver secao 5)."
 
 H2 "3.2 Pre-cadastro de usuario (antes do primeiro login)"
@@ -181,6 +182,13 @@ P "Tres paginas tem sua visibilidade controlada por uma lista de papeis, definid
 Bul "Painel Executivo comeca configurado apenas para Admin, mantendo o comportamento original da pagina."
 Bul "Relatorio de Situacao e Relatorio de Entregas comecam configurados para todos os papeis, mantendo o comportamento original (acesso livre a qualquer usuario autenticado) ate que o Admin decida restringir."
 P "Importante: um usuario com papel Admin sempre consegue acessar as tres paginas, mesmo que o papel Admin seja removido da lista por engano - essa trava evita que o proprio Admin fique bloqueado sem ter como reverter a configuracao."
+
+H2 "3.5 Importacao de transcricao por IA (Ata de Reuniao)"
+P "A Ata de Reuniao pode preencher automaticamente pauta, participantes, resumo, encaminhamentos e entraves a partir de uma transcricao de reuniao colada pelo usuario, analisada por IA (Claude, via uma Supabase Edge Function - a chave da API fica guardada no servidor, nunca exposta no navegador)."
+Bul "Existe um interruptor geral em Administracao > Configuracoes, desligado por padrao. Diferente da restricao por papel da secao 3.4, esse interruptor vale para todo mundo sem excecao, inclusive Admin - desligado, ninguem consegue usar a importacao."
+Bul "Com o interruptor ligado, uma lista de papeis (podendo marcar mais de um) define quem pode usar a importacao - Admin sempre tem acesso quando o interruptor esta ligado, mesmo sem estar marcado na lista."
+Bul "Quem nao tem permissao simplesmente nao ve a opcao de importar transcricao no formulario."
+P "A Edge Function que processa a transcricao confere essa mesma regra direto no banco de dados antes de chamar a IA - nao basta esconder o botao na tela, a chamada e recusada no servidor para quem nao tem permissao, mesmo que tentada por fora da interface."
 
 HR
 

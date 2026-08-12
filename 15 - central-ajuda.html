@@ -263,7 +263,7 @@ body.auth-ready{padding-top:34px}
         <p class="lead">Quando usar: depois do Canvas aprovado, para autorizar formalmente a existência do projeto.</p>
         <p>Campos principais: Justificativa, Objetivos, Público-alvo/Benefícios/Exclusões, Premissas/Restrições/Critérios, cronograma de entregas macro, custo total estimado, equipe do projeto e indicadores de resultado.</p>
         <div class="tip"><b>Registro de riscos vivo:</b> diferente dos outros campos do TAP, a seção de Riscos é uma tabela — não um texto fixo. Você pode voltar ao TAP a qualquer momento (mesmo depois de registrado) e usar <b>Editar dados</b> para adicionar novos riscos, mudar o status de um risco existente (Aberto → Monitorando → Mitigado/Materializado → Encerrado) e atualizar a data de revisão.</div>
-        <div class="tip"><b>Sugestão automática de riscos recorrentes:</b> ao selecionar o projeto vinculado, o TAP analisa os "Entraves" já registrados em todas as Atas de Reunião daquele projeto (inclusive as preenchidas pelo Read AI). Um entrave que aparece em 2 ou mais atas diferentes vira uma sugestão de risco, com um botão para adicionar direto ao registro de riscos com um clique.</div>
+        <div class="tip"><b>Sugestão automática de riscos recorrentes:</b> ao selecionar o projeto vinculado, o TAP analisa os "Entraves" já registrados em todas as Atas de Reunião daquele projeto (inclusive as preenchidas via <a href="#passo-6">importação de transcrição por IA</a>). Um entrave que aparece em 2 ou mais atas diferentes vira uma sugestão de risco, com um botão para adicionar direto ao registro de riscos com um clique.</div>
         <p>Clique em <b>Registrar TAP</b>. Um projeto sem TAP aprovado não deve avançar para a execução.</p>
         <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
       </section>
@@ -301,7 +301,9 @@ body.auth-ready{padding-top:34px}
         <div class="eyebrow">formulário 6 de 12 · uso recorrente</div>
         <h2>Ata de Reunião <span style="font-weight:600;font-size:13px;color:var(--muted)">FORALF00340</span><span class="tag nologin">sem login opcional</span></h2>
         <p class="lead">Quando usar: a qualquer momento do projeto, para registrar formalmente qualquer reunião — não faz parte da esteira sequencial, fica sempre disponível.</p>
-        <p>Selecione a(s) unidade(s) envolvidas, preencha Pauta e Projeto (obrigatórios), participantes, resumo, encaminhamentos e entraves. Opcional: use <b>Preencher com Read AI</b> para tentar preencher automaticamente a partir do nome de uma reunião gravada — revise sempre os dados antes de registrar.</p>
+        <p>Selecione a(s) unidade(s) envolvidas, preencha Pauta e Projeto (obrigatórios), participantes, resumo, encaminhamentos e entraves.</p>
+        <p>Opcional, quando habilitado pelo Admin: cole a transcrição da reunião em <b>Importar transcrição da reunião</b> e clique em <b>Analisar e preencher</b> — a IA sugere pauta, data/horário (se mencionados), participantes, resumo, encaminhamentos e entraves. Revise sempre os dados sugeridos antes de registrar.</p>
+        <div class="tip">Essa opção só aparece se o Admin tiver habilitado a importação por IA e liberado o seu papel em <a href="#administracao">Administração &gt; Configurações</a> — cada análise tem um custo real de API, então fica desligada por padrão.</div>
         <p>Clique em <b>Registrar ata</b> para gerar o protocolo.</p>
         <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
       </section>
@@ -378,7 +380,7 @@ body.auth-ready{padding-top:34px}
         <ul>
           <li><b>Usuários</b> — lista quem já fez login, com nome, telefone (editável direto na lista) e um seletor para alterar o papel.</li>
           <li><b>Equipes</b> — define quem faz parte da equipe de cada projeto (base da <a href="#equipe">restrição por equipe</a>).</li>
-          <li><b>Configurações</b> — controla os dois interruptores de <a href="#sem-login">acesso sem login</a> e quais papéis podem ver o Painel Executivo, o Relatório de Situação e o Relatório de Entregas.</li>
+          <li><b>Configurações</b> — controla os dois interruptores de <a href="#sem-login">acesso sem login</a>, quais papéis podem ver o Painel Executivo/Relatório de Situação/Relatório de Entregas, e o interruptor + papéis permitidos da <a href="#passo-6">importação de transcrição por IA</a> na Ata de Reunião.</li>
         </ul>
         <p class="lead">Pré-cadastro de usuário (antes do primeiro login)</p>
         <p>No topo da aba Usuários, o Admin pode preencher nome, telefone (opcional), e-mail e papel e clicar em <b>+ Adicionar usuário</b> para cadastrar alguém que ainda não fez login. Essa pessoa aparece na lista com o selo <b>Pendente — 1º login</b>, e o Admin ainda pode ajustar telefone/papel ou remover o pré-cadastro a qualquer momento.</p>

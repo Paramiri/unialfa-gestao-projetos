@@ -1,4 +1,4 @@
-<!-- Ata de Reunião — FORALF00340 / UNIALFA — com integração Read AI -->
+<!-- Ata de Reunião — FORALF00340 / UNIALFA — com importação de transcrição por IA (Claude) -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -565,15 +565,15 @@ window.unialfaHistorico = {
       <div class="doc-logo">UNIALFA<small>GRUPO JOSÉ ALVES</small></div>
       <div class="doc-title">
         <h1>Ata de Reunião para Projetos</h1>
-        <p>Registro de reuniões · Escritório de Projetos · Integração Read AI</p>
+        <p>Registro de reuniões · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=5#passo-6" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=6#passo-6" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00340</b></div>
       <div><span>Revisão</span><b>00</b></div>
       <div><span>Homologação</span><b>07/05/2026</b></div>
-      <div class="hide-sm"><span>IA</span><b>Read AI + Claude</b></div>
+      <div class="hide-sm"><span>IA</span><b>Análise de transcrição</b></div>
     </div>
   </div>
 
@@ -595,16 +595,16 @@ window.unialfaHistorico = {
     </div>
 
     <!-- AI panel -->
-    <div class="card">
-      <div class="section-h"><div class="n ai">✦</div><h2>Preencher com Read AI</h2><p>Busca a transcrição e preenche a ata automaticamente</p></div>
+    <div class="card" id="cardImportarIA" style="display:none">
+      <div class="section-h"><div class="n ai">✦</div><h2>Importar transcrição da reunião</h2><p>Analisa o texto e preenche a ata automaticamente</p></div>
       <div class="ai-panel">
-        <div class="ai-row">
-          <div class="field">
-            <label>Título ou trecho do nome da reunião no Read AI</label>
-            <div class="hint">Ex: "Reunião de planejamento UNIALFA" — qualquer palavra que identifique a reunião</div>
-            <input id="aiQuery" type="text" placeholder="Nome da reunião gravada no Read AI">
-          </div>
-          <button class="btn-ai" id="btnAI" onclick="fetchReadAI()">✦ Buscar e preencher</button>
+        <div class="field">
+          <label>Cole aqui a transcrição da reunião</label>
+          <div class="hint">A IA identifica pauta, data/horário (se mencionados), participantes, um resumo dos pontos discutidos, encaminhamentos e entraves — sempre para você revisar e completar antes de salvar.</div>
+          <textarea id="transcricaoInput" rows="8" placeholder="Cole o texto completo da transcrição aqui…" style="width:100%;font-family:var(--font);font-size:13px;padding:10px 12px;border:1px solid var(--line-strong,#D1D5DB);border-radius:8px;resize:vertical"></textarea>
+        </div>
+        <div class="ai-row" style="margin-top:10px;justify-content:flex-end">
+          <button class="btn-ai" id="btnAnalisarIA" onclick="analisarTranscricao()">✦ Analisar e preencher</button>
         </div>
         <div class="ai-status" id="aiStatus" style="display:none"></div>
         <div class="ai-filled" id="aiFilled"></div>
@@ -877,54 +877,40 @@ function roTable(name,rows){
   h+='</tbody></table></div></dd>'; return h;
 }
 
-/* ---------- Read AI integration ---------- */
-async function fetchReadAI(){
-  const query=(document.getElementById('aiQuery').value||'').trim();
-  if(!query){toast('Digite o nome da reunião antes de buscar',false);return;}
-  const btn=document.getElementById('btnAI');
+/* ---------- Importação de transcrição por IA ---------- */
+async function transcricaoImportPermitida(){
+  try{
+    const r = await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=in.(permitir_importar_transcricao_ata,papeis_importar_transcricao_ata)&select=chave,valor', { headers: unialfaAuth.authHeaders() });
+    const rows = r.ok ? await r.json() : [];
+    const habilitado = rows.find(x=>x.chave==='permitir_importar_transcricao_ata')?.valor===true;
+    if(!habilitado) return false;
+    if(window.currentProfile && window.currentProfile.papel==='admin') return true;
+    const papeis = rows.find(x=>x.chave==='papeis_importar_transcricao_ata')?.valor;
+    return window.currentProfile ? (Array.isArray(papeis) && papeis.includes(window.currentProfile.papel)) : false;
+  }catch(e){ return false; }
+}
+
+async function analisarTranscricao(){
+  const transcricao=(document.getElementById('transcricaoInput').value||'').trim();
+  if(!transcricao){toast('Cole o texto da transcrição antes de analisar',false);return;}
+  const btn=document.getElementById('btnAnalisarIA');
   btn.disabled=true;
-  setAIStatus('loading','Buscando reunião no Read AI…');
+  setAIStatus('loading','Analisando a transcrição…');
   document.getElementById('aiFilled').classList.remove('show');
 
-  const SYSTEM=`Você é um assistente que preenche atas de reunião.
-Use a ferramenta do Read AI para buscar reuniões. Quando encontrar a reunião pedida, extraia:
-- titulo: título da reunião
-- data: data no formato YYYY-MM-DD
-- horaIni: horário de início HH:MM
-- horaFim: horário de encerramento HH:MM
-- participantes: array de objetos {nome, depto} — use o cargo/empresa como depto quando disponível
-- descricao: resumo executivo dos pontos discutidos em português (3-6 parágrafos)
-- encaminhamentos: array de objetos {seq, encam, resp, prazo} — prazo em YYYY-MM-DD se mencionado
-- entraves: array de objetos {seq, entrave}
-
-Responda APENAS com JSON válido, sem markdown, sem texto extra.
-Formato: {"titulo":"...","data":"...","horaIni":"...","horaFim":"...","participantes":[...],"descricao":"...","encaminhamentos":[...],"entraves":[...]}
-Se não encontrar a reunião, retorne: {"erro":"Reunião não encontrada"}`;
-
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:1000,
-        system:SYSTEM,
-        messages:[{role:'user',content:`Busque no Read AI a reunião: "${query}". Extraia todos os dados e retorne o JSON.`}],
-        mcp_servers:[{type:'url',url:'https://api.read.ai/mcp',name:'read-ai'}]
-      })
+    const resp=await fetch(unialfaAuth.REST_BASE.replace('/rest/v1','/functions/v1') + '/analisar-transcricao-ata', {
+      method:'POST', headers: unialfaAuth.authHeaders(),
+      body: JSON.stringify({ transcricao })
     });
     const data=await resp.json();
-    const text=data.content?.filter(b=>b.type==='text').map(b=>b.text).join('') || '';
-    const clean=text.replace(/```json|```/g,'').trim();
-    const parsed=JSON.parse(clean);
-
-    if(parsed.erro){
-      setAIStatus('err','⚠ '+parsed.erro);
+    if(!resp.ok || data.error){
+      setAIStatus('err','⚠ '+(data.error||'Não foi possível analisar a transcrição'));
       btn.disabled=false; return;
     }
 
-    /* preenche os campos */
-    if(parsed.titulo) document.getElementById('pauta').value=parsed.titulo;
+    const parsed=data.dados||{};
+    if(parsed.pauta) document.getElementById('pauta').value=parsed.pauta;
     if(parsed.data) document.getElementById('data').value=parsed.data;
     if(parsed.horaIni) document.getElementById('horaIni').value=parsed.horaIni;
     if(parsed.horaFim) document.getElementById('horaFim').value=parsed.horaFim;
@@ -939,12 +925,12 @@ Se não encontrar a reunião, retorne: {"erro":"Reunião não encontrada"}`;
     const msg=`✓ Ata preenchida — ${parts} participante${parts!==1?'s':''}, ${enc} encaminhamento${enc!==1?'s':''}, ${entr} entrave${entr!==1?'s':''}. Revise e ajuste antes de registrar.`;
     setAIStatus('ok', msg);
     const filled=document.getElementById('aiFilled');
-    filled.textContent='Campos preenchidos automaticamente a partir da transcrição do Read AI. Revise todos os dados antes de salvar — a IA pode cometer erros.';
+    filled.textContent='Campos preenchidos automaticamente a partir da transcrição. Revise todos os dados antes de salvar — a IA pode cometer erros.';
     filled.classList.add('show');
-    toast('Ata preenchida pelo Read AI',true);
+    toast('Ata preenchida a partir da transcrição',true);
   }catch(e){
     console.error(e);
-    setAIStatus('err','Erro ao conectar com Read AI. Verifique se o conector está ativo em Settings → Connectors.');
+    setAIStatus('err','Falha ao conectar com o serviço de análise. Tente novamente.');
   }
   btn.disabled=false;
 }
@@ -1057,7 +1043,7 @@ function clearForm(){
   document.querySelectorAll('#unid-grid input').forEach(cb=>{cb.checked=false;cb.closest('.unid-opt').classList.remove('checked');});
   ['part','saidas','entraves'].forEach(clearTable);
   document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
-  document.getElementById('aiQuery').value='';
+  const transcInput=document.getElementById('transcricaoInput'); if(transcInput) transcInput.value='';
   document.getElementById('aiStatus').style.display='none';
   document.getElementById('aiFilled').classList.remove('show');
   document.getElementById('projetoSelect').value=''; projetoSelecionadoId='';
@@ -1169,5 +1155,10 @@ function exportCSV(){
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
 mountTable('part'); mountTable('saidas'); mountTable('entraves');
-(async()=>{ await verificarConfigSemLogin(); await ensureAuthenticated(); await loadAll(); renderList(); await carregarProjetosAprovados(); })();
+(async()=>{
+  await verificarConfigSemLogin();
+  await ensureAuthenticated();
+  if(await transcricaoImportPermitida()) document.getElementById('cardImportarIA').style.display='block';
+  await loadAll(); renderList(); await carregarProjetosAprovados();
+})();
 </script>
