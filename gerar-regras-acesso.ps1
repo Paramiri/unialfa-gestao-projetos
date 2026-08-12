@@ -157,6 +157,7 @@ Bul "Pactuar ou reabrir o Gate 2 no Relatorio de Entregas e Beneficios (ver seca
 Bul "Pre-cadastrar uma pessoa que ainda nao fez login, informando nome, telefone, e-mail e papel (ver 3.2)."
 Bul "Remover da lista um usuario que nunca teve nenhuma relacao com projetos nem registros no sistema (ver 3.3)."
 Bul "Ligar/desligar a importacao de transcricao por IA na Ata de Reuniao e definir quais papeis podem usa-la (ver 3.5)."
+Bul "Ligar/desligar, separadamente, a importacao de audio (gravacao da reuniao) por IA na Ata de Reuniao e definir quais papeis podem usa-la (ver 3.6)."
 P "Importante: um Admin sempre e considerado `"membro`" de qualquer equipe de projeto automaticamente - nao precisa ser adicionado manualmente para poder editar registros vinculados a um projeto (ver secao 5)."
 
 H2 "3.2 Pre-cadastro de usuario (antes do primeiro login)"
@@ -189,6 +190,13 @@ Bul "Existe um interruptor geral em Administracao > Configuracoes, desligado por
 Bul "Com o interruptor ligado, uma lista de papeis (podendo marcar mais de um) define quem pode usar a importacao - Admin sempre tem acesso quando o interruptor esta ligado, mesmo sem estar marcado na lista."
 Bul "Quem nao tem permissao simplesmente nao ve a opcao de importar transcricao no formulario."
 P "A Edge Function que processa a transcricao confere essa mesma regra direto no banco de dados antes de chamar a IA - nao basta esconder o botao na tela, a chamada e recusada no servidor para quem nao tem permissao, mesmo que tentada por fora da interface."
+
+H2 "3.6 Importacao de audio por IA (Ata de Reuniao)"
+P "Alem de colar/anexar a transcricao em texto (secao 3.5), a Ata de Reuniao pode transcrever a gravacao de audio da reuniao (.mp3, .m4a, .wav, .ogg e outros formatos comuns) usando um segundo servico de IA (OpenAI, tambem via uma Supabase Edge Function separada, com sua propria chave guardada no servidor). O audio e dividido automaticamente em pedacos de alguns minutos no proprio navegador antes do envio, por causa de limites tecnicos da API de transcricao - o usuario nao precisa fazer nada manualmente para isso."
+Bul "Regra de acesso INDEPENDENTE da importacao de transcricao em texto (secao 3.5): interruptor proprio em Administracao > Configuracoes, desligado por padrao, valendo para todo mundo sem excecao, inclusive Admin."
+Bul "Com o interruptor de audio ligado, uma lista de papeis propria (podendo marcar mais de um) define quem pode usar a importacao de audio - Admin sempre tem acesso quando ligado, mesmo sem estar marcado na lista."
+Bul "Na pratica, importar audio so faz sentido para quem tambem pode rodar a analise da transcricao (secao 3.5) - por isso a opcao de anexar audio so aparece para quem tem as duas permissoes ativas ao mesmo tempo."
+P "Assim como a importacao de texto, a Edge Function que processa o audio confere a permissao direto no banco antes de chamar a IA, nao so a interface."
 
 HR
 

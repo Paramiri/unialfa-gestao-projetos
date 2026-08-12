@@ -134,7 +134,7 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         model: "claude-sonnet-5",
-        max_tokens: 2000,
+        max_tokens: 8000,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: `Transcrição da reunião:\n\n${transcricao}` }],
       }),
@@ -147,12 +147,25 @@ Deno.serve(async (req: Request) => {
     }
 
     const data = await resp.json();
+
+    if (data.stop_reason === "max_tokens") {
+      console.error("Resposta da IA cortada por atingir o limite de tokens.");
+      return json({ error: "A transcrição é longa demais para ser analisada de uma vez — tente dividir em partes menores" }, 502);
+    }
+
     const text = (data.content || [])
       .filter((b: any) => b.type === "text")
       .map((b: any) => b.text)
       .join("");
     const clean = text.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(clean);
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(clean);
+    } catch (parseErr) {
+      console.error("Resposta da IA nao era JSON valido:", clean.slice(0, 500));
+      return json({ error: "A IA não conseguiu estruturar os dados dessa transcrição — tente novamente" }, 502);
+    }
 
     return json({ ok: true, dados: parsed });
   } catch (e) {

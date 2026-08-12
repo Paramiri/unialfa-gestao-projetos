@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.18 - 12 de agosto de 2026 (substitui a versao 2.17 de 12/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.19 - 12 de agosto de 2026 (substitui a versao 2.18 de 12/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -269,6 +269,7 @@ P "Esta e a versao 2.15 do manual. Em relacao a versao 2.14 (10/08/2026), foi ad
 P "Esta e a versao 2.16 do manual. Em relacao a versao 2.15 (10/08/2026), foi adicionada a restricao de acesso por papel ao Painel Executivo, ao Relatorio de Situacao e ao Relatorio de Entregas (secao 6.3 e 3.4 das Regras de Acesso): o Admin marca, por caixas de selecao, quais papeis podem ver cada uma dessas tres paginas, podendo marcar mais de um papel por pagina."
 P "Esta e a versao 2.17 do manual. Em relacao a versao 2.16 (11/08/2026), foi adicionada a importacao de transcricao por IA na Ata de Reuniao (secao 2.10, Passo 6 e 6.3 - substitui o antigo painel `Preencher com Read AI`, que nunca funcionou em producao): o usuario cola a transcricao de uma reuniao e a IA sugere pauta, participantes, resumo, encaminhamentos e entraves para revisao, com interruptor geral e lista de papeis permitidos configuraveis pelo Admin."
 P "Esta e a versao 2.18 do manual. Em relacao a versao 2.17 (12/08/2026), a importacao de transcricao por IA (secao 2.10) passou a aceitar tambem arquivo `.txt`, `.docx` ou `.pdf` anexado, alem de colar o texto diretamente - o sistema extrai o texto do arquivo automaticamente para revisao antes de analisar."
+P "Esta e a versao 2.19 do manual. Em relacao a versao 2.18 (12/08/2026), foi adicionada a importacao de audio por IA na Ata de Reuniao (secao 2.11): alem de colar/anexar a transcricao em texto, o usuario pode anexar a propria gravacao da reuniao (.mp3, .m4a, .wav, .ogg...), dividida e transcrita automaticamente em pedacos pelo sistema - com interruptor geral e lista de papeis permitidos proprios, independentes dos da importacao por texto, configuraveis pelo Admin (secao 6.3)."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -396,6 +397,14 @@ P "Diferente do envio de e-mail e do push (secoes 2.8 e 2.9), essa funcionalidad
 Bul "Liga ou desliga a importacao para o sistema inteiro - desligada, ninguem tem acesso ao painel, nem o proprio Admin."
 Bul "Com a importacao ligada, marca quais papeis podem usa-la (pode marcar mais de um) - PMO/Admin sempre tem acesso quando a importacao esta ligada, mesmo sem estar marcado na lista."
 Nota "Quem nao tem permissao simplesmente nao ve o painel `Importar transcricao da reuniao` na Ata - nao ha mensagem de erro, o painel so aparece para quem pode usa-lo."
+
+H2 "2.11 Importacao de audio por IA (Ata de Reuniao)"
+P "Alem de colar/anexar a transcricao em texto, a Ata de Reuniao pode transcrever a propria gravacao da reuniao: no painel `Importar transcricao da reuniao`, o botao `Anexar audio` aceita `.mp3`, `.m4a`, `.wav`, `.ogg` e outros formatos comuns. O sistema divide o audio automaticamente em pedacos de cerca de 8 minutos direto no navegador (por causa de um limite tecnico da API de transcricao) e transcreve cada pedaco por IA (OpenAI, via uma segunda Supabase Edge Function; a chave fica guardada no servidor, igual a da Claude). O texto de cada pedaco vai sendo concatenado na caixa de transcricao, junto com uma lista de progresso (`Parte 1 de N`, `Parte 2 de N`...) - reunioes longas podem levar alguns minutos para processar."
+Bul "Se algum pedaco falhar (ex.: instabilidade de rede), aparece um botao `Tentar novamente` especifico para aquele pedaco - os pedacos ja transcritos com sucesso nao precisam ser refeitos."
+Bul "Depois de transcrito, o texto fica disponivel na mesma caixa da importacao por texto, para revisar e so entao clicar em `Analisar e preencher` normalmente."
+P "A importacao de audio tem uma regra de habilitacao SEPARADA da importacao de texto (secao 2.10) - dois interruptores independentes em Administracao > Configuracoes (secao 6.3), cada um desligado por padrao. Na pratica, o botao `Anexar audio` so aparece para quem tem as duas permissoes ativas ao mesmo tempo (importar transcricao E importar audio), ja que o audio so serve para gerar o texto que depois passa pela mesma analise."
+Nota "PDFs e audio muito longos consomem mais tempo de processamento; nao ha limite de duracao da reuniao em si, mas o navegador precisa decodificar o arquivo inteiro antes de dividir em pedacos - arquivos muito grandes (varias horas) podem demorar mais para começar a transcrever."
+
 # ============================================================
 H1 "3. Passo a passo do fluxo de um projeto"
 P "Esta secao percorre os 12 formularios de registro na ordem em que normalmente sao usados ao longo da vida de um projeto. Os Passos 1 a 5 e 8 a 9 seguem a esteira sequencial do projeto; os Passos 6, 7 e 10 sao de uso recorrente ou condicional; os relatorios finais (Passos 11 e 12) sao detalhados na secao 4."
@@ -500,7 +509,7 @@ P "Quando usar: a qualquer momento do projeto, para registrar formalmente qualqu
 Img "25_f07_novo.png" "Tela de nova ata, com o painel `Importar transcricao da reuniao` para preenchimento automatico por IA." 5.6
 Img "26_f07_lista.png" "Atas cadastradas (estado vazio)." 5.6
 Bul "Selecione a(s) unidade(s) envolvidas, preencha Pauta e Projeto (obrigatorios), participantes, resumo, encaminhamentos e entraves."
-Bul "Opcional, quando habilitado pelo Admin: em `Importar transcricao da reuniao`, cole o texto ou anexe um arquivo `.txt`/`.docx`/`.pdf`, depois clique em `Analisar e preencher` - a IA sugere pauta, data/horario (se mencionados), participantes, resumo, encaminhamentos e entraves. Revise sempre os dados sugeridos antes de registrar (secao 2.10)."
+Bul "Opcional, quando habilitado pelo Admin: em `Importar transcricao da reuniao`, cole o texto, anexe um arquivo `.txt`/`.docx`/`.pdf`, ou anexe o audio da gravacao (`.mp3`/`.m4a`/`.wav`/`.ogg`) para transcricao automatica (secao 2.11), depois clique em `Analisar e preencher` - a IA sugere pauta, data/horario (se mencionados), participantes, resumo, encaminhamentos e entraves. Revise sempre os dados sugeridos antes de registrar (secao 2.10)."
 P "Clique em `Registrar ata` para gerar o protocolo."
 
 H2 "Passo 7 - SMP, Solicitacao de Mudanca de Projeto (FORALF00343) - uso condicional"
@@ -621,7 +630,7 @@ P "Controla os dois interruptores de acesso sem login (Solicitacao de Demanda e 
 Img "11_admin_config.png" "Aba Configuracoes: os dois interruptores de acesso sem login, hoje desativados." 5.8
 P "Logo abaixo, tres grupos de caixas de selecao controlam quem pode ver o Painel Executivo, o Relatorio de Situacao de Projetos e o Relatorio de Entregas e Beneficios: o Admin marca um ou mais papeis por pagina, e quem tiver um papel fora da lista marcada ve `Acesso restrito` ao tentar abrir aquela pagina. Por padrao, o Painel Executivo comeca marcado so para Admin (mesmo comportamento de antes), e os dois relatorios comecam com todos os papeis marcados (acesso livre, tambem o comportamento de antes) - a restricao so entra em vigor se o Admin desmarcar algum papel."
 Nota "O papel Admin sempre tem acesso as tres paginas, mesmo que fique desmarcado por engano - isso evita que o proprio Admin perca o acesso e fique sem como reverter a configuracao."
-P "Por ultimo, um interruptor liga/desliga a importacao de transcricao por IA na Ata de Reuniao (secao 2.10) - desligado por padrao, ja que cada analise tem custo real de API. Diferente dos tres grupos de papel acima, esse interruptor vale para todo mundo sem excecao, inclusive Admin: desligado, ninguem ve o painel de importar transcricao. Ligado, o grupo de papeis logo abaixo controla quem pode usar, com Admin sempre incluido."
+P "Por ultimo, dois interruptores independentes controlam a importacao por IA na Ata de Reuniao - cada um desligado por padrao, ja que cada uso tem custo real de API, e cada um vale para todo mundo sem excecao, inclusive Admin: um para a importacao de transcricao em texto (secao 2.10) e outro, separado, para a importacao de audio (secao 2.11). Cada interruptor tem seu proprio grupo de papeis logo abaixo, com Admin sempre incluido quando ligado. Como a importacao de audio so serve para gerar o texto que passa pela mesma analise, o botao `Anexar audio` na Ata so aparece para quem tem as duas permissoes ativas ao mesmo tempo."
 H2 "6.4 Painel Executivo"
 P "Agrega em tempo real dados de todos os 10 formularios de registro e dos 2 relatorios - sem exigir nenhuma mudanca no banco de dados, apenas consultando o que ja esta salvo. Pensada para dar ao PMO uma visao geral do sistema inteiro em uma unica tela, sem precisar abrir cada formulario individualmente. Por padrao so o Admin ve esta pagina, mas isso pode ser ampliado para outros papeis em Administracao > Configuracoes (secao 6.3)."
 Bul "Gates de aprovacao: contagem de Solicitacoes de Demanda por status (Gate 1) e o status atual do Relatorio de Entregas (Gate 2 - Pactuacao)."
