@@ -611,8 +611,8 @@ window.unialfaHistorico = {
           <div id="blocoAudioIA" style="display:none; margin:0 0 12px; padding-top:10px; border-top:1px dashed var(--line-strong,#D1D5DB)">
             <div style="display:flex; align-items:center; gap:10px">
               <label class="btn btn-ghost btn-sm" style="cursor:pointer; margin:0">
-                🎤 Anexar áudio (.mp3, .m4a, .wav, .ogg…)
-                <input type="file" id="audioArquivo" accept="audio/*,.mp3,.m4a,.wav,.ogg,.webm,.flac" style="display:none" onchange="lerAudioTranscricao(this.files[0])">
+                🎤 Anexar áudio (.mp3, .m4a, .aac, .wav, .ogg…)
+                <input type="file" id="audioArquivo" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.webm,.flac" style="display:none" onchange="lerAudioTranscricao(this.files[0])">
               </label>
               <span id="audioArquivoStatus" style="font-size:12px; color:var(--muted)"></span>
             </div>
@@ -1027,7 +1027,7 @@ async function enviarPedacoAudio(blob, indice, total){
     method:'POST', headers, body: form
   });
   const data=await resp.json();
-  if(!resp.ok || data.error) throw new Error((data.error||'Falha ao transcrever a parte '+(indice+1))+(data.debug?(' ['+data.debug+']'):''));
+  if(!resp.ok || data.error) throw new Error(data.error||'Falha ao transcrever a parte '+(indice+1));
   return data.texto||'';
 }
 
@@ -1057,7 +1057,7 @@ async function processarPartesAudio(){
     }catch(e){
       console.error(e);
       renderAudioProgresso(audioPartesAtuais, audioResultadosAtuais, i);
-      statusEl.textContent='⚠ Falha ao transcrever a parte '+(i+1)+' de '+audioPartesAtuais.length+' — '+(e&&e.message?e.message:'');
+      statusEl.textContent='⚠ Falha ao transcrever a parte '+(i+1)+' de '+audioPartesAtuais.length;
       document.getElementById('audioArquivo').disabled=false;
       return;
     }
