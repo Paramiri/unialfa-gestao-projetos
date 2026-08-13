@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.20 - 13 de agosto de 2026 (substitui a versao 2.19 de 12/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.21 - 13 de agosto de 2026 (substitui a versao 2.20 de 13/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -271,6 +271,7 @@ P "Esta e a versao 2.17 do manual. Em relacao a versao 2.16 (11/08/2026), foi ad
 P "Esta e a versao 2.18 do manual. Em relacao a versao 2.17 (12/08/2026), a importacao de transcricao por IA (secao 2.10) passou a aceitar tambem arquivo `.txt`, `.docx` ou `.pdf` anexado, alem de colar o texto diretamente - o sistema extrai o texto do arquivo automaticamente para revisao antes de analisar."
 P "Esta e a versao 2.19 do manual. Em relacao a versao 2.18 (12/08/2026), foi adicionada a importacao de audio por IA na Ata de Reuniao (secao 2.11): alem de colar/anexar a transcricao em texto, o usuario pode anexar a propria gravacao da reuniao (.mp3, .m4a, .aac, .wav, .ogg...), dividida e transcrita automaticamente em pedacos pelo sistema - com interruptor geral e lista de papeis permitidos proprios, independentes dos da importacao por texto, configuraveis pelo Admin (secao 6.3)."
 P "Esta e a versao 2.20 do manual. Em relacao a versao 2.19 (12/08/2026), os antigos botoes `Exportar CSV` e `Imprimir` da Ata de Reuniao (Passo 6), que agiam sobre a lista inteira e nao geravam um documento util, foram substituidos por `Imprimir` e `Exportar Word` no painel de uma ata especifica: ambos geram o documento no formato oficial do FORALF00340 (cabecalho, unidade, pauta, participantes, descricao, saidas e entraves)."
+P "Esta e a versao 2.21 do manual. Em relacao a versao 2.20 (13/08/2026), o mesmo ajuste foi estendido aos demais formularios que ainda tinham os antigos botoes `Exportar CSV` e `Imprimir` sem funcionalidade real: Solicitacao de Demanda (Passo 1), Canvas de Projeto (Passo 2), TAP (Passo 3), Planejamento e Desenvolvimento (Passo 4), EAP (Passo 5), SMP (Passo 7), TEP (Passo 8), RLA (Passo 9), Relatorio de Situacao (secao 4.1) e Relatorio de Entregas e Beneficios (secao 4.2). Em todos, `Imprimir` e `Exportar Word` agora geram o documento no formato oficial do respectivo FORALF (ou, no caso da EAP, um layout padrao do sistema, ja que este artefato nao tem FORALF proprio)."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -325,7 +326,7 @@ H2 "2.2 Convencoes usadas neste manual"
 Bul "Campos marcados com asterisco (*) nos formularios sao obrigatorios. O sistema nao deixa registrar enquanto algum campo obrigatorio estiver vazio - ele destaca o campo em vermelho e rola a tela ate ele."
 Bul "Ao salvar, cada formulario gera um numero de protocolo automatico no formato CODIGO-ANO-SEQUENCIAL (ex.: FORALF00339-2026-001). Guarde esse numero para localizar o registro depois."
 Bul "Todo registro tem um status (ex.: Pendente de aprovacao, Aprovado, Reprovado), alteravel a partir da tela de consulta - em alguns formularios, so o Admin pode altera-lo (ver secao 2.4)."
-Bul "A tela de consulta de cada formulario tem um campo de busca, exportacao para CSV e opcao de impressao."
+Bul "A tela de consulta de cada formulario tem um campo de busca. Ao abrir um registro especifico, o rodape do painel lateral traz os botoes `Imprimir` e `Exportar Word`, que geram o documento no formato oficial do respectivo FORALF, pronto para impressao ou para abrir no Word."
 
 H2 "2.3 Papeis de usuario e o que cada um pode fazer"
 P "Cada pessoa que faz login recebe um papel, usado para liberar ou restringir acoes especificas no sistema. Papeis sao atribuidos e alterados por um Admin, em Administracao > Usuarios."
@@ -432,6 +433,7 @@ Img "13_f01_lista.png" "Demandas cadastradas, com protocolo, projeto, prazo e st
 Exemplo "`Automatizacao de servicos` - solicitante Hudson Lucas Aleixo, unidade Relacionamento, justificativa: reduzir o tempo de espera dos alunos e desafogar o atendimento presencial/manual da secretaria, oferecendo disponibilidade 24/7 para solicitacoes basicas."
 P "Como salvar: clique em `Registrar solicitacao`. O sistema gera o protocolo e leva voce para `Demandas cadastradas`. Clique em qualquer linha da tabela para abrir o registro e revisar os dados. Ao salvar, todos os Admins recebem um aviso automatico (e-mail e, se ativado, push) de que ha um Gate 1 pendente de analise (secao 2.8)."
 Nota "E neste ponto que ocorre o Gate 1 - Triagem: so um Admin pode mudar o status para Aprovada ou Reprovada (secao 2.4). So avance para o Passo 2 depois que o status estiver Aprovada. Essa mudanca de status dispara um e-mail de notificacao (secao 2.8)."
+Bul "No rodape do painel de detalhes de uma demanda, os botoes `Imprimir` e `Exportar Word` geram o documento no formato oficial do FORALF00339, pronto para impressao ou para abrir no Word."
 
 H2 "Passo 2 - Canvas de Projeto (FORALF00344)"
 P "Quando usar: assim que a demanda for aprovada. O Canvas e o primeiro documento estruturado do projeto - reune, em uma unica tela, a motivacao, o produto, os parceiros, as entregas, os riscos e os custos. Exige selecionar um `Projeto vinculado` ja Aprovado no Gate 1, e so membros da equipe daquele projeto (ou Admin) podem registrar (secao 2.5)."
@@ -452,6 +454,7 @@ TableSimple $r2 @(5.0,1.8,9.2)
 Img "15_f02_novo.png" "Tela de novo Canvas, com o seletor de Projeto vinculado no topo." 5.6
 Img "16_f02_lista.png" "Canvas cadastrados." 5.6
 P "Como salvar: clique em `Registrar canvas`. O status inicial e Pendente de aprovacao; altere para Aprovado ao validar o Canvas com o Dono do Negocio e o Gerente de Projetos. Ao marcar Aprovado, um e-mail de notificacao e disparado automaticamente (secao 2.8)."
+Bul "No rodape do painel de detalhes de um canvas, os botoes `Imprimir` e `Exportar Word` geram o documento no formato oficial do FORALF00344, pronto para impressao ou para abrir no Word."
 
 H2 "Passo 3 - TAP, Termo de Abertura de Projeto (FORALF00338)"
 P "Quando usar: depois do Canvas aprovado, para autorizar formalmente a existencia do projeto. Tambem exige `Projeto vinculado` e segue a restricao por equipe (secao 2.5) - a figura da secao 2.5 mostra este formulario com um projeto ja selecionado."
@@ -475,6 +478,7 @@ P "Sugestoes de riscos recorrentes: ao selecionar um Projeto vinculado, o formul
 Img "37_f03_riscos.png" "Registro de riscos preenchido, com selos de status coloridos e a caixa de sugestoes de riscos recorrentes vindas das atas do projeto." 5.6
 Img "18_f03_lista.png" "TAPs cadastrados." 5.6
 P "Como salvar: clique em `Registrar TAP`. Um projeto sem TAP aprovado nao deve avancar para a execucao. Ao marcar Aprovado, um e-mail de notificacao e disparado automaticamente (secao 2.8)."
+Bul "No rodape do painel de detalhes de um TAP, os botoes `Imprimir` e `Exportar Word` geram o documento no formato oficial do FORALF00338 (incluindo o registro de riscos e as tabelas de cronograma, custos, partes interessadas, equipe e indicadores), pronto para impressao ou para abrir no Word."
 
 H2 "Passo 4 - Planejamento e Desenvolvimento de Projeto (FORALF00325)"
 P "Quando usar: logo apos o TAP, para detalhar o projeto em profundidade. E o dossie mais extenso da ferramenta, organizado em 8 abas internas, navegaveis pela barra de estagios no topo."
@@ -493,6 +497,7 @@ TableSimple $r4 @(3.0,13.0)
 Img "19_f04_novo.png" "Capa de identificacao do dossie, com a barra das 8 abas no rodape visivel." 5.6
 Img "20_f04_lista.png" "Projetos cadastrados (estado vazio, antes do primeiro dossie ser salvo)." 5.6
 P "Como salvar: preencha a capa (nome do projeto, unidade e gestor sao obrigatorios) e navegue pelas 8 abas. Clique em `Registrar dossie`. E este documento que alimenta, junto com o Canvas, a elaboracao do Relatorio de Entregas e Beneficios (Passo 12)."
+Bul "No rodape do painel de detalhes de um dossie, os botoes `Imprimir` e `Exportar Word` geram o documento no formato oficial do FORALF00325, com as 8 abas em sequencia, pronto para impressao ou para abrir no Word."
 
 H2 "Passo 5 - EAP, Estrutura Analitica do Projeto"
 P "Quando usar: em paralelo ao planejamento, para decompor visualmente o escopo em pacotes de trabalho."
@@ -504,6 +509,7 @@ Bul "Clique em `Visualizar arvore` a qualquer momento para conferir o diagrama a
 Bul "Cada Atividade (nivel 3) pode receber, de forma opcional, uma prioridade: `P0 - Critica`, `P1 - Alta` ou `P2 - Normal` (ou nenhuma), exibida como selo colorido no construtor, na `Visualizar arvore` e no painel de detalhes. Serve para repriorizar o trabalho no dia a dia sem precisar abrir uma SMP - Solicitacao de Mudanca de Projeto (Passo 7). EAPs que ja existiam sem prioridade definida continuam funcionando normalmente."
 Img "39_f05_prioridade.png" "Atividades de nivel 3 com os tres niveis de prioridade (P0, P1 e P2), exibidos como selo colorido ao lado de cada atividade." 5.6
 P "Clique em `Registrar EAP` para gerar o protocolo."
+Bul "No rodape do painel de detalhes de uma EAP, os botoes `Imprimir` e `Exportar Word` geram um documento com a arvore hierarquica completa (pacotes, entregas e atividades, com a prioridade de cada uma), pronto para impressao ou para abrir no Word. Este artefato nao tem um FORALF oficial - o layout segue o padrao visual dos demais documentos gerados pelo sistema."
 
 H2 "Passo 6 - Ata de Reuniao (FORALF00340) - uso recorrente"
 P "Quando usar: a qualquer momento do projeto, para registrar formalmente qualquer reuniao - nao faz parte da esteira sequencial, fica sempre disponivel. Pode ser preenchida com login normal ou, se a opcao estiver ativa, sem login (ver secao 2.6)."
@@ -522,6 +528,7 @@ Bul "Identifique o projeto e a mudanca (titulo e solicitante sao obrigatorios); 
 Bul "Preencha a analise de impactos nas 8 dimensoes: objetivo, cronograma, escopo, custo, alinhamento estrategico, qualidade, riscos e outros impactos."
 Bul "Marque a decisao: Aprovada, Nao aprovada ou Pendente de avaliacao, com justificativa."
 P "Clique em `Registrar SMP` - o status do registro acompanha automaticamente a decisao marcada."
+Bul "No rodape do painel de detalhes de uma SMP, os botoes `Imprimir` e `Exportar Word` geram o documento no formato oficial do FORALF00343 (incluindo a analise das 8 dimensoes de impacto), pronto para impressao ou para abrir no Word."
 Nota "Propagacao para o projeto vinculado: sempre que a decisao da SMP e finalizada como `Aprovada` ou `Nao aprovada` (seja ao registrar/editar a SMP ou ao trocar o Status na tela de detalhes), o sistema grava automaticamente um evento no historico compartilhado do projeto vinculado (o mesmo historico acessivel pelo botao `Ver historico` em qualquer formulario com `Projeto vinculado` - secao 2.5). Isso torna as decisoes de mudanca visiveis para quem estiver no Canvas, TAP, Planejamento, EAP, TEP ou RLA daquele projeto, sem precisar abrir a SMP. Essa propagacao apenas registra o evento no historico - ela nao altera o Status do projeto usado no Gate 1 (Aprovado/Reprovado). A mesma decisao (Aprovada ou Nao aprovada) tambem dispara um e-mail de notificacao (secao 2.8)."
 
 H2 "Passo 8 - TEP, Termo de Encerramento de Projeto (FORALF00341)"
@@ -532,6 +539,7 @@ Bul "Preencha a identificacao e o programa vinculado, se houver; selecione o tip
 Bul "Se Paralisado ou Cancelado, o campo Justificativa aparece automaticamente."
 Bul "Registre entregas de resultados, atividades encerradas, o link da pasta do projeto e a analise de efetividade."
 P "Clique em `Registrar TEP` para gerar o protocolo. O registro de um novo TEP dispara um e-mail de notificacao (secao 2.8)."
+Bul "No rodape do painel de detalhes de um TEP, os botoes `Imprimir` e `Exportar Word` geram o documento no formato oficial do FORALF00341, pronto para impressao ou para abrir no Word."
 
 H2 "Passo 9 - RLA, Registro de Licoes Aprendidas (FORALF00342)"
 P "Quando usar: junto com o TEP, ao final do projeto (ou tambem em pontos intermediarios), para capturar o aprendizado organizacional."
@@ -540,6 +548,7 @@ Img "31_f10_lista.png" "RLAs cadastrados (estado vazio)." 5.6
 Bul "Responda as perguntas abertas dos blocos Visao geral, Destaques, Desafios e Pos-projeto."
 Bul "Nos blocos de avaliacao estruturada, marque Sim/Nao/Parcial/N-A para cada afirmacao - cada bloco calcula automaticamente um placar percentual."
 P "Clique em `Registrar RLA`. O score global fica salvo junto com o registro."
+Bul "No rodape do painel de detalhes de um RLA, os botoes `Imprimir` e `Exportar Word` geram o documento no formato oficial do FORALF00342 (incluindo os quatro blocos de avaliacao estruturada com o placar de cada um), pronto para impressao ou para abrir no Word."
 
 H2 "Passo 10 - Plano de Comunicacao de Projeto (FORALF00308)"
 P "Quando usar: para planejar o que sera comunicado, a quem e em qual momento do projeto. Diferente da versao 1.0 deste manual, este artefato ja tem uma ferramenta eletronica propria, organizada como uma tabela de referencia (tipo de comunicacao x o que comunicar), com abas Painel (visualizacao) e Editar dados."
@@ -562,14 +571,14 @@ Bul "Adicione cada projeto do portfolio, com status, % execucao, datas e os camp
 Nota "Projeto vinculado (Gate 1) - opcional: cada linha de projeto pode, opcionalmente, ser associada a um Projeto ja Aprovado no Gate 1 (o mesmo cadastro compartilhado usado pelo Canvas, TAP, Planejamento, EAP, SMP, TEP e RLA - secao 2.5). Ao selecionar um projeto na lista, o campo Nome do projeto e preenchido automaticamente (se ainda estiver vazio) e aparece o botao `Ver historico`, que mostra as alteracoes desse projeto vindas de qualquer outro formulario vinculado a ele. Deixar em `Nenhum` mantem o comportamento anterior - o projeto do Relatorio de Situacao continua sendo texto livre, sem vinculo."
 Img "42_f11_projeto_vinculado.png" "Projeto vinculado selecionado, com o nome preenchido automaticamente e o historico compartilhado exibido." 5.6
 Bul "Alternativa mais rapida: use `Importar Project` - o sistema detecta automaticamente as colunas de nome, % concluido, inicio, termino e responsavel."
-Bul "Clique em `Salvar e ver painel`. Use os botoes do rodape para Imprimir ou Exportar CSV."
-Nota "Sinalizacao automatica: a tabela de projetos do Painel ganhou a coluna `Sinalizacao` e o quadro de indicadores ganhou o card `Em risco de atraso`. E um calculo automatico, independente do campo Status manual: compara o % Execucao informado com o % que seria esperado pelo tempo ja decorrido entre o Inicio previsto e o Termino previsto do projeto. Se a defasagem for de 15 pontos percentuais ou mais, aparece `Risco de atraso`; se o Termino previsto ja passou e o projeto nao esta em 100%, aparece `Prazo vencido`. Projetos Concluido, Cancelado ou Paralisado ficam fora desse calculo. O resultado tambem sai no CSV exportado."
+Bul "Clique em `Salvar e ver painel`. No rodape, os botoes `Imprimir` e `Exportar Word` geram o documento no formato oficial do FORALF11 com o retrato completo do portfolio (visao geral dos projetos, entraves e encaminhamentos, resultados alcancados e o resumo de atencao/destaque por programa), pronto para impressao ou para abrir no Word. Se uma versao historica estiver sendo visualizada (Nota abaixo), os dois botoes exportam essa versao, nao a atual."
+Nota "Sinalizacao automatica: a tabela de projetos do Painel ganhou a coluna `Sinalizacao` e o quadro de indicadores ganhou o card `Em risco de atraso`. E um calculo automatico, independente do campo Status manual: compara o % Execucao informado com o % que seria esperado pelo tempo ja decorrido entre o Inicio previsto e o Termino previsto do projeto. Se a defasagem for de 15 pontos percentuais ou mais, aparece `Risco de atraso`; se o Termino previsto ja passou e o projeto nao esta em 100%, aparece `Prazo vencido`. Projetos Concluido, Cancelado ou Paralisado ficam fora desse calculo. O resultado tambem sai no documento exportado."
 Img "38_f11_sinalizacao.png" "Painel com o card `Em risco de atraso` e a coluna Sinalizacao mostrando os selos Risco de atraso e Prazo vencido." 5.6
 Bul "Na aba Editar dados, alem dos projetos, ha dois cartoes independentes: `Entraves` e `Encaminhamentos`. Cada item tem Descricao, Responsavel, Prazo e Status (Aberto / Resolvido / Cancelado)."
-Nota "Gestao de Entraves e Encaminhamentos: entraves sao bloqueios que impedem o avanco do portfolio (ex.: dependencia externa, aprovacao pendente); encaminhamentos sao os proximos passos e decisoes acordadas para desbloquear ou avancar o trabalho. Os dois sao listas simples, independentes dos projetos cadastrados - continuam visiveis no Painel mesmo que nenhum projeto tenha sido informado ainda. No Painel, aparecem lado a lado na secao `Entraves e encaminhamentos`, com o Status de cada item destacado por selo colorido, e tambem saem no CSV exportado."
+Nota "Gestao de Entraves e Encaminhamentos: entraves sao bloqueios que impedem o avanco do portfolio (ex.: dependencia externa, aprovacao pendente); encaminhamentos sao os proximos passos e decisoes acordadas para desbloquear ou avancar o trabalho. Os dois sao listas simples, independentes dos projetos cadastrados - continuam visiveis no Painel mesmo que nenhum projeto tenha sido informado ainda. No Painel, aparecem lado a lado na secao `Entraves e encaminhamentos`, com o Status de cada item destacado por selo colorido, e tambem saem no documento exportado."
 Img "41_f11_entraves_encaminhamentos.png" "Secao Entraves e encaminhamentos no Painel, com itens Aberto e Resolvido lado a lado." 5.6
 Bul "Ainda em Editar dados, o cartao `Resultados alcancados` registra o desempenho real do portfolio: Descricao, Tipo (Indicador / Entrega / Beneficio), Planejado e Alcancado."
-Nota "Reporte de Resultados (D06.5): este cartao e a base do momento em que o Gerente de Projetos e o Dono do Negocio apresentam as instancias de decisao no que o projeto foi alcancado - nao so o que foi planejado, mas indicadores, entregas e beneficios de fato realizados, lado a lado com a meta original. E uma lista simples, independente dos projetos cadastrados, com o mesmo comportamento de Entraves e Encaminhamentos: continua visivel no Painel mesmo sem nenhum projeto informado, e sai no CSV exportado. Junto com os Entraves e Encaminhamentos (D06.6/D06.7), completa os tres artefatos de governanca da Diretriz D06 sem exigir um 13o formulario separado - o Reporte de Resultados e atendido dentro do proprio Relatorio de Situacao."
+Nota "Reporte de Resultados (D06.5): este cartao e a base do momento em que o Gerente de Projetos e o Dono do Negocio apresentam as instancias de decisao no que o projeto foi alcancado - nao so o que foi planejado, mas indicadores, entregas e beneficios de fato realizados, lado a lado com a meta original. E uma lista simples, independente dos projetos cadastrados, com o mesmo comportamento de Entraves e Encaminhamentos: continua visivel no Painel mesmo sem nenhum projeto informado, e sai no documento exportado. Junto com os Entraves e Encaminhamentos (D06.6/D06.7), completa os tres artefatos de governanca da Diretriz D06 sem exigir um 13o formulario separado - o Reporte de Resultados e atendido dentro do proprio Relatorio de Situacao."
 Img "47_f11_resultados_alcancados.png" "Secao Resultados alcancados no Painel, com selos coloridos por Indicador, Entrega e Beneficio." 5.6
 Bul "No rodape do Painel, o botao `Historico de versoes` mostra todas as vezes que este relatorio foi salvo, com data/hora e quem salvou."
 Nota "Versionamento: toda vez que o relatorio e salvo (`Salvar e ver painel`), o sistema arquiva uma copia completa dos dados daquele momento, alem de atualizar a versao atual. Isso preserva as referencias mensais anteriores, que antes eram sobrescritas a cada novo salvamento. Ao clicar em `Visualizar` numa versao antiga, o Painel passa a mostrar aquele instantaneo, com um aviso amarelo no topo (`Visualizando versao... - somente leitura`) e um botao `Voltar a versao atual`. Enquanto uma versao antiga esta sendo visualizada, as abas `Editar dados` e `Importar Project` ficam bloqueadas - e preciso voltar a versao atual antes de editar."
@@ -586,7 +595,7 @@ Nota "Projeto vinculado (Gate 1) - opcional: assim como no Relatorio de Situacao
 Img "43_f12_projeto_vinculado.png" "Projeto vinculado selecionado no Relatorio de Entregas, com nome e historico preenchidos." 5.6
 Nota "Importar indicadores do TAP: quando um Projeto vinculado e selecionado, a secao `Indicadores do projeto` ganha o botao `Importar do TAP`. Ele busca o(s) TAP(s) registrados para aquele mesmo projeto e traz os indicadores de resultado ja preenchidos la (secao 9 do TAP - Passo 3), evitando digitar tudo de novo: o Valor inicial do TAP vira o Valor atual aqui, e o Valor final vira a Meta. Indicadores com o mesmo nome que ja estiverem na lista nao sao duplicados - o botao pode ser clicado varias vezes com seguranca. Se nenhum TAP for encontrado para o projeto selecionado, aparece um aviso."
 Img "44_f12_importar_tap.png" "Indicadores do projeto apos importar do TAP - Valor atual e Meta preenchidos automaticamente." 5.6
-Bul "Clique em `Salvar e ver painel`. Imprima ou exporte para levar a reuniao de pactuacao."
+Bul "Clique em `Salvar e ver painel`. No rodape, os botoes `Imprimir` e `Exportar Word` geram o documento no formato oficial do FORALF12 (ficha do programa, indicadores, valores estimados e a ficha de cada projeto com suas entregas), pronto para levar a reuniao de pactuacao ou abrir no Word."
 Nota "Gate 2 - Pactuacao: no topo da aba Editar dados ha um cartao `Gate 2 - Pactuacao` com Status (Pendente de pactuacao / Pactuado), Data de pactuacao e Aprovador. Assim como o Gate 1 da Solicitacao de Demanda, so o Admin consegue alterar o Status - qualquer outro papel ve o controle travado com um aviso. Ao marcar `Pactuado`, a Data e o Aprovador sao preenchidos automaticamente (editaveis). Enquanto o status estiver `Pactuado`, todos os demais campos do relatorio ficam bloqueados para edicao, inclusive para o Admin, ate que o Gate 2 seja reaberto (status volte para `Pendente de pactuacao`)."
 Img "40_f12_gate2.png" "Cartao Gate 2 - Pactuacao preenchido, com o relatorio travado apos a pactuacao." 5.6
 Nota "So depois do Gate 2 pactuado o projeto deve avancar para a execucao. Um projeto que comeca a ser executado sem essa pactuacao corre o risco de ser questionado ou desautorizado em momentos criticos. Ao marcar Pactuado, um e-mail de notificacao e disparado automaticamente (secao 2.8)."
