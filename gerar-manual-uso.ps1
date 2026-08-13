@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.19 - 12 de agosto de 2026 (substitui a versao 2.18 de 12/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.20 - 13 de agosto de 2026 (substitui a versao 2.19 de 12/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -270,6 +270,7 @@ P "Esta e a versao 2.16 do manual. Em relacao a versao 2.15 (10/08/2026), foi ad
 P "Esta e a versao 2.17 do manual. Em relacao a versao 2.16 (11/08/2026), foi adicionada a importacao de transcricao por IA na Ata de Reuniao (secao 2.10, Passo 6 e 6.3 - substitui o antigo painel `Preencher com Read AI`, que nunca funcionou em producao): o usuario cola a transcricao de uma reuniao e a IA sugere pauta, participantes, resumo, encaminhamentos e entraves para revisao, com interruptor geral e lista de papeis permitidos configuraveis pelo Admin."
 P "Esta e a versao 2.18 do manual. Em relacao a versao 2.17 (12/08/2026), a importacao de transcricao por IA (secao 2.10) passou a aceitar tambem arquivo `.txt`, `.docx` ou `.pdf` anexado, alem de colar o texto diretamente - o sistema extrai o texto do arquivo automaticamente para revisao antes de analisar."
 P "Esta e a versao 2.19 do manual. Em relacao a versao 2.18 (12/08/2026), foi adicionada a importacao de audio por IA na Ata de Reuniao (secao 2.11): alem de colar/anexar a transcricao em texto, o usuario pode anexar a propria gravacao da reuniao (.mp3, .m4a, .aac, .wav, .ogg...), dividida e transcrita automaticamente em pedacos pelo sistema - com interruptor geral e lista de papeis permitidos proprios, independentes dos da importacao por texto, configuraveis pelo Admin (secao 6.3)."
+P "Esta e a versao 2.20 do manual. Em relacao a versao 2.19 (12/08/2026), os antigos botoes `Exportar CSV` e `Imprimir` da Ata de Reuniao (Passo 6), que agiam sobre a lista inteira e nao geravam um documento util, foram substituidos por `Imprimir` e `Exportar Word` no painel de uma ata especifica: ambos geram o documento no formato oficial do FORALF00340 (cabecalho, unidade, pauta, participantes, descricao, saidas e entraves)."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -511,6 +512,7 @@ Img "26_f07_lista.png" "Atas cadastradas (estado vazio)." 5.6
 Bul "Selecione a(s) unidade(s) envolvidas, preencha Pauta e Projeto (obrigatorios), participantes, resumo, encaminhamentos e entraves."
 Bul "Opcional, quando habilitado pelo Admin: em `Importar transcricao da reuniao`, cole o texto, anexe um arquivo `.txt`/`.docx`/`.pdf`, ou anexe o audio da gravacao (`.mp3`/`.m4a`/`.aac`/`.wav`/`.ogg`) para transcricao automatica (secao 2.11), depois clique em `Analisar e preencher` - a IA sugere pauta, data/horario (se mencionados), participantes, resumo, encaminhamentos e entraves. Revise sempre os dados sugeridos antes de registrar (secao 2.10)."
 P "Clique em `Registrar ata` para gerar o protocolo."
+Bul "Na lista `Atas cadastradas`, clique numa ata para abri-la e usar os botoes `Imprimir` e `Exportar Word`, no rodape do painel lateral: ambos geram o documento no formato oficial do FORALF00340 (cabecalho, unidade, pauta, participantes, descricao, saidas e entraves), pronto para impressao ou para abrir no Word."
 
 H2 "Passo 7 - SMP, Solicitacao de Mudanca de Projeto (FORALF00343) - uso condicional"
 P "Quando usar: sempre que for necessario alterar escopo, cronograma, custo ou qualidade de um projeto ja em andamento. Nenhuma mudanca deve ser feita sem passar por este formulario."
