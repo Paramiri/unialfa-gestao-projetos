@@ -128,7 +128,7 @@ Deno.serve(async (req: Request) => {
     if (!resp.ok) {
       const errBody = await resp.text();
       console.error("OpenAI API retornou erro:", resp.status, errBody);
-      return json({ error: "Falha ao transcrever este pedaço de áudio (erro na API de IA)" }, 502);
+      return json({ error: "Falha ao transcrever este pedaço de áudio (erro na API de IA)", debug: `status ${resp.status}: ${errBody.slice(0, 500)}` }, 502);
     }
 
     const data = await resp.json();
@@ -137,6 +137,6 @@ Deno.serve(async (req: Request) => {
     return json({ ok: true, texto });
   } catch (e) {
     console.error("Falha ao chamar a API da OpenAI:", e);
-    return json({ error: "Falha ao transcrever este pedaço de áudio" }, 502);
+    return json({ error: "Falha ao transcrever este pedaço de áudio", debug: String((e as Error)?.stack || e) }, 502);
   }
 });

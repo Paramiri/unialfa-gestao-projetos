@@ -1027,7 +1027,7 @@ async function enviarPedacoAudio(blob, indice, total){
     method:'POST', headers, body: form
   });
   const data=await resp.json();
-  if(!resp.ok || data.error) throw new Error(data.error||'Falha ao transcrever a parte '+(indice+1));
+  if(!resp.ok || data.error) throw new Error((data.error||'Falha ao transcrever a parte '+(indice+1))+(data.debug?(' ['+data.debug+']'):''));
   return data.texto||'';
 }
 
@@ -1057,7 +1057,7 @@ async function processarPartesAudio(){
     }catch(e){
       console.error(e);
       renderAudioProgresso(audioPartesAtuais, audioResultadosAtuais, i);
-      statusEl.textContent='⚠ Falha ao transcrever a parte '+(i+1)+' de '+audioPartesAtuais.length;
+      statusEl.textContent='⚠ Falha ao transcrever a parte '+(i+1)+' de '+audioPartesAtuais.length+' — '+(e&&e.message?e.message:'');
       document.getElementById('audioArquivo').disabled=false;
       return;
     }
