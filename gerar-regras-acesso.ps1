@@ -198,6 +198,12 @@ Bul "Com o interruptor de audio ligado, uma lista de papeis propria (podendo mar
 Bul "Na pratica, importar audio so faz sentido para quem tambem pode rodar a analise da transcricao (secao 3.5) - por isso a opcao de anexar audio so aparece para quem tem as duas permissoes ativas ao mesmo tempo."
 P "Assim como a importacao de texto, a Edge Function que processa o audio confere a permissao direto no banco antes de chamar a IA, nao so a interface."
 
+H2 "3.7 Restricao de edicao no Plano de Comunicacao de Projeto"
+P "O Plano de Comunicacao de Projeto (FORALF00308) e um documento unico e compartilhado (secao 5.3) - qualquer usuario autenticado sempre pode abrir a aba Painel, visualizar o conteudo e usar o botao Imprimir. Diferente da secao 3.4 (que restringe visualizacao de pagina inteira), aqui a restricao e so sobre a aba `"Editar dados`": uma lista de papeis, definida pelo Admin na aba Configuracoes da Administracao, decide quem pode usar `"Editar dados`" e salvar alteracoes."
+Bul "Comeca configurado apenas para PMO/Admin - os demais papeis veem a aba `"Editar dados`" escondida e uma nota explicando a restricao no lugar dela, mas continuam vendo o Painel normalmente."
+Bul "Um usuario com papel Admin sempre consegue editar, mesmo que o papel Admin seja removido da lista por engano - mesma trava de seguranca usada na secao 3.4."
+Bul "A checagem tambem bloqueia a funcao de salvar caso alguem tente forcar a aba de edicao por fora da interface."
+
 HR
 
 # ---- 4 ----
@@ -261,7 +267,7 @@ $rows = @(
   @("EAP","Sim","Sim","-"),
   @("SMP","Sim","Sim","-"),
   @("Ata de Reuniao","Sim (ou sem login, se ativado)","Nao","-"),
-  @("Plano de Comunicacao","Sim","Nao","-"),
+  @("Plano de Comunicacao","Sim","Nao","Edicao por papel (padrao Admin)"),
   @("TEP","Sim","Sim","-"),
   @("RLA","Sim","Sim","-"),
   @("Relatorio de Situacao","Sim (por papel)","Nao","-"),

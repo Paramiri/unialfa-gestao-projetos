@@ -39,12 +39,13 @@ body{font-family:var(--font);color:var(--ink);background:var(--surface);-webkit-
 .card-head{background:var(--gold-soft);border-bottom:1px solid #F5E1B8;padding:12px 20px}
 .card-head h2{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
 
-table.pcp-t{width:100%;border-collapse:collapse}
-table.pcp-t thead th{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:10px 16px;background:var(--surface-2);border-bottom:1px solid var(--line);text-align:left}
+.pcp-t-wrap{overflow-x:auto}
+table.pcp-t{width:100%;min-width:980px;border-collapse:collapse}
+table.pcp-t thead th{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:10px 16px;background:var(--surface-2);border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
 table.pcp-t td{padding:12px 16px;border-bottom:1px solid var(--surface-2);vertical-align:top;font-size:13px}
 table.pcp-t tbody tr:last-child td{border-bottom:none}
 table.pcp-t tbody tr:hover{background:var(--surface)}
-table.pcp-t td.tipo{font-weight:700;width:32%}
+table.pcp-t td.tipo{font-weight:700;width:16%}
 
 .empty-state{padding:48px 24px;text-align:center;color:var(--muted)}
 .empty-state h3{font-size:15px;color:var(--ink);font-weight:700;margin-bottom:6px}
@@ -76,7 +77,8 @@ input:focus,textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 0
 textarea{resize:vertical;min-height:80px}
 .approv-edit{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 
-.dyn-mini{width:100%;border-collapse:collapse;border:1px solid var(--line);border-radius:7px;overflow:hidden;font-size:12.5px}
+.dyn-mini{width:100%;min-width:1100px;border-collapse:collapse;border:1px solid var(--line);border-radius:7px;overflow:hidden;font-size:12.5px}
+#tbl-tipos textarea,#tbl-tipos input{min-width:130px}
 .dyn-mini th{font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:8px 10px;background:var(--surface-2);border-bottom:1px solid var(--line);text-align:left}
 .dyn-mini td{padding:4px 6px;border-bottom:1px solid var(--surface-2);vertical-align:top}
 .dyn-mini tbody tr:last-child td{border-bottom:none}
@@ -347,17 +349,18 @@ function ensureAuthenticated(){
       <h1>Plano de Comunicação de Projeto</h1>
       <p>Tipos de comunicação e o que é comunicado em cada uma · Escritório de Projetos</p>
     </div>
-    <a class="head-help" href="15 - central-ajuda.html?v=10#passo-10" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+    <a class="head-help" href="15 - central-ajuda.html?v=11#passo-10" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
   </div>
 
   <div class="view-tabs">
     <button class="vtab" aria-selected="true" onclick="showView('painel')">📋 Painel</button>
-    <button class="vtab" aria-selected="false" onclick="showView('editar')">✏️ Editar dados</button>
+    <button class="vtab" id="vtabEditar" aria-selected="false" onclick="showView('editar')">✏️ Editar dados</button>
   </div>
 
   <!-- ===== PAINEL ===== -->
   <div id="view-painel">
     <div id="painel-content"></div>
+    <div id="editRestritoMsg" style="display:none;padding:14px 18px;margin-bottom:18px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);font-size:12.5px;color:var(--muted)">🔒 A edição deste plano é restrita a PMO/Admin. Você pode visualizar e imprimir normalmente.</div>
     <div class="action-bar" style="border-radius:var(--radius);border:1px solid var(--line)">
       <button class="btn btn-ghost" onclick="window.print()">🖨 Imprimir</button>
       <div class="ml" style="font-size:11px;color:var(--muted)">UNIALFA</div>
@@ -370,10 +373,10 @@ function ensureAuthenticated(){
     <div class="edit-card">
       <div class="edit-card-head"><h3>Tipos de Comunicação</h3><button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)" onclick="addTipo()">+ Adicionar linha</button></div>
       <div class="edit-body">
-        <table class="dyn-mini" id="tbl-tipos">
-          <thead><tr><th style="width:32%">Tipo de Comunicação</th><th>O que Comunicar</th><th style="width:32px"></th></tr></thead>
+        <div class="pcp-t-wrap"><table class="dyn-mini" id="tbl-tipos">
+          <thead><tr><th>Tipo de Comunicação</th><th>O que Comunicar</th><th>Quando Comunicar</th><th>Com Quem se Comunicar</th><th>Como Comunicar</th><th>Quem Comunica</th><th style="width:32px"></th></tr></thead>
           <tbody id="tbody-tipos"></tbody>
-        </table>
+        </table></div>
         <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addTipo()">+ Adicionar linha</button></div>
       </div>
     </div>
@@ -459,21 +462,21 @@ const KEY = 'plancom_data';
 /* seed = conteúdo real do documento (usado apenas se ainda não houver nada salvo) */
 const SEED = {
   tipos: [
-    {tipo:'Começo do projeto', oque:'Escopo, objetivos, governança, cronograma macro, papéis e regras'},
-    {tipo:'Diário de equipe', oque:'Progresso, impedimentos, plano do dia'},
-    {tipo:'Status semanal', oque:'Andamento vs. plano, riscos/ações, decisões, próximos passos'},
-    {tipo:'Report executivo', oque:'Indicadores (prazo, custo, escopo, qualidade), marcos e desvios'},
-    {tipo:'Comitê de Mudanças (CCB)', oque:'Solicitações de mudança, impactos e deliberações'},
-    {tipo:'Gestão de Riscos', oque:'Novos riscos, status, planos de resposta'},
-    {tipo:'Comunicação de incidentes', oque:'Incidentes/erros críticos, impacto e mitigação'},
-    {tipo:'Entregas e marcos', oque:'Conclusão de entregáveis, critérios de aceite'},
-    {tipo:'Integração com stakeholders externos', oque:'Alinhamentos contratuais, prazos, dependências'},
-    {tipo:'Comunicação de mudanças organizacionais', oque:'Impactos em processo/pessoas, plano de adoção'},
-    {tipo:'Treinamentos', oque:'Conteúdo, público, agenda, materiais e avaliações'},
-    {tipo:'Homologação/UAT', oque:'Escopo de testes, critérios de aprovação, defeitos'},
-    {tipo:'Go/No-Go', oque:'Checklist, riscos remanescentes, decisão final'},
-    {tipo:'Pós-Lançamento', oque:'Estabilização, KPIs, chamados, melhorias'},
-    {tipo:'Lições aprendidas & Encerramento', oque:'Resultados, o que funcionou, melhorias, documentação final'},
+    {tipo:'Começo do projeto', oque:'Escopo, objetivos, governança, cronograma macro, papéis e regras', quando:'Início do projeto', comQuem:'Patrocinador, PMO, áreas envolvidas, time do projeto', como:'Reunião online/presencial + ata e apresentação', quemComunica:'Gerente de Projetos (GP)'},
+    {tipo:'Diário de equipe', oque:'Progresso, impedimentos, plano do dia', quando:'Diário (15 min)', comQuem:'Time do projeto', como:'Reunião rápida (Teams/Slack Huddle) + notas no board', quemComunica:'GP / Líder Técnico'},
+    {tipo:'Status semanal', oque:'Andamento vs. plano, riscos/ações, decisões, próximos passos', quando:'Semanal', comQuem:'Patrocinador, PMO, líderes de área', como:'E-mail resumo + dashboard + reunião de 30 min', quemComunica:'GP'},
+    {tipo:'Report executivo', oque:'Indicadores (prazo, custo, escopo, qualidade), marcos e desvios', quando:'Mensal (ou quinzenal)', comQuem:'Alta gestão / Comitê executivo', como:'Relatório em PDF/Slide + apresentação executiva', quemComunica:'GP / PMO'},
+    {tipo:'Comitê de Mudanças (CCB)', oque:'Solicitações de mudança, impactos e deliberações', quando:'Quinzenal ou sob demanda', comQuem:'CCB (Patrocinador, PMO, áreas-chave)', como:'Reunião com pauta + registro em ata e RDM', quemComunica:'GP / PMO'},
+    {tipo:'Gestão de Riscos', oque:'Novos riscos, status, planos de resposta', quando:'Semanal (junto ao status) e sob evento', comQuem:'Time do projeto + PMO', como:'Registro no log de riscos + resumo no status', quemComunica:'GP'},
+    {tipo:'Comunicação de incidentes', oque:'Incidentes/erros críticos, impacto e mitigação', quando:'Em até 2h do evento', comQuem:'Patrocinador, PMO, áreas afetadas, Suporte', como:'Alerta por Teams/Slack + e-mail com RCA e plano', quemComunica:'Líder Técnico / GP'},
+    {tipo:'Entregas e marcos', oque:'Conclusão de entregáveis, critérios de aceite', quando:'Em cada entrega/marco', comQuem:'Donos de processo, Qualidade, Patrocinador', como:'Demonstração/Passo a passo + checklist de aceite', quemComunica:'GP / Dono do Entregável'},
+    {tipo:'Integração com stakeholders externos', oque:'Alinhamentos contratuais, prazos, dependências', quando:'Conforme cronograma / pontos de controle', comQuem:'Fornecedores, parceiros, órgãos externos', como:'Reunião + e-mail recap + pontos de ação', quemComunica:'GP / Compras (se aplicável)'},
+    {tipo:'Comunicação de mudanças organizacionais', oque:'Impactos em processo/pessoas, plano de adoção', quando:'Antes do lançamento do projeto (D-10, D-5, D-1) e no dia', comQuem:'Usuários finais, RH, Comunicação Interna', como:'Campanha interna (intranet, e-mail, FAQ, vídeo curto)', quemComunica:'GP / Comunicação Interna'},
+    {tipo:'Treinamentos', oque:'Conteúdo, público, agenda, materiais e avaliações', quando:'D-7 (convite) / D-1 (lembrete) / pós (avaliação)', comQuem:'Usuários finais e multiplicadores', como:'Sessões online/presencial + LMS + guia rápido', quemComunica:'Time de Treinamento / GP'},
+    {tipo:'Homologação/UAT', oque:'Escopo de testes, critérios de aprovação, defeitos', quando:'Na janela de UAT', comQuem:'Usuários-chave, QA, TI', como:'Plano de testes + registro em ferramenta + reunião de fechamento', quemComunica:'QA / GP'},
+    {tipo:'Go/No-Go', oque:'Checklist, riscos remanescentes, decisão final', quando:'Véspera do lançamento', comQuem:'Patrocinador, PMO, TI, áreas críticas', como:'Reunião formal + ata de decisão', quemComunica:'GP / Patrocinador'},
+    {tipo:'Pós-Lançamento', oque:'Estabilização, KPIs, chamados, melhorias', quando:'Diário (1ª semana) e semanal (30 dias)', comQuem:'Operação, Suporte, PMO', como:'War room + dashboard + e-mail diário de saúde', quemComunica:'GP / Suporte'},
+    {tipo:'Lições aprendidas & Encerramento', oque:'Resultados, o que funcionou, melhorias, documentação final', quando:'No encerramento', comQuem:'Todas as partes interessadas', como:'Workshop + relatório final + arquivamento', quemComunica:'GP / PMO'},
   ],
   comentarios: '',
   aprovData: '2026-05-08',
@@ -511,7 +514,19 @@ async function saveData(){
   catch(e){ toast('Erro ao salvar'); return false; }
 }
 
+let podeEditarPlano = false;
+async function papelPermitido(chave){
+  if(window.currentProfile && window.currentProfile.papel==='admin') return true;
+  try{
+    const r = await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=eq.'+chave+'&select=valor', { headers: unialfaAuth.authHeaders() });
+    const rows = r.ok ? await r.json() : [];
+    const permitidos = (rows[0] && Array.isArray(rows[0].valor)) ? rows[0].valor : [];
+    return window.currentProfile ? permitidos.includes(window.currentProfile.papel) : false;
+  }catch(e){ return false; }
+}
+
 function showView(v){
+  if(v==='editar' && !podeEditarPlano){ toast('A edição deste plano é restrita a PMO/Admin', false); return; }
   document.getElementById('view-painel').style.display = v==='painel' ? 'block' : 'none';
   document.getElementById('view-editar').style.display = v==='editar' ? 'block' : 'none';
   document.querySelectorAll('.vtab').forEach((b,i)=>b.setAttribute('aria-selected', ['painel','editar'][i]===v));
@@ -525,15 +540,15 @@ function renderPainel(){
 
   html += `<div class="card">
     <div class="card-head"><h2>Tipos de Comunicação</h2></div>
-    <table class="pcp-t">
-      <thead><tr><th>Tipo de Comunicação</th><th>O que Comunicar</th></tr></thead>
+    <div class="pcp-t-wrap"><table class="pcp-t">
+      <thead><tr><th>Tipo de Comunicação</th><th>O que Comunicar</th><th>Quando Comunicar</th><th>Com Quem se Comunicar</th><th>Como Comunicar</th><th>Quem Comunica</th></tr></thead>
       <tbody>`;
   if(data.tipos && data.tipos.length){
-    data.tipos.forEach(t=>{ html += `<tr><td class="tipo">${esc(t.tipo)}</td><td>${esc(t.oque)}</td></tr>`; });
+    data.tipos.forEach(t=>{ html += `<tr><td class="tipo">${esc(t.tipo)}</td><td>${esc(t.oque)}</td><td>${esc(t.quando)}</td><td>${esc(t.comQuem)}</td><td>${esc(t.como)}</td><td>${esc(t.quemComunica)}</td></tr>`; });
   } else {
-    html += `<tr><td colspan="2"><div class="empty-state"><h3>Nenhum tipo cadastrado</h3><p>Use "Editar dados" para adicionar.</p></div></td></tr>`;
+    html += `<tr><td colspan="6"><div class="empty-state"><h3>Nenhum tipo cadastrado</h3><p>Use "Editar dados" para adicionar.</p></div></td></tr>`;
   }
-  html += `</tbody></table></div>`;
+  html += `</tbody></table></div></div>`;
 
   html += `<div class="card">
     <div class="card-head"><h2>Comentários</h2></div>
@@ -579,19 +594,22 @@ function rebuildTipos(rows){
 function addTipo(vals){
   const tb = document.getElementById('tbody-tipos');
   const tr = document.createElement('tr');
-  const tipoV = vals ? (vals.tipo||'') : '';
-  const oqueV = vals ? (vals.oque||'') : '';
-  tr.innerHTML = `<td><input data-k="tipo" value="${esc(tipoV)}" placeholder="Ex: Status semanal"></td>
-    <td><textarea data-k="oque" placeholder="O que é comunicado">${esc(oqueV)}</textarea></td>
+  const v = k => vals ? (vals[k]||'') : '';
+  tr.innerHTML = `<td><input data-k="tipo" value="${esc(v('tipo'))}" placeholder="Ex: Status semanal"></td>
+    <td><textarea data-k="oque" placeholder="O que é comunicado">${esc(v('oque'))}</textarea></td>
+    <td><textarea data-k="quando" placeholder="Ex: Semanal">${esc(v('quando'))}</textarea></td>
+    <td><textarea data-k="comQuem" placeholder="Com quem se comunicar">${esc(v('comQuem'))}</textarea></td>
+    <td><textarea data-k="como" placeholder="Como comunicar">${esc(v('como'))}</textarea></td>
+    <td><textarea data-k="quemComunica" placeholder="Ex: GP / PMO">${esc(v('quemComunica'))}</textarea></td>
     <td><button type="button" class="row-x" onclick="this.closest('tr').remove()">×</button></td>`;
   tb.appendChild(tr);
 }
 function readTipos(){
   const rows = [];
   document.querySelectorAll('#tbody-tipos tr').forEach(tr=>{
-    const tipo = tr.querySelector('[data-k="tipo"]').value.trim();
-    const oque = tr.querySelector('[data-k="oque"]').value.trim();
-    if(tipo || oque) rows.push({tipo, oque});
+    const g = k => tr.querySelector(`[data-k="${k}"]`).value.trim();
+    const tipo = g('tipo'), oque = g('oque'), quando = g('quando'), comQuem = g('comQuem'), como = g('como'), quemComunica = g('quemComunica');
+    if(tipo || oque || quando || comQuem || como || quemComunica) rows.push({tipo, oque, quando, comQuem, como, quemComunica});
   });
   return rows;
 }
@@ -620,6 +638,7 @@ function readGloss(){
 }
 
 async function saveAndPreview(){
+  if(!podeEditarPlano){ toast('A edição deste plano é restrita a PMO/Admin', false); return; }
   data.tipos = readTipos();
   data.comentarios = document.getElementById('comentarios').value.trim();
   data.aprovData = document.getElementById('aprovData').value;
@@ -629,5 +648,14 @@ async function saveAndPreview(){
   if(ok){ toast('Plano de comunicação salvo'); showView('painel'); }
 }
 
-(async()=>{ await ensureAuthenticated(); await loadData(); renderPainel(); })();
+(async()=>{
+  await ensureAuthenticated();
+  podeEditarPlano = await papelPermitido('papeis_plano_comunicacao_editar');
+  if(!podeEditarPlano){
+    document.getElementById('vtabEditar').style.display = 'none';
+    document.getElementById('editRestritoMsg').style.display = 'block';
+  }
+  await loadData();
+  renderPainel();
+})();
 </script>

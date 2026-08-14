@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.21 - 13 de agosto de 2026 (substitui a versao 2.20 de 13/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.22 - 14 de agosto de 2026 (substitui a versao 2.21 de 13/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -272,6 +272,7 @@ P "Esta e a versao 2.18 do manual. Em relacao a versao 2.17 (12/08/2026), a impo
 P "Esta e a versao 2.19 do manual. Em relacao a versao 2.18 (12/08/2026), foi adicionada a importacao de audio por IA na Ata de Reuniao (secao 2.11): alem de colar/anexar a transcricao em texto, o usuario pode anexar a propria gravacao da reuniao (.mp3, .m4a, .aac, .wav, .ogg...), dividida e transcrita automaticamente em pedacos pelo sistema - com interruptor geral e lista de papeis permitidos proprios, independentes dos da importacao por texto, configuraveis pelo Admin (secao 6.3)."
 P "Esta e a versao 2.20 do manual. Em relacao a versao 2.19 (12/08/2026), os antigos botoes `Exportar CSV` e `Imprimir` da Ata de Reuniao (Passo 6), que agiam sobre a lista inteira e nao geravam um documento util, foram substituidos por `Imprimir` e `Exportar Word` no painel de uma ata especifica: ambos geram o documento no formato oficial do FORALF00340 (cabecalho, unidade, pauta, participantes, descricao, saidas e entraves)."
 P "Esta e a versao 2.21 do manual. Em relacao a versao 2.20 (13/08/2026), o mesmo ajuste foi estendido aos demais formularios que ainda tinham os antigos botoes `Exportar CSV` e `Imprimir` sem funcionalidade real: Solicitacao de Demanda (Passo 1), Canvas de Projeto (Passo 2), TAP (Passo 3), Planejamento e Desenvolvimento (Passo 4), EAP (Passo 5), SMP (Passo 7), TEP (Passo 8), RLA (Passo 9), Relatorio de Situacao (secao 4.1) e Relatorio de Entregas e Beneficios (secao 4.2). Em todos, `Imprimir` e `Exportar Word` agora geram o documento no formato oficial do respectivo FORALF (ou, no caso da EAP, um layout padrao do sistema, ja que este artefato nao tem FORALF proprio)."
+P "Esta e a versao 2.22 do manual. Em relacao a versao 2.21 (13/08/2026), o Plano de Comunicacao de Projeto (Passo 10) ganhou as 4 colunas que faltavam em relacao ao documento oficial FORALF00308 - Quando Comunicar, Com Quem se Comunicar, Como Comunicar e Quem Comunica, alem das ja existentes Tipo de Comunicacao e O que Comunicar - e passou a ter a aba `Editar dados` restrita por papel (padrao PMO/Admin, configuravel em Administracao > Configuracoes, secao 6.3), mantendo a visualizacao e impressao livres para qualquer usuario autenticado."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -551,9 +552,20 @@ P "Clique em `Registrar RLA`. O score global fica salvo junto com o registro."
 Bul "No rodape do painel de detalhes de um RLA, os botoes `Imprimir` e `Exportar Word` geram o documento no formato oficial do FORALF00342 (incluindo os quatro blocos de avaliacao estruturada com o placar de cada um), pronto para impressao ou para abrir no Word."
 
 H2 "Passo 10 - Plano de Comunicacao de Projeto (FORALF00308)"
-P "Quando usar: para planejar o que sera comunicado, a quem e em qual momento do projeto. Diferente da versao 1.0 deste manual, este artefato ja tem uma ferramenta eletronica propria, organizada como uma tabela de referencia (tipo de comunicacao x o que comunicar), com abas Painel (visualizacao) e Editar dados."
-Img "27_f08_painel.png" "Painel do Plano de Comunicacao: cada linha da tabela e um tipo de comunicacao do projeto e o que deve ser comunicado nele." 5.6
-P "Use `Editar dados` para ajustar o conteudo de cada linha as necessidades do seu projeto, e `Painel` para visualizar, imprimir ou exportar o resultado."
+P "Quando usar: para planejar o que sera comunicado, a quem e em qual momento do projeto. Este artefato tem uma ferramenta eletronica propria, organizada como uma tabela de referencia com abas Painel (visualizacao) e Editar dados."
+Img "27_f08_painel.png" "Painel do Plano de Comunicacao: cada linha da tabela e um tipo de comunicacao do projeto." 5.6
+$r10 = @(
+  @("Coluna","Descricao"),
+  @("Tipo de Comunicacao","Nome do momento/evento de comunicacao (ex.: Status semanal, Go/No-Go)"),
+  @("O que Comunicar","Conteudo tratado nessa comunicacao"),
+  @("Quando Comunicar","Periodicidade ou gatilho (ex.: Semanal, Em ate 2h do evento)"),
+  @("Com Quem se Comunicar","Publico-alvo da comunicacao"),
+  @("Como Comunicar","Canal e formato (ex.: Reuniao + ata, E-mail resumo + dashboard)"),
+  @("Quem Comunica","Responsavel por comunicar (ex.: GP, GP / PMO)")
+)
+TableSimple $r10 @(4.5,11.5)
+P "As 15 linhas padrao do plano (Comeco do projeto, Diario de equipe, Status semanal, Report executivo, Comite de Mudancas, Gestao de Riscos, Comunicacao de incidentes, Entregas e marcos, Integracao com stakeholders externos, Comunicacao de mudancas organizacionais, Treinamentos, Homologacao/UAT, Go/No-Go, Pos-Lancamento e Licoes aprendidas & Encerramento) vem preenchidas com o conteudo do documento oficial FORALF00308 nas 6 colunas - use `Editar dados` para ajustar aos seus projetos."
+Nota "Edicao restrita por papel: diferente dos demais formularios, so PMO/Admin pode usar `Editar dados` e salvar alteracoes no Plano de Comunicacao - controlavel pelo Admin em Administracao > Configuracoes (secao 6.3), mesmo esquema de lista de papeis usado no Painel Executivo e nos dois relatorios. Qualquer usuario autenticado continua podendo abrir a aba Painel, visualizar todas as colunas e usar o botao Imprimir; quem nao tem permissao de edicao ve a aba `Editar dados` escondida e um aviso no lugar dela."
 
 # ============================================================
 # 4. RELATORIOS FINAIS
@@ -640,7 +652,8 @@ H2 "6.3 Configuracoes"
 P "Controla os dois interruptores de acesso sem login (Solicitacao de Demanda e Ata de Reuniao), descritos na secao 2.6."
 Img "11_admin_config.png" "Aba Configuracoes: os dois interruptores de acesso sem login, hoje desativados." 5.8
 P "Logo abaixo, tres grupos de caixas de selecao controlam quem pode ver o Painel Executivo, o Relatorio de Situacao de Projetos e o Relatorio de Entregas e Beneficios: o Admin marca um ou mais papeis por pagina, e quem tiver um papel fora da lista marcada ve `Acesso restrito` ao tentar abrir aquela pagina. Por padrao, o Painel Executivo comeca marcado so para Admin (mesmo comportamento de antes), e os dois relatorios comecam com todos os papeis marcados (acesso livre, tambem o comportamento de antes) - a restricao so entra em vigor se o Admin desmarcar algum papel."
-Nota "O papel Admin sempre tem acesso as tres paginas, mesmo que fique desmarcado por engano - isso evita que o proprio Admin perca o acesso e fique sem como reverter a configuracao."
+P "Um quarto grupo, `Quem pode editar o Plano de Comunicacao de Projeto`, controla so a aba `Editar dados` desse formulario (Passo 10) - diferente dos tres grupos acima, que controlam a pagina inteira. Comeca marcado apenas para PMO/Admin; qualquer papel fora da lista continua vendo e imprimindo o Painel normalmente, so nao consegue editar."
+Nota "O papel Admin sempre tem acesso a essas quatro configuracoes, mesmo que fique desmarcado por engano - isso evita que o proprio Admin perca o acesso e fique sem como reverter a configuracao."
 P "Por ultimo, dois interruptores independentes controlam a importacao por IA na Ata de Reuniao - cada um desligado por padrao, ja que cada uso tem custo real de API, e cada um vale para todo mundo sem excecao, inclusive Admin: um para a importacao de transcricao em texto (secao 2.10) e outro, separado, para a importacao de audio (secao 2.11). Cada interruptor tem seu proprio grupo de papeis logo abaixo, com Admin sempre incluido quando ligado. Como a importacao de audio so serve para gerar o texto que passa pela mesma analise, o botao `Anexar audio` na Ata so aparece para quem tem as duas permissoes ativas ao mesmo tempo."
 H2 "6.4 Painel Executivo"
 P "Agrega em tempo real dados de todos os 10 formularios de registro e dos 2 relatorios - sem exigir nenhuma mudanca no banco de dados, apenas consultando o que ja esta salvo. Pensada para dar ao PMO uma visao geral do sistema inteiro em uma unica tela, sem precisar abrir cada formulario individualmente. Por padrao so o Admin ve esta pagina, mas isso pode ser ampliado para outros papeis em Administracao > Configuracoes (secao 6.3)."

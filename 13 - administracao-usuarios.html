@@ -348,7 +348,7 @@ window.unialfaEquipe = {
         <h1>Administração de Usuários</h1>
         <p>Controle de acesso · Papéis e permissões · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=10#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=11#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
     </div>
   </div>
 
@@ -418,6 +418,11 @@ window.unialfaEquipe = {
       <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode ver o Relatório de Entregas e Benefícios</b>
       <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">Marque os papéis que podem abrir esta página. PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
       <div class="papeis-grupo" id="papeisRelatorioEntregas" data-chave="papeis_relatorio_entregas"></div>
+    </div>
+    <div style="padding:20px 24px; border-top:1px solid var(--line)">
+      <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode editar o Plano de Comunicação de Projeto</b>
+      <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">A visualização e impressão continuam abertas a qualquer usuário autenticado — isto controla só quem pode usar "Editar dados". PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
+      <div class="papeis-grupo" id="papeisPlanoComunicacao" data-chave="papeis_plano_comunicacao_editar"></div>
     </div>
     <div style="padding:20px 24px; display:flex; align-items:center; gap:14px; justify-content:space-between; flex-wrap:wrap; border-top:1px solid var(--line)">
       <div>
@@ -683,6 +688,7 @@ function showAba(aba){
     carregarConfigPapeis('papeis_painel_executivo', 'papeisPainelExecutivo');
     carregarConfigPapeis('papeis_relatorio_situacao', 'papeisRelatorioSituacao');
     carregarConfigPapeis('papeis_relatorio_entregas', 'papeisRelatorioEntregas');
+    carregarConfigPapeis('papeis_plano_comunicacao_editar', 'papeisPlanoComunicacao');
     carregarConfigSemLogin('permitir_importar_transcricao_ata', 'toggleImportarIA');
     carregarConfigPapeis('papeis_importar_transcricao_ata', 'papeisImportarIA');
     carregarConfigSemLogin('permitir_importar_audio_ata', 'toggleImportarAudio');
