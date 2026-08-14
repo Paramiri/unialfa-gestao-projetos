@@ -158,6 +158,7 @@ Bul "Pre-cadastrar uma pessoa que ainda nao fez login, informando nome, telefone
 Bul "Remover da lista um usuario que nunca teve nenhuma relacao com projetos nem registros no sistema (ver 3.3)."
 Bul "Ligar/desligar a importacao de transcricao por IA na Ata de Reuniao e definir quais papeis podem usa-la (ver 3.5)."
 Bul "Ligar/desligar, separadamente, a importacao de audio (gravacao da reuniao) por IA na Ata de Reuniao e definir quais papeis podem usa-la (ver 3.6)."
+Bul "Resetar e repopular o ambiente de treinamento com os 7 projetos de exemplo, pelo botao na aba Administracao (ver 3.8)."
 P "Importante: um Admin sempre e considerado `"membro`" de qualquer equipe de projeto automaticamente - nao precisa ser adicionado manualmente para poder editar registros vinculados a um projeto (ver secao 5)."
 
 H2 "3.2 Pre-cadastro de usuario (antes do primeiro login)"
@@ -203,6 +204,13 @@ P "O Plano de Comunicacao de Projeto (FORALF00308) e um documento unico e compar
 Bul "Comeca configurado apenas para PMO/Admin - os demais papeis veem a aba `"Editar dados`" escondida e uma nota explicando a restricao no lugar dela, mas continuam vendo o Painel normalmente."
 Bul "Um usuario com papel Admin sempre consegue editar, mesmo que o papel Admin seja removido da lista por engano - mesma trava de seguranca usada na secao 3.4."
 Bul "A checagem tambem bloqueia a funcao de salvar caso alguem tente forcar a aba de edicao por fora da interface."
+
+H2 "3.8 Reset do ambiente de treinamento (aba Administracao, so em producao)"
+P "O sistema tem um ambiente de treinamento/demonstracao totalmente separado (banco de dados proprio, mesmo schema e regras de acesso da producao, com 7 projetos de exemplo ficticios cobrindo o ciclo completo), usado para apresentacoes e capacitacao sem tocar em dado real. A aba Administracao, quando acessada em producao (`"gestaoprojetos.alfa.br`"), mostra uma aba extra `"Ambiente de Treino`" com um botao que apaga os dados atuais do ambiente de treinamento e recria os 7 projetos de exemplo do zero - util para deixar o ambiente limpo antes de uma nova turma."
+Bul "A aba so aparece em producao - quem acessa a Administracao pelo proprio ambiente de treinamento nao ve essa opcao."
+Bul "A acao e restrita a Admin: o botao chama uma Edge Function que confere, direto no banco de producao (nao so na tela), que quem chamou tem papel Admin antes de fazer qualquer alteracao - inclusive rejeitando um token de sessao valido cujo dono nao seja Admin."
+Bul "Nao apaga nem altera nenhum dado de producao em nenhuma hipotese - a Edge Function so tem permissao de escrita no banco do ambiente de treinamento, nunca no de producao, e se recusa a rodar caso seja implantada por engano no projeto errado."
+Bul "As 6 contas fixas de treinamento e as configuracoes do ambiente de treino nao sao apagadas pelo reset - so os projetos e os registros de formulario."
 
 HR
 

@@ -390,11 +390,12 @@ body.auth-ready{padding-top:34px}
       <section class="sec" id="administracao">
         <div class="eyebrow">gestão</div>
         <h2>Administração <span class="tag eq">exclusivo Admin</span></h2>
-        <p class="lead">Página restrita a usuários com papel Admin. Reúne três abas:</p>
+        <p class="lead">Página restrita a usuários com papel Admin. Reúne até quatro abas:</p>
         <ul>
           <li><b>Usuários</b> — lista quem já fez login, com nome, telefone (editável direto na lista) e um seletor para alterar o papel.</li>
           <li><b>Equipes</b> — define quem faz parte da equipe de cada projeto (base da <a href="#equipe">restrição por equipe</a>).</li>
           <li><b>Configurações</b> — controla os dois interruptores de <a href="#sem-login">acesso sem login</a>, quais papéis podem ver o Painel Executivo/Relatório de Situação/Relatório de Entregas, quais papéis podem editar o <a href="#passo-10">Plano de Comunicação de Projeto</a>, e os interruptores + papéis permitidos da <a href="#passo-6">importação de transcrição e de áudio por IA</a> na Ata de Reunião (regras independentes).</li>
+          <li><b>Ambiente de Treino</b> — só aparece quando a Administração é acessada em produção. Tem um único botão para resetar e repopular o <a href="https://paramiri.github.io/unialfa-gestao-projetos-treino/" target="_blank" rel="noopener">ambiente de treinamento</a> (um sistema separado, com banco próprio, usado para apresentações e capacitação) com os 7 projetos de exemplo — não afeta nenhum dado de produção.</li>
         </ul>
         <p class="lead">Pré-cadastro de usuário (antes do primeiro login)</p>
         <p>No topo da aba Usuários, o Admin pode preencher nome, telefone (opcional), e-mail e papel e clicar em <b>+ Adicionar usuário</b> para cadastrar alguém que ainda não fez login. Essa pessoa aparece na lista com o selo <b>Pendente — 1º login</b>, e o Admin ainda pode ajustar telefone/papel ou remover o pré-cadastro a qualquer momento.</p>

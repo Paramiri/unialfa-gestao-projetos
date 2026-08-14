@@ -372,7 +372,7 @@ window.unialfaEquipe = {
         <h1>Administração de Usuários</h1>
         <p>Controle de acesso · Papéis e permissões · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=11#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=12#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
     </div>
   </div>
 
@@ -380,6 +380,7 @@ window.unialfaEquipe = {
     <button class="vtab" aria-selected="true" onclick="showAba('usuarios')">Usuários</button>
     <button class="vtab" aria-selected="false" onclick="showAba('equipes')">Equipes</button>
     <button class="vtab" aria-selected="false" onclick="showAba('config')">Configurações</button>
+    <button class="vtab" aria-selected="false" onclick="showAba('treino')" id="vtabTreino" style="display:none">Ambiente de Treino</button>
   </div>
 
   <div class="card" id="content-card">
@@ -475,6 +476,23 @@ window.unialfaEquipe = {
       <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode importar áudio na Ata de Reunião</b>
       <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">Só tem efeito com a importação de áudio habilitada acima. PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
       <div class="papeis-grupo" id="papeisImportarAudio" data-chave="papeis_importar_audio_ata"></div>
+    </div>
+  </div>
+
+  <div class="card" id="treino-card" style="display:none">
+    <div class="section-h"><h2>Ambiente de Treinamento</h2><p>Reset e repopulação dos dados de exemplo</p></div>
+    <div style="padding:20px 24px">
+      <b style="display:block; font-size:13px; margin-bottom:6px">Resetar e repopular o ambiente de treinamento</b>
+      <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:14px; line-height:1.6">
+        Apaga todos os projetos e registros do ambiente de treinamento
+        (<a href="https://paramiri.github.io/unialfa-gestao-projetos-treino/" target="_blank" rel="noopener">paramiri.github.io/unialfa-gestao-projetos-treino</a>)
+        e recria os 7 projetos de exemplo cobrindo o ciclo completo — útil para deixar o ambiente
+        limpo antes de uma nova turma de treinamento. Não afeta nenhum dado de produção: o
+        ambiente de treinamento roda num banco Supabase totalmente separado. As 6 contas fixas de
+        treino e as configurações continuam intactas.
+      </span>
+      <button class="btn" id="btnResetTreino" onclick="executarResetTreino()">🔄 Resetar ambiente de treinamento</button>
+      <div id="resetTreinoMsg" style="margin-top:12px; font-size:12.5px; font-weight:600; display:none; padding:10px 12px; border-radius:7px"></div>
     </div>
   </div>
 </div>
@@ -705,7 +723,8 @@ function showAba(aba){
   document.getElementById('content-card').style.display = aba==='usuarios' ? 'block' : 'none';
   document.getElementById('equipes-card').style.display = aba==='equipes' ? 'block' : 'none';
   document.getElementById('config-card').style.display = aba==='config' ? 'block' : 'none';
-  document.querySelectorAll('.vtab').forEach((b,i)=>b.setAttribute('aria-selected', (aba==='usuarios'&&i===0)||(aba==='equipes'&&i===1)||(aba==='config'&&i===2)));
+  document.getElementById('treino-card').style.display = aba==='treino' ? 'block' : 'none';
+  document.querySelectorAll('.vtab').forEach((b,i)=>b.setAttribute('aria-selected', (aba==='usuarios'&&i===0)||(aba==='equipes'&&i===1)||(aba==='config'&&i===2)||(aba==='treino'&&i===3)));
   if(aba==='config'){
     carregarConfigSemLogin('permitir_solicitacao_sem_login', 'toggleSemLogin');
     carregarConfigSemLogin('permitir_ata_sem_login', 'toggleAtaSemLogin');
@@ -717,6 +736,39 @@ function showAba(aba){
     carregarConfigPapeis('papeis_importar_transcricao_ata', 'papeisImportarIA');
     carregarConfigSemLogin('permitir_importar_audio_ata', 'toggleImportarAudio');
     carregarConfigPapeis('papeis_importar_audio_ata', 'papeisImportarAudio');
+  }
+}
+
+async function executarResetTreino(){
+  if(!confirm('Isso vai apagar TODOS os dados atuais do ambiente de treinamento e recriar os 7 projetos de exemplo. Não afeta produção. Continuar?')) return;
+  const btn = document.getElementById('btnResetTreino');
+  const msg = document.getElementById('resetTreinoMsg');
+  btn.disabled = true; const textoOriginal = btn.textContent; btn.textContent = 'Resetando…';
+  msg.style.display = 'none';
+  try{
+    const session = unialfaAuth.getSession();
+    const token = session && session.access_token;
+    if(!token) throw new Error('Sessão não encontrada — saia e entre novamente.');
+    const r = await fetch('https://fiarntunpqteopwjkhjg.supabase.co/functions/v1/reset-treino', {
+      method: 'POST',
+      headers: {
+        'apikey': 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ',
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+    const data = await r.json().catch(()=>({}));
+    if(!r.ok || !data.ok) throw new Error(data.error || ('Falha (HTTP ' + r.status + ')'));
+    msg.textContent = '✓ ' + (data.mensagem || 'Ambiente de treinamento resetado com sucesso.');
+    msg.style.cssText = 'margin-top:12px;font-size:12.5px;font-weight:600;display:block;padding:10px 12px;border-radius:7px;background:var(--ok-soft);color:var(--ok)';
+    toast('Ambiente de treinamento resetado');
+  }catch(e){
+    msg.textContent = '✗ ' + (e.message || 'Não foi possível resetar o ambiente de treinamento.');
+    msg.style.cssText = 'margin-top:12px;font-size:12.5px;font-weight:600;display:block;padding:10px 12px;border-radius:7px;background:var(--bad-soft);color:var(--bad)';
+    toast('Falha ao resetar ambiente de treinamento', false);
+  }finally{
+    btn.disabled = false; btn.textContent = textoOriginal;
   }
 }
 
@@ -835,6 +887,7 @@ async function removerMembro(projetoId, usuarioId){
     return;
   }
   document.getElementById('vtabs').style.display='flex';
+  if(location.href.indexOf('treino')===-1){ document.getElementById('vtabTreino').style.display='inline-block'; }
   document.getElementById('novoPapel').innerHTML = PAPEIS.map(p=>`<option value="${p}">${unialfaAuth.papelLabel(p)}</option>`).join('');
   await carregarUsuarios();
   await carregarProjetosEquipe();
