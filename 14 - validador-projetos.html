@@ -182,6 +182,14 @@ footer.tool-foot .quote{font-size:13px;font-style:italic;color:var(--ink);font-w
     </div>
     <div style="text-align:center;margin:14px 0;color:var(--muted,#6B7280);font-size:11px;font-weight:600">— ou —</div>
     <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="unialfaAuthUI.signInWithAzure()">Entrar com Microsoft - UNIALFA</button>
+    <div id="treinoLoginBloco" style="display:none">
+      <div style="text-align:center;margin:14px 0;color:var(--muted,#6B7280);font-size:11px;font-weight:600">— ou —</div>
+      <p style="font-size:11.5px;color:var(--muted,#6B7280);margin-bottom:8px">Ambiente de treinamento — use uma conta de teste:</p>
+      <input type="email" id="treinoEmail" placeholder="ex.: admin@treino.unialfa.local">
+      <input type="password" id="treinoSenha" placeholder="Senha" style="margin-top:8px">
+      <button class="btn btn-primary" style="margin-top:10px" onclick="unialfaAuthUI.signInTreino()">Entrar (treinamento)</button>
+    </div>
+    <script>if(location.href.indexOf('treino')>-1){var _tb=document.getElementById('treinoLoginBloco');if(_tb)_tb.style.display='block';}</script>
     <div id="authStep2" style="display:none">
       <p>✓ Link enviado para <b id="authEmailSent"></b>. Verifique seu e-mail e clique no link — esta página atualiza sozinha.</p>
       <button class="btn btn-ghost btn-sm" onclick="unialfaAuthUI.reset()">Usar outro e-mail</button>
@@ -217,8 +225,9 @@ body.auth-ready{padding-top:34px}
 <script>
 /* ---- Autenticacao (magic link + Microsoft) ---- */
 (function(){
-  var SUPABASE_URL = 'https://fiarntunpqteopwjkhjg.supabase.co';
-  var SUPABASE_ANON_KEY = 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+  var IS_TREINO = location.href.indexOf('treino')>-1;
+  var SUPABASE_URL = IS_TREINO ? 'https://uuxvdulunrwppbmofyux.supabase.co' : 'https://fiarntunpqteopwjkhjg.supabase.co';
+  var SUPABASE_ANON_KEY = IS_TREINO ? 'sb_publishable_c2t1YzuGTrNvg5770BYOvg_04hR9NrE' : 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
   var AUTH_BASE = SUPABASE_URL + '/auth/v1';
   var REST_BASE = SUPABASE_URL + '/rest/v1';
   var SESSION_KEY = 'unialfa_session';
@@ -338,6 +347,7 @@ body.auth-ready{padding-top:34px}
   }
 
   window.unialfaAuth = {
+    ANON_KEY: SUPABASE_ANON_KEY,
     REST_BASE: REST_BASE,
     AUTH_BASE: AUTH_BASE,
     getSession: getSession, clearSession: clearSession, captureRedirect: captureRedirect,
@@ -368,6 +378,20 @@ var unialfaAuthUI = {
     document.getElementById('authStep1').style.display='block';
     document.getElementById('authStep2').style.display='none';
     document.getElementById('authEmail').value='';
+  },
+  signInTreino: async function(){
+    var email = document.getElementById('treinoEmail').value.trim();
+    var senha = document.getElementById('treinoSenha').value;
+    var msg = document.getElementById('authMsg');
+    if(!email || !senha){ msg.textContent='Informe e-mail e senha de treinamento.'; msg.className='auth-msg err'; msg.style.display='block'; return; }
+    msg.style.display='none';
+    try{
+      var r = await fetch(unialfaAuth.AUTH_BASE + '/token?grant_type=password', { method:'POST', headers:{'Content-Type':'application/json','apikey':unialfaAuth.ANON_KEY}, body: JSON.stringify({email:email, password:senha}) });
+      var data = await r.json();
+      if(!r.ok || !data.access_token){ msg.textContent='E-mail ou senha inválidos.'; msg.className='auth-msg err'; msg.style.display='block'; return; }
+      localStorage.setItem('unialfa_session', JSON.stringify({ access_token:data.access_token, refresh_token:data.refresh_token, expires_at: Date.now() + (parseInt(data.expires_in||'3600',10)*1000) }));
+      location.reload();
+    }catch(e){ msg.textContent='Não foi possível entrar. Tente novamente.'; msg.className='auth-msg err'; msg.style.display='block'; }
   },
 };
 

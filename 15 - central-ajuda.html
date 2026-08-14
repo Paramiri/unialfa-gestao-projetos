@@ -451,8 +451,9 @@ body.auth-ready{padding-top:34px}
 <script>
 /* Marca no menu a seção visível e mostra a barra de login se houver sessão ativa (sem exigir login) */
 (function(){
-  var SUPABASE_URL = 'https://fiarntunpqteopwjkhjg.supabase.co';
-  var SUPABASE_ANON_KEY = 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+  var IS_TREINO = location.href.indexOf('treino')>-1;
+  var SUPABASE_URL = IS_TREINO ? 'https://uuxvdulunrwppbmofyux.supabase.co' : 'https://fiarntunpqteopwjkhjg.supabase.co';
+  var SUPABASE_ANON_KEY = IS_TREINO ? 'sb_publishable_c2t1YzuGTrNvg5770BYOvg_04hR9NrE' : 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
   var PAPEL_LABEL = { solicitante:'Solicitante', gerente_projetos:'Gerente de Projetos', gestor_responsavel:'Gestor Responsável', dono_negocio:'Dono do Negócio', alta_gestao:'Alta Gestão', admin:'PMO / Admin' };
   function getSession(){ try{ return JSON.parse(localStorage.getItem('unialfa_session')); }catch(e){ return null; } }
   async function mostrarTopbar(){
