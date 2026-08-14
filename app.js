@@ -216,7 +216,8 @@
 
   // ---------------- Detail ----------------
   function estrategiaHtml(e) {
-    const chips = (e.artefatos || []).map(artChip).join('');
+    const nomes = (e.artefatos || []).map(code => ARTEFATOS[code] && ARTEFATOS[code].nome).filter(Boolean);
+    const formsLabel = nomes.length ? `<div class="acc-forms">Formulários (${nomes.map(esc).join(', ')})</div>` : '';
     return `<div class="acc-item" data-acc>
       <div class="acc-head">
         <button class="acc-trigger" data-toggle>
@@ -224,7 +225,7 @@
           <span class="acc-title" title="${esc(e.titulo)}">${esc(e.titulo)}</span>
           <span class="acc-chev">▾</span>
         </button>
-        ${chips ? `<div class="acc-quicklinks">${chips}</div>` : ''}
+        ${formsLabel}
       </div>
       <div class="acc-body">
         <div class="acc-body-in">
@@ -242,6 +243,17 @@
     const pessoasLi = d.pessoas.map(x => `<li>${esc(x)}</li>`).join('');
 
     const gateBefore = Object.values(GATES).find(g => g.diretriz === d.id && false); // reserved
+
+    const artCodes = [];
+    d.grupos.forEach(g => g.estrategias.forEach(e => (e.artefatos || []).forEach(c => {
+      if (!artCodes.includes(c)) artCodes.push(c);
+    })));
+    const formsSummaryHtml = artCodes.length ? `
+      <div class="forms-summary">
+        <h4>Formulários utilizados nesta diretriz</h4>
+        <div class="art-row">${artCodes.map(artChip).join('')}</div>
+      </div>` : '';
+
     let strategiesHtml = '';
 
     d.grupos.forEach(grp => {
@@ -280,6 +292,7 @@
           <div><h4>O que a diretriz entrega?</h4><ul>${entregaLi}</ul></div>
           <div><h4>Quem está envolvido?</h4><ul>${pessoasLi}</ul></div>
         </div>
+        ${formsSummaryHtml}
       </div>
 
       ${strategiesHtml}

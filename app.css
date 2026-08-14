@@ -251,6 +251,11 @@ button{font-family:var(--font)}
 .ficha ul{margin:0; padding-left:16px; font-size:12px}
 .ficha li{margin-bottom:4px}
 
+.forms-summary{
+  background:var(--surface-2); border-top:1px solid var(--line); padding:16px 26px 20px;
+}
+.forms-summary h4{margin:0 0 10px; font-size:10.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
+
 .strategies-title{
   font-size:12px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--muted);
   margin:24px 2px 12px;
@@ -281,6 +286,7 @@ button{font-family:var(--font)}
 .acc-trigger .acc-chev{flex:none; color:var(--muted-2); transition:transform .15s ease; font-size:12px}
 .acc-item.open .acc-chev{transform:rotate(180deg)}
 .acc-quicklinks{flex:none; display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; max-width:100%}
+.acc-forms{flex:none; font-size:11px; color:var(--muted); text-align:right; max-width:340px; line-height:1.4}
 .acc-body{max-height:0; overflow:hidden; transition:max-height .2s ease}
 .acc-item.open .acc-body{max-height:1200px}
 .acc-body-in{padding:0 18px 18px}
