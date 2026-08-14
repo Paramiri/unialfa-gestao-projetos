@@ -38,6 +38,20 @@ Se essa atualização for delegada a um agente, a verificação do passo 3 (conf
 
 Diferente de `app.css`/`app.js`, essa página não é referenciada por `<link>`/`<script>` num único lugar, e sim por um link `?` (`class="doc-help"`/`"head-help"`) em cada um dos 12 formulários + o item de menu em `app.js` — todos com cache-busting `?v=N` (ex.: `href="15 - central-ajuda.html?v=1#passo-1"`). Sempre que o conteúdo de `15 - central-ajuda.html` mudar, incrementar o `N` em **todos** esses links (não só no arquivo em si), senão o GitHub Pages/CDN pode continuar servindo a versão em cache por até 10 minutos.
 
+## Ambiente de Treinamento (sincronização)
+
+`Paramiri/unialfa-gestao-projetos-treino` é um repositório-espelho, publicado separadamente no GitHub Pages (`https://paramiri.github.io/unialfa-gestao-projetos-treino/`), usado como ambiente de treinamento/demonstração: mesmo código, backend Supabase totalmente separado (projeto `unialfa-treinamento`, ref `uuxvdulunrwppbmofyux`), selecionado em runtime pelo hostname (`IS_TREINO = location.href.indexOf('treino')>-1`, já presente em todos os arquivos HTML). Scripts de seed/reset dos dados de exemplo desse ambiente ficam versionados em `treino/` neste repositório; o botão que roda esse reset a partir da Administração (produção) chama a Edge Function `reset-treino`.
+
+**Regra permanente:** sempre que um arquivo do site de produção for alterado — HTML, `app.js`/`app.css`, ou uma Edge Function em `supabase/functions/` — replicar a mesma mudança no repositório-espelho, no mesmo commit (ou logo em seguida) da mudança em produção, para o ambiente de treinamento continuar refletindo a mesma versão do sistema. Isso vale tanto para mudanças feitas por mim quanto pelo usuário, exatamente como já vale para o Manual de Uso e a Central de Ajuda.
+
+Como sincronizar:
+1. Copiar os arquivos alterados de `unialfa-gestao-projetos` (produção) para a working copy local do repositório-espelho, preservando as poucas divergências propositais dele: sem arquivo `CNAME` (usa o endereço padrão do GitHub Pages) e sem a senha das contas de treino em texto puro no `README.md`.
+2. Commitar e dar push no repositório-espelho (mesmo padrão de commit em português + `Co-Authored-By`).
+3. Confirmar a publicação fazendo polling no GitHub Pages do espelho (`https://paramiri.github.io/unialfa-gestao-projetos-treino/...`) até o conteúdo novo aparecer — mesmo procedimento do "Padrão de deploy" abaixo, aplicado ao repositório-espelho.
+4. Se a mudança envolver uma Edge Function nova ou alterada, reimplantá-la também no projeto de treinamento (`supabase functions deploy <nome> --project-ref uuxvdulunrwppbmofyux`) — sem copiar nenhum secret real de e-mail/IA (`RESEND_API_KEY`, `VAPID_*`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`) para lá, propositalmente, para o ambiente de treino nunca poder disparar e-mail real, push real nem chamada de IA paga.
+
+Se a mudança alterar o formato dos dados salvos por algum formulário (novo campo no objeto salvo no `kv_store`, nova coluna em `projetos`/`projeto_equipe`/`projeto_historico`), também avaliar se `treino/treino_seed.sql` precisa de ajuste para continuar gerando dados de exemplo válidos.
+
 ## Padrão de deploy
 
 `git add` dos arquivos específicos → commit em português com `Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>` → `git push` → confirmar publicação fazendo polling no GitHub Pages (`https://paramiri.github.io/unialfa-gestao-projetos/...`) até o conteúdo novo aparecer.
