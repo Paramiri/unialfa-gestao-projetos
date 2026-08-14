@@ -832,7 +832,7 @@ function renderPainel(){
 
   document.getElementById('kpi-prog').textContent=programs.length||projs.length;
   document.getElementById('kpi-proj').textContent=projs.length;
-  document.getElementById('kpi-entr').textContent=data.entr||'—';
+  document.getElementById('kpi-entr').textContent=data.entr||0;
   document.getElementById('kpi-fin').textContent=data.fin?fmtBRL(data.fin):'—';
   document.getElementById('kpi-risco').textContent=projs.filter(p=>calcSinalizacao(p)).length;
 
