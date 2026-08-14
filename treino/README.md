@@ -35,7 +35,10 @@ supabase link --project-ref fiarntunpqteopwjkhjg
 
 6 contas fixas (`@treino.unialfa.local`, senha `Treino@2026`), uma por papel —
 criadas separadamente via Auth Admin API, não fazem parte destes scripts.
-Peça a quem administra o ambiente caso precise recriá-las.
+Peça a quem administra o ambiente caso precise recriá-las. Na tela de login do
+ambiente de treino, a pessoa não digita e-mail/senha: só seleciona o papel
+desejado num menu suspenso e clica em "Entrar" — a conta e a senha correspondentes
+são preenchidas automaticamente pelo próprio front-end.
 
 ## Sobre as Edge Functions no ambiente de treino
 

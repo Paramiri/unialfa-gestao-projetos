@@ -135,10 +135,16 @@ table.list tbody tr:hover{background:var(--surface-2)}
     <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="unialfaAuthUI.signInWithAzure()">Entrar com Microsoft - UNIALFA</button>
     <div id="treinoLoginBloco" style="display:none">
       <div style="text-align:center;margin:14px 0;color:var(--muted,#6B7280);font-size:11px;font-weight:600">— ou —</div>
-      <p style="font-size:11.5px;color:var(--muted,#6B7280);margin-bottom:8px">Ambiente de treinamento — use uma conta de teste:</p>
-      <input type="email" id="treinoEmail" placeholder="ex.: admin@treino.unialfa.local">
-      <input type="password" id="treinoSenha" placeholder="Senha" style="margin-top:8px">
-      <button class="btn btn-primary" style="margin-top:10px" onclick="unialfaAuthUI.signInTreino()">Entrar (treinamento)</button>
+      <p style="font-size:11.5px;color:var(--muted,#6B7280);margin-bottom:8px">Ambiente de treinamento — selecione um papel para entrar:</p>
+      <select id="treinoPapel" style="width:100%;font-family:inherit;font-size:13.5px;border:1px solid var(--line-strong,#D1D5DB);border-radius:8px;padding:10px 12px;margin-bottom:10px;color:var(--ink,#0F0F0F)">
+        <option value="solicitante@treino.unialfa.local">Solicitante</option>
+        <option value="gp@treino.unialfa.local">Gerente de Projetos</option>
+        <option value="gestor@treino.unialfa.local">Gestor Responsável</option>
+        <option value="dono@treino.unialfa.local">Dono do Negócio</option>
+        <option value="altagestao@treino.unialfa.local">Alta Gestão</option>
+        <option value="admin@treino.unialfa.local">PMO / Admin</option>
+      </select>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="unialfaAuthUI.signInTreino()">Entrar</button>
     </div>
     <script>if(location.href.indexOf('treino')>-1){var _tb=document.getElementById('treinoLoginBloco');if(_tb)_tb.style.display='block';}</script>
     <div id="authStep2" style="display:none">
@@ -342,10 +348,9 @@ var unialfaAuthUI = {
     document.getElementById('authEmail').value='';
   },
   signInTreino: async function(){
-    var email = document.getElementById('treinoEmail').value.trim();
-    var senha = document.getElementById('treinoSenha').value;
+    var email = document.getElementById('treinoPapel').value;
+    var senha = 'Treino@2026';
     var msg = document.getElementById('authMsg');
-    if(!email || !senha){ msg.textContent='Informe e-mail e senha de treinamento.'; msg.className='auth-msg err'; msg.style.display='block'; return; }
     msg.style.display='none';
     try{
       var r = await fetch(unialfaAuth.AUTH_BASE + '/token?grant_type=password', { method:'POST', headers:{'Content-Type':'application/json','apikey':unialfaAuth.ANON_KEY}, body: JSON.stringify({email:email, password:senha}) });
