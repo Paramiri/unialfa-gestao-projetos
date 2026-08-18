@@ -87,6 +87,10 @@ textarea{resize:vertical;min-height:80px}
 .dyn-mini input:focus,.dyn-mini textarea:focus{background:#fff;border-color:var(--red);box-shadow:none}
 .row-x{appearance:none;border:none;background:transparent;color:var(--muted);font-size:17px;cursor:pointer;width:26px;height:26px;border-radius:5px;line-height:1;display:flex;align-items:center;justify-content:center}
 .row-x:hover{background:#FEE2E2;color:#DC2626}
+.row-actions{display:flex;align-items:center;justify-content:flex-end;gap:1px}
+.row-mv{appearance:none;border:none;background:transparent;color:var(--muted);font-size:10px;cursor:pointer;width:22px;height:22px;border-radius:5px;line-height:1;display:flex;align-items:center;justify-content:center}
+.row-mv:hover:not(:disabled){background:var(--surface-2);color:var(--ink)}
+.row-mv:disabled{opacity:.25;cursor:default}
 .dyn-foot{margin-top:8px}
 
 .action-bar{display:flex;gap:10px;align-items:center;padding:14px 20px;border-top:1px solid var(--line);background:var(--surface-2);flex-wrap:wrap}
@@ -403,7 +407,7 @@ function ensureAuthenticated(){
       <div class="edit-card-head"><h3>Tipos de Comunicação</h3><button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)" onclick="addTipo()">+ Adicionar linha</button></div>
       <div class="edit-body">
         <div class="pcp-t-wrap"><table class="dyn-mini" id="tbl-tipos">
-          <thead><tr><th>Tipo de Comunicação</th><th>O que Comunicar</th><th>Quando Comunicar</th><th>Com Quem se Comunicar</th><th>Como Comunicar</th><th>Quem Comunica</th><th style="width:32px"></th></tr></thead>
+          <thead><tr><th>Tipo de Comunicação</th><th>O que Comunicar</th><th>Quando Comunicar</th><th>Com Quem se Comunicar</th><th>Como Comunicar</th><th>Quem Comunica</th><th style="width:96px"></th></tr></thead>
           <tbody id="tbody-tipos"></tbody>
         </table></div>
         <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addTipo()">+ Adicionar linha</button></div>
@@ -431,7 +435,7 @@ function ensureAuthenticated(){
       <div class="edit-card-head"><h3>Glossário</h3><button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)" onclick="addTermo()">+ Adicionar termo</button></div>
       <div class="edit-body">
         <table class="dyn-mini" id="tbl-gloss">
-          <thead><tr><th>Termo e definição</th><th style="width:32px"></th></tr></thead>
+          <thead><tr><th>Termo e definição</th><th style="width:96px"></th></tr></thead>
           <tbody id="tbody-gloss"></tbody>
         </table>
         <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addTermo()">+ Adicionar termo</button></div>
@@ -631,8 +635,13 @@ function addTipo(vals){
     <td><textarea data-k="comQuem" placeholder="Com quem se comunicar">${esc(v('comQuem'))}</textarea></td>
     <td><textarea data-k="como" placeholder="Como comunicar">${esc(v('como'))}</textarea></td>
     <td><textarea data-k="quemComunica" placeholder="Ex: GP / PMO">${esc(v('quemComunica'))}</textarea></td>
-    <td><button type="button" class="row-x" onclick="this.closest('tr').remove()">×</button></td>`;
+    <td class="row-actions">
+      <button type="button" class="row-mv row-mv-up" title="Mover para cima" onclick="moveRow(this,-1)">▲</button>
+      <button type="button" class="row-mv row-mv-down" title="Mover para baixo" onclick="moveRow(this,1)">▼</button>
+      <button type="button" class="row-x" onclick="removeRow(this)">×</button>
+    </td>`;
   tb.appendChild(tr);
+  updateRowMoveButtons(tb);
 }
 function readTipos(){
   const rows = [];
@@ -655,8 +664,34 @@ function addTermo(val){
   const tr = document.createElement('tr');
   const v = val ? (typeof val === 'string' ? val : (val.texto||'')) : '';
   tr.innerHTML = `<td><textarea data-k="termo" placeholder="Ex: PMO (Project Management Office)...">${esc(v)}</textarea></td>
-    <td><button type="button" class="row-x" onclick="this.closest('tr').remove()">×</button></td>`;
+    <td class="row-actions">
+      <button type="button" class="row-mv row-mv-up" title="Mover para cima" onclick="moveRow(this,-1)">▲</button>
+      <button type="button" class="row-mv row-mv-down" title="Mover para baixo" onclick="moveRow(this,1)">▼</button>
+      <button type="button" class="row-x" onclick="removeRow(this)">×</button>
+    </td>`;
   tb.appendChild(tr);
+  updateRowMoveButtons(tb);
+}
+function moveRow(btn,dir){
+  const tr=btn.closest('tr'); const tb=tr.parentElement;
+  if(dir<0){ const prev=tr.previousElementSibling; if(prev) tb.insertBefore(tr, prev); }
+  else { const next=tr.nextElementSibling; if(next) tb.insertBefore(next, tr); }
+  updateRowMoveButtons(tb);
+}
+function removeRow(btn, after){
+  const tr=btn.closest('tr'); const tb=tr.parentElement;
+  tr.remove();
+  updateRowMoveButtons(tb);
+  if(after) after();
+}
+function updateRowMoveButtons(tbody){
+  if(!tbody) return;
+  const trs=tbody.querySelectorAll(':scope > tr');
+  trs.forEach((tr,i)=>{
+    const up=tr.querySelector('.row-mv-up'), down=tr.querySelector('.row-mv-down');
+    if(up) up.disabled=(i===0);
+    if(down) down.disabled=(i===trs.length-1);
+  });
 }
 function readGloss(){
   const rows = [];

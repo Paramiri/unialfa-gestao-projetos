@@ -86,6 +86,10 @@ table.dyn-t input{border:1px solid transparent;border-radius:6px;padding:8px;fon
 table.dyn-t input:focus{background:#fff;border-color:var(--red);box-shadow:none;outline:none}
 .row-x{appearance:none;border:none;background:transparent;color:var(--muted);font-size:18px;cursor:pointer;width:28px;height:28px;border-radius:6px;line-height:1;display:flex;align-items:center;justify-content:center}
 .row-x:hover{background:var(--bad-soft);color:var(--bad)}
+.row-actions{display:flex;align-items:center;justify-content:flex-end;gap:1px}
+.row-mv{appearance:none;border:none;background:transparent;color:var(--muted);font-size:10px;cursor:pointer;width:22px;height:22px;border-radius:5px;line-height:1;display:flex;align-items:center;justify-content:center}
+.row-mv:hover:not(:disabled){background:var(--surface-2);color:var(--ink)}
+.row-mv:disabled{opacity:.25;cursor:default}
 .dyn-foot{margin-top:10px}
 .actions{display:flex;align-items:center;gap:12px;padding:18px 24px;border-top:1px solid var(--line);background:var(--surface-2)}
 .btn{appearance:none;font-family:var(--font);font-weight:700;font-size:13px;border-radius:8px;padding:11px 22px;cursor:pointer;border:1px solid transparent;transition:all .15s;display:inline-flex;align-items:center;gap:8px}
@@ -889,7 +893,7 @@ function mountTable(name){
   const cfg=TABLES[name]; const host=document.getElementById('dyn-'+name);
   const wrap=document.createElement('div');
   wrap.innerHTML=`<div class="dyn-table-wrap"><table class="dyn-t" id="tbl-${name}">
-    <thead><tr>${cfg.cols.map(c=>`<th>${c.label}</th>`).join('')}<th style="width:36px"></th></tr></thead><tbody></tbody>
+    <thead><tr>${cfg.cols.map(c=>`<th>${c.label}</th>`).join('')}<th style="width:96px"></th></tr></thead><tbody></tbody>
   </table></div><div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addRow('${name}')">+ Adicionar linha</button></div>`;
   host.appendChild(wrap);
   for(let i=0;i<cfg.seed;i++) addRow(name);
@@ -903,8 +907,34 @@ function addRow(name,vals){
     const inp=c.type==='date'?`<input data-k="${c.key}" type="date" value="${esc(v)}">`:`<input data-k="${c.key}" type="text" value="${esc(v)}">`;
     return `<td>${inp}</td>`;
   }).join('');
-  cells+=`<td><button type="button" class="row-x" onclick="this.closest('tr').remove()">×</button></td>`;
+  cells+=`<td class="row-actions">
+    <button type="button" class="row-mv row-mv-up" title="Mover para cima" onclick="moveRow(this,-1)">▲</button>
+    <button type="button" class="row-mv row-mv-down" title="Mover para baixo" onclick="moveRow(this,1)">▼</button>
+    <button type="button" class="row-x" onclick="removeRow(this)">×</button>
+  </td>`;
   tr.innerHTML=cells; tb.appendChild(tr);
+  updateRowMoveButtons(tb);
+}
+function moveRow(btn,dir){
+  const tr=btn.closest('tr'); const tb=tr.parentElement;
+  if(dir<0){ const prev=tr.previousElementSibling; if(prev) tb.insertBefore(tr, prev); }
+  else { const next=tr.nextElementSibling; if(next) tb.insertBefore(next, tr); }
+  updateRowMoveButtons(tb);
+}
+function removeRow(btn, after){
+  const tr=btn.closest('tr'); const tb=tr.parentElement;
+  tr.remove();
+  updateRowMoveButtons(tb);
+  if(after) after();
+}
+function updateRowMoveButtons(tbody){
+  if(!tbody) return;
+  const trs=tbody.querySelectorAll(':scope > tr');
+  trs.forEach((tr,i)=>{
+    const up=tr.querySelector('.row-mv-up'), down=tr.querySelector('.row-mv-down');
+    if(up) up.disabled=(i===0);
+    if(down) down.disabled=(i===trs.length-1);
+  });
 }
 function clearTable(name){document.querySelector(`#tbl-${name} tbody`).innerHTML=''; for(let i=0;i<TABLES[name].seed;i++) addRow(name);}
 function fillTable(name,rows){
