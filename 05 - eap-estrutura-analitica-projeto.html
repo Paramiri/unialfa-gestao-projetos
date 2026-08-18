@@ -103,6 +103,14 @@ input:focus, select:focus{outline:none; border-color:var(--red); box-shadow:0 0 
 .tree-head{display:flex; align-items:center; gap:12px; padding:16px 24px; border-bottom:1px solid var(--line); background:var(--surface-2);}
 .tree-head h3{margin:0; font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase}
 .tree-area{padding:32px 24px; overflow-x:auto; min-height:120px;}
+.tree-area,#drawer-tree{scrollbar-width:auto; scrollbar-color:var(--red,#B91D2E) #E4E4E7;}
+.tree-area::-webkit-scrollbar,#drawer-tree::-webkit-scrollbar{height:12px;}
+.tree-area::-webkit-scrollbar-track,#drawer-tree::-webkit-scrollbar-track{background:#E4E4E7; border-radius:6px;}
+.tree-area::-webkit-scrollbar-thumb,#drawer-tree::-webkit-scrollbar-thumb{background:var(--red,#B91D2E); border-radius:6px;}
+.tree-nav{display:flex; align-items:center; gap:6px;}
+.tree-nav button{appearance:none; border:1px solid var(--line); background:var(--paper); width:28px; height:28px; border-radius:6px; cursor:pointer; font-size:13px; color:var(--muted);}
+.tree-nav button:hover{border-color:var(--ink); color:var(--ink);}
+.tree-hint{font-size:11px; color:var(--muted); font-weight:600;}
 .t-root{display:flex; flex-direction:column; align-items:center;}
 .t-root-box{background:var(--red); color:#fff; padding:10px 24px; border-radius:8px; font-weight:800; font-size:14px; text-align:center; max-width:320px; word-break:break-word;}
 .t-vline{width:2px; height:22px; background:var(--line-strong); margin:0 auto;}
@@ -668,7 +676,14 @@ window.unialfaHistorico = {
     <div class="tree-card" id="tree-preview" style="display:none">
       <div class="tree-head">
         <h3>Árvore da EAP</h3>
-        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="document.getElementById('tree-preview').style.display='none'">Fechar</button>
+        <div style="margin-left:auto; display:flex; align-items:center; gap:14px">
+          <span class="tree-hint" id="tree-hint" style="display:none">Role para o lado para ver todos os itens</span>
+          <div class="tree-nav">
+            <button type="button" onclick="scrollTreeBy('tree-area',-1)" title="Rolar para a esquerda">◀</button>
+            <button type="button" onclick="scrollTreeBy('tree-area',1)" title="Rolar para a direita">▶</button>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('tree-preview').style.display='none'">Fechar</button>
+        </div>
       </div>
       <div class="tree-area" id="tree-area"></div>
     </div>
@@ -893,8 +908,8 @@ function readForm(){
 function n3Nome(n3){ return typeof n3==='string' ? n3 : (n3&&n3.nome)||''; }
 function n3Prio(n3){ return (n3&&typeof n3==='object'&&n3.prioridade)||''; }
 
-function renderTree(nome,n1s,host){
-  if(!n1s||!n1s.length){host.innerHTML='<p style="color:var(--muted);font-size:13px;text-align:center">Nenhum pacote de trabalho cadastrado.</p>'; return;}
+function renderTree(nome,n1s,host,hintId){
+  if(!n1s||!n1s.length){host.innerHTML='<p style="color:var(--muted);font-size:13px;text-align:center">Nenhum pacote de trabalho cadastrado.</p>'; if(hintId){const h=document.getElementById(hintId); if(h) h.style.display='none';} return;}
   let html=`<div class="t-root"><div class="t-root-box">${esc(nome)}</div><div class="t-vline"></div><div class="t-hrow">`;
   n1s.forEach((n1,i)=>{
     html+=`<div class="t-col"><div class="t-n1">${esc(n1.name||'(sem nome)')}<div class="t-code">${i+1}</div></div>`;
@@ -918,13 +933,22 @@ function renderTree(nome,n1s,host){
   });
   html+=`</div></div>`;
   host.innerHTML=html;
+  if(hintId){
+    const h=document.getElementById(hintId);
+    if(h) h.style.display = (host.scrollWidth>host.clientWidth+4) ? 'inline' : 'none';
+  }
 }
 
 function previewTree(){
   const nome=(document.getElementById('nomeProjeto').value||'').trim()||'(Projeto)';
-  renderTree(nome, readForm(), document.getElementById('tree-area'));
   document.getElementById('tree-preview').style.display='block';
+  renderTree(nome, readForm(), document.getElementById('tree-area'), 'tree-hint');
   document.getElementById('tree-preview').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function scrollTreeBy(id,dir){
+  const el=document.getElementById(id); if(!el) return;
+  el.scrollBy({left:dir*260, behavior:'smooth'});
 }
 
 function validate(){
@@ -1080,8 +1104,16 @@ function openDrawer(id){
   document.getElementById('d-proto').textContent=r.protocolo+' · '+fmtStamp(r.createdAt);
   document.getElementById('d-status').value=r.status;
   const body=document.getElementById('d-body');
-  body.innerHTML=`<p style="font-size:11px;color:var(--muted);font-weight:600;margin:0 0 14px">GERENTE: ${esc(r.gerente||'—')} &nbsp;|&nbsp; UNIDADE: ${esc(r.unidade||'—')}</p><div id="drawer-tree" style="overflow-x:auto"></div>`;
-  renderTree(r.nomeProjeto, r.n1s, document.getElementById('drawer-tree'));
+  body.innerHTML=`<p style="font-size:11px;color:var(--muted);font-weight:600;margin:0 0 14px">GERENTE: ${esc(r.gerente||'—')} &nbsp;|&nbsp; UNIDADE: ${esc(r.unidade||'—')}</p>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+      <span class="tree-hint" id="d-tree-hint" style="display:none">Role para o lado para ver todos os itens</span>
+      <div class="tree-nav" style="margin-left:auto">
+        <button type="button" onclick="scrollTreeBy('drawer-tree',-1)" title="Rolar para a esquerda">◀</button>
+        <button type="button" onclick="scrollTreeBy('drawer-tree',1)" title="Rolar para a direita">▶</button>
+      </div>
+    </div>
+    <div id="drawer-tree" style="overflow-x:auto"></div>`;
+  renderTree(r.nomeProjeto, r.n1s, document.getElementById('drawer-tree'), 'd-tree-hint');
   document.getElementById('regHistoricoPanel').style.display='none';
   regHistoricoAberto=false;
   document.getElementById('overlay').classList.add('show');
