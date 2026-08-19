@@ -212,6 +212,14 @@ Bul "A acao e restrita a Admin: o botao chama uma Edge Function que confere, dir
 Bul "Nao apaga nem altera nenhum dado de producao em nenhuma hipotese - a Edge Function so tem permissao de escrita no banco do ambiente de treinamento, nunca no de producao, e se recusa a rodar caso seja implantada por engano no projeto errado."
 Bul "As 6 contas fixas de treinamento e as configuracoes do ambiente de treino nao sao apagadas pelo reset - so os projetos e os registros de formulario."
 
+H2 "3.9 Assistente de preenchimento por IA (Canvas e TAP)"
+P "O Canvas de Projeto e o TAP (Termo de Abertura de Projeto) tem um botao `"Sugerir com IA`", que aparece ao lado do seletor de projeto vinculado depois que um projeto e escolhido. Ele le os documentos ja registrados desse mesmo projeto - Solicitacao de Demanda e, no caso do TAP, tambem o Canvas - alem de todas as Atas de Reuniao vinculadas ao projeto, e usa a API da Claude (Anthropic) para sugerir o preenchimento dos campos ainda vazios. A sugestao nunca salva nada sozinha - o usuario sempre revisa e confirma antes de usar `"Registrar`"/`"Salvar alteracoes`", exatamente como ja funciona na importacao de transcricao da Ata (secao 3.5)."
+Bul "Mesma logica de permissao das secoes 3.5/3.6: interruptor mestre em Administracao > Configuracoes, desligado por padrao, valendo para todo mundo sem excecao, inclusive Admin."
+Bul "Com o interruptor ligado, uma lista de papeis propria define quem pode usar o assistente - Admin sempre tem acesso, mesmo sem estar marcado na lista."
+Bul "Alem da permissao de papel, so quem faz parte da equipe do projeto selecionado (secao 5) pode acionar o botao - a Edge Function confere isso direto no banco antes de gastar uma chamada de API, para ninguem sugerir preenchimento de projeto alheio."
+Bul "So preenche campos vazios: um campo que o usuario ja digitou nunca e sobrescrito pela sugestao. Cada campo preenchido pela IA fica marcado com um selo `"IA`" ate ser editado, e uma linha no rodape lista os documentos usados como base da sugestao."
+Bul "Disponivel apenas em producao - o ambiente de treinamento nao recebe a chave de IA nem a Edge Function correspondente, de proposito, para nunca gerar cobranca real ao demonstrar o sistema."
+
 HR
 
 # ---- 4 ----

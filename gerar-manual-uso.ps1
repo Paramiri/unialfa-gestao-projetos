@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.22 - 14 de agosto de 2026 (substitui a versao 2.21 de 13/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.24 - 19 de agosto de 2026 (substitui a versao 2.23 de 14/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -274,6 +274,7 @@ P "Esta e a versao 2.20 do manual. Em relacao a versao 2.19 (12/08/2026), os ant
 P "Esta e a versao 2.21 do manual. Em relacao a versao 2.20 (13/08/2026), o mesmo ajuste foi estendido aos demais formularios que ainda tinham os antigos botoes `Exportar CSV` e `Imprimir` sem funcionalidade real: Solicitacao de Demanda (Passo 1), Canvas de Projeto (Passo 2), TAP (Passo 3), Planejamento e Desenvolvimento (Passo 4), EAP (Passo 5), SMP (Passo 7), TEP (Passo 8), RLA (Passo 9), Relatorio de Situacao (secao 4.1) e Relatorio de Entregas e Beneficios (secao 4.2). Em todos, `Imprimir` e `Exportar Word` agora geram o documento no formato oficial do respectivo FORALF (ou, no caso da EAP, um layout padrao do sistema, ja que este artefato nao tem FORALF proprio)."
 P "Esta e a versao 2.22 do manual. Em relacao a versao 2.21 (13/08/2026), o Plano de Comunicacao de Projeto (Passo 10) ganhou as 4 colunas que faltavam em relacao ao documento oficial FORALF00308 - Quando Comunicar, Com Quem se Comunicar, Como Comunicar e Quem Comunica, alem das ja existentes Tipo de Comunicacao e O que Comunicar - e passou a ter a aba `Editar dados` restrita por papel (padrao PMO/Admin, configuravel em Administracao > Configuracoes, secao 6.3), mantendo a visualizacao e impressao livres para qualquer usuario autenticado."
 P "Esta e a versao 2.23 do manual. Em relacao a versao 2.22 (13/08/2026), foi adicionada a nova secao 6.5 - Ambiente de Treino: um ambiente de treinamento/demonstracao totalmente separado da producao, com 7 projetos ficticios cobrindo o ciclo completo, e uma quarta aba na Administracao (visivel so em producao) com um botao que reseta e repopula esse ambiente com um clique, restrito a Admin (secao 3.8 das Regras de Acesso)."
+P "Esta e a versao 2.24 do manual. Em relacao a versao 2.23 (14/08/2026), foi adicionada a nova secao 2.12 - Assistente de preenchimento por IA (Canvas e TAP): um botao `Sugerir com IA` que le a Solicitacao de Demanda, o Canvas (no caso do TAP) e as Atas de Reuniao do projeto vinculado para sugerir o preenchimento dos campos ainda vazios, com a mesma logica de interruptor geral e lista de papeis liberados ja usada na importacao de transcricao (secao 2.10)."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -409,6 +410,15 @@ Bul "Depois de transcrito, o texto fica disponivel na mesma caixa da importacao 
 P "A importacao de audio tem uma regra de habilitacao SEPARADA da importacao de texto (secao 2.10) - dois interruptores independentes em Administracao > Configuracoes (secao 6.3), cada um desligado por padrao. Na pratica, o botao `Anexar audio` so aparece para quem tem as duas permissoes ativas ao mesmo tempo (importar transcricao E importar audio), ja que o audio so serve para gerar o texto que depois passa pela mesma analise."
 Nota "PDFs e audio muito longos consomem mais tempo de processamento; nao ha limite de duracao da reuniao em si, mas o navegador precisa decodificar o arquivo inteiro antes de dividir em pedacos - arquivos muito grandes (varias horas) podem demorar mais para começar a transcrever."
 
+H2 "2.12 Assistente de preenchimento por IA (Canvas e TAP)"
+P "O Canvas de Projeto (Passo 2) e o TAP (Passo 3) tem um botao `Sugerir com IA`, que aparece assim que um Projeto vinculado e selecionado. Diferente da importacao de transcricao (secao 2.10), que le um texto colado pelo usuario, este assistente le os proprios documentos ja registrados do projeto - a Solicitacao de Demanda e, no caso do TAP, tambem o Canvas - alem de todas as Atas de Reuniao vinculadas a ele, e usa IA (Claude, pela mesma Supabase Edge Function em espirito da secao 2.10) para sugerir o preenchimento dos campos ainda vazios."
+Bul "So preenche o que estiver vazio: um campo ja digitado pelo usuario nunca e sobrescrito pela sugestao."
+Bul "Cada campo preenchido pela IA fica com um selo `IA` e destaque visual ate ser editado - assim fica claro, campo a campo, o que veio de sugestao e o que foi escrito pela pessoa."
+Bul "Uma linha no rodape do bloco lista os documentos usados como base (ex.: `Sugestao baseada em: Solicitacao de Demanda FORALF00339-2026-001, Canvas de Projeto FORALF00344-2026-002`)."
+Bul "No TAP, alem dos campos de texto, a sugestao tambem propoe linhas iniciais para as tabelas de riscos, cronograma de entregas macro, custos e partes interessadas - sempre que a tabela ainda estiver vazia."
+P "Mesma logica de custo e permissao da importacao de transcricao (secao 2.10): interruptor geral do Admin, desligado por padrao, e lista de papeis liberados em Administracao > Configuracoes (secao 6.3) - PMO/Admin sempre tem acesso quando o assistente esta ligado. Alem disso, so quem faz parte da equipe do projeto selecionado (secao 2.5) pode usar o botao."
+Nota "Como qualquer sugestao de IA, o resultado pode estar incompleto ou impreciso quando os documentos anteriores tambem estiverem - revise sempre antes de clicar em `Registrar`."
+
 # ============================================================
 H1 "3. Passo a passo do fluxo de um projeto"
 P "Esta secao percorre os 12 formularios de registro na ordem em que normalmente sao usados ao longo da vida de um projeto. Os Passos 1 a 5 e 8 a 9 seguem a esteira sequencial do projeto; os Passos 6, 7 e 10 sao de uso recorrente ou condicional; os relatorios finais (Passos 11 e 12) sao detalhados na secao 4."
@@ -457,6 +467,7 @@ Img "15_f02_novo.png" "Tela de novo Canvas, com o seletor de Projeto vinculado n
 Img "16_f02_lista.png" "Canvas cadastrados." 5.6
 P "Como salvar: clique em `Registrar canvas`. O status inicial e Pendente de aprovacao; altere para Aprovado ao validar o Canvas com o Dono do Negocio e o Gerente de Projetos. Ao marcar Aprovado, um e-mail de notificacao e disparado automaticamente (secao 2.8)."
 Bul "No rodape do painel de detalhes de um canvas, os botoes `Imprimir` e `Exportar Word` geram o documento no formato oficial do FORALF00344, pronto para impressao ou para abrir no Word."
+Bul "Assistente de preenchimento por IA: apos selecionar o Projeto vinculado, o botao `Sugerir com IA` le a Solicitacao de Demanda e as Atas de Reuniao do projeto e sugere o preenchimento dos campos ainda vazios (secao 2.12)."
 
 H2 "Passo 3 - TAP, Termo de Abertura de Projeto (FORALF00338)"
 P "Quando usar: depois do Canvas aprovado, para autorizar formalmente a existencia do projeto. Tambem exige `Projeto vinculado` e segue a restricao por equipe (secao 2.5) - a figura da secao 2.5 mostra este formulario com um projeto ja selecionado."
@@ -481,6 +492,7 @@ Img "37_f03_riscos.png" "Registro de riscos preenchido, com selos de status colo
 Img "18_f03_lista.png" "TAPs cadastrados." 5.6
 P "Como salvar: clique em `Registrar TAP`. Um projeto sem TAP aprovado nao deve avancar para a execucao. Ao marcar Aprovado, um e-mail de notificacao e disparado automaticamente (secao 2.8)."
 Bul "No rodape do painel de detalhes de um TAP, os botoes `Imprimir` e `Exportar Word` geram o documento no formato oficial do FORALF00338 (incluindo o registro de riscos e as tabelas de cronograma, custos, partes interessadas, equipe e indicadores), pronto para impressao ou para abrir no Word."
+Bul "Assistente de preenchimento por IA: apos selecionar o Projeto vinculado, o botao `Sugerir com IA` le a Solicitacao de Demanda, o Canvas e as Atas de Reuniao do projeto e sugere o preenchimento dos campos de texto ainda vazios, alem de rascunhos iniciais para as tabelas de riscos, cronograma, custos e partes interessadas (secao 2.12) - diferente da sugestao de riscos recorrentes acima, que e uma regra automatica sem IA."
 
 H2 "Passo 4 - Planejamento e Desenvolvimento de Projeto (FORALF00325)"
 P "Quando usar: logo apos o TAP, para detalhar o projeto em profundidade. E o dossie mais extenso da ferramenta, organizado em 8 abas internas, navegaveis pela barra de estagios no topo."

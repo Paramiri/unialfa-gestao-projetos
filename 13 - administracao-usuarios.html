@@ -377,7 +377,7 @@ window.unialfaEquipe = {
         <h1>Administração de Usuários</h1>
         <p>Controle de acesso · Papéis e permissões · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=12#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=13#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
     </div>
   </div>
 
@@ -481,6 +481,20 @@ window.unialfaEquipe = {
       <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode importar áudio na Ata de Reunião</b>
       <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">Só tem efeito com a importação de áudio habilitada acima. PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
       <div class="papeis-grupo" id="papeisImportarAudio" data-chave="papeis_importar_audio_ata"></div>
+    </div>
+    <div style="padding:20px 24px; display:flex; align-items:center; gap:14px; justify-content:space-between; flex-wrap:wrap; border-top:1px solid var(--line)">
+      <div>
+        <b style="display:block; font-size:13px; margin-bottom:4px">Habilitar assistente de preenchimento por IA (Canvas e TAP)</b>
+        <span style="font-size:12px; color:var(--muted)">Quando ativado, aparece o botão "Sugerir com IA" no Canvas de Projeto e no TAP — a IA lê a Solicitação de Demanda, o Canvas (para o TAP) e as Atas do mesmo projeto para sugerir o preenchimento dos campos vazios. Cada sugestão tem um custo real de API — mantenha desativado se não for usar.</span>
+      </div>
+      <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; flex:none">
+        <input type="checkbox" id="toggleAssistenteIA" onchange="alterarConfigSemLogin('permitir_assistente_preenchimento', 'toggleAssistenteIA', this.checked)" style="width:38px; height:20px; cursor:pointer">
+      </label>
+    </div>
+    <div style="padding:20px 24px; border-top:1px solid var(--line)">
+      <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode usar o assistente de preenchimento</b>
+      <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">Só tem efeito com o assistente habilitado acima. PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
+      <div class="papeis-grupo" id="papeisAssistenteIA" data-chave="papeis_assistente_preenchimento"></div>
     </div>
   </div>
 
@@ -751,6 +765,8 @@ function showAba(aba){
     carregarConfigPapeis('papeis_importar_transcricao_ata', 'papeisImportarIA');
     carregarConfigSemLogin('permitir_importar_audio_ata', 'toggleImportarAudio');
     carregarConfigPapeis('papeis_importar_audio_ata', 'papeisImportarAudio');
+    carregarConfigSemLogin('permitir_assistente_preenchimento', 'toggleAssistenteIA');
+    carregarConfigPapeis('papeis_assistente_preenchimento', 'papeisAssistenteIA');
   }
 }
 
