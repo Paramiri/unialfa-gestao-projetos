@@ -21,6 +21,8 @@
     --warn-soft:#FBF1E3;
     --bad:#9F1239;
     --bad-soft:#FBE7EC;
+    --ai:#6D28D9;
+    --ai-soft:#F5F3FF;
     --radius:10px;
     --shadow:0 1px 2px rgba(20,20,20,.04), 0 8px 28px rgba(20,20,20,.06);
     --font:'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
@@ -94,8 +96,25 @@
     width:26px; height:26px; border-radius:7px; background:var(--red); color:#fff;
     font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center; flex:none;
   }
+  .section-h .n.ai{background:var(--ai)}
   .section-h h2{margin:0; font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase}
   .section-h p{margin:0 0 0 auto; font-size:11px; color:var(--muted); font-weight:500}
+  .ai-panel{padding:18px 24px}
+  .btn-ai{background:var(--ai);color:#fff;appearance:none;font-family:var(--font);font-weight:700;font-size:13px;border-radius:8px;padding:11px 20px;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:8px;transition:background .15s;white-space:nowrap}
+  .btn-ai:hover{background:#5B21B6}
+  .btn-ai:disabled{opacity:.5;cursor:not-allowed}
+  .ai-status{margin-top:10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .ai-status.loading{color:var(--ai)}
+  .ai-status.ok{color:var(--ok)}
+  .ai-status.err{color:var(--bad)}
+  .ai-spinner{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:ai-spin .7s linear infinite;flex:none}
+  @keyframes ai-spin{to{transform:rotate(360deg)}}
+  .ai-filled{background:var(--ai-soft);border:1px solid #C4B5FD;border-radius:7px;padding:10px 14px;font-size:12px;color:var(--ai);font-weight:600;margin-top:8px;display:none}
+  .ai-filled.show{display:block}
+  .field.ai-suggested textarea,.field.ai-suggested input,.field.ai-suggested select{border-color:var(--ai);background:var(--ai-soft)}
+  .field.ai-suggested label{color:var(--ai)}
+  .field .ai-tag{display:none;font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:var(--ai);color:#fff;padding:1px 6px;border-radius:999px;margin-left:6px;vertical-align:middle}
+  .field.ai-suggested .ai-tag{display:inline-block}
 
   .grid{padding:22px 24px; display:grid; grid-template-columns:1fr 1fr; gap:18px 20px}
   .field{display:flex; flex-direction:column; gap:6px}
@@ -739,7 +758,7 @@ window.unialfaEquipe = {
         <h1>Solicitação de Demanda de Projetos</h1>
         <p>Formulário de entrada de demandas · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=13#passo-1" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=14#passo-1" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00339</b></div>
@@ -759,6 +778,28 @@ window.unialfaEquipe = {
 
   <!-- ====== FORM VIEW ====== -->
   <div id="view-new">
+    <div class="card" id="cardImportarIA" style="display:none;margin-bottom:18px">
+      <div class="section-h"><div class="n ai">✦</div><h2>Importar documento preenchido</h2><p>Extrai os dados do FORALF00339 em Word ou PDF</p></div>
+      <div class="ai-panel">
+        <div class="field">
+          <label>Cole aqui o texto do documento preenchido, ou anexe o arquivo</label>
+          <div class="hint">A IA identifica nome do projeto, solicitante, departamento, justificativa, objetivo, escopo, prazo, orçamento, partes interessadas e anexos a partir do formulário oficial já preenchido — sempre para você revisar e completar antes de salvar.</div>
+          <div style="display:flex; align-items:center; gap:10px; margin:8px 0 10px">
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer; margin:0">
+              📎 Anexar arquivo (.txt, .docx, .pdf)
+              <input type="file" id="documentoArquivo" accept=".txt,.docx,.pdf" style="display:none" onchange="lerArquivoDocumento(this.files[0])">
+            </label>
+            <span id="documentoArquivoStatus" style="font-size:12px; color:var(--muted)"></span>
+          </div>
+          <textarea id="documentoInput" rows="8" placeholder="Cole o texto completo do documento aqui, ou anexe um arquivo acima…" style="width:100%;font-family:var(--font);font-size:13px;padding:10px 12px;border:1px solid var(--line-strong,#D4D4D8);border-radius:8px;resize:vertical"></textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:10px">
+          <button class="btn-ai" id="btnAnalisarDocIA" onclick="analisarDocumentoDemanda()">✦ Analisar e preencher</button>
+        </div>
+        <div class="ai-status" id="docAiStatus" style="display:none"></div>
+        <div class="ai-filled" id="docAiFilled"></div>
+      </div>
+    </div>
     <div class="card">
       <div class="section-h"><div class="n">1</div><h2>Identificação</h2><p>Quem está solicitando e qual o projeto</p></div>
       <div class="grid">
@@ -1388,5 +1429,142 @@ function exportarDemandaWord(){
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
 
 /* ---------- init ---------- */
-(async()=>{ await verificarConfigSemLogin(); await ensureAuthenticated(); await loadAll(); renderList(); })();
+function carregarScript(src, nomeGlobal){
+  return new Promise((resolve, reject)=>{
+    if(window[nomeGlobal]){ resolve(); return; }
+    const s=document.createElement('script');
+    s.src=src;
+    s.onload=()=>resolve();
+    s.onerror=()=>reject(new Error('Falha ao carregar '+src));
+    document.head.appendChild(s);
+  });
+}
+async function lerArquivoDocumento(file){
+  if(!file) return;
+  const statusEl=document.getElementById('documentoArquivoStatus');
+  if(file.size > 15*1024*1024){
+    statusEl.textContent='⚠ Arquivo muito grande (máximo 15 MB)';
+    document.getElementById('documentoArquivo').value='';
+    return;
+  }
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  statusEl.textContent='Lendo '+file.name+'…';
+  try{
+    let texto='';
+    if(ext==='txt'){
+      texto=await file.text();
+    }else if(ext==='docx'){
+      await carregarScript('https://cdn.jsdelivr.net/npm/mammoth@1/mammoth.browser.min.js', 'mammoth');
+      const buf=await file.arrayBuffer();
+      const resultado=await mammoth.extractRawText({ arrayBuffer: buf });
+      texto=resultado.value;
+    }else if(ext==='pdf'){
+      await carregarScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js', 'pdfjsLib');
+      pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const buf=await file.arrayBuffer();
+      const pdf=await pdfjsLib.getDocument({ data: buf }).promise;
+      const partes=[];
+      for(let i=1;i<=pdf.numPages;i++){
+        const page=await pdf.getPage(i);
+        const conteudo=await page.getTextContent();
+        partes.push(conteudo.items.map(it=>it.str).join(' '));
+      }
+      texto=partes.join('\n\n');
+    }else{
+      statusEl.textContent='⚠ Formato não suportado. Use .txt, .docx ou .pdf';
+      document.getElementById('documentoArquivo').value='';
+      return;
+    }
+    texto=texto.trim();
+    if(!texto){
+      statusEl.textContent='⚠ Não foi possível extrair texto deste arquivo (PDF escaneado sem texto real não é suportado)';
+      return;
+    }
+    document.getElementById('documentoInput').value=texto;
+    statusEl.textContent='✓ '+file.name+' — '+texto.length+' caracteres extraídos. Revise abaixo antes de analisar.';
+  }catch(e){
+    console.error(e);
+    statusEl.textContent='⚠ Não foi possível ler este arquivo';
+  }
+}
+function setDocAIStatus(type,msg){
+  const el=document.getElementById('docAiStatus');
+  el.style.display='flex'; el.className='ai-status '+type;
+  el.innerHTML=(type==='loading'?'<span class="ai-spinner"></span>':'')+`<span>${msg}</span>`;
+}
+function marcarCampoSugeridoDemanda(id){
+  const el=document.getElementById(id);
+  const campo=el ? el.closest('.field') : null;
+  if(!campo) return;
+  campo.classList.add('ai-suggested');
+  const label=campo.querySelector('label');
+  if(label && !label.querySelector('.ai-tag')){
+    const tag=document.createElement('span'); tag.className='ai-tag'; tag.textContent='IA';
+    label.appendChild(tag);
+  }
+  const evento = (el.tagName==='SELECT') ? 'change' : 'input';
+  el.addEventListener(evento, function limpar(){ campo.classList.remove('ai-suggested'); el.removeEventListener(evento, limpar); }, {once:true});
+}
+async function documentoImportPermitido(){
+  if(window.guestInfo) return false;
+  try{
+    const r = await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=in.(permitir_importar_documento_demanda,papeis_importar_documento_demanda)&select=chave,valor', { headers: unialfaAuth.authHeaders() });
+    const rows = r.ok ? await r.json() : [];
+    const habilitado = rows.find(x=>x.chave==='permitir_importar_documento_demanda')?.valor===true;
+    if(!habilitado) return false;
+    if(window.currentProfile && window.currentProfile.papel==='admin') return true;
+    const papeis = rows.find(x=>x.chave==='papeis_importar_documento_demanda')?.valor;
+    return window.currentProfile ? (Array.isArray(papeis) && papeis.includes(window.currentProfile.papel)) : false;
+  }catch(e){ return false; }
+}
+async function analisarDocumentoDemanda(){
+  const texto=(document.getElementById('documentoInput').value||'').trim();
+  if(!texto){toast('Cole ou anexe o texto do documento antes de analisar',false);return;}
+  const btn=document.getElementById('btnAnalisarDocIA');
+  btn.disabled=true;
+  setDocAIStatus('loading','Analisando o documento…');
+  document.getElementById('docAiFilled').classList.remove('show');
+  try{
+    const resp=await fetch(unialfaAuth.REST_BASE.replace('/rest/v1','/functions/v1') + '/analisar-documento-demanda', {
+      method:'POST', headers: unialfaAuth.authHeaders(),
+      body: JSON.stringify({ texto })
+    });
+    const data=await resp.json();
+    if(!resp.ok || data.error){
+      setDocAIStatus('err','⚠ '+(data.error||'Não foi possível analisar o documento'));
+      btn.disabled=false; return;
+    }
+    const d=data.dados||{};
+    let preenchidos=0;
+    ['projeto','solicitante','justificativa','objetivo','escopo','orcamento','partes','anexos'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el && !el.value.trim() && d[id]){ el.value=d[id]; marcarCampoSugeridoDemanda(id); preenchidos++; }
+    });
+    const depSel=document.getElementById('departamento');
+    if(depSel && !depSel.value && d.departamento && Array.from(depSel.options).some(o=>o.value===d.departamento)){
+      depSel.value=d.departamento; marcarCampoSugeridoDemanda('departamento'); preenchidos++;
+    }
+    const prioSel=document.getElementById('prioridade');
+    if(prioSel && !prioSel.value && d.prioridade && Array.from(prioSel.options).some(o=>o.value===d.prioridade)){
+      prioSel.value=d.prioridade; marcarCampoSugeridoDemanda('prioridade'); preenchidos++;
+    }
+    const prazoEl=document.getElementById('prazo');
+    if(prazoEl && !prazoEl.value && d.prazo){ prazoEl.value=d.prazo; marcarCampoSugeridoDemanda('prazo'); preenchidos++; }
+    if(!preenchidos){
+      setDocAIStatus('ok','Nenhum campo vazio para sugerir — os campos já preenchidos não são sobrescritos.');
+    } else {
+      setDocAIStatus('ok', `✓ ${preenchidos} campo${preenchidos!==1?'s':''} preenchido${preenchidos!==1?'s':''} pela IA. Revise antes de registrar.`);
+    }
+    const filled=document.getElementById('docAiFilled');
+    filled.textContent='Campos preenchidos automaticamente a partir do documento. Revise todos os dados antes de registrar — a IA pode cometer erros.';
+    filled.classList.add('show');
+    toast('Solicitação preenchida a partir do documento',true);
+  }catch(e){
+    console.error(e);
+    setDocAIStatus('err','Falha ao conectar com o serviço de análise. Tente novamente.');
+  }
+  btn.disabled=false;
+}
+
+(async()=>{ await verificarConfigSemLogin(); await ensureAuthenticated(); await loadAll(); renderList(); if(await documentoImportPermitido()) document.getElementById('cardImportarIA').style.display='block'; })();
 </script>

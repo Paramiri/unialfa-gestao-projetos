@@ -220,6 +220,14 @@ Bul "Alem da permissao de papel, so quem faz parte da equipe do projeto selecion
 Bul "So preenche campos vazios: um campo que o usuario ja digitou nunca e sobrescrito pela sugestao. Cada campo preenchido pela IA fica marcado com um selo `"IA`" ate ser editado, e uma linha no rodape lista os documentos usados como base da sugestao."
 Bul "Disponivel apenas em producao - o ambiente de treinamento nao recebe a chave de IA nem a Edge Function correspondente, de proposito, para nunca gerar cobranca real ao demonstrar o sistema."
 
+H2 "3.10 Importacao de documento por IA (Solicitacao de Demanda)"
+P "A Solicitacao de Demanda (FORALF00339) tem um painel `"Importar documento preenchido`", no topo do formulario, que aceita colar texto ou anexar um arquivo (.txt, .docx ou .pdf) do formulario oficial ja preenchido a mao fora do sistema. O texto e extraido no proprio navegador (sem passar pelo servidor) e analisado pela API da Claude (Anthropic), que sugere o preenchimento dos campos ainda vazios - nome do projeto, solicitante, departamento, justificativa, objetivo, escopo, prazo, orcamento, partes interessadas e anexos. Igual as demais importacoes por IA, a sugestao nunca salva nada sozinha."
+Bul "Mesma logica de permissao das secoes 3.5/3.6/3.9: interruptor mestre em Administracao > Configuracoes, desligado por padrao, valendo para todo mundo sem excecao, inclusive Admin; com o interruptor ligado, uma lista de papeis propria define quem pode usar - Admin sempre tem acesso."
+Bul "Diferente das demais secoes deste capitulo, aqui nao ha restricao por equipe de projeto - a Solicitacao de Demanda e o primeiro formulario da esteira, registrado antes de existir um projeto aprovado."
+Bul "Acesso sem login (secao 2 do documento institucional) NAO tem acesso a este painel, mesmo com o interruptor ligado para os papeis normais - a importacao exige um perfil de usuario autenticado com papel definido."
+Bul "Os campos Departamento e Prioridade so sao preenchidos automaticamente se o valor sugerido pela IA corresponder exatamente a uma das opcoes ja existentes na lista suspensa - qualquer valor fora da lista e descartado, para nunca deixar esses dois campos num estado invalido."
+Bul "Disponivel apenas em producao, pela mesma razao das demais importacoes por IA."
+
 HR
 
 # ---- 4 ----

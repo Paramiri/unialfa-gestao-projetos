@@ -377,7 +377,7 @@ window.unialfaEquipe = {
         <h1>Administração de Usuários</h1>
         <p>Controle de acesso · Papéis e permissões · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=13#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=14#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
     </div>
   </div>
 
@@ -495,6 +495,20 @@ window.unialfaEquipe = {
       <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode usar o assistente de preenchimento</b>
       <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">Só tem efeito com o assistente habilitado acima. PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
       <div class="papeis-grupo" id="papeisAssistenteIA" data-chave="papeis_assistente_preenchimento"></div>
+    </div>
+    <div style="padding:20px 24px; display:flex; align-items:center; gap:14px; justify-content:space-between; flex-wrap:wrap; border-top:1px solid var(--line)">
+      <div>
+        <b style="display:block; font-size:13px; margin-bottom:4px">Habilitar importação de documento por IA (Solicitação de Demanda)</b>
+        <span style="font-size:12px; color:var(--muted)">Quando ativado, aparece na Solicitação de Demanda a opção de colar ou anexar (.txt, .docx, .pdf) o formulário oficial FORALF00339 já preenchido fora do sistema — a IA extrai nome do projeto, solicitante, departamento, justificativa, objetivo, escopo, prazo, orçamento, partes interessadas e anexos. Cada análise tem um custo real de API — mantenha desativado se não for usar.</span>
+      </div>
+      <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; flex:none">
+        <input type="checkbox" id="toggleImportarDocDemanda" onchange="alterarConfigSemLogin('permitir_importar_documento_demanda', 'toggleImportarDocDemanda', this.checked)" style="width:38px; height:20px; cursor:pointer">
+      </label>
+    </div>
+    <div style="padding:20px 24px; border-top:1px solid var(--line)">
+      <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode importar documento na Solicitação de Demanda</b>
+      <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">Só tem efeito com a importação habilitada acima. PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
+      <div class="papeis-grupo" id="papeisImportarDocDemanda" data-chave="papeis_importar_documento_demanda"></div>
     </div>
   </div>
 
@@ -767,6 +781,8 @@ function showAba(aba){
     carregarConfigPapeis('papeis_importar_audio_ata', 'papeisImportarAudio');
     carregarConfigSemLogin('permitir_assistente_preenchimento', 'toggleAssistenteIA');
     carregarConfigPapeis('papeis_assistente_preenchimento', 'papeisAssistenteIA');
+    carregarConfigSemLogin('permitir_importar_documento_demanda', 'toggleImportarDocDemanda');
+    carregarConfigPapeis('papeis_importar_documento_demanda', 'papeisImportarDocDemanda');
   }
 }
 

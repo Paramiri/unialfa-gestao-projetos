@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.24 - 19 de agosto de 2026 (substitui a versao 2.23 de 14/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.25 - 19 de agosto de 2026 (substitui a versao 2.24 de 19/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -275,6 +275,7 @@ P "Esta e a versao 2.21 do manual. Em relacao a versao 2.20 (13/08/2026), o mesm
 P "Esta e a versao 2.22 do manual. Em relacao a versao 2.21 (13/08/2026), o Plano de Comunicacao de Projeto (Passo 10) ganhou as 4 colunas que faltavam em relacao ao documento oficial FORALF00308 - Quando Comunicar, Com Quem se Comunicar, Como Comunicar e Quem Comunica, alem das ja existentes Tipo de Comunicacao e O que Comunicar - e passou a ter a aba `Editar dados` restrita por papel (padrao PMO/Admin, configuravel em Administracao > Configuracoes, secao 6.3), mantendo a visualizacao e impressao livres para qualquer usuario autenticado."
 P "Esta e a versao 2.23 do manual. Em relacao a versao 2.22 (13/08/2026), foi adicionada a nova secao 6.5 - Ambiente de Treino: um ambiente de treinamento/demonstracao totalmente separado da producao, com 7 projetos ficticios cobrindo o ciclo completo, e uma quarta aba na Administracao (visivel so em producao) com um botao que reseta e repopula esse ambiente com um clique, restrito a Admin (secao 3.8 das Regras de Acesso)."
 P "Esta e a versao 2.24 do manual. Em relacao a versao 2.23 (14/08/2026), foi adicionada a nova secao 2.12 - Assistente de preenchimento por IA (Canvas e TAP): um botao `Sugerir com IA` que le a Solicitacao de Demanda, o Canvas (no caso do TAP) e as Atas de Reuniao do projeto vinculado para sugerir o preenchimento dos campos ainda vazios, com a mesma logica de interruptor geral e lista de papeis liberados ja usada na importacao de transcricao (secao 2.10)."
+P "Esta e a versao 2.25 do manual. Em relacao a versao 2.24 (19/08/2026), foi adicionada a nova secao 2.13 - Importacao de documento por IA (Solicitacao de Demanda): um painel `Importar documento preenchido` que le o formulario oficial FORALF00339 preenchido a mao em Word ou PDF (colado ou anexado) e sugere o preenchimento dos campos do formulario online, com a mesma logica de interruptor geral e lista de papeis liberados das demais importacoes por IA - sem restricao por equipe de projeto, ja que e o primeiro formulario da esteira."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -419,6 +420,13 @@ Bul "No TAP, alem dos campos de texto, a sugestao tambem propoe linhas iniciais 
 P "Mesma logica de custo e permissao da importacao de transcricao (secao 2.10): interruptor geral do Admin, desligado por padrao, e lista de papeis liberados em Administracao > Configuracoes (secao 6.3) - PMO/Admin sempre tem acesso quando o assistente esta ligado. Alem disso, so quem faz parte da equipe do projeto selecionado (secao 2.5) pode usar o botao."
 Nota "Como qualquer sugestao de IA, o resultado pode estar incompleto ou impreciso quando os documentos anteriores tambem estiverem - revise sempre antes de clicar em `Registrar`."
 
+H2 "2.13 Importacao de documento por IA (Solicitacao de Demanda)"
+P "A Solicitacao de Demanda (Passo 1) tem um painel `Importar documento preenchido`, no topo do formulario, para quem ja preencheu o formulario oficial FORALF00339 em Word ou PDF fora do sistema e agora precisa transcrever esses dados para a tela. O texto pode ser colado diretamente, ou o arquivo (`.txt`, `.docx` ou `.pdf`) anexado pelo botao `Anexar arquivo` - o sistema extrai o texto automaticamente para revisao antes de clicar em `Analisar e preencher`. Limite de 15 MB por arquivo."
+Bul "A IA identifica nome do projeto, solicitante, departamento, justificativa, objetivo, escopo, prazo, orcamento, partes interessadas e anexos, e preenche so os campos ainda vazios do formulario - exatamente como as demais importacoes por IA (secoes 2.10 e 2.12)."
+Bul "Departamento e Prioridade so sao preenchidos se o valor identificado pela IA corresponder exatamente a uma das opcoes da lista suspensa - caso contrario, o campo fica em branco para preenchimento manual."
+Nota "PDFs escaneados (so imagem, sem texto real por tras) nao sao suportados - a extracao depende do PDF ter texto selecionavel. Nesse caso, copie e cole o texto manualmente."
+P "Mesma logica de custo e permissao das demais importacoes por IA: interruptor geral do Admin, desligado por padrao, e lista de papeis liberados em Administracao > Configuracoes (secao 6.3). Diferente das secoes 2.10 e 2.12, nao ha restricao por equipe de projeto aqui - a Solicitacao de Demanda e o primeiro formulario, preenchida antes de existir um projeto aprovado - mas o acesso sem login (secao 2.6) nunca tem acesso a este painel, mesmo com a importacao habilitada."
+
 # ============================================================
 H1 "3. Passo a passo do fluxo de um projeto"
 P "Esta secao percorre os 12 formularios de registro na ordem em que normalmente sao usados ao longo da vida de um projeto. Os Passos 1 a 5 e 8 a 9 seguem a esteira sequencial do projeto; os Passos 6, 7 e 10 sao de uso recorrente ou condicional; os relatorios finais (Passos 11 e 12) sao detalhados na secao 4."
@@ -446,6 +454,7 @@ Exemplo "`Automatizacao de servicos` - solicitante Hudson Lucas Aleixo, unidade 
 P "Como salvar: clique em `Registrar solicitacao`. O sistema gera o protocolo e leva voce para `Demandas cadastradas`. Clique em qualquer linha da tabela para abrir o registro e revisar os dados. Ao salvar, todos os Admins recebem um aviso automatico (e-mail e, se ativado, push) de que ha um Gate 1 pendente de analise (secao 2.8)."
 Nota "E neste ponto que ocorre o Gate 1 - Triagem: so um Admin pode mudar o status para Aprovada ou Reprovada (secao 2.4). So avance para o Passo 2 depois que o status estiver Aprovada. Essa mudanca de status dispara um e-mail de notificacao (secao 2.8)."
 Bul "No rodape do painel de detalhes de uma demanda, os botoes `Imprimir` e `Exportar Word` geram o documento no formato oficial do FORALF00339, pronto para impressao ou para abrir no Word."
+Bul "Assistente de preenchimento por IA: o painel `Importar documento preenchido`, no topo do formulario, extrai os dados de uma copia do formulario oficial ja preenchida em Word ou PDF fora do sistema (secao 2.13)."
 
 H2 "Passo 2 - Canvas de Projeto (FORALF00344)"
 P "Quando usar: assim que a demanda for aprovada. O Canvas e o primeiro documento estruturado do projeto - reune, em uma unica tela, a motivacao, o produto, os parceiros, as entregas, os riscos e os custos. Exige selecionar um `Projeto vinculado` ja Aprovado no Gate 1, e so membros da equipe daquele projeto (ou Admin) podem registrar (secao 2.5)."
