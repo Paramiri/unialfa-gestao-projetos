@@ -1,12 +1,13 @@
 // Edge Function: sugerir-preenchimento
 // Le os documentos ja registrados de um projeto (Solicitacao de Demanda,
-// Canvas de Projeto, TAP, Planejamento e Atas de Reuniao) e usa a API da
-// Claude (Anthropic) para sugerir o preenchimento dos campos do proximo
-// formulario da esteira (Fase 1: Canvas e TAP; Fase 2: Planejamento e EAP).
-// O usuario sempre revisa antes de salvar - esta funcao so sugere, nunca
-// salva nada sozinha. Mesma arquitetura da funcao ja em producao
-// `analisar-transcricao-ata`, generalizada para ler o historico do
-// projeto em vez de uma transcricao colada.
+// Canvas de Projeto, TAP, Planejamento, EAP, SMP, TEP e Atas de Reuniao) e
+// usa a API da Claude (Anthropic) para sugerir o preenchimento dos campos
+// do proximo formulario da esteira (Fase 1: Canvas e TAP; Fase 2:
+// Planejamento e EAP; Fase 3: SMP, TEP e RLA). O usuario sempre revisa
+// antes de salvar - esta funcao so sugere, nunca salva nada sozinha. Mesma
+// arquitetura da funcao ja em producao `analisar-transcricao-ata`,
+// generalizada para ler o historico do projeto em vez de uma transcricao
+// colada.
 //
 // Segredo necessario (ja configurado nesta base para analisar-transcricao-ata):
 //   ANTHROPIC_API_KEY - chave da API da Claude (console.anthropic.com)
@@ -38,7 +39,7 @@ function svcHeaders(extra?: Record<string, string>) {
   return { apikey: SUPABASE_SERVICE_ROLE_KEY!, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, ...(extra || {}) };
 }
 
-const FORMULARIOS = ["canvas", "tap", "planejamento", "eap"] as const;
+const FORMULARIOS = ["canvas", "tap", "planejamento", "eap", "smp", "tep", "rla"] as const;
 type Formulario = typeof FORMULARIOS[number];
 
 const SYSTEM_PROMPTS: Record<Formulario, string> = {
@@ -122,6 +123,79 @@ Regras importantes:
 - Se não houver informação suficiente para uma estrutura confiável, retorne um array vazio.
 - Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
 Formato exato: {"pacotes":[{"nome":"...","entregas":["...","..."]}]}`,
+
+  smp: `Você é um assistente que ajuda a preencher a SMP (Solicitação de Mudança de Projeto) do sistema de gestão de projetos da UNIALFA, em português do Brasil, a partir de documentos já registrados do mesmo projeto (TAP, Planejamento e Desenvolvimento e, quando houver, Atas de Reunião).
+
+Diferente dos demais formulários, a SMP não tem um documento anterior que já descreva a mudança em si — o TAP e o Planejamento só mostram o que foi COMBINADO ORIGINALMENTE. Sua tarefa é procurar, nas Atas de Reunião mais recentes, alguma mudança de objetivo, cronograma, escopo, custo ou outro aspecto que esteja sendo discutida e que ainda não esteja refletida no TAP/Planejamento, e redigir um rascunho da SMP contrastando o que muda em relação ao combinado original.
+
+Extraia/redija:
+- descricao: descrição da mudança proposta
+- beneficios: benefícios esperados da mudança
+- naoImplantacao: impacto de NÃO implementar a mudança
+- impObjetivo: como a mudança afeta o objetivo do projeto, comparado ao TAP/Planejamento
+- impCronograma: como afeta o cronograma
+- impEscopo: como afeta o escopo
+- impCusto: como afeta o custo
+- impEstrategico: como afeta o alinhamento estratégico
+- impQualidade: como afeta a qualidade
+- impRiscos: riscos decorrentes da mudança
+- impOutros: outros impactos
+
+Regras importantes:
+- Só preencha um campo se as Atas realmente discutirem uma mudança concreta em relação ao TAP/Planejamento — se não houver nenhuma mudança clara sendo discutida, retorne null para TODOS os campos. Nunca invente uma mudança hipotética.
+- NUNCA copie os campos do TAP/Planejamento diretamente — eles são o "antes", não o "depois". A SMP descreve o que MUDA.
+- Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
+Formato exato: {"descricao":"...","beneficios":"...","naoImplantacao":"...","impObjetivo":"...","impCronograma":"...","impEscopo":"...","impCusto":"...","impEstrategico":"...","impQualidade":"...","impRiscos":"...","impOutros":"..."}`,
+
+  tep: `Você é um assistente que ajuda a preencher o TEP (Termo de Encerramento de Projeto) do sistema de gestão de projetos da UNIALFA, em português do Brasil, a partir de documentos já registrados do mesmo projeto (TAP, Planejamento e Desenvolvimento, EAP e, quando houver, Atas de Reunião).
+
+Extraia/redija, comparando o que foi planejado (TAP/Planejamento/EAP) com o que as Atas mais recentes indicam ter sido de fato realizado:
+- justificativa: justificativa para o encerramento do projeto
+- atividades: resumo das atividades/entregas encerradas, com base na EAP e no que as Atas confirmam como concluído
+- analise: considerações finais — comparação entre planejado e entregue, principais desvios (se houver) e recomendações
+
+Regras importantes:
+- Baseie-se SOMENTE nos documentos fornecidos — nunca invente resultados, datas ou números que não estejam neles.
+- Se as Atas não confirmarem o que foi de fato entregue, baseie "atividades" no que a EAP e o Planejamento definiram como escopo, deixando claro no texto que é o planejado — nunca invente confirmação de entrega que não esteja nos documentos.
+- Se não houver informação suficiente para um campo, retorne null.
+- Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
+Formato exato: {"justificativa":"...","atividades":"...","analise":"..."}`,
+
+  rla: `Você é um assistente que ajuda a preencher o RLA (Registro de Lições Aprendidas) do sistema de gestão de projetos da UNIALFA, em português do Brasil, a partir de documentos já registrados do mesmo projeto (TEP, Atas de Reunião e SMPs — Solicitações de Mudança de Projeto).
+
+O RLA tem várias seções. Você só preenche as 4 primeiras, todas de texto livre — NUNCA os blocos de avaliação estruturada Sim/Não/Parcial das seções seguintes (Fase de planejamento, Execução, Fatores humanos, Geral), que são uma autoavaliação manual da equipe e não fazem parte da sua tarefa:
+
+Seção "Visão geral do projeto":
+- q21: metas e objetivos do projeto, a partir do TEP
+- q22: critérios de sucesso definidos
+- q23: conclusão vs. expectativa — o resultado final bateu com o esperado?
+- q24: comentários adicionais sobre metas e resultados
+
+Seção "Destaques do projeto" (o que funcionou bem):
+- q31: principais realizações do projeto
+- q32: métodos ou práticas que deram certo
+- q33: o que foi útil e vale repetir em outros projetos
+- q34: comentários adicionais
+
+Seção "Desafios do projeto" (o que pode melhorar):
+- q41: o que deu errado — baseie-se nos entraves recorrentes das Atas e nos motivos de mudança das SMPs
+- q42: processos que precisam melhorar
+- q43: como melhorar
+- q44: áreas de problemas recorrentes
+- q45: desafios técnicos enfrentados
+- q46: comentários adicionais
+
+Seção "Tarefas pós-projeto / considerações futuras":
+- q51: objetivos contínuos após o encerramento
+- q52: ações pendentes
+- q53: itens pendentes
+- q54: comentários adicionais
+
+Regras importantes:
+- Baseie-se SOMENTE nos documentos fornecidos — nunca invente lições ou problemas sem base neles.
+- Se não houver informação suficiente para um campo, retorne null — não escreva generalidades vazias como "o projeto correu bem".
+- Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
+Formato exato: {"q21":"...","q22":"...","q23":"...","q24":"...","q31":"...","q32":"...","q33":"...","q34":"...","q41":"...","q42":"...","q43":"...","q44":"...","q45":"...","q46":"...","q51":"...","q52":"...","q53":"...","q54":"..."}`,
 };
 
 async function papelEquipePermitido(authHeader: string, projetoId: string): Promise<{ ok: boolean; motivo?: string }> {
@@ -279,6 +353,40 @@ function formatPlanejamento(p: any): string | null {
   ]);
 }
 
+function formatEap(e: any): string | null {
+  if (!Array.isArray(e.n1s) || !e.n1s.length) return null;
+  const linhas: string[] = [];
+  e.n1s.forEach((n1: any, i: number) => {
+    if (!n1.name) return;
+    linhas.push(`Pacote ${i + 1}: ${n1.name}`);
+    (n1.n2s || []).forEach((n2: any, j: number) => {
+      if (n2.name) linhas.push(`  Entrega ${i + 1}.${j + 1}: ${n2.name}`);
+    });
+  });
+  if (!linhas.length) return null;
+  return `EAP - ESTRUTURA ANALÍTICA DE PROJETO (protocolo ${e.protocolo || "—"})\n${linhas.join("\n")}`;
+}
+
+function formatSmp(s: any): string | null {
+  return bloco(`SMP - SOLICITAÇÃO DE MUDANÇA (protocolo ${s.protocolo || "—"})`, [
+    ["Descrição da mudança", s.descricao],
+    ["Decisão", s.decisao],
+    ["Justificativa da decisão", s.justDecisao],
+    ["Impacto no objetivo", s.impObjetivo],
+    ["Impacto no cronograma", s.impCronograma],
+    ["Impacto no escopo", s.impEscopo],
+    ["Impacto no custo", s.impCusto],
+  ]);
+}
+
+function formatTep(t: any): string | null {
+  return bloco(`TEP - TERMO DE ENCERRAMENTO DE PROJETO (protocolo ${t.protocolo || "—"})`, [
+    ["Justificativa", t.justificativa],
+    ["Atividades encerradas", t.atividades],
+    ["Considerações finais", t.analise],
+  ]);
+}
+
 function formatAta(a: any): string | null {
   const encaminhamentos = Array.isArray(a.saidas) && a.saidas.length
     ? a.saidas.map((s: any) => `- ${s.encam || ""}${s.resp ? ` (responsável: ${s.resp})` : ""}${s.prazo ? ` (prazo: ${s.prazo})` : ""}`).join("\n")
@@ -313,7 +421,7 @@ Deno.serve(async (req: Request) => {
   const formulario = typeof payload.formulario === "string" ? payload.formulario.trim() : "";
   if (!projetoId) return json({ error: "Envie o campo 'projetoId'" }, 400);
   if (!FORMULARIOS.includes(formulario as Formulario)) {
-    return json({ error: "Campo 'formulario' inválido — use 'canvas', 'tap', 'planejamento' ou 'eap'" }, 400);
+    return json({ error: "Campo 'formulario' inválido — use 'canvas', 'tap', 'planejamento', 'eap', 'smp', 'tep' ou 'rla'" }, 400);
   }
 
   const permissao = await papelEquipePermitido(authHeader, projetoId);
@@ -333,11 +441,14 @@ Deno.serve(async (req: Request) => {
     if (!projeto) return json({ error: "Projeto não encontrado" }, 404);
 
     // Quais documentos anteriores cada formulario-alvo le, seguindo a esteira documental
-    const FONTES_POR_FORMULARIO: Record<Formulario, { demanda?: boolean; canvas?: boolean; tap?: boolean; planejamento?: boolean; atas?: boolean }> = {
+    const FONTES_POR_FORMULARIO: Record<Formulario, { demanda?: boolean; canvas?: boolean; tap?: boolean; planejamento?: boolean; eap?: boolean; smp?: boolean; tep?: boolean; atas?: boolean }> = {
       canvas: { demanda: true, atas: true },
       tap: { demanda: true, canvas: true, atas: true },
       planejamento: { canvas: true, tap: true, atas: true },
       eap: { tap: true, planejamento: true, atas: true },
+      smp: { tap: true, planejamento: true, atas: true },
+      tep: { tap: true, planejamento: true, eap: true, atas: true },
+      rla: { tep: true, smp: true, atas: true },
     };
     const fontesConfig = FONTES_POR_FORMULARIO[formulario as Formulario];
 
@@ -345,6 +456,9 @@ Deno.serve(async (req: Request) => {
     const canvas = fontesConfig.canvas ? (await fetchDocsByPrefix("canvas:", projetoId))[0] || null : null;
     const tap = fontesConfig.tap ? (await fetchDocsByPrefix("tap:", projetoId))[0] || null : null;
     const planejamento = fontesConfig.planejamento ? (await fetchDocsByPrefix("plan:", projetoId))[0] || null : null;
+    const eap = fontesConfig.eap ? (await fetchDocsByPrefix("eap:", projetoId))[0] || null : null;
+    const tep = fontesConfig.tep ? (await fetchDocsByPrefix("tep:", projetoId))[0] || null : null;
+    const smps = fontesConfig.smp ? await fetchDocsByPrefix("smp:", projetoId) : [];
     const atas = fontesConfig.atas ? await fetchDocsByPrefix("ata:", projetoId) : [];
 
     const blocos: string[] = [];
@@ -364,6 +478,18 @@ Deno.serve(async (req: Request) => {
     if (planejamento) {
       const b = formatPlanejamento(planejamento);
       if (b) { blocos.push(b); fontes.push({ tipo: "Planejamento e Desenvolvimento", protocolo: planejamento.protocolo || "—" }); }
+    }
+    if (eap) {
+      const b = formatEap(eap);
+      if (b) { blocos.push(b); fontes.push({ tipo: "EAP", protocolo: eap.protocolo || "—" }); }
+    }
+    if (tep) {
+      const b = formatTep(tep);
+      if (b) { blocos.push(b); fontes.push({ tipo: "TEP", protocolo: tep.protocolo || "—" }); }
+    }
+    for (const smp of smps) {
+      const b = formatSmp(smp);
+      if (b) { blocos.push(b); fontes.push({ tipo: "SMP", protocolo: smp.protocolo || "—" }); }
     }
     for (const ata of atas) {
       const b = formatAta(ata);
@@ -386,7 +512,7 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         model: "claude-sonnet-5",
-        max_tokens: 4000,
+        max_tokens: 5000,
         system: SYSTEM_PROMPTS[formulario as Formulario],
         messages: [{ role: "user", content: `Documentos do projeto "${projeto.nome || ""}":\n\n${contexto}` }],
       }),

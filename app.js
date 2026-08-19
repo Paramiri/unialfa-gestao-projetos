@@ -86,7 +86,7 @@
           <a class="nav-item" href="14 - validador-projetos.html" target="_blank" rel="noopener">
             <span class="tag">◈</span><span class="lbl">Validador de Projetos</span>
           </a>
-          <a class="nav-item" href="15 - central-ajuda.html?v=15" target="_blank" rel="noopener">
+          <a class="nav-item" href="15 - central-ajuda.html?v=16" target="_blank" rel="noopener">
             <span class="tag">?</span><span class="lbl">Central de Ajuda</span>
           </a>
           <div class="sidebar-section-label">Gestão</div>
