@@ -655,12 +655,33 @@ function ensureAuthenticated(){
       return rows.length ? { value: rows[0].value } : null;
     },
     set: async function(key, value){
-      var r = await fetch(base + '?on_conflict=key', { method: 'POST', headers: headers({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }) });
-      return r.ok;
+      var r;
+      try{
+        r = await fetch(base + '?on_conflict=key', { method: 'POST', headers: headers({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }) });
+      }catch(netErr){
+        var eNet = new Error('network'); eNet.kind = 'network'; throw eNet;
+      }
+      if (!r.ok) {
+        var eHttp = new Error('http ' + r.status);
+        eHttp.kind = 'http'; eHttp.status = r.status;
+        try{ eHttp.body = await r.text(); }catch(_){}
+        throw eHttp;
+      }
+      return true;
     },
     delete: async function(key){
-      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key), { method: 'DELETE', headers: headers() });
-      return r.ok;
+      var r;
+      try{
+        r = await fetch(base + '?key=eq.' + encodeURIComponent(key), { method: 'DELETE', headers: headers() });
+      }catch(netErr){
+        var eNet = new Error('network'); eNet.kind = 'network'; throw eNet;
+      }
+      if (!r.ok) {
+        var eHttp = new Error('http ' + r.status);
+        eHttp.kind = 'http'; eHttp.status = r.status;
+        throw eHttp;
+      }
+      return true;
     },
     list: async function(prefix){
       var r = await fetch(base + '?key=like.' + encodeURIComponent(prefix) + '*&select=key', { headers: headers() });
@@ -711,6 +732,16 @@ async function toggleProjRowHistorico(i){
 
 /* ── helpers ── */
 function toast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3000);}
+function mensagemErroSalvar(e, acao){
+  acao = acao || 'salvar este registro';
+  if(e && e.kind==='network') return 'Sem conexão com a internet. Verifique sua rede e tente novamente.';
+  if(e && e.status===401) return 'Sua sessão expirou. Atualize a página e faça login novamente.';
+  if(e && e.status===403) return 'Você não tem permissão para '+acao+'.';
+  if(e && (e.status===413||e.status===414)) return 'O conteúdo é muito grande para salvar. Reduza o texto e tente novamente.';
+  if(e && e.status>=500) return 'O servidor está indisponível no momento. Tente novamente em alguns instantes.';
+  if(e && e.status) return 'Não foi possível '+acao+' (erro '+e.status+'). Atualize a página; se o problema continuar, contate o suporte.';
+  return 'Não foi possível '+acao+'. Atualize a página e tente novamente.';
+}
 function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function fmtBRL(s){if(!s)return '—';return 'R$ '+String(s).replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
 function fmtRef(ym){if(!ym)return '—';const[y,m]=ym.split('-');const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return meses[parseInt(m)-1]+' / '+y;}
@@ -764,7 +795,7 @@ async function loadData(){
   if(!data.resultados) data.resultados=[];
 }
 async function saveData(){
-  try{await window.storage.set(KEY,JSON.stringify(data));}catch(e){toast('Erro ao salvar');}
+  try{await window.storage.set(KEY,JSON.stringify(data));}catch(e){toast(mensagemErroSalvar(e));}
 }
 
 /* ── histórico de versões ── */

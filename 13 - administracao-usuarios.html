@@ -513,6 +513,16 @@ function toast(msg, ok=true){
   t.classList.toggle('ok', ok); t.classList.add('show');
   clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),3200);
 }
+function mensagemErroSalvar(e, acao){
+  acao = acao || 'salvar este registro';
+  if(e && e.kind==='network') return 'Sem conexão com a internet. Verifique sua rede e tente novamente.';
+  if(e && e.status===401) return 'Sua sessão expirou. Atualize a página e faça login novamente.';
+  if(e && e.status===403) return 'Você não tem permissão para '+acao+'.';
+  if(e && (e.status===413||e.status===414)) return 'O conteúdo é muito grande para salvar. Reduza o texto e tente novamente.';
+  if(e && e.status>=500) return 'O servidor está indisponível no momento. Tente novamente em alguns instantes.';
+  if(e && e.status) return 'Não foi possível '+acao+' (erro '+e.status+'). Atualize a página; se o problema continuar, contate o suporte.';
+  return 'Não foi possível '+acao+'. Atualize a página e tente novamente.';
+}
 function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 
 let todosUsuarios=[];
@@ -566,11 +576,11 @@ async function alterarPapel(userId, novoPapel, selectEl){
       method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
       body: JSON.stringify({ papel: novoPapel })
     });
-    if(!r.ok) throw new Error();
+    if(!r.ok){ const eHttp=new Error('http '+r.status); eHttp.kind='http'; eHttp.status=r.status; throw eHttp; }
     toast('Papel atualizado para "'+unialfaAuth.papelLabel(novoPapel)+'"');
     await carregarUsuarios();
   }catch(e){
-    toast('Não foi possível atualizar o papel. Verifique se você ainda tem permissão de administrador.', false);
+    toast(mensagemErroSalvar(e,'atualizar o papel'), false);
   }finally{
     selectEl.disabled=false;
   }
@@ -583,10 +593,10 @@ async function alterarTelefone(userId, novoTelefone, inputEl){
       method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
       body: JSON.stringify({ telefone: novoTelefone.trim()||null })
     });
-    if(!r.ok) throw new Error();
+    if(!r.ok){ const eHttp=new Error('http '+r.status); eHttp.kind='http'; eHttp.status=r.status; throw eHttp; }
     toast('Telefone atualizado');
   }catch(e){
-    toast('Não foi possível atualizar o telefone', false);
+    toast(mensagemErroSalvar(e,'atualizar o telefone'), false);
   }finally{
     inputEl.disabled=false;
   }
@@ -599,10 +609,10 @@ async function alterarTelefonePendente(email, novoTelefone, inputEl){
       method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
       body: JSON.stringify({ telefone: novoTelefone.trim()||null })
     });
-    if(!r.ok) throw new Error();
+    if(!r.ok){ const eHttp=new Error('http '+r.status); eHttp.kind='http'; eHttp.status=r.status; throw eHttp; }
     toast('Telefone atualizado');
   }catch(e){
-    toast('Não foi possível atualizar o telefone', false);
+    toast(mensagemErroSalvar(e,'atualizar o telefone'), false);
   }finally{
     inputEl.disabled=false;
   }
@@ -615,10 +625,10 @@ async function alterarPapelPendente(email, novoPapel, selectEl){
       method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
       body: JSON.stringify({ papel: novoPapel })
     });
-    if(!r.ok) throw new Error();
+    if(!r.ok){ const eHttp=new Error('http '+r.status); eHttp.kind='http'; eHttp.status=r.status; throw eHttp; }
     toast('Papel do pré-cadastro atualizado para "'+unialfaAuth.papelLabel(novoPapel)+'"');
   }catch(e){
-    toast('Não foi possível atualizar o papel', false);
+    toast(mensagemErroSalvar(e,'atualizar o papel'), false);
   }finally{
     selectEl.disabled=false;
   }
@@ -630,11 +640,11 @@ async function removerPendente(email){
     const r=await fetch(unialfaAuth.REST_BASE+'/perfis_pendentes?email=eq.'+encodeURIComponent(email), {
       method:'DELETE', headers: unialfaAuth.authHeaders()
     });
-    if(!r.ok) throw new Error();
+    if(!r.ok){ const eHttp=new Error('http '+r.status); eHttp.kind='http'; eHttp.status=r.status; throw eHttp; }
     toast('Pré-cadastro removido');
     await carregarUsuarios();
   }catch(e){
-    toast('Não foi possível remover', false);
+    toast(mensagemErroSalvar(e,'remover este pré-cadastro'), false);
   }
 }
 
@@ -685,11 +695,11 @@ async function removerUsuario(id, email, btnEl){
     }
     if(!confirm('Remover '+email+' do sistema?\n\nA pessoa não tem equipe, projeto nem registro vinculado. Se ela fizer login de novo depois, o perfil é recriado do zero (papel Solicitante).')) return;
     const r=await fetch(unialfaAuth.REST_BASE+'/perfis?id=eq.'+id, { method:'DELETE', headers: unialfaAuth.authHeaders() });
-    if(!r.ok) throw new Error();
+    if(!r.ok){ const eHttp=new Error('http '+r.status); eHttp.kind='http'; eHttp.status=r.status; throw eHttp; }
     toast('Usuário removido');
     await carregarUsuarios();
   }catch(e){
-    toast('Não foi possível remover o usuário', false);
+    toast(mensagemErroSalvar(e,'remover o usuário'), false);
   }finally{
     btnEl.disabled=false;
   }
@@ -804,11 +814,11 @@ async function alterarConfigPapeis(chave, elId){
       method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
       body: JSON.stringify({ valor: selecionados, atualizado_em: new Date().toISOString() })
     });
-    if(!r.ok) throw new Error();
+    if(!r.ok){ const eHttp=new Error('http '+r.status); eHttp.kind='http'; eHttp.status=r.status; throw eHttp; }
     toast('Permissão de visualização atualizada');
     renderGrupoPapeis(elId, selecionados);
   }catch(e){
-    toast('Não foi possível salvar', false);
+    toast(mensagemErroSalvar(e), false);
     await carregarConfigPapeis(chave, elId);
   }
 }
@@ -825,10 +835,10 @@ async function alterarConfigSemLogin(chave, elId, ativo){
       method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
       body: JSON.stringify({ valor: ativo, atualizado_em: new Date().toISOString() })
     });
-    if(!r.ok) throw new Error();
+    if(!r.ok){ const eHttp=new Error('http '+r.status); eHttp.kind='http'; eHttp.status=r.status; throw eHttp; }
     toast(ativo ? 'Opção "sem login" ativada' : 'Opção "sem login" desativada');
   }catch(e){
-    toast('Não foi possível salvar a configuração', false);
+    toast(mensagemErroSalvar(e,'salvar a configuração'), false);
     document.getElementById(elId).checked = !ativo;
   }
 }

@@ -814,12 +814,33 @@ window.unialfaHistorico = {
       return rows.length ? { value: rows[0].value } : null;
     },
     set: async function(key, value){
-      var r = await fetch(base + '?on_conflict=key', { method: 'POST', headers: headers({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }) });
-      return r.ok;
+      var r;
+      try{
+        r = await fetch(base + '?on_conflict=key', { method: 'POST', headers: headers({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }) });
+      }catch(netErr){
+        var eNet = new Error('network'); eNet.kind = 'network'; throw eNet;
+      }
+      if (!r.ok) {
+        var eHttp = new Error('http ' + r.status);
+        eHttp.kind = 'http'; eHttp.status = r.status;
+        try{ eHttp.body = await r.text(); }catch(_){}
+        throw eHttp;
+      }
+      return true;
     },
     delete: async function(key){
-      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key), { method: 'DELETE', headers: headers() });
-      return r.ok;
+      var r;
+      try{
+        r = await fetch(base + '?key=eq.' + encodeURIComponent(key), { method: 'DELETE', headers: headers() });
+      }catch(netErr){
+        var eNet = new Error('network'); eNet.kind = 'network'; throw eNet;
+      }
+      if (!r.ok) {
+        var eHttp = new Error('http ' + r.status);
+        eHttp.kind = 'http'; eHttp.status = r.status;
+        throw eHttp;
+      }
+      return true;
     },
     list: async function(prefix){
       var r = await fetch(base + '?key=like.' + encodeURIComponent(prefix) + '*&select=key', { headers: headers() });
@@ -871,6 +892,16 @@ async function toggleHistorico(){
   else panel.style.display='none';
 }
 
+function mensagemErroSalvar(e, acao){
+  acao = acao || 'salvar este registro';
+  if(e && e.kind==='network') return 'Sem conexão com a internet. Verifique sua rede e tente novamente.';
+  if(e && e.status===401) return 'Sua sessão expirou. Atualize a página e faça login novamente.';
+  if(e && e.status===403) return 'Você não tem permissão para '+acao+'.';
+  if(e && (e.status===413||e.status===414)) return 'O conteúdo é muito grande para salvar. Reduza o texto e tente novamente.';
+  if(e && e.status>=500) return 'O servidor está indisponível no momento. Tente novamente em alguns instantes.';
+  if(e && e.status) return 'Não foi possível '+acao+' (erro '+e.status+'). Atualize a página; se o problema continuar, contate o suporte.';
+  return 'Não foi possível '+acao+'. Atualize a página e tente novamente.';
+}
 function toast(msg,ok=true){
   const t=document.getElementById('toast');
   document.getElementById('toast-msg').textContent=msg;
@@ -1289,7 +1320,7 @@ async function submitForm(){
     document.getElementById('count').textContent=cache.length;
     editId=null;
     clearForm(); showView('list');
-  }catch(e){toast('Não foi possível salvar.',false);}
+  }catch(e){toast(mensagemErroSalvar(e),false);}
 }
 function setUnidades(str){
   const vals=(str||'').split(',').map(s=>s.trim()).filter(Boolean);
@@ -1423,14 +1454,14 @@ async function changeStatus(){
   if(window.guestInfo){ document.getElementById('d-status').value=r.status; toast('Sem login, você só pode enviar novas atas — não é possível alterar registros existentes.', false); return; }
   r.status=document.getElementById('d-status').value;
   try{await window.storage.set(KEY_PREFIX+r.id,JSON.stringify(r));renderList();toast('Status atualizado para "'+r.status+'"');}
-  catch(e){toast('Erro ao atualizar',false);}
+  catch(e){toast(mensagemErroSalvar(e,'atualizar o status'),false);}
 }
 async function deleteCurrent(){
   if(window.guestInfo){ toast('Sem login, você só pode enviar novas atas — não é possível excluir registros existentes.', false); return; }
   const r=cache.find(x=>x.id===currentId);if(!r)return;
   if(!confirm('Excluir a ata '+r.protocolo+'?'))return;
   try{await window.storage.delete(KEY_PREFIX+r.id);cache=cache.filter(x=>x.id!==currentId);document.getElementById('count').textContent=cache.length;closeDrawer();renderList();toast('Ata excluída');}
-  catch(e){toast('Erro ao excluir',false);}
+  catch(e){toast(mensagemErroSalvar(e,'excluir este registro'),false);}
 }
 /* ---------- Impressao / exportacao no formato homologado (FORALF00340) ---------- */
 function docTableRows(name,rows,withAssinatura){
