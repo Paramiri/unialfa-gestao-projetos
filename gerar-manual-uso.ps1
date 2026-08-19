@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.25 - 19 de agosto de 2026 (substitui a versao 2.24 de 19/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.26 - 19 de agosto de 2026 (substitui a versao 2.25 de 19/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -276,6 +276,7 @@ P "Esta e a versao 2.22 do manual. Em relacao a versao 2.21 (13/08/2026), o Plan
 P "Esta e a versao 2.23 do manual. Em relacao a versao 2.22 (13/08/2026), foi adicionada a nova secao 6.5 - Ambiente de Treino: um ambiente de treinamento/demonstracao totalmente separado da producao, com 7 projetos ficticios cobrindo o ciclo completo, e uma quarta aba na Administracao (visivel so em producao) com um botao que reseta e repopula esse ambiente com um clique, restrito a Admin (secao 3.8 das Regras de Acesso)."
 P "Esta e a versao 2.24 do manual. Em relacao a versao 2.23 (14/08/2026), foi adicionada a nova secao 2.12 - Assistente de preenchimento por IA (Canvas e TAP): um botao `Sugerir com IA` que le a Solicitacao de Demanda, o Canvas (no caso do TAP) e as Atas de Reuniao do projeto vinculado para sugerir o preenchimento dos campos ainda vazios, com a mesma logica de interruptor geral e lista de papeis liberados ja usada na importacao de transcricao (secao 2.10)."
 P "Esta e a versao 2.25 do manual. Em relacao a versao 2.24 (19/08/2026), foi adicionada a nova secao 2.13 - Importacao de documento por IA (Solicitacao de Demanda): um painel `Importar documento preenchido` que le o formulario oficial FORALF00339 preenchido a mao em Word ou PDF (colado ou anexado) e sugere o preenchimento dos campos do formulario online, com a mesma logica de interruptor geral e lista de papeis liberados das demais importacoes por IA - sem restricao por equipe de projeto, ja que e o primeiro formulario da esteira."
+P "Esta e a versao 2.26 do manual. Em relacao a versao 2.25 (19/08/2026), o assistente de preenchimento por IA (secao 2.12) foi estendido do Canvas/TAP para tambem cobrir o Planejamento e Desenvolvimento de Projeto (Passo 4: pre-projeto, beneficios e marcos iniciais de cronograma, a partir do TAP e do Canvas) e a EAP (Passo 5: pacotes de trabalho e entregas, a partir do Planejamento e do TAP, so quando a arvore estiver totalmente vazia) - Fase 2 do assistente, usando o mesmo interruptor geral ja existente."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -411,13 +412,14 @@ Bul "Depois de transcrito, o texto fica disponivel na mesma caixa da importacao 
 P "A importacao de audio tem uma regra de habilitacao SEPARADA da importacao de texto (secao 2.10) - dois interruptores independentes em Administracao > Configuracoes (secao 6.3), cada um desligado por padrao. Na pratica, o botao `Anexar audio` so aparece para quem tem as duas permissoes ativas ao mesmo tempo (importar transcricao E importar audio), ja que o audio so serve para gerar o texto que depois passa pela mesma analise."
 Nota "PDFs e audio muito longos consomem mais tempo de processamento; nao ha limite de duracao da reuniao em si, mas o navegador precisa decodificar o arquivo inteiro antes de dividir em pedacos - arquivos muito grandes (varias horas) podem demorar mais para começar a transcrever."
 
-H2 "2.12 Assistente de preenchimento por IA (Canvas e TAP)"
-P "O Canvas de Projeto (Passo 2) e o TAP (Passo 3) tem um botao `Sugerir com IA`, que aparece assim que um Projeto vinculado e selecionado. Diferente da importacao de transcricao (secao 2.10), que le um texto colado pelo usuario, este assistente le os proprios documentos ja registrados do projeto - a Solicitacao de Demanda e, no caso do TAP, tambem o Canvas - alem de todas as Atas de Reuniao vinculadas a ele, e usa IA (Claude, pela mesma Supabase Edge Function em espirito da secao 2.10) para sugerir o preenchimento dos campos ainda vazios."
+H2 "2.12 Assistente de preenchimento por IA (Canvas, TAP, Planejamento e EAP)"
+P "O Canvas de Projeto (Passo 2), o TAP (Passo 3), o Planejamento e Desenvolvimento de Projeto (Passo 4) e a EAP (Passo 5) tem um botao `Sugerir com IA`, que aparece assim que um Projeto vinculado e selecionado. Diferente da importacao de transcricao (secao 2.10), que le um texto colado pelo usuario, este assistente le os proprios documentos ja registrados do projeto - seguindo a esteira (Demanda alimenta o Canvas; Canvas e Demanda alimentam o TAP; TAP e Canvas alimentam o Planejamento; TAP e Planejamento alimentam a EAP), sempre incluindo as Atas de Reuniao do projeto - e usa IA (Claude, pela mesma Supabase Edge Function em espirito da secao 2.10) para sugerir o preenchimento dos campos ainda vazios."
 Bul "So preenche o que estiver vazio: um campo ja digitado pelo usuario nunca e sobrescrito pela sugestao."
 Bul "Cada campo preenchido pela IA fica com um selo `IA` e destaque visual ate ser editado - assim fica claro, campo a campo, o que veio de sugestao e o que foi escrito pela pessoa."
 Bul "Uma linha no rodape do bloco lista os documentos usados como base (ex.: `Sugestao baseada em: Solicitacao de Demanda FORALF00339-2026-001, Canvas de Projeto FORALF00344-2026-002`)."
-Bul "No TAP, alem dos campos de texto, a sugestao tambem propoe linhas iniciais para as tabelas de riscos, cronograma de entregas macro, custos e partes interessadas - sempre que a tabela ainda estiver vazia."
-P "Mesma logica de custo e permissao da importacao de transcricao (secao 2.10): interruptor geral do Admin, desligado por padrao, e lista de papeis liberados em Administracao > Configuracoes (secao 6.3) - PMO/Admin sempre tem acesso quando o assistente esta ligado. Alem disso, so quem faz parte da equipe do projeto selecionado (secao 2.5) pode usar o botao."
+Bul "No TAP, alem dos campos de texto, a sugestao tambem propoe linhas iniciais para as tabelas de riscos, cronograma de entregas macro, custos e partes interessadas - sempre que a tabela ainda estiver vazia. No Planejamento, propoe tambem marcos iniciais na aba Cronograma."
+Bul "Na EAP, a logica e diferente: a sugestao so se aplica se a arvore inteira ainda estiver vazia (nenhum pacote de trabalho ou entrega com nome digitado) - havendo qualquer conteudo, a sugestao inteira e recusada, para nunca misturar pacotes existentes com sugeridos. A IA propoe apenas os nomes dos pacotes de trabalho (nivel 1) e das entregas (nivel 2); as atividades (nivel 3) continuam sendo detalhadas manualmente."
+P "Mesma logica de custo e permissao da importacao de transcricao (secao 2.10): interruptor geral do Admin, desligado por padrao, e lista de papeis liberados em Administracao > Configuracoes (secao 6.3) - um unico interruptor cobre os 4 formularios, e PMO/Admin sempre tem acesso quando esta ligado. Alem disso, so quem faz parte da equipe do projeto selecionado (secao 2.5) pode usar o botao."
 Nota "Como qualquer sugestao de IA, o resultado pode estar incompleto ou impreciso quando os documentos anteriores tambem estiverem - revise sempre antes de clicar em `Registrar`."
 
 H2 "2.13 Importacao de documento por IA (Solicitacao de Demanda)"
@@ -521,6 +523,7 @@ Img "19_f04_novo.png" "Capa de identificacao do dossie, com a barra das 8 abas n
 Img "20_f04_lista.png" "Projetos cadastrados (estado vazio, antes do primeiro dossie ser salvo)." 5.6
 P "Como salvar: preencha a capa (nome do projeto, unidade e gestor sao obrigatorios) e navegue pelas 8 abas. Clique em `Registrar dossie`. E este documento que alimenta, junto com o Canvas, a elaboracao do Relatorio de Entregas e Beneficios (Passo 12)."
 Bul "No rodape do painel de detalhes de um dossie, os botoes `Imprimir` e `Exportar Word` geram o documento no formato oficial do FORALF00325, com as 8 abas em sequencia, pronto para impressao ou para abrir no Word."
+Bul "Assistente de preenchimento por IA: apos selecionar o Projeto vinculado, o botao `Sugerir com IA` le o TAP, o Canvas e as Atas de Reuniao do projeto e sugere o preenchimento da aba Pre-projeto, dos beneficios na aba Viabilidade e de marcos iniciais na aba Cronograma (secao 2.12)."
 
 H2 "Passo 5 - EAP, Estrutura Analitica do Projeto"
 P "Quando usar: em paralelo ao planejamento, para decompor visualmente o escopo em pacotes de trabalho."
@@ -533,6 +536,7 @@ Bul "Cada Atividade (nivel 3) pode receber, de forma opcional, uma prioridade: `
 Img "39_f05_prioridade.png" "Atividades de nivel 3 com os tres niveis de prioridade (P0, P1 e P2), exibidos como selo colorido ao lado de cada atividade." 5.6
 P "Clique em `Registrar EAP` para gerar o protocolo."
 Bul "No rodape do painel de detalhes de uma EAP, os botoes `Imprimir` e `Exportar Word` geram um documento com a arvore hierarquica completa (pacotes, entregas e atividades, com a prioridade de cada uma), pronto para impressao ou para abrir no Word. Este artefato nao tem um FORALF oficial - o layout segue o padrao visual dos demais documentos gerados pelo sistema."
+Bul "Assistente de preenchimento por IA: apos selecionar o Projeto vinculado, o botao `Sugerir com IA` le o Planejamento e o TAP do projeto e sugere pacotes de trabalho (nivel 1) e entregas (nivel 2) - nunca atividades (nivel 3). So funciona se a arvore estiver totalmente vazia; se ja houver qualquer pacote ou entrega digitado, a sugestao e recusada (secao 2.12)."
 
 H2 "Passo 6 - Ata de Reuniao (FORALF00340) - uso recorrente"
 P "Quando usar: a qualquer momento do projeto, para registrar formalmente qualquer reuniao - nao faz parte da esteira sequencial, fica sempre disponivel. Pode ser preenchida com login normal ou, se a opcao estiver ativa, sem login (ver secao 2.6)."

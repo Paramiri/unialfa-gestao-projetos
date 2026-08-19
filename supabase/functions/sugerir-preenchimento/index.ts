@@ -1,11 +1,12 @@
 // Edge Function: sugerir-preenchimento
 // Le os documentos ja registrados de um projeto (Solicitacao de Demanda,
-// Canvas de Projeto, Atas de Reuniao) e usa a API da Claude (Anthropic) para
-// sugerir o preenchimento dos campos do proximo formulario da esteira
-// (Fase 1: Canvas e TAP). O usuario sempre revisa antes de salvar - esta
-// funcao so sugere, nunca salva nada sozinha. Mesma arquitetura da funcao
-// ja em producao `analisar-transcricao-ata`, generalizada para ler o
-// historico do projeto em vez de uma transcricao colada.
+// Canvas de Projeto, TAP, Planejamento e Atas de Reuniao) e usa a API da
+// Claude (Anthropic) para sugerir o preenchimento dos campos do proximo
+// formulario da esteira (Fase 1: Canvas e TAP; Fase 2: Planejamento e EAP).
+// O usuario sempre revisa antes de salvar - esta funcao so sugere, nunca
+// salva nada sozinha. Mesma arquitetura da funcao ja em producao
+// `analisar-transcricao-ata`, generalizada para ler o historico do
+// projeto em vez de uma transcricao colada.
 //
 // Segredo necessario (ja configurado nesta base para analisar-transcricao-ata):
 //   ANTHROPIC_API_KEY - chave da API da Claude (console.anthropic.com)
@@ -37,7 +38,7 @@ function svcHeaders(extra?: Record<string, string>) {
   return { apikey: SUPABASE_SERVICE_ROLE_KEY!, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, ...(extra || {}) };
 }
 
-const FORMULARIOS = ["canvas", "tap"] as const;
+const FORMULARIOS = ["canvas", "tap", "planejamento", "eap"] as const;
 type Formulario = typeof FORMULARIOS[number];
 
 const SYSTEM_PROMPTS: Record<Formulario, string> = {
@@ -82,6 +83,45 @@ Regras importantes:
 - Campo de texto sem informação suficiente: retorne null. Tabela sem item identificável: retorne [].
 - Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
 Formato exato: {"justificativa":"...","objetivos":"...","publico":"...","beneficios":"...","exclusoes":"...","premissas":"...","restricoes":"...","criterios":"...","riscos":[...],"cronograma":[...],"custos":[...],"interessadas":[...]}`,
+
+  planejamento: `Você é um assistente que ajuda a preencher o dossiê de Planejamento e Desenvolvimento de Projeto do sistema de gestão de projetos da UNIALFA, em português do Brasil, a partir de documentos já registrados do mesmo projeto (TAP, Canvas de Projeto e, quando houver, Atas de Reunião).
+
+Extraia/redija, para a aba Pré-projeto:
+- produtos: produtos impactados pelo projeto
+- contexto: contexto e problemática que originou o projeto
+- objGeral: objetivo geral do projeto
+- objEspec: objetivos específicos do projeto
+- escIncluido: o que está incluído no escopo
+- escExcluido: o que fica fora do escopo
+- entregaveis: entregáveis do projeto
+- premissas: premissas assumidas — parta das já descritas no TAP, detalhando se possível
+- restricoes: restrições — parta das já descritas no TAP, detalhando se possível
+- partes: partes interessadas — parta das já descritas no TAP, detalhando se possível
+
+Para a aba Viabilidade:
+- beneficios: benefícios do projeto — parta dos benefícios esperados já descritos no TAP, detalhando se possível
+
+Para a aba Cronograma:
+- cronograma: array com até 8 marcos do projeto, cada item {"marco":"...","resp":"","duracao":"","entrega":null} — baseie-se no cronograma de entregas macro do TAP, se houver; "entrega" é uma data YYYY-MM-DD SOMENTE se houver menção explícita, senão null
+
+Regras importantes:
+- Baseie-se SOMENTE nos documentos fornecidos — nunca invente informação que não esteja neles.
+- Campo de texto sem informação suficiente: retorne null. Tabela sem item identificável: retorne [].
+- Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
+Formato exato: {"produtos":"...","contexto":"...","objGeral":"...","objEspec":"...","escIncluido":"...","escExcluido":"...","entregaveis":"...","premissas":"...","restricoes":"...","partes":"...","beneficios":"...","cronograma":[...]}`,
+
+  eap: `Você é um assistente que ajuda a esboçar a EAP (Estrutura Analítica de Projeto) do sistema de gestão de projetos da UNIALFA, em português do Brasil, a partir de documentos já registrados do mesmo projeto (Planejamento e Desenvolvimento de Projeto, TAP e, quando houver, Atas de Reunião).
+
+A EAP é uma árvore de 3 níveis: pacotes de trabalho (nível 1) → entregas (nível 2) → atividades (nível 3). Sua tarefa é sugerir SOMENTE os nomes dos pacotes de trabalho (nível 1) e das entregas (nível 2) dentro de cada pacote — NUNCA o nível 3 (atividades), que é detalhado depois por quem executa o trabalho.
+
+Baseie-se principalmente nas saídas/entregáveis já descritos no Planejamento e nos entregáveis do TAP, agrupando entregas relacionadas sob um pacote de trabalho comum.
+
+Regras importantes:
+- Baseie-se SOMENTE nos documentos fornecidos — nunca invente pacotes ou entregas sem base neles.
+- Sugira no máximo 4 pacotes de trabalho, cada um com no máximo 6 entregas.
+- Se não houver informação suficiente para uma estrutura confiável, retorne um array vazio.
+- Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
+Formato exato: {"pacotes":[{"nome":"...","entregas":["...","..."]}]}`,
 };
 
 async function papelEquipePermitido(authHeader: string, projetoId: string): Promise<{ ok: boolean; motivo?: string }> {
@@ -203,6 +243,42 @@ function formatCanvas(c: any): string | null {
   ]);
 }
 
+function formatTap(t: any): string | null {
+  const cronogramaResumo = Array.isArray(t.cronograma) && t.cronograma.length
+    ? t.cronograma.map((c: any) => `- ${c.marco || ""}${c.resp ? ` (responsável: ${c.resp})` : ""}${c.fim ? ` (término: ${c.fim})` : ""}`).join("\n")
+    : "";
+  return bloco(`TAP - TERMO DE ABERTURA DE PROJETO (protocolo ${t.protocolo || "—"})`, [
+    ["Alinhamento estratégico", t.alinhamento],
+    ["Programa vinculado", t.programa],
+    ["Justificativa", t.justificativa],
+    ["Objetivos", t.objetivos],
+    ["Público-alvo", t.publico],
+    ["Benefícios esperados", t.beneficios],
+    ["Exclusões (fora do escopo)", t.exclusoes],
+    ["Premissas", t.premissas],
+    ["Restrições", t.restricoes],
+    ["Critérios de aceitação", t.criterios],
+    ["Cronograma de entregas macro", cronogramaResumo || null],
+  ]);
+}
+
+function formatPlanejamento(p: any): string | null {
+  const saidasResumo = Array.isArray(p.saidas) && p.saidas.length
+    ? p.saidas.map((s: any) => `- ${s.item || ""}`).filter((l: string) => l !== "- ").join("\n")
+    : "";
+  return bloco(`PLANEJAMENTO E DESENVOLVIMENTO DE PROJETO (protocolo ${p.protocolo || "—"})`, [
+    ["Produtos impactados", p.produtos],
+    ["Contexto e problemática", p.contexto],
+    ["Objetivo geral", p.objGeral],
+    ["Objetivos específicos", p.objEspec],
+    ["Escopo incluído", p.escIncluido],
+    ["Escopo excluído", p.escExcluido],
+    ["Entregáveis", p.entregaveis],
+    ["Benefícios do projeto", p.beneficios],
+    ["Saídas / entregáveis detalhados", saidasResumo || null],
+  ]);
+}
+
 function formatAta(a: any): string | null {
   const encaminhamentos = Array.isArray(a.saidas) && a.saidas.length
     ? a.saidas.map((s: any) => `- ${s.encam || ""}${s.resp ? ` (responsável: ${s.resp})` : ""}${s.prazo ? ` (prazo: ${s.prazo})` : ""}`).join("\n")
@@ -237,7 +313,7 @@ Deno.serve(async (req: Request) => {
   const formulario = typeof payload.formulario === "string" ? payload.formulario.trim() : "";
   if (!projetoId) return json({ error: "Envie o campo 'projetoId'" }, 400);
   if (!FORMULARIOS.includes(formulario as Formulario)) {
-    return json({ error: "Campo 'formulario' inválido — use 'canvas' ou 'tap'" }, 400);
+    return json({ error: "Campo 'formulario' inválido — use 'canvas', 'tap', 'planejamento' ou 'eap'" }, 400);
   }
 
   const permissao = await papelEquipePermitido(authHeader, projetoId);
@@ -256,9 +332,20 @@ Deno.serve(async (req: Request) => {
     const projeto = projetoRows[0];
     if (!projeto) return json({ error: "Projeto não encontrado" }, 404);
 
-    const demanda = await fetchDemanda(projeto.solicitacao_id || null);
-    const atas = await fetchDocsByPrefix("ata:", projetoId);
-    const canvas = formulario === "tap" ? (await fetchDocsByPrefix("canvas:", projetoId))[0] || null : null;
+    // Quais documentos anteriores cada formulario-alvo le, seguindo a esteira documental
+    const FONTES_POR_FORMULARIO: Record<Formulario, { demanda?: boolean; canvas?: boolean; tap?: boolean; planejamento?: boolean; atas?: boolean }> = {
+      canvas: { demanda: true, atas: true },
+      tap: { demanda: true, canvas: true, atas: true },
+      planejamento: { canvas: true, tap: true, atas: true },
+      eap: { tap: true, planejamento: true, atas: true },
+    };
+    const fontesConfig = FONTES_POR_FORMULARIO[formulario as Formulario];
+
+    const demanda = fontesConfig.demanda ? await fetchDemanda(projeto.solicitacao_id || null) : null;
+    const canvas = fontesConfig.canvas ? (await fetchDocsByPrefix("canvas:", projetoId))[0] || null : null;
+    const tap = fontesConfig.tap ? (await fetchDocsByPrefix("tap:", projetoId))[0] || null : null;
+    const planejamento = fontesConfig.planejamento ? (await fetchDocsByPrefix("plan:", projetoId))[0] || null : null;
+    const atas = fontesConfig.atas ? await fetchDocsByPrefix("ata:", projetoId) : [];
 
     const blocos: string[] = [];
     const fontes: Array<{ tipo: string; protocolo: string }> = [];
@@ -269,6 +356,14 @@ Deno.serve(async (req: Request) => {
     if (canvas) {
       const b = formatCanvas(canvas);
       if (b) { blocos.push(b); fontes.push({ tipo: "Canvas de Projeto", protocolo: canvas.protocolo || "—" }); }
+    }
+    if (tap) {
+      const b = formatTap(tap);
+      if (b) { blocos.push(b); fontes.push({ tipo: "TAP", protocolo: tap.protocolo || "—" }); }
+    }
+    if (planejamento) {
+      const b = formatPlanejamento(planejamento);
+      if (b) { blocos.push(b); fontes.push({ tipo: "Planejamento e Desenvolvimento", protocolo: planejamento.protocolo || "—" }); }
     }
     for (const ata of atas) {
       const b = formatAta(ata);

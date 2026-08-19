@@ -9,7 +9,7 @@
     --red:#B91D2E; --red-deep:#8E1322; --ink:#1A1A1A; --muted:#6A6A70;
     --paper:#FFFFFF; --surface:#F6F6F7; --surface-2:#FAFAFB;
     --line:#E4E4E7; --line-strong:#D4D4D8;
-    --ok:#1B7F4B; --ok-soft:#E6F4EC; --warn:#B45309; --warn-soft:#FBF1E3; --bad:#9F1239; --bad-soft:#FBE7EC;
+    --ok:#1B7F4B; --ok-soft:#E6F4EC; --warn:#B45309; --warn-soft:#FBF1E3; --bad:#9F1239; --bad-soft:#FBE7EC; --ai:#6D28D9; --ai-soft:#F5F3FF;
     --radius:10px; --shadow:0 1px 2px rgba(20,20,20,.04), 0 8px 28px rgba(20,20,20,.06);
     --font:'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
   }
@@ -227,6 +227,22 @@ body.auth-ready .drawer{top:34px;height:calc(100% - 34px)}
 .proj-link-card .plc-info{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12px}
 .proj-link-card .plc-info span{color:var(--muted,#6B7280)}
 .proj-link-card .plc-info b{color:var(--ink,#0F0F0F);margin-left:4px}
+.btn-ai{background:var(--ai);color:#fff;appearance:none;font-family:var(--font);font-weight:700;font-size:12px;border-radius:7px;padding:8px 14px;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:7px;transition:background .15s;white-space:nowrap}
+.btn-ai:hover{background:#5B21B6}
+.btn-ai:disabled{opacity:.5;cursor:not-allowed}
+.ai-status{margin-top:10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px}
+.ai-status.loading{color:var(--ai)}
+.ai-status.ok{color:var(--ok)}
+.ai-status.err{color:var(--bad)}
+.ai-spinner{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:ai-spin .7s linear infinite;flex:none}
+@keyframes ai-spin{to{transform:rotate(360deg)}}
+.ai-fontes{background:var(--ai-soft);border:1px solid #C4B5FD;border-radius:7px;padding:10px 14px;font-size:12px;color:var(--ai);font-weight:600;margin-top:10px;display:none}
+.ai-fontes.show{display:block}
+.field.ai-suggested textarea,.field.ai-suggested input{border-color:var(--ai);background:var(--ai-soft)}
+.field.ai-suggested label{color:var(--ai)}
+.field .ai-tag{display:none;font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:var(--ai);color:#fff;padding:1px 6px;border-radius:999px;margin-left:6px;vertical-align:middle}
+.field.ai-suggested .ai-tag{display:inline-block}
+.dyn-table-wrap.ai-suggested{border-color:var(--ai)}
 .hist-panel{background:var(--surface-2,#F1F2F4);border:1px solid var(--line,#E5E7EB);border-radius:8px;margin-top:12px;padding:12px 14px;font-size:12px;max-height:220px;overflow-y:auto}
 .hist-panel .hi{padding:6px 0;border-bottom:1px solid var(--line,#E5E7EB)}
 .hist-panel .hi:last-child{border-bottom:none}
@@ -584,7 +600,7 @@ window.unialfaHistorico = {
         <h1>Planejamento e Desenvolvimento de Projeto</h1>
         <p>Dossiê de ciclo de vida do projeto · Gerência de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=14#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=15#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00325</b></div>
@@ -614,6 +630,11 @@ window.unialfaHistorico = {
       </div>
       <div id="equipeAviso" style="display:none;margin-top:10px;font-size:12px;color:var(--bad,#9F1239);font-weight:600">Você não faz parte da equipe deste projeto. Peça a um administrador para adicioná-lo(a) em Administração → Equipes.</div>
       <div id="historicoPanel" style="display:none"></div>
+      <div id="iaSugestaoBloco" style="display:none;margin-top:12px">
+        <button type="button" class="btn-ai" id="btnSugerirIA" onclick="sugerirPreenchimentoIA()">✦ Sugerir com IA</button>
+        <div class="ai-status" id="iaStatus" style="display:none"></div>
+        <div class="ai-fontes" id="iaFontes"></div>
+      </div>
     </div>
     <!-- Identification (always visible) -->
     <div class="card">
@@ -882,7 +903,7 @@ async function onProjetoSelect(preencherCampos=true){
   document.getElementById('btnHistorico').style.display = id ? 'inline' : 'none';
   document.getElementById('historicoPanel').style.display='none'; historicoAberto=false;
   const p=projetosAprovados.find(x=>x.id===id);
-  if(!p){ info.style.display='none'; document.getElementById('equipeAviso').style.display='none'; atualizarBotaoEquipe(true); return; }
+  if(!p){ info.style.display='none'; document.getElementById('equipeAviso').style.display='none'; atualizarBotaoEquipe(true); document.getElementById('iaSugestaoBloco').style.display='none'; return; }
   document.getElementById('pi-unidade').textContent=p.unidade||'—';
   document.getElementById('pi-gerente').textContent=p.gerente||'—';
   document.getElementById('pi-status').textContent='Aprovado';
@@ -890,6 +911,9 @@ async function onProjetoSelect(preencherCampos=true){
   const souMembro = await unialfaEquipe.souMembro(id);
   document.getElementById('equipeAviso').style.display = souMembro ? 'none' : 'block';
   atualizarBotaoEquipe(souMembro);
+  document.getElementById('iaSugestaoBloco').style.display = (souMembro && window.__iaAssistentePermitido) ? 'block' : 'none';
+  document.getElementById('iaStatus').style.display='none';
+  document.getElementById('iaFontes').classList.remove('show');
   if(preencherCampos){
     document.getElementById('nomeProjeto').value=p.nome||'';
     document.getElementById('unidade').value=p.unidade||'';
@@ -1336,5 +1360,89 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
 buildIdGrid();
 buildStages();
 REQUIRED.forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('input',()=>clearError(id)); });
-(async()=>{ await ensureAuthenticated(); await loadAll(); renderList(); await carregarProjetosAprovados(); })();
+async function assistenteIAPermitido(){
+  try{
+    const r = await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=in.(permitir_assistente_preenchimento,papeis_assistente_preenchimento)&select=chave,valor', { headers: unialfaAuth.authHeaders() });
+    const rows = r.ok ? await r.json() : [];
+    const habilitado = rows.find(x=>x.chave==='permitir_assistente_preenchimento')?.valor===true;
+    if(!habilitado) return false;
+    if(window.currentProfile && window.currentProfile.papel==='admin') return true;
+    const papeis = rows.find(x=>x.chave==='papeis_assistente_preenchimento')?.valor;
+    return window.currentProfile ? (Array.isArray(papeis) && papeis.includes(window.currentProfile.papel)) : false;
+  }catch(e){ return false; }
+}
+function setIAStatus(type,msg){
+  const el=document.getElementById('iaStatus');
+  el.style.display='flex'; el.className='ai-status '+type;
+  el.innerHTML=(type==='loading'?'<span class="ai-spinner"></span>':'')+`<span>${msg}</span>`;
+}
+function marcarCampoSugerido(id){
+  const el=document.getElementById(id);
+  const campo=el ? el.closest('.field') : null;
+  if(!campo) return;
+  campo.classList.add('ai-suggested');
+  const label=campo.querySelector('label');
+  if(label && !label.querySelector('.ai-tag')){
+    const tag=document.createElement('span'); tag.className='ai-tag'; tag.textContent='IA';
+    label.appendChild(tag);
+  }
+  el.addEventListener('input', function limpar(){ campo.classList.remove('ai-suggested'); el.removeEventListener('input', limpar); }, {once:true});
+}
+function sugerirTabela(name, rows){
+  if(!Array.isArray(rows) || !rows.length) return false;
+  if(readTable(name).length) return false;
+  const tb=document.querySelector(`#tbl-${name} tbody`);
+  if(!tb) return false;
+  tb.innerHTML='';
+  rows.forEach(r=>addRow(name, r));
+  const wrap=tb.closest('.dyn-table-wrap');
+  if(wrap){
+    wrap.classList.add('ai-suggested');
+    wrap.addEventListener('input', function limpar(){ wrap.classList.remove('ai-suggested'); wrap.removeEventListener('input', limpar); }, {once:true});
+  }
+  return true;
+}
+async function sugerirPreenchimentoIA(){
+  const projetoId=document.getElementById('projetoSelect').value;
+  if(!projetoId){ toast('Selecione o projeto vinculado primeiro', false); return; }
+  const btn=document.getElementById('btnSugerirIA');
+  btn.disabled=true;
+  setIAStatus('loading','Lendo os documentos do projeto…');
+  document.getElementById('iaFontes').classList.remove('show');
+  try{
+    const resp=await fetch(unialfaAuth.REST_BASE.replace('/rest/v1','/functions/v1') + '/sugerir-preenchimento', {
+      method:'POST', headers: unialfaAuth.authHeaders(),
+      body: JSON.stringify({ projetoId, formulario:'planejamento' })
+    });
+    const data=await resp.json();
+    if(!resp.ok || data.error){
+      setIAStatus('err','⚠ '+(data.error||'Não foi possível gerar a sugestão'));
+      btn.disabled=false; return;
+    }
+    const d=data.dados||{};
+    let preenchidos=0;
+    ['produtos','contexto','objGeral','objEspec','escIncluido','escExcluido','entregaveis','premissas','restricoes','partes','beneficios'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el && !el.value.trim() && d[id]){ el.value=d[id]; marcarCampoSugerido(id); preenchidos++; }
+    });
+    if(sugerirTabela('cronograma', d.cronograma)) preenchidos++;
+    if(!preenchidos){
+      setIAStatus('ok','Nenhum campo vazio para sugerir — os campos já preenchidos não são sobrescritos.');
+    } else {
+      setIAStatus('ok', `✓ ${preenchidos} campo${preenchidos!==1?'s':''} preenchido${preenchidos!==1?'s':''} pela IA. Revise antes de registrar.`);
+    }
+    const fontes=(data.fontes||[]).map(f=>`${f.tipo} ${f.protocolo}`).join(', ');
+    if(fontes){
+      const fEl=document.getElementById('iaFontes');
+      fEl.textContent='📎 Sugestão baseada em: '+fontes+'. Revise antes de salvar — a IA pode errar ou simplificar demais.';
+      fEl.classList.add('show');
+    }
+  }catch(e){
+    console.error(e);
+    setIAStatus('err','Falha ao conectar com o serviço de sugestão. Tente novamente.');
+  }
+  btn.disabled=false;
+}
+
+(async()=>{ await ensureAuthenticated(); await loadAll(); renderList(); await carregarProjetosAprovados(); window.__iaAssistentePermitido = await assistenteIAPermitido(); })();
 </script>
