@@ -469,7 +469,7 @@ function ensureAuthenticated(){
       <h1>Relatório de Situação de Projetos</h1>
       <p>Escritório de Projetos · Visão geral e por programa/projeto</p>
     </div>
-    <a class="head-help" href="15 - central-ajuda.html?v=18#relatorio-situacao" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
+    <a class="head-help" href="15 - central-ajuda.html?v=19#relatorio-situacao" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
     <div class="head-meta">
       <div class="head-meta-item"><span>Referência</span><b id="hd-ref">—</b></div>
       <div class="head-meta-item"><span>Responsável</span><b id="hd-resp">—</b></div>
@@ -708,16 +708,46 @@ let data={ref:'',resp:'',fin:'',entr:'',projetos:[],entraves:[],encaminhamentos:
 
 let projetosAprovados=[];
 async function carregarProjetosAprovados(){ projetosAprovados = await unialfaProjeto.listarAprovados(); }
-function onProjRowProjetoSelect(i){
+function isoToBR(iso){
+  const m=String(iso||'').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? (m[3]+'/'+m[2]+'/'+m[1]) : '';
+}
+async function buscarDatasCronogramaTAP(projetoId){
+  try{
+    const res=await window.storage.list('tap:');
+    const keys=(res&&res.keys)?res.keys:[];
+    for(const k of keys){
+      const r=await window.storage.get(k);
+      if(!r||!r.value) continue;
+      const tap=JSON.parse(r.value);
+      if(tap.projetoId!==projetoId) continue;
+      const marcos=Array.isArray(tap.cronograma)?tap.cronograma:[];
+      const inis=marcos.map(m=>m.ini).filter(Boolean).sort();
+      const fims=marcos.map(m=>m.fim).filter(Boolean).sort();
+      return { inicio: inis.length?isoToBR(inis[0]):'', termino: fims.length?isoToBR(fims[fims.length-1]):'' };
+    }
+  }catch(e){}
+  return null;
+}
+async function onProjRowProjetoSelect(i){
   const id=document.getElementById('projVinc-'+i).value;
   data.projetos[i].projetoId=id;
   document.getElementById('histBtn-'+i).style.display=id?'inline-flex':'none';
   document.getElementById('projRowHist-'+i).style.display='none';
-  if(id){
-    const pa=projetosAprovados.find(x=>x.id===id);
-    if(pa){
-      const nomeEl=document.querySelector(`input[data-pi="${i}"][data-k="nome"]`);
-      if(nomeEl && !nomeEl.value.trim()){ nomeEl.value=pa.nome; data.projetos[i].nome=pa.nome; }
+  if(!id) return;
+  const pa=projetosAprovados.find(x=>x.id===id);
+  if(!pa) return;
+  const nomeEl=document.querySelector(`input[data-pi="${i}"][data-k="nome"]`);
+  if(nomeEl && !nomeEl.value.trim()){ nomeEl.value=pa.nome; data.projetos[i].nome=pa.nome; }
+  const respEl=document.querySelector(`input[data-pi="${i}"][data-k="resp"]`);
+  if(respEl && !respEl.value.trim() && pa.gerente){ respEl.value=pa.gerente; data.projetos[i].resp=pa.gerente; }
+  const inicioEl=document.querySelector(`input[data-pi="${i}"][data-k="inicio"]`);
+  const terminoEl=document.querySelector(`input[data-pi="${i}"][data-k="termino"]`);
+  if((inicioEl && !inicioEl.value.trim()) || (terminoEl && !terminoEl.value.trim())){
+    const datas=await buscarDatasCronogramaTAP(id);
+    if(datas){
+      if(inicioEl && !inicioEl.value.trim() && datas.inicio){ inicioEl.value=datas.inicio; data.projetos[i].inicio=datas.inicio; }
+      if(terminoEl && !terminoEl.value.trim() && datas.termino){ terminoEl.value=datas.termino; data.projetos[i].termino=datas.termino; }
     }
   }
 }
