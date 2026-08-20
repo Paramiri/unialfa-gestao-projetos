@@ -3,7 +3,10 @@
 // Canvas de Projeto, TAP, Planejamento, EAP, SMP, TEP e Atas de Reuniao) e
 // usa a API da Claude (Anthropic) para sugerir o preenchimento dos campos
 // do proximo formulario da esteira (Fase 1: Canvas e TAP; Fase 2:
-// Planejamento e EAP; Fase 3: SMP, TEP e RLA). O usuario sempre revisa
+// Planejamento e EAP; Fase 3: SMP, TEP e RLA; Fase B dos relatorios de
+// portfolio: Relatorio de Situacao e Relatorio de Entregas, sugeridos POR
+// LINHA de projeto, ja que um unico relatorio cobre varios projetos). O
+// usuario sempre revisa
 // antes de salvar - esta funcao so sugere, nunca salva nada sozinha. Mesma
 // arquitetura da funcao ja em producao `analisar-transcricao-ata`,
 // generalizada para ler o historico do projeto em vez de uma transcricao
@@ -39,7 +42,7 @@ function svcHeaders(extra?: Record<string, string>) {
   return { apikey: SUPABASE_SERVICE_ROLE_KEY!, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, ...(extra || {}) };
 }
 
-const FORMULARIOS = ["canvas", "tap", "planejamento", "eap", "smp", "tep", "rla"] as const;
+const FORMULARIOS = ["canvas", "tap", "planejamento", "eap", "smp", "tep", "rla", "relatorio-situacao", "relatorio-entregas"] as const;
 type Formulario = typeof FORMULARIOS[number];
 
 const SYSTEM_PROMPTS: Record<Formulario, string> = {
@@ -203,6 +206,35 @@ Regras importantes:
 - Se não houver informação suficiente para um campo, retorne null — não escreva generalidades vazias como "o projeto correu bem".
 - Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
 Formato exato: {"q21":"...","q22":"...","q23":"...","q24":"...","q31":"...","q32":"...","q33":"...","q34":"...","q41":"...","q42":"...","q43":"...","q44":"...","q45":"...","q46":"...","q51":"...","q52":"...","q53":"...","q54":"..."}`,
+
+  "relatorio-situacao": `Você é um assistente que ajuda a preencher, por linha de projeto, o Relatório de Situação de Projetos (FORALF11) do sistema de gestão de projetos da UNIALFA, em português do Brasil — uma visão consolidada de portfólio, atualizada durante a execução do projeto.
+
+Esta sugestão é para UMA linha específica do relatório, referente a um projeto já vinculado — não para o relatório inteiro. Baseie-se nos documentos desse projeto (TAP e, quando houver, Atas de Reunião) e, se fornecida, na situação já digitada nesta linha (status, % de execução, datas, sinalização automática de atraso).
+
+Redija:
+- atencao: o que merece atenção nesta linha — riscos em aberto do TAP, entraves recentes das Atas ainda sem solução, ou a sinalização automática de atraso/prazo vencido já calculada, se houver. Seja específico e breve (1 a 3 frases).
+- destaque: o que merece destaque nesta linha — ausência de riscos em aberto, entraves recentes resolvidos, ou benefícios esperados relevantes do TAP. Seja específico e breve (1 a 3 frases).
+
+Regras importantes:
+- Baseie-se SOMENTE nos documentos e na situação fornecidos — nunca invente riscos, entraves ou conquistas que não estejam neles.
+- Se não houver nada de fato relevante para um campo, retorne null — não escreva generalidades vazias como "o projeto está indo bem".
+- Nunca sugira ou corrija o percentual de execução, o status ou as datas da linha — esses continuam sendo preenchidos manualmente por quem acompanha o projeto; sua tarefa é só os dois campos de texto abaixo.
+- Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
+Formato exato: {"atencao":"...","destaque":"..."}`,
+
+  "relatorio-entregas": `Você é um assistente que ajuda a preencher, por linha de projeto, o Relatório de Entregas e Benefícios (FORALF12) do sistema de gestão de projetos da UNIALFA, em português do Brasil — a ficha que embasa o Gate 2, pactuado com o Dono do Negócio ANTES da execução do projeto começar.
+
+Esta sugestão é para UMA linha específica do relatório, referente a um projeto já vinculado — não para o relatório inteiro. Baseie-se no TAP desse projeto e, quando houver, nas Atas de Reunião.
+
+Redija:
+- impacto: o impacto/resultado ESPERADO do projeto para a organização — parta dos benefícios esperados e dos objetivos já descritos no TAP, com redação própria e focada em impacto organizacional, não uma cópia literal do campo de benefícios do TAP (que já é copiado automaticamente em outro campo desta mesma linha).
+
+Regras importantes:
+- Como o Gate 2 ocorre antes da execução, NUNCA descreva isso como um resultado já alcançado ou medido — é sempre uma expectativa, redija no futuro/condicional.
+- Baseie-se SOMENTE no TAP e nas Atas fornecidos — nunca invente benefícios que não estejam neles.
+- Se não houver informação suficiente, retorne null.
+- Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
+Formato exato: {"impacto":"..."}`,
 };
 
 async function papelEquipePermitido(authHeader: string, projetoId: string): Promise<{ ok: boolean; motivo?: string }> {
@@ -417,7 +449,7 @@ Deno.serve(async (req: Request) => {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) return json({ error: "Não autenticado" }, 401);
 
-  let payload: { projetoId?: unknown; formulario?: unknown };
+  let payload: { projetoId?: unknown; formulario?: unknown; contextoLinha?: unknown };
   try {
     payload = await req.json();
   } catch {
@@ -426,9 +458,25 @@ Deno.serve(async (req: Request) => {
 
   const projetoId = typeof payload.projetoId === "string" ? payload.projetoId.trim() : "";
   const formulario = typeof payload.formulario === "string" ? payload.formulario.trim() : "";
+  // Situação já digitada nesta linha do relatório (opcional) - só usado pelo
+  // formulario 'relatorio-situacao', para o assistente não repetir uma
+  // sinalização de atraso que a própria pessoa já vê na tela.
+  const CONTEXTO_LINHA_CAMPOS: Record<string, string> = {
+    status: "Status", pctExecucao: "% Execução", inicioPrevisto: "Início previsto",
+    terminoPrevisto: "Término previsto", sinalizacao: "Sinalização automática",
+  };
+  let contextoLinhaTexto: string | null = null;
+  if (payload.contextoLinha && typeof payload.contextoLinha === "object") {
+    const linhas: string[] = [];
+    for (const [chave, rotulo] of Object.entries(CONTEXTO_LINHA_CAMPOS)) {
+      const v = (payload.contextoLinha as Record<string, unknown>)[chave];
+      if (typeof v === "string" && v.trim()) linhas.push(`${rotulo}: ${v.trim()}`);
+    }
+    if (linhas.length) contextoLinhaTexto = `SITUAÇÃO JÁ REGISTRADA NESTA LINHA DO RELATÓRIO\n${linhas.join("\n")}`;
+  }
   if (!projetoId) return json({ error: "Envie o campo 'projetoId'" }, 400);
   if (!FORMULARIOS.includes(formulario as Formulario)) {
-    return json({ error: "Campo 'formulario' inválido — use 'canvas', 'tap', 'planejamento', 'eap', 'smp', 'tep' ou 'rla'" }, 400);
+    return json({ error: "Campo 'formulario' inválido — use 'canvas', 'tap', 'planejamento', 'eap', 'smp', 'tep', 'rla', 'relatorio-situacao' ou 'relatorio-entregas'" }, 400);
   }
 
   const permissao = await papelEquipePermitido(authHeader, projetoId);
@@ -456,6 +504,8 @@ Deno.serve(async (req: Request) => {
       smp: { tap: true, planejamento: true, atas: true },
       tep: { tap: true, planejamento: true, eap: true, atas: true },
       rla: { tep: true, smp: true, atas: true },
+      "relatorio-situacao": { tap: true, atas: true },
+      "relatorio-entregas": { tap: true, atas: true },
     };
     const fontesConfig = FONTES_POR_FORMULARIO[formulario as Formulario];
 
@@ -503,9 +553,10 @@ Deno.serve(async (req: Request) => {
       if (b) { blocos.push(b); fontes.push({ tipo: "Ata de Reunião", protocolo: ata.protocolo || "—" }); }
     }
 
-    if (!blocos.length) {
+    if (!blocos.length && !contextoLinhaTexto) {
       return json({ error: "Nenhum documento anterior com conteúdo foi encontrado para este projeto ainda" }, 422);
     }
+    if (contextoLinhaTexto) blocos.push(contextoLinhaTexto);
 
     let contexto = blocos.join("\n\n");
     if (contexto.length > 60000) contexto = contexto.slice(0, 60000) + "\n\n[...conteúdo adicional omitido por limite de tamanho...]";

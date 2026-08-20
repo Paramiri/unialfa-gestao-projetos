@@ -13,6 +13,7 @@
   --warn:#D97706;--warn-soft:#FEF3C7;
   --bad:#DC2626;--bad-soft:#FEE2E2;
   --blue:#2563EB;--blue-soft:#DBEAFE;
+  --ai:#6D28D9;--ai-soft:#F5F3FF;
   --radius:10px;--shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);
   --font:'Montserrat',-apple-system,BlinkMacSystemFont,sans-serif;
 }
@@ -91,6 +92,20 @@ body{font-family:var(--font);color:var(--ink);background:var(--surface);-webkit-
 input,select,textarea{font-family:var(--font);font-size:13px;color:var(--ink);border:1px solid var(--line-strong);border-radius:7px;padding:9px 11px;background:var(--paper);width:100%;transition:border-color .15s,box-shadow .15s}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(185,29,46,.1)}
 textarea{resize:vertical;min-height:68px}
+.field.ai-suggested textarea,.field.ai-suggested input,.field.ai-suggested select{border-color:var(--ai);background:var(--ai-soft)}
+.field.ai-suggested label{color:var(--ai)}
+.field .ai-tag{display:none;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:var(--ai);color:#fff;padding:1px 6px;border-radius:999px;margin-left:6px;vertical-align:middle}
+.field.ai-suggested .ai-tag{display:inline-block}
+.btn-ai-sm{background:var(--ai);color:#fff;appearance:none;font-family:var(--font);font-weight:700;font-size:11.5px;border-radius:7px;padding:7px 12px;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:background .15s}
+.btn-ai-sm:hover{background:#5B21B6}
+.btn-ai-sm:disabled{opacity:.5;cursor:not-allowed}
+.ai-row-status{font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:7px;margin-bottom:8px}
+.ai-row-status.loading{color:var(--ai)}
+.ai-row-status.ok{color:var(--ok)}
+.ai-row-status.err{color:var(--bad)}
+.ai-spinner{width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:ai-spin .7s linear infinite;flex:none}
+@keyframes ai-spin{to{transform:rotate(360deg)}}
+.ai-fontes-row{background:var(--ai-soft);border:1px solid #DDD6FE;border-radius:7px;padding:8px 12px;font-size:11px;color:var(--ai);font-weight:600;margin-bottom:8px}
 
 /* dyn mini tables in editor */
 .dyn-mini{width:100%;border-collapse:collapse;border:1px solid var(--line);border-radius:7px;overflow:hidden;font-size:12.5px;margin-top:4px}
@@ -476,7 +491,7 @@ function ensureAuthenticated(){
       <h1>Relatório de Entregas e Benefícios</h1>
       <p>Ficha de programa e projetos vinculados · Escritório de Projetos</p>
     </div>
-    <a class="head-help" href="15 - central-ajuda.html?v=19#relatorio-entregas" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
+    <a class="head-help" href="15 - central-ajuda.html?v=20#relatorio-entregas" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
     <div class="head-badge">FORALF12</div>
   </div>
 
@@ -688,6 +703,94 @@ async function onProjRowProjetoSelect(i){
     const abertos=tap.riscos.filter(r=>r.risco && RISCO_ABERTO.includes(r.status));
     if(abertos.length) riscosEl.value=abertos.map(r=>'- '+r.risco+(r.resp?' (responsável: '+r.resp+')':'')).join('\n');
   }
+  atualizarBotaoIA(i);
+}
+
+/* ---- Assistente de preenchimento por IA, por linha de projeto (Fase B) ---- */
+window.unialfaEquipe = {
+  async listar(projetoId){
+    var r = await fetch(unialfaAuth.REST_BASE + '/projeto_equipe?projeto_id=eq.'+projetoId+'&select=*&order=usuario_email', { headers: unialfaAuth.authHeaders() });
+    return r.ok ? await r.json() : [];
+  },
+  async souMembro(projetoId){
+    if(window.currentProfile && window.currentProfile.papel==='admin') return true;
+    if(!projetoId) return false;
+    var membros = await this.listar(projetoId);
+    var uid = window.currentUser ? window.currentUser.id : null;
+    return membros.some(function(m){ return m.usuario_id===uid; });
+  },
+};
+async function assistenteIAPermitido(){
+  try{
+    const r = await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=in.(permitir_assistente_preenchimento,papeis_assistente_preenchimento)&select=chave,valor', { headers: unialfaAuth.authHeaders() });
+    const rows = r.ok ? await r.json() : [];
+    const habilitado = rows.find(x=>x.chave==='permitir_assistente_preenchimento')?.valor===true;
+    if(!habilitado) return false;
+    if(window.currentProfile && window.currentProfile.papel==='admin') return true;
+    const papeis = rows.find(x=>x.chave==='papeis_assistente_preenchimento')?.valor;
+    return window.currentProfile ? (Array.isArray(papeis) && papeis.includes(window.currentProfile.papel)) : false;
+  }catch(e){ return false; }
+}
+function marcarCampoSugerido(id){
+  const el=document.getElementById(id);
+  const campo=el ? el.closest('.field') : null;
+  if(!campo) return;
+  campo.classList.add('ai-suggested');
+  const label=campo.querySelector('label');
+  if(label && !label.querySelector('.ai-tag')){
+    const tag=document.createElement('span'); tag.className='ai-tag'; tag.textContent='IA';
+    label.appendChild(tag);
+  }
+  el.addEventListener('input', function limpar(){ campo.classList.remove('ai-suggested'); el.removeEventListener('input', limpar); }, {once:true});
+}
+async function atualizarBotaoIA(i){
+  const projetoId=document.getElementById('projVinc-'+i)?.value;
+  const btn=document.getElementById('iaBtn-'+i);
+  if(!btn) return;
+  if(!projetoId || !window.__iaAssistentePermitido){ btn.style.display='none'; return; }
+  const souMembro=await unialfaEquipe.souMembro(projetoId);
+  btn.style.display=souMembro?'inline-flex':'none';
+}
+async function sugerirLinhaIA(i){
+  const projetoId=document.getElementById('projVinc-'+i).value;
+  if(!projetoId){ toast('Selecione um Projeto vinculado (Gate 1) primeiro.',false); return; }
+  const btn=document.getElementById('iaBtn-'+i);
+  const statusEl=document.getElementById('iaRowStatus-'+i);
+  const fontesEl=document.getElementById('iaFontesRow-'+i);
+  btn.disabled=true;
+  statusEl.style.display='flex'; statusEl.className='ai-row-status loading';
+  statusEl.innerHTML='<span class="ai-spinner"></span><span>Lendo os documentos do projeto…</span>';
+  fontesEl.style.display='none';
+  try{
+    const resp=await fetch(unialfaAuth.REST_BASE.replace('/rest/v1','/functions/v1') + '/sugerir-preenchimento', {
+      method:'POST', headers: unialfaAuth.authHeaders(),
+      body: JSON.stringify({ projetoId, formulario:'relatorio-entregas' })
+    });
+    const d0=await resp.json();
+    if(!resp.ok || d0.error){
+      statusEl.className='ai-row-status err';
+      statusEl.innerHTML='<span>⚠ '+(d0.error||'Não foi possível gerar a sugestão')+'</span>';
+      btn.disabled=false; return;
+    }
+    const d=d0.dados||{};
+    let preenchidos=0;
+    const impactoEl=document.getElementById('pr'+i+'-impacto');
+    if(impactoEl && !impactoEl.value.trim() && d.impacto){ impactoEl.value=d.impacto; marcarCampoSugerido('pr'+i+'-impacto'); preenchidos++; }
+    if(!preenchidos){
+      statusEl.className='ai-row-status ok';
+      statusEl.innerHTML='<span>Nenhum campo vazio para sugerir, ou nada de relevante identificado nos documentos.</span>';
+    }else{
+      statusEl.className='ai-row-status ok';
+      statusEl.innerHTML=`<span>✓ ${preenchidos} campo preenchido pela IA. Revise antes de salvar.</span>`;
+    }
+    const fontes=(d0.fontes||[]).map(f=>`${f.tipo} ${f.protocolo}`).join(', ');
+    if(fontes){ fontesEl.textContent='📎 Sugestão baseada em: '+fontes+'.'; fontesEl.style.display='block'; }
+  }catch(e){
+    console.error(e);
+    statusEl.className='ai-row-status err';
+    statusEl.innerHTML='<span>Falha ao conectar com o serviço de sugestão. Tente novamente.</span>';
+  }
+  btn.disabled=false;
 }
 async function importarIndicadoresTAP(i){
   const projetoId=document.getElementById('projVinc-'+i).value;
@@ -1031,6 +1134,7 @@ function buildProjEditor(pr,i){
             ${projetosAprovados.map(pa=>`<option value="${pa.id}" ${pr.projetoId===pa.id?'selected':''}>${esc(pa.nome)}</option>`).join('')}
           </select>
           <button type="button" class="btn btn-sm btn-ghost" id="histBtn-${i}" style="display:${pr.projetoId?'inline-flex':'none'}" onclick="toggleProjRowHistorico(${i})">Ver histórico</button>
+          <button type="button" class="btn-ai-sm" id="iaBtn-${i}" style="display:none" onclick="sugerirLinhaIA(${i})">✦ Sugerir com IA</button>
         </div>
         <div id="projRowHist-${i}" style="display:none"></div>
       </div>
@@ -1041,6 +1145,10 @@ function buildProjEditor(pr,i){
       <div class="field full"><label>Objetivo</label><textarea id="pr${i}-obj" rows="2">${esc(pr.obj||'')}</textarea></div>
       <div class="field"><label>Público-alvo</label><textarea id="pr${i}-publico" rows="2">${esc(pr.publico||'')}</textarea></div>
       <div class="field"><label>Riscos</label><textarea id="pr${i}-riscos" rows="2">${esc(pr.riscos||'')}</textarea></div>
+      <div class="field full" id="iaRowWrap-${i}">
+        <div class="ai-row-status" id="iaRowStatus-${i}" style="display:none"></div>
+        <div class="ai-fontes-row" id="iaFontesRow-${i}" style="display:none"></div>
+      </div>
       <div class="field full"><label>Impacto / Resultado do projeto</label><textarea id="pr${i}-impacto" rows="2">${esc(pr.impacto||'')}</textarea></div>
     </div>
     <div style="padding:0 20px 8px">
@@ -1062,6 +1170,7 @@ function buildProjEditor(pr,i){
     rebuildTable(`ent-${i}`,['entrega','qtde','data'],pr.entregas||[{entrega:'',qtde:'',data:''}]);
     rebuildTable(`ind-pr-${i}`,['indicador','valor','meta'],pr.indicadores||[]);
     rebuildTable(`val-pr-${i}`,['tipo','a1','a2','a3'],pr.valores||[]);
+    atualizarBotaoIA(i);
   },0);
   return div;
 }
@@ -1233,5 +1342,6 @@ async function papelPermitido(chave){
   }
   document.getElementById('conteudoRelatorio').style.display = 'block';
   await loadData(); await carregarProjetosAprovados(); renderPainel();
+  window.__iaAssistentePermitido = await assistenteIAPermitido();
 })();
 </script>
