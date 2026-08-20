@@ -600,7 +600,7 @@ window.unialfaHistorico = {
         <h1>Planejamento e Desenvolvimento de Projeto</h1>
         <p>Dossiê de ciclo de vida do projeto · Gerência de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=16#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=17#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00325</b></div>
@@ -1421,7 +1421,7 @@ async function sugerirPreenchimentoIA(){
     }
     const d=data.dados||{};
     let preenchidos=0;
-    ['produtos','contexto','objGeral','objEspec','escIncluido','escExcluido','entregaveis','premissas','restricoes','partes','beneficios'].forEach(id=>{
+    ['solicitante','produtos','contexto','objGeral','objEspec','escIncluido','escExcluido','entregaveis','premissas','restricoes','partes','macroFases','introducao','situacao','proposta','beneficios'].forEach(id=>{
       const el=document.getElementById(id);
       if(el && !el.value.trim() && d[id]){ el.value=d[id]; marcarCampoSugerido(id); preenchidos++; }
     });

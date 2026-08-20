@@ -85,9 +85,12 @@ Regras importantes:
 - Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
 Formato exato: {"justificativa":"...","objetivos":"...","publico":"...","beneficios":"...","exclusoes":"...","premissas":"...","restricoes":"...","criterios":"...","riscos":[...],"cronograma":[...],"custos":[...],"interessadas":[...]}`,
 
-  planejamento: `Você é um assistente que ajuda a preencher o dossiê de Planejamento e Desenvolvimento de Projeto do sistema de gestão de projetos da UNIALFA, em português do Brasil, a partir de documentos já registrados do mesmo projeto (TAP, Canvas de Projeto e, quando houver, Atas de Reunião).
+  planejamento: `Você é um assistente que ajuda a preencher o dossiê de Planejamento e Desenvolvimento de Projeto do sistema de gestão de projetos da UNIALFA, em português do Brasil, a partir de documentos já registrados do mesmo projeto (Solicitação de Demanda, TAP, Canvas de Projeto e, quando houver, Atas de Reunião).
 
-Extraia/redija, para a aba Pré-projeto:
+Extraia/redija, para a capa (identificação):
+- solicitante: nome de quem solicitou o projeto — copie da Solicitação de Demanda, se houver
+
+Para a aba Pré-projeto:
 - produtos: produtos impactados pelo projeto
 - contexto: contexto e problemática que originou o projeto
 - objGeral: objetivo geral do projeto
@@ -98,8 +101,12 @@ Extraia/redija, para a aba Pré-projeto:
 - premissas: premissas assumidas — parta das já descritas no TAP, detalhando se possível
 - restricoes: restrições — parta das já descritas no TAP, detalhando se possível
 - partes: partes interessadas — parta das já descritas no TAP, detalhando se possível
+- macroFases: macro fases do projeto (ex.: levantamento, desenvolvimento, implantação...) — parta do cronograma de entregas macro do TAP, se houver, resumindo os marcos como fases em texto corrido
 
-Para a aba Viabilidade:
+Para a aba Viabilidade — atenção: estes campos têm um propósito diferente dos campos do Pré-projeto acima, mesmo baseando-se nos mesmos fatos. Redija cada um com a redação própria do que é pedido, nunca copiando literalmente o texto de outro campo:
+- introducao: introdução breve ao problema/oportunidade, para quem vai avaliar a viabilidade
+- situacao: situação atual — o cenário/problema de hoje, antes do projeto (mesma base factual do campo "contexto" do Pré-projeto, mas com foco em descrever o estado atual das coisas, não em justificar o projeto)
+- proposta: proposta de mudança — o que está sendo proposto para resolver a situação atual (mesma base factual do campo "objGeral" do Pré-projeto, mas redigida como uma proposta de solução, não como um objetivo)
 - beneficios: benefícios do projeto — parta dos benefícios esperados já descritos no TAP, detalhando se possível
 
 Para a aba Cronograma:
@@ -109,7 +116,7 @@ Regras importantes:
 - Baseie-se SOMENTE nos documentos fornecidos — nunca invente informação que não esteja neles.
 - Campo de texto sem informação suficiente: retorne null. Tabela sem item identificável: retorne [].
 - Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
-Formato exato: {"produtos":"...","contexto":"...","objGeral":"...","objEspec":"...","escIncluido":"...","escExcluido":"...","entregaveis":"...","premissas":"...","restricoes":"...","partes":"...","beneficios":"...","cronograma":[...]}`,
+Formato exato: {"solicitante":"...","produtos":"...","contexto":"...","objGeral":"...","objEspec":"...","escIncluido":"...","escExcluido":"...","entregaveis":"...","premissas":"...","restricoes":"...","partes":"...","macroFases":"...","introducao":"...","situacao":"...","proposta":"...","beneficios":"...","cronograma":[...]}`,
 
   eap: `Você é um assistente que ajuda a esboçar a EAP (Estrutura Analítica de Projeto) do sistema de gestão de projetos da UNIALFA, em português do Brasil, a partir de documentos já registrados do mesmo projeto (Planejamento e Desenvolvimento de Projeto, TAP e, quando houver, Atas de Reunião).
 
@@ -444,7 +451,7 @@ Deno.serve(async (req: Request) => {
     const FONTES_POR_FORMULARIO: Record<Formulario, { demanda?: boolean; canvas?: boolean; tap?: boolean; planejamento?: boolean; eap?: boolean; smp?: boolean; tep?: boolean; atas?: boolean }> = {
       canvas: { demanda: true, atas: true },
       tap: { demanda: true, canvas: true, atas: true },
-      planejamento: { canvas: true, tap: true, atas: true },
+      planejamento: { demanda: true, canvas: true, tap: true, atas: true },
       eap: { tap: true, planejamento: true, atas: true },
       smp: { tap: true, planejamento: true, atas: true },
       tep: { tap: true, planejamento: true, eap: true, atas: true },
