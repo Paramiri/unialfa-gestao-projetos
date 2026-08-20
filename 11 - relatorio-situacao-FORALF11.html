@@ -111,14 +111,14 @@ table.proj-t tbody tr:hover{background:var(--surface)}
 
 /* ── portfolio by year ── */
 .year-table-wrap{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow-x:auto}
-table.year-t{width:100%;border-collapse:collapse;min-width:600px;table-layout:fixed}
-table.year-t th{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:10px 14px;background:var(--surface-2);border-bottom:1px solid var(--line);text-align:center;white-space:normal}
-table.year-t th:first-child{text-align:left}
-table.year-t td{padding:10px 14px;border-bottom:1px solid var(--surface-2);font-size:12.5px;text-align:center;font-weight:600}
-table.year-t td:first-child{text-align:left;font-weight:700}
-table.year-t .sub-h{background:var(--surface-2);font-size:9px;font-weight:700;color:var(--muted);padding:6px 14px;letter-spacing:.06em}
-table.year-t tbody tr:last-child td{border-bottom:none}
-.year-span{background:var(--ink);color:#fff;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.year-grid{display:grid;min-width:600px}
+.yg-cell{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--surface-2);font-size:12.5px}
+.yg-head{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);border-bottom:1px solid var(--line);justify-content:center;text-align:center}
+.yg-head:first-child{justify-content:flex-start;text-align:left}
+.yg-year{background:var(--ink);color:#fff;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;justify-content:center}
+.yg-label{font-weight:700}
+.yg-val{justify-content:center;text-align:center;font-weight:600}
+.yg-last-row{border-bottom:none}
 
 /* ── forms / inputs ── */
 .import-zone{border:2px dashed var(--line-strong);border-radius:10px;padding:28px;text-align:center;background:var(--surface);cursor:pointer;transition:all .15s;margin-bottom:6px}
@@ -1105,19 +1105,21 @@ function renderYearTable(projs){
   const years=[...new Set(projs.map(p=>anoDeData(p.inicio)).filter(Boolean))].sort();
   if(!years.length){wrap.innerHTML='<div style="padding:28px;text-align:center;color:var(--muted);font-size:13px">Informe datas de início nos projetos para ver a tabela por ano.</div>';return;}
   const progs=[...new Set(projs.map(p=>p.programa).filter(Boolean))];
-  const colPct=(80/(years.length*2)).toFixed(2);
-  let html='<table class="year-t"><colgroup><col style="width:20%">'+years.map(()=>`<col style="width:${colPct}%"><col style="width:${colPct}%">`).join('')+'</colgroup><thead><tr><th rowspan="2">Carteira</th>';
-  years.forEach(y=>html+=`<th colspan="2" class="year-span">${y}</th>`);
-  html+='</tr><tr>';
-  years.forEach(()=>html+='<th>Em andamento</th><th>Realizado</th>');
-  html+='</tr></thead><tbody>';
-  const rows=[{label:'Programas',fn:(y,done)=>{const s=new Set(projs.filter(p=>anoDeData(p.inicio)===y&&(p.programa)).map(p=>p.programa));const d=new Set(projs.filter(p=>anoDeData(p.inicio)===y&&p.status==='Concluído'&&p.programa).map(p=>p.programa));return[s.size-d.size,d.size];}},{label:'Projetos',fn:(y,done)=>{const a=projs.filter(p=>anoDeData(p.inicio)===y);const d=a.filter(p=>p.status==='Concluído');return[a.length-d.length,d.length];}},];
-  rows.forEach(row=>{
-    html+=`<tr><td>${row.label}</td>`;
-    years.forEach(y=>{const[em,real]=row.fn(y);html+=`<td>${em||'—'}</td><td>${real||'—'}</td>`;});
-    html+='</tr>';
+  /* Grid em vez de <table>/colgroup: uma unica grid-template-columns aplicada
+     a todas as linhas garante que cabecalho e dados usem exatamente as mesmas
+     colunas, sem depender do algoritmo de largura de tabela do navegador. */
+  const nCols=1+years.length*2;
+  let html=`<div class="year-grid" style="grid-template-columns:minmax(120px,20%) repeat(${years.length*2},1fr)">`;
+  html+='<div class="yg-cell yg-head" style="grid-row:1 / span 2">Carteira</div>';
+  years.forEach(y=>html+=`<div class="yg-cell yg-head yg-year" style="grid-column:span 2">${esc(y)}</div>`);
+  years.forEach(()=>html+='<div class="yg-cell yg-head yg-sub">Em andamento</div><div class="yg-cell yg-head yg-sub">Realizado</div>');
+  const rows=[{label:'Programas',fn:(y)=>{const s=new Set(projs.filter(p=>anoDeData(p.inicio)===y&&(p.programa)).map(p=>p.programa));const d=new Set(projs.filter(p=>anoDeData(p.inicio)===y&&p.status==='Concluído'&&p.programa).map(p=>p.programa));return[s.size-d.size,d.size];}},{label:'Projetos',fn:(y)=>{const a=projs.filter(p=>anoDeData(p.inicio)===y);const d=a.filter(p=>p.status==='Concluído');return[a.length-d.length,d.length];}},];
+  rows.forEach((row,ri)=>{
+    const lastRow=ri===rows.length-1?' yg-last-row':'';
+    html+=`<div class="yg-cell yg-label${lastRow}">${esc(row.label)}</div>`;
+    years.forEach(y=>{const[em,real]=row.fn(y);html+=`<div class="yg-cell yg-val${lastRow}">${em||'—'}</div><div class="yg-cell yg-val${lastRow}">${real||'—'}</div>`;});
   });
-  html+='</tbody></table>';
+  html+='</div>';
   wrap.innerHTML=html;
 }
 
