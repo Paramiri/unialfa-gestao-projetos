@@ -1087,10 +1087,22 @@ function renderResultadosTable(wrapId,items){
   wrap.innerHTML=html;
 }
 
+function anoDeData(s){
+  if(!s) return '';
+  let dt=parseBRDate(s);
+  if(!dt){
+    const m=String(s).trim().match(/^(\d{2})(\d{2})(\d{4})$/);
+    if(m){
+      const d=parseInt(m[1]),mo=parseInt(m[2]),y=parseInt(m[3]);
+      if(mo>=1&&mo<=12&&d>=1&&d<=31){ const cand=new Date(y,mo-1,d); if(cand.getMonth()===mo-1) dt=cand; }
+    }
+  }
+  return dt?String(dt.getFullYear()):'';
+}
 function renderYearTable(projs){
   const wrap=document.getElementById('year-table-wrap');
   if(!projs.length){wrap.innerHTML='<div style="padding:28px;text-align:center;color:var(--muted);font-size:13px">Adicione projetos para ver a tabela por ano.</div>';return;}
-  const years=[...new Set(projs.map(p=>(p.inicio||'').slice(0,4)).filter(y=>y&&y.length===4))].sort();
+  const years=[...new Set(projs.map(p=>anoDeData(p.inicio)).filter(Boolean))].sort();
   if(!years.length){wrap.innerHTML='<div style="padding:28px;text-align:center;color:var(--muted);font-size:13px">Informe datas de início nos projetos para ver a tabela por ano.</div>';return;}
   const progs=[...new Set(projs.map(p=>p.programa).filter(Boolean))];
   let html='<table class="year-t"><thead><tr><th rowspan="2">Carteira</th>';
@@ -1098,7 +1110,7 @@ function renderYearTable(projs){
   html+='</tr><tr>';
   years.forEach(()=>html+='<th>Em andamento</th><th>Realizado</th>');
   html+='</tr></thead><tbody>';
-  const rows=[{label:'Programas',fn:(y,done)=>{const s=new Set(projs.filter(p=>p.inicio?.startsWith(y)&&(p.programa)).map(p=>p.programa));const d=new Set(projs.filter(p=>p.inicio?.startsWith(y)&&p.status==='Concluído'&&p.programa).map(p=>p.programa));return[s.size-d.size,d.size];}},{label:'Projetos',fn:(y,done)=>{const a=projs.filter(p=>p.inicio?.startsWith(y));const d=a.filter(p=>p.status==='Concluído');return[a.length-d.length,d.length];}},];
+  const rows=[{label:'Programas',fn:(y,done)=>{const s=new Set(projs.filter(p=>anoDeData(p.inicio)===y&&(p.programa)).map(p=>p.programa));const d=new Set(projs.filter(p=>anoDeData(p.inicio)===y&&p.status==='Concluído'&&p.programa).map(p=>p.programa));return[s.size-d.size,d.size];}},{label:'Projetos',fn:(y,done)=>{const a=projs.filter(p=>anoDeData(p.inicio)===y);const d=a.filter(p=>p.status==='Concluído');return[a.length-d.length,d.length];}},];
   rows.forEach(row=>{
     html+=`<tr><td>${row.label}</td>`;
     years.forEach(y=>{const[em,real]=row.fn(y);html+=`<td>${em||'—'}</td><td>${real||'—'}</td>`;});
