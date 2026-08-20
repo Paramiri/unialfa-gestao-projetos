@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.28 - 20 de agosto de 2026 (substitui a versao 2.27 de 19/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.29 - 20 de agosto de 2026 (substitui a versao 2.28 de 20/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -279,6 +279,7 @@ P "Esta e a versao 2.25 do manual. Em relacao a versao 2.24 (19/08/2026), foi ad
 P "Esta e a versao 2.26 do manual. Em relacao a versao 2.25 (19/08/2026), o assistente de preenchimento por IA (secao 2.12) foi estendido do Canvas/TAP para tambem cobrir o Planejamento e Desenvolvimento de Projeto (Passo 4: pre-projeto, beneficios e marcos iniciais de cronograma, a partir do TAP e do Canvas) e a EAP (Passo 5: pacotes de trabalho e entregas, a partir do Planejamento e do TAP, so quando a arvore estiver totalmente vazia) - Fase 2 do assistente, usando o mesmo interruptor geral ja existente."
 P "Esta e a versao 2.27 do manual. Em relacao a versao 2.26 (19/08/2026), o assistente de preenchimento por IA (secao 2.12) foi estendido para tambem cobrir a SMP (Passo 7: descricao da mudanca e analise de impactos, contrastando o combinado no TAP/Planejamento com o que as Atas mais recentes discutem), o TEP (Passo 8: justificativa, atividades encerradas e consideracoes finais, comparando planejado e realizado) e o RLA (Passo 9: as 4 secoes de texto livre - Visao geral, Destaques, Desafios e Tarefas pos-projeto - nunca os blocos de avaliacao estruturada Sim/Nao/Parcial com placar, que continuam sendo autoavaliacao manual) - Fase 3, concluindo o assistente nos 7 formularios da esteira principal, usando o mesmo interruptor geral ja existente."
 P "Esta e a versao 2.28 do manual. Em relacao a versao 2.27 (19/08/2026), o assistente de preenchimento por IA no Planejamento (Passo 4, secao 2.12) passou a ler tambem a Solicitacao de Demanda e a sugerir mais 5 campos que ainda ficavam de fora: o Solicitante (capa, copiado da Demanda), as Macro fases do projeto (aba Pre-projeto, resumidas do cronograma do TAP) e a Introducao, Situacao atual e Proposta de mudanca (aba Viabilidade, redigidas com a mesma base factual do Contexto e do Objetivo geral do Pre-projeto, mas com redacao propria para cada campo). O campo Negocio (capa) permanece de fora do assistente, por nao ter fonte confiavel nos documentos lidos."
+P "Esta e a versao 2.29 do manual. Em relacao a versao 2.28 (20/08/2026), a Solicitacao de Demanda (Passo 1) passou a aceitar upload real de arquivo nos Anexos - antes era so um campo de texto livre com nomes de documentos ou links. Agora e possivel anexar diretamente ate 15 MB por arquivo (.txt, .docx ou .pdf), guardado num repositorio de arquivos proprio do sistema (Supabase Storage) e disponivel para download por quem acessar o registro; o campo de texto livre continua existindo, renomeado para Links de documentos, para casos como Drive ou SharePoint que nao sao um arquivo enviado."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -453,7 +454,8 @@ $r1 = @(
   @("Prioridade","Sim","Critica, Alta, Media ou Baixa - urgencia da demanda, ajuda o Admin a priorizar a triagem do Gate 1"),
   @("Orcamento estimado","Nao","Valor aproximado, se ja houver"),
   @("Partes interessadas","Sim","Areas, equipes ou pessoas impactadas"),
-  @("Anexos","Nao","Nomes de documentos ou links de apoio")
+  @("Arquivos anexados","Nao","Upload real de arquivo (.txt, .docx ou .pdf, ate 15 MB cada)"),
+  @("Links de documentos","Nao","Links de apoio (Drive, SharePoint etc.) que nao sao um arquivo enviado")
 )
 TableSimple $r1 @(5.0,1.8,9.2)
 Img "12_f01_novo.png" "Tela de novo registro da Solicitacao de Demanda." 5.6
@@ -463,6 +465,7 @@ P "Como salvar: clique em `Registrar solicitacao`. O sistema gera o protocolo e 
 Nota "E neste ponto que ocorre o Gate 1 - Triagem: so um Admin pode mudar o status para Aprovada ou Reprovada (secao 2.4). So avance para o Passo 2 depois que o status estiver Aprovada. Essa mudanca de status dispara um e-mail de notificacao (secao 2.8)."
 Bul "No rodape do painel de detalhes de uma demanda, os botoes `Imprimir` e `Exportar Word` geram o documento no formato oficial do FORALF00339, pronto para impressao ou para abrir no Word."
 Bul "Assistente de preenchimento por IA: o painel `Importar documento preenchido`, no topo do formulario, extrai os dados de uma copia do formulario oficial ja preenchida em Word ou PDF fora do sistema (secao 2.13)."
+Bul "Anexos: o botao `Anexar arquivo`, na secao Anexos, envia o arquivo direto para um repositorio proprio do sistema (ate 15 MB, .txt/.docx/.pdf) - cada arquivo enviado aparece numa lista com opcoes `Baixar` e `Remover`, tanto no formulario quanto no painel de detalhes do registro. O campo de texto Links de documentos continua disponivel a parte, para links que nao sao um arquivo enviado."
 
 H2 "Passo 2 - Canvas de Projeto (FORALF00344)"
 P "Quando usar: assim que a demanda for aprovada. O Canvas e o primeiro documento estruturado do projeto - reune, em uma unica tela, a motivacao, o produto, os parceiros, as entregas, os riscos e os custos. Exige selecionar um `Projeto vinculado` ja Aprovado no Gate 1, e so membros da equipe daquele projeto (ou Admin) podem registrar (secao 2.5)."

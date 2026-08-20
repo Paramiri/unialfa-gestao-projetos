@@ -115,6 +115,10 @@
   .field.ai-suggested label{color:var(--ai)}
   .field .ai-tag{display:none;font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:var(--ai);color:#fff;padding:1px 6px;border-radius:999px;margin-left:6px;vertical-align:middle}
   .field.ai-suggested .ai-tag{display:inline-block}
+  .anexos-lista{display:flex; flex-direction:column; gap:6px; margin-top:6px}
+  .anexo-item{display:flex; align-items:center; gap:10px; padding:8px 12px; border:1px solid var(--line-strong); border-radius:8px; font-size:12.5px}
+  .anexo-nome{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .anexo-tam{color:var(--muted); font-size:11.5px; flex:none}
 
   .grid{padding:22px 24px; display:grid; grid-template-columns:1fr 1fr; gap:18px 20px}
   .field{display:flex; flex-direction:column; gap:6px}
@@ -472,6 +476,7 @@ body.auth-ready .drawer{top:34px;height:calc(100% - 34px)}
     ANON_KEY: SUPABASE_ANON_KEY,
     REST_BASE: REST_BASE,
     AUTH_BASE: AUTH_BASE,
+    STORAGE_BASE: SUPABASE_URL + '/storage/v1',
     getSession: getSession, clearSession: clearSession, captureRedirect: captureRedirect,
     sendMagicLink: sendMagicLink, signInAnonymously: signInAnonymously, fetchUser: fetchUser, authHeaders: authHeaders,
     fetchProfile: fetchProfile, ensureProfile: ensureProfile, tentarNomeViaGraph: tentarNomeViaGraph,
@@ -746,6 +751,40 @@ window.unialfaEquipe = {
     return r.ok;
   },
 };
+
+/* ---- Anexos reais (upload de arquivo) da Solicitação de Demanda, via Supabase Storage ---- */
+window.unialfaAnexos = {
+  bucket: 'anexos-demanda',
+  async upload(recordId, file){
+    var nomeSeguro = file.name.replace(/[^\w.\-]+/g, '_');
+    var caminho = recordId + '/' + Date.now() + '_' + Math.random().toString(36).slice(2,8) + '_' + nomeSeguro;
+    var r = await fetch(unialfaAuth.STORAGE_BASE + '/object/' + this.bucket + '/' + caminho, {
+      method: 'POST',
+      headers: unialfaAuth.authHeaders({ 'Content-Type': file.type || 'application/octet-stream' }),
+      body: file,
+    });
+    if(!r.ok) throw new Error('Falha ao enviar arquivo (HTTP '+r.status+')');
+    return { nome: file.name, caminho: caminho, tamanho: file.size, enviadoEm: Date.now() };
+  },
+  async remover(caminho){
+    var r = await fetch(unialfaAuth.STORAGE_BASE + '/object/' + this.bucket + '/' + caminho, {
+      method: 'DELETE', headers: unialfaAuth.authHeaders(), body: '{}',
+    });
+    return r.ok;
+  },
+  async baixar(caminho, nomeArquivo){
+    var r = await fetch(unialfaAuth.STORAGE_BASE + '/object/authenticated/' + this.bucket + '/' + caminho, {
+      headers: unialfaAuth.authHeaders(),
+    });
+    if(!r.ok) throw new Error('Falha ao baixar arquivo (HTTP '+r.status+')');
+    var blob = await r.blob();
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = nomeArquivo || 'arquivo';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  },
+};
 </script>
 
 <div class="wrap">
@@ -758,7 +797,7 @@ window.unialfaEquipe = {
         <h1>Solicitação de Demanda de Projetos</h1>
         <p>Formulário de entrada de demandas · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=17#passo-1" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=18#passo-1" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00339</b></div>
@@ -907,9 +946,21 @@ window.unialfaEquipe = {
       <div class="section-h"><div class="n">3</div><h2>Anexos</h2><p>Documentos de apoio</p></div>
       <div class="grid">
         <div class="field full">
-          <label>Documentos auxiliares</label>
-          <div class="hint">Liste os nomes dos documentos ou cole links (Drive, SharePoint). Um por linha.</div>
-          <textarea id="anexos" placeholder="Ex: Estudo de viabilidade.pdf&#10;https://..."></textarea>
+          <label>Arquivos anexados</label>
+          <div class="hint">Envie os documentos de apoio diretamente (.txt, .docx, .pdf — até 15 MB cada). Ficam guardados junto com a solicitação e podem ser baixados por quem acessar o registro.</div>
+          <div style="display:flex; align-items:center; gap:10px; margin:8px 0 10px">
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer; margin:0">
+              📎 Anexar arquivo
+              <input type="file" id="anexoArquivoInput" accept=".txt,.docx,.pdf" style="display:none" onchange="onAnexarArquivo(this.files[0])">
+            </label>
+            <span id="anexoArquivoStatus" style="font-size:12px; color:var(--muted)"></span>
+          </div>
+          <div id="anexosArquivosList"></div>
+        </div>
+        <div class="field full">
+          <label>Links de documentos</label>
+          <div class="hint">Cole links (Drive, SharePoint, etc.) para documentos que não serão enviados como arquivo. Um por linha.</div>
+          <textarea id="anexos" placeholder="https://..."></textarea>
         </div>
       </div>
       <div class="actions">
@@ -1035,6 +1086,76 @@ const KEY_PREFIX = 'demanda:';
 let cache = [];        // loaded records
 let currentId = null;  // id open in drawer
 let editId = null;     // id currently being edited in the form (null = creating new)
+let anexosArquivos = [];  // arquivos anexados no registro aberto no formulário: [{nome,caminho,tamanho,enviadoEm}]
+let draftRecordId = null; // id provisório usado para dar caminho aos arquivos antes do primeiro "Registrar solicitação"
+
+function formatarTamanhoArquivo(bytes){
+  if(bytes < 1024) return bytes + ' B';
+  if(bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+function getRecordIdParaUpload(){
+  if(editId) return editId;
+  if(!draftRecordId) draftRecordId = 'd_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  return draftRecordId;
+}
+function renderAnexosArquivos(){
+  const host = document.getElementById('anexosArquivosList');
+  if(!anexosArquivos.length){ host.innerHTML=''; return; }
+  host.innerHTML = '<div class="anexos-lista">' + anexosArquivos.map((a,i)=>
+    '<div class="anexo-item"><span class="anexo-nome" title="'+esc(a.nome)+'">📄 '+esc(a.nome)+'</span>'+
+    '<span class="anexo-tam">'+formatarTamanhoArquivo(a.tamanho)+'</span>'+
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="baixarAnexoArquivo('+i+')">⬇ Baixar</button>'+
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="removerAnexoArquivo('+i+')">🗑 Remover</button></div>'
+  ).join('') + '</div>';
+}
+async function persistAnexosSeEditando(){
+  if(!editId) return;
+  const idx = cache.findIndex(x=>x.id===editId);
+  if(idx<0) return;
+  cache[idx].anexosArquivos = anexosArquivos.slice();
+  await window.storage.set(KEY_PREFIX+editId, JSON.stringify(cache[idx]));
+}
+async function onAnexarArquivo(file){
+  if(!file) return;
+  const statusEl = document.getElementById('anexoArquivoStatus');
+  const inputEl = document.getElementById('anexoArquivoInput');
+  if(file.size > 15*1024*1024){
+    statusEl.textContent = '⚠ Arquivo muito grande (máximo 15 MB)';
+    inputEl.value = ''; return;
+  }
+  const ext = (file.name.split('.').pop()||'').toLowerCase();
+  if(['txt','docx','pdf'].indexOf(ext)===-1){
+    statusEl.textContent = '⚠ Formato não suportado. Use .txt, .docx ou .pdf';
+    inputEl.value = ''; return;
+  }
+  statusEl.textContent = 'Enviando '+file.name+'…';
+  try{
+    const recordId = getRecordIdParaUpload();
+    const meta = await window.unialfaAnexos.upload(recordId, file);
+    anexosArquivos.push(meta);
+    renderAnexosArquivos();
+    await persistAnexosSeEditando();
+    statusEl.textContent = '✓ '+file.name+' anexado';
+  }catch(err){
+    statusEl.textContent = '⚠ Não foi possível enviar o arquivo. Tente novamente.';
+  }
+  inputEl.value = '';
+}
+async function baixarAnexoArquivo(i){
+  const a = anexosArquivos[i]; if(!a) return;
+  try{ await window.unialfaAnexos.baixar(a.caminho, a.nome); }
+  catch(err){ toast('Não foi possível baixar o arquivo', false); }
+}
+async function removerAnexoArquivo(i){
+  const a = anexosArquivos[i]; if(!a) return;
+  if(!confirm('Remover o arquivo "'+a.nome+'"?')) return;
+  const ok = await window.unialfaAnexos.remover(a.caminho);
+  if(!ok){ toast('Não foi possível remover o arquivo. Tente novamente.', false); return; }
+  anexosArquivos.splice(i,1);
+  renderAnexosArquivos();
+  await persistAnexosSeEditando();
+}
 
 /* ---------- helpers ---------- */
 function toast(msg, ok=true){
@@ -1142,7 +1263,7 @@ async function submitForm(){
     registroAntigo = Object.assign({}, rec);
     camposAntigos = { nome: rec.projeto, unidade: rec.departamento };
   } else {
-    rec = { id:'d_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), protocolo: await nextProtocol(), status:'Pendente de aprovação', createdAt:Date.now(), criadoPorEmail: window.currentUser?window.currentUser.email:null };
+    rec = { id: draftRecordId || ('d_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)), protocolo: await nextProtocol(), status:'Pendente de aprovação', createdAt:Date.now(), criadoPorEmail: window.currentUser?window.currentUser.email:null };
   }
   rec.projeto=document.getElementById('projeto').value.trim();
   rec.solicitante=document.getElementById('solicitante').value.trim();
@@ -1155,6 +1276,7 @@ async function submitForm(){
   rec.orcamento=document.getElementById('orcamento').value.trim();
   rec.partes=document.getElementById('partes').value.trim();
   rec.anexos=document.getElementById('anexos').value.trim();
+  rec.anexosArquivos=anexosArquivos.slice();
   if(window.guestInfo){
     if(!rec.solicitante) rec.solicitante=window.guestInfo.nome;
     rec.guestEmail=window.guestInfo.email;
@@ -1169,7 +1291,11 @@ async function submitForm(){
     } else {
       await unialfaProjeto.sincronizarSeMudou(rec.projetoId, 'Solicitação de Demanda (FORALF00339)', camposAntigos, { nome: rec.projeto, unidade: rec.departamento });
     }
-    if(registroAntigo){ await unialfaHistorico.registrar(KEY_PREFIX+rec.id, 'Solicitação de Demanda (FORALF00339)', registroAntigo, rec); }
+    if(registroAntigo){
+      const antigoSemArquivos = Object.assign({}, registroAntigo); delete antigoSemArquivos.anexosArquivos;
+      const novoSemArquivos = Object.assign({}, rec); delete novoSemArquivos.anexosArquivos;
+      await unialfaHistorico.registrar(KEY_PREFIX+rec.id, 'Solicitação de Demanda (FORALF00339)', antigoSemArquivos, novoSemArquivos);
+    }
     const r=await window.storage.set(KEY_PREFIX+rec.id, JSON.stringify(rec));
     if(!r) throw new Error('no result');
     if(editId){
@@ -1187,6 +1313,7 @@ async function submitForm(){
     }
     document.getElementById('count').textContent=cache.length;
     editId=null;
+    draftRecordId=null;
     clearForm();
     showView('list');
   }catch(e){
@@ -1210,6 +1337,8 @@ function editCurrent(){
   document.getElementById('orcamento').value=r.orcamento||'';
   document.getElementById('partes').value=r.partes||'';
   document.getElementById('anexos').value=r.anexos||'';
+  anexosArquivos=(r.anexosArquivos||[]).slice();
+  renderAnexosArquivos();
   document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
   closeDrawer();
   showView('new');
@@ -1226,6 +1355,9 @@ function clearForm(){
     .forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
   document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
   editId=null;
+  draftRecordId=null;
+  anexosArquivos=[];
+  renderAnexosArquivos();
   updateEditBanner();
 }
 
@@ -1265,6 +1397,12 @@ function renderList(){
 }
 
 /* ---------- drawer ---------- */
+async function baixarAnexoDrawer(i){
+  const r=cache.find(x=>x.id===currentId); if(!r || !r.anexosArquivos) return;
+  const a=r.anexosArquivos[i]; if(!a) return;
+  try{ await window.unialfaAnexos.baixar(a.caminho, a.nome); }
+  catch(err){ toast('Não foi possível baixar o arquivo', false); }
+}
 function openDrawer(id){
   const r=cache.find(x=>x.id===id); if(!r) return;
   currentId=id;
@@ -1288,10 +1426,16 @@ function openDrawer(id){
     ['Prioridade',r.prioridade||'—'],
     ['Orçamento estimado',r.orcamento||'—'],
     ['Partes interessadas',r.partes],
-    ['Anexos',r.anexos||'—'],
+    ['Links de documentos',r.anexos||'—'],
   ];
+  const arquivosHtml = (r.anexosArquivos&&r.anexosArquivos.length)
+    ? '<div class="row"><dt>Arquivos anexados</dt><dd>' + r.anexosArquivos.map((a,i)=>
+        '<div>📄 '+esc(a.nome)+' ('+formatarTamanhoArquivo(a.tamanho)+') '+
+        '<button type="button" class="btn btn-ghost btn-sm" onclick="baixarAnexoDrawer('+i+')">⬇ Baixar</button></div>'
+      ).join('') + '</dd></div>'
+    : '<div class="row"><dt>Arquivos anexados</dt><dd>—</dd></div>';
   document.getElementById('d-body').innerHTML=rows.map(([k,v])=>
-    `<div class="row"><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
+    `<div class="row"><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('') + arquivosHtml;
   document.getElementById('regHistoricoPanel').style.display='none';
   regHistoricoAberto=false;
   document.getElementById('overlay').classList.add('show');
@@ -1397,7 +1541,7 @@ function buildDemandaDocumentoHtml(r){
     +'<div class="doc-box"><div class="lbl">7 - Orcamento estimado</div><div class="val">'+(esc(r.orcamento)||'&nbsp;')+'</div></div>'
     +'</div>'
     +'<div class="doc-box"><div class="lbl">8 - Partes interessadas</div><div class="val">'+(esc(r.partes)||'&nbsp;')+'</div></div>'
-    +'<div class="doc-box"><div class="lbl">9 - Anexos</div><div class="val">'+(esc(r.anexos)||'&nbsp;')+'</div></div>'
+    +'<div class="doc-box"><div class="lbl">9 - Anexos</div><div class="val">'+(esc([r.anexos, (r.anexosArquivos||[]).map(a=>'Arquivo: '+a.nome).join('\n')].filter(Boolean).join('\n'))||'&nbsp;')+'</div></div>'
     +'<div class="doc-foot">GRUPO JOSE ALVES</div>'
     +'<div class="doc-gen">Documento gerado pelo Sistema de Gestao de Projetos UNIALFA em '+hoje+' &mdash; Status: '+esc(r.status)+'</div>'
     +'</body></html>';
