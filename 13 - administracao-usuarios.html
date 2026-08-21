@@ -377,7 +377,7 @@ window.unialfaEquipe = {
         <h1>Administração de Usuários</h1>
         <p>Controle de acesso · Papéis e permissões · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=22#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=23#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
     </div>
   </div>
 
@@ -509,6 +509,62 @@ window.unialfaEquipe = {
       <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode importar documento na Solicitação de Demanda</b>
       <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">Só tem efeito com a importação habilitada acima. PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
       <div class="papeis-grupo" id="papeisImportarDocDemanda" data-chave="papeis_importar_documento_demanda"></div>
+    </div>
+
+    <div style="padding:20px 24px; display:flex; align-items:center; gap:14px; justify-content:space-between; flex-wrap:wrap; border-top:1px solid var(--line)">
+      <div>
+        <b style="display:block; font-size:13px; margin-bottom:4px">Habilitar backup automatizado</b>
+        <span style="font-size:12px; color:var(--muted)">Liga a rotina agendada (fora do sistema, via GitHub Actions) que copia o banco de dados, os arquivos anexados e o código-fonte para o destino configurado abaixo. Este interruptor e os campos abaixo só definem os parâmetros — a rotina em si é implantada separadamente.</span>
+      </div>
+      <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; flex:none">
+        <input type="checkbox" id="toggleBackup" onchange="alterarConfigSemLogin('permitir_backup_automatizado', 'toggleBackup', this.checked)" style="width:38px; height:20px; cursor:pointer">
+      </label>
+    </div>
+    <div style="padding:20px 24px; border-top:1px solid var(--line)">
+      <b style="display:block; font-size:13px; margin-bottom:12px">Parâmetros do backup</b>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 20px">
+        <div>
+          <label style="font-size:11.5px; font-weight:700; display:block; margin-bottom:5px">Destino</label>
+          <select id="backupDestinoTipo" onchange="salvarConfigTexto('backup_destino_tipo','backupDestinoTipo')" style="width:100%; padding:9px 11px; border:1px solid var(--line-strong,#D1D5DB); border-radius:7px; font-family:inherit; font-size:13px; color:var(--ink,#0F0F0F)">
+            <option value="onedrive_sharepoint">OneDrive / SharePoint institucional</option>
+            <option value="nuvem_externa">Outro armazenamento de nuvem</option>
+            <option value="servidor_instituicao">Servidor da instituição</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:700; display:block; margin-bottom:5px">Frequência</label>
+          <select id="backupFrequencia" onchange="salvarConfigTexto('backup_frequencia','backupFrequencia')" style="width:100%; padding:9px 11px; border:1px solid var(--line-strong,#D1D5DB); border-radius:7px; font-family:inherit; font-size:13px; color:var(--ink,#0F0F0F)">
+            <option value="diario">Diária</option>
+            <option value="semanal">Semanal</option>
+          </select>
+        </div>
+        <div style="grid-column:1/-1">
+          <label style="font-size:11.5px; font-weight:700; display:block; margin-bottom:5px">Pasta / caminho de destino</label>
+          <input type="text" id="backupCaminho" placeholder="Ex: /Backups/UNIALFA-Gestao-Projetos" onblur="salvarConfigTexto('backup_destino_caminho','backupCaminho')" style="width:100%; padding:9px 11px; border:1px solid var(--line-strong,#D1D5DB); border-radius:7px; font-family:inherit; font-size:13px; color:var(--ink,#0F0F0F)">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:700; display:block; margin-bottom:5px">Retenção (dias, opcional)</label>
+          <input type="number" min="1" id="backupRetencao" placeholder="deixe vazio para manter tudo" onblur="salvarConfigTexto('backup_retencao_dias','backupRetencao')" style="width:100%; padding:9px 11px; border:1px solid var(--line-strong,#D1D5DB); border-radius:7px; font-family:inherit; font-size:13px; color:var(--ink,#0F0F0F)">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:700; display:block; margin-bottom:5px">E-mail para alerta em caso de falha</label>
+          <input type="email" id="backupEmailAlerta" placeholder="ex: ti@alfa.br" onblur="salvarConfigTexto('backup_email_alerta','backupEmailAlerta')" style="width:100%; padding:9px 11px; border:1px solid var(--line-strong,#D1D5DB); border-radius:7px; font-family:inherit; font-size:13px; color:var(--ink,#0F0F0F)">
+        </div>
+        <div style="grid-column:1/-1">
+          <label style="font-size:11.5px; font-weight:700; display:block; margin-bottom:5px">E-mails com acesso ao destino externo (referência)</label>
+          <span style="font-size:11px; color:var(--muted); display:block; margin-bottom:6px">Só registra a decisão — conceder o acesso de verdade (na pasta do OneDrive, no repositório etc.) continua sendo feito manualmente onde o destino estiver.</span>
+          <input type="text" id="backupEmailsAcesso" placeholder="separados por vírgula" onblur="salvarConfigTexto('backup_emails_acesso_destino','backupEmailsAcesso')" style="width:100%; padding:9px 11px; border:1px solid var(--line-strong,#D1D5DB); border-radius:7px; font-family:inherit; font-size:13px; color:var(--ink,#0F0F0F)">
+        </div>
+      </div>
+    </div>
+    <div style="padding:20px 24px; border-top:1px solid var(--line)">
+      <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode gerenciar as configurações de backup</b>
+      <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
+      <div class="papeis-grupo" id="papeisBackup" data-chave="papeis_backup_gerenciar"></div>
+    </div>
+    <div style="padding:16px 24px; border-top:1px solid var(--line); background:var(--surface-2,#F1F2F4)">
+      <b style="display:block; font-size:12.5px; margin-bottom:4px">Última execução da rotina</b>
+      <span id="backupStatusExecucao" style="font-size:12.5px; color:var(--muted)">Carregando…</span>
     </div>
   </div>
 
@@ -783,6 +839,15 @@ function showAba(aba){
     carregarConfigPapeis('papeis_assistente_preenchimento', 'papeisAssistenteIA');
     carregarConfigSemLogin('permitir_importar_documento_demanda', 'toggleImportarDocDemanda');
     carregarConfigPapeis('papeis_importar_documento_demanda', 'papeisImportarDocDemanda');
+    carregarConfigSemLogin('permitir_backup_automatizado', 'toggleBackup');
+    carregarConfigTexto('backup_destino_tipo', 'backupDestinoTipo');
+    carregarConfigTexto('backup_frequencia', 'backupFrequencia');
+    carregarConfigTexto('backup_destino_caminho', 'backupCaminho');
+    carregarConfigTexto('backup_retencao_dias', 'backupRetencao');
+    carregarConfigTexto('backup_email_alerta', 'backupEmailAlerta');
+    carregarConfigTexto('backup_emails_acesso_destino', 'backupEmailsAcesso');
+    carregarConfigPapeis('papeis_backup_gerenciar', 'papeisBackup');
+    carregarStatusBackup();
   }
 }
 
@@ -872,6 +937,48 @@ async function alterarConfigSemLogin(chave, elId, ativo){
   }catch(e){
     toast(mensagemErroSalvar(e,'salvar a configuração'), false);
     document.getElementById(elId).checked = !ativo;
+  }
+}
+
+async function carregarConfigTexto(chave, elId){
+  const r=await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=eq.'+chave+'&select=valor', { headers: unialfaAuth.authHeaders() });
+  const rows = r.ok ? await r.json() : [];
+  const v = rows[0] ? rows[0].valor : '';
+  document.getElementById(elId).value = (v===null || v===undefined) ? '' : v;
+}
+
+async function salvarConfigTexto(chave, elId){
+  const el=document.getElementById(elId);
+  let valor = el.value;
+  if(el.type==='number'){ valor = valor==='' ? null : Number(valor); }
+  else { valor = (valor||'').trim(); }
+  try{
+    const r=await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=eq.'+chave, {
+      method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
+      body: JSON.stringify({ valor: valor, atualizado_em: new Date().toISOString() })
+    });
+    if(!r.ok){ const eHttp=new Error('http '+r.status); eHttp.kind='http'; eHttp.status=r.status; throw eHttp; }
+    toast('Configuração de backup salva');
+  }catch(e){
+    toast(mensagemErroSalvar(e,'salvar a configuração'), false);
+    await carregarConfigTexto(chave, elId);
+  }
+}
+
+async function carregarStatusBackup(){
+  const el=document.getElementById('backupStatusExecucao');
+  try{
+    const r=await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=in.(backup_ultima_execucao,backup_ultimo_status)&select=chave,valor', { headers: unialfaAuth.authHeaders() });
+    const rows = r.ok ? await r.json() : [];
+    const data = rows.find(x=>x.chave==='backup_ultima_execucao');
+    if(!data || !data.valor){ el.textContent='Nunca executado ainda — a rotina automatizada ainda não foi implantada.'; return; }
+    const status = rows.find(x=>x.chave==='backup_ultimo_status');
+    const dt = new Date(data.valor);
+    const st = status ? status.valor : '';
+    const label = st==='sucesso' ? '✓ sucesso' : (st==='falha' ? '✗ falha' : (st||''));
+    el.textContent = dt.toLocaleDateString('pt-BR')+' às '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' — '+label;
+  }catch(e){
+    el.textContent='Não foi possível carregar o status.';
   }
 }
 

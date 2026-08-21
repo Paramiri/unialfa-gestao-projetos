@@ -232,6 +232,12 @@ Bul "Acesso sem login (secao 2 do documento institucional) NAO tem acesso a este
 Bul "Os campos Departamento e Prioridade so sao preenchidos automaticamente se o valor sugerido pela IA corresponder exatamente a uma das opcoes ja existentes na lista suspensa - qualquer valor fora da lista e descartado, para nunca deixar esses dois campos num estado invalido."
 Bul "Disponivel apenas em producao, pela mesma razao das demais importacoes por IA."
 
+H2 "3.11 Backup automatizado"
+P "Na aba Configuracoes da Administracao, um bloco separado deixa o Admin/PMO definir os parametros de uma rotina de backup periodico do sistema (banco de dados, arquivos anexados e codigo-fonte) para um destino fora do GitHub: destino e caminho, frequencia, retencao, e-mail de alerta e e-mails com acesso ao destino externo (campo de registro, nao concede acesso de fato)."
+Bul "Mesma logica de permissao das demais listas de papeis deste capitulo: uma lista de papeis propria (`"Quem pode gerenciar as configuracoes de backup`") define quem, alem do Admin, pode ver e alterar esses campos - Admin sempre tem acesso, mesmo sem estar marcado na lista."
+Bul "Diferente das secoes 3.5 a 3.10, esta nao tem um interruptor mestre `"desligado por padrao`" que bloqueia todo mundo - o campo `"Habilitar backup automatizado`" e, ele mesmo, um dos parametros salvos, nao uma trava de acesso a tela: quem tem o papel liberado sempre ve e edita a tela, ligado ou desligado."
+Bul "Esta tela define apenas os parametros - quem efetivamente executa a copia dos dados e uma rotina agendada fora do sistema (GitHub Actions), sem acesso direto ao sistema nem papel de usuario."
+
 HR
 
 # ---- 4 ----

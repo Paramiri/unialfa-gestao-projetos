@@ -130,6 +130,7 @@ body.auth-ready{padding-top:34px}
       <div class="grp">Outras ferramentas</div>
       <a href="#validador" data-sec="validador">Validador de Projetos</a>
       <a href="#administracao" data-sec="administracao">Administração</a>
+      <a href="#backup" data-sec="backup">Backup automatizado</a>
       <a href="#painel-executivo" data-sec="painel-executivo">Painel Executivo</a>
       <div class="grp">Ajuda</div>
       <a href="#faq" data-sec="faq">Perguntas frequentes</a>
@@ -411,7 +412,7 @@ body.auth-ready{padding-top:34px}
         <ul>
           <li><b>Usuários</b> — lista quem já fez login, com nome, telefone (editável direto na lista) e um seletor para alterar o papel.</li>
           <li><b>Equipes</b> — define quem faz parte da equipe de cada projeto (base da <a href="#equipe">restrição por equipe</a>).</li>
-          <li><b>Configurações</b> — controla os dois interruptores de <a href="#sem-login">acesso sem login</a>, quais papéis podem ver o Painel Executivo/Relatório de Situação/Relatório de Entregas, quais papéis podem editar o <a href="#passo-10">Plano de Comunicação de Projeto</a>, os interruptores + papéis permitidos da <a href="#passo-6">importação de transcrição e de áudio por IA</a> na Ata de Reunião, o interruptor + papéis permitidos do <a href="#passo-2">assistente de preenchimento por IA</a> no Canvas, TAP, Planejamento, EAP, SMP, TEP, RLA, Relatório de Situação e Relatório de Entregas, e o interruptor + papéis permitidos da <a href="#passo-1">importação de documento por IA</a> na Solicitação de Demanda (todas regras independentes entre si).</li>
+          <li><b>Configurações</b> — controla os dois interruptores de <a href="#sem-login">acesso sem login</a>, quais papéis podem ver o Painel Executivo/Relatório de Situação/Relatório de Entregas, quais papéis podem editar o <a href="#passo-10">Plano de Comunicação de Projeto</a>, os interruptores + papéis permitidos da <a href="#passo-6">importação de transcrição e de áudio por IA</a> na Ata de Reunião, o interruptor + papéis permitidos do <a href="#passo-2">assistente de preenchimento por IA</a> no Canvas, TAP, Planejamento, EAP, SMP, TEP, RLA, Relatório de Situação e Relatório de Entregas, o interruptor + papéis permitidos da <a href="#passo-1">importação de documento por IA</a> na Solicitação de Demanda, e os parâmetros do <a href="#backup">backup automatizado</a> (todas regras independentes entre si).</li>
           <li><b>Ambiente de Treino</b> — só aparece quando a Administração é acessada em produção. Tem um único botão para resetar e repopular o <a href="https://paramiri.github.io/unialfa-gestao-projetos-treino/" target="_blank" rel="noopener">ambiente de treinamento</a> (um sistema separado, com banco próprio, usado para apresentações e capacitação) com os 7 projetos de exemplo — não afeta nenhum dado de produção.</li>
         </ul>
         <p class="lead">Pré-cadastro de usuário (antes do primeiro login)</p>
@@ -420,6 +421,24 @@ body.auth-ready{padding-top:34px}
         <p class="lead">Remover um usuário</p>
         <p>Cada usuário já cadastrado (menos o próprio Admin logado) tem um botão <b>Remover</b> na última coluna. Ao clicar, o sistema checa na hora se a pessoa faz parte da equipe de algum projeto, criou algum projeto, ou tem registro criado em seu nome em algum dos 9 formulários que gravam essa informação (Solicitação de Demanda, Canvas, TAP, Planejamento, EAP, SMP, Ata de Reunião, TEP e RLA). Se algum desses vínculos existir, a remoção é recusada e o Admin vê exatamente qual foi o motivo; caso contrário, pede confirmação final antes de excluir o perfil.</p>
         <div class="tip">Remover aqui apaga só o perfil (papel, nome, telefone) — a pessoa pode logar de novo depois normalmente, só que entra como "Solicitante", como se fosse a primeira vez. Os três formulários que são documentos únicos e compartilhados (Plano de Comunicação, Relatório de Situação e Relatório de Entregas) não entram nessa checagem automática, por não terem um "dono" individual do registro.</div>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="backup">
+        <div class="eyebrow">gestão</div>
+        <h2>Backup automatizado <span class="tag eq">exclusivo Admin</span></h2>
+        <p class="lead">No fim da aba <b>Configurações</b> da Administração, o Admin/PMO define os parâmetros de uma rotina de backup periódico do sistema (banco de dados, arquivos anexados e código-fonte) para um destino fora do GitHub.</p>
+        <ul>
+          <li><b>Habilitar backup automatizado</b> — interruptor geral da rotina.</li>
+          <li><b>Destino</b> — OneDrive/SharePoint institucional, outro armazenamento de nuvem, ou servidor da instituição — e o caminho/pasta exato onde os arquivos devem ser gravados.</li>
+          <li><b>Frequência</b> — diária ou semanal.</li>
+          <li><b>Retenção (dias)</b> — opcional; depois de quantos dias backups antigos podem ser descartados. Vazio mantém tudo indefinidamente.</li>
+          <li><b>E-mail de alerta</b> — para onde avisar automaticamente se uma execução da rotina falhar.</li>
+          <li><b>E-mails com acesso ao destino externo</b> — campo de referência/registro de quem deveria ter permissão na pasta de destino; conceder esse acesso de fato ainda é feito manualmente onde o destino estiver (OneDrive, repositório etc.), este campo não concede permissão sozinho.</li>
+          <li><b>Quem pode gerenciar essas configurações</b> — papéis liberados para alterar esta tela, além do PMO/Admin que sempre tem acesso.</li>
+          <li><b>Última execução</b> — data/hora e status (sucesso/falha) da última vez que a rotina automatizada rodou, preenchido por ela mesma.</li>
+        </ul>
+        <div class="tip">Esta tela define os parâmetros — quem efetivamente lê essas configurações e executa a cópia dos dados é uma rotina agendada fora do sistema (GitHub Actions). Como o agendamento de uma rotina desse tipo roda em horários fixos (não pode ser alterado em tempo real por este formulário), ela é programada para rodar com frequência maior do que o necessário e, a cada execução, checar aqui se já está na hora de rodar de acordo com a frequência configurada — na prática, o efeito para quem usa a tela é o mesmo de definir a frequência diretamente.</div>
         <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
       </section>
 

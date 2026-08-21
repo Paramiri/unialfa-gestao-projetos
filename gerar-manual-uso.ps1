@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.33 - 21 de agosto de 2026 (substitui a versao 2.32 de 20/08/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.35 - 21 de agosto de 2026 (substitui a versao 2.33 de 21/08/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -284,6 +284,8 @@ P "Esta e a versao 2.30 do manual. Em relacao a versao 2.29 (20/08/2026), o vinc
 P "Esta e a versao 2.31 do manual. Em relacao a versao 2.30 (20/08/2026), o assistente de preenchimento por IA (secao 2.12) foi estendido do preenchimento direto (Fase A) para tambem sugerir por IA, por linha de projeto: no Relatorio de Situacao (secao 4.1), o que Merece atencao e o que Merece destaque, com base no TAP, nas Atas e na situacao ja digitada na linha (status, % execucao, datas, sinalizacao automatica); no Relatorio de Entregas (secao 4.2), o Impacto/Resultado esperado do projeto, com base no TAP e nas Atas. Diferente dos outros 7 formularios do assistente, aqui o botao `Sugerir com IA` aparece por linha, nao uma vez so para o formulario inteiro - Fase B, concluindo a proposta tecnica de preenchimento automatico dos relatorios de portfolio."
 P "Esta e a versao 2.32 do manual. Em relacao a versao 2.31 (20/08/2026), o Relatorio de Situacao (secao 4.1) ganhou o botao `Importar marcos do TAP` na secao Marcos de cada linha de projeto: complementa a copia direta ja existente (Responsavel, Inicio/Termino previsto) trazendo tambem os marcos do cronograma de entregas macro do TAP como linhas de Marcos, sem duplicar os que ja estiverem na lista - mesma logica do `Importar do TAP` ja usado nos Indicadores do Relatorio de Entregas (secao 4.2)."
 P "Esta e a versao 2.33 do manual. Em relacao a versao 2.32 (20/08/2026), duas melhorias na Ata de Reuniao (Passo 6): os campos e linhas preenchidos pela importacao de transcricao por IA (secao 2.10) agora ficam com o mesmo selo `IA` e destaque visual ja usado nos demais assistentes do sistema, o que antes nao acontecia nesse formulario; e a coluna SEQ das tabelas de Encaminhamentos e Entraves passou a ser preenchida automaticamente (numeracao sequencial, so contando linhas com conteudo), liberando mais espaco de tela para o texto do Encaminhamento/Entrave em si."
+P "Esta e a versao 2.34 do manual. Em relacao a versao 2.33 (21/08/2026), o Planejamento e Desenvolvimento do Projeto (Passo 4) passou a agrupar visualmente Objetivo Geral e Objetivo Especifico sob um unico item `Objetivo do projeto`, e Escopo Incluido e Escopo Excluido sob `Escopo` - reorganizacao apenas de apresentacao (o mesmo destaque de campo aplicado a um grupo inteiro), sem mudanca nos dados salvos nem nos campos em si."
+P "Esta e a versao 2.35 do manual. Em relacao a versao 2.34 (21/08/2026), foi adicionada a nova secao 6.6 - Backup automatizado: um bloco na aba Configuracoes da Administracao onde o Admin/PMO define destino, frequencia, retencao, e-mail de alerta e papeis com acesso a essas proprias configuracoes de backup - complemento operacional a proposta tecnica `Backup Automatizado` entregue separadamente, que descreve a rotina agendada (GitHub Actions) que efetivamente le esses parametros e executa a copia."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -719,6 +721,17 @@ Bul "A aba so aparece quando a Administracao e acessada pelo endereco de produca
 Bul "Nao afeta nenhum dado de producao em nenhuma hipotese - a acao roda numa Edge Function que so tem permissao de escrita no banco do ambiente de treinamento."
 Bul "As 6 contas fixas de treinamento e as configuracoes do ambiente de treino nao sao apagadas pelo reset - so os projetos e os registros de formulario."
 Nota "Assim como as outras acoes exclusivas de Admin, a Edge Function confere o papel do usuario direto no banco de producao antes de fazer qualquer alteracao - nao basta ver o botao na tela."
+H2 "6.6 Backup automatizado"
+P "No fim da aba Configuracoes (secao 6.3), um bloco separado deixa o Admin/PMO definir os parametros de uma rotina de backup periodico do sistema inteiro (banco de dados, arquivos anexados e codigo-fonte) para um destino fora do GitHub - complemento operacional a proposta `Backup Automatizado` entregue separadamente."
+Bul "Habilitar backup automatizado: interruptor geral da rotina."
+Bul "Destino: OneDrive/SharePoint institucional, outro armazenamento de nuvem ou servidor da instituicao, mais o caminho/pasta exato onde gravar."
+Bul "Frequencia: diaria ou semanal."
+Bul "Retencao (dias, opcional): depois de quantos dias os backups antigos podem ser descartados; vazio mantem tudo indefinidamente."
+Bul "E-mail de alerta: para onde avisar automaticamente se uma execucao falhar."
+Bul "E-mails com acesso ao destino externo: campo de registro/referencia de quem deveria ter permissao na pasta de destino - conceder esse acesso de fato continua sendo feito manualmente onde o destino estiver (OneDrive, repositorio etc.)."
+Bul "Quem pode gerenciar essas configuracoes: papeis liberados para alterar esta tela, alem do PMO/Admin, que sempre tem acesso."
+Bul "Ultima execucao: data/hora e status (sucesso ou falha) da ultima vez que a rotina automatizada rodou, preenchido por ela mesma."
+Nota "Esta tela define os parametros - quem efetivamente le essas configuracoes e executa a copia dos dados e uma rotina agendada fora do sistema (GitHub Actions). Como o agendamento desse tipo de rotina roda em horarios fixos (nao pode ser alterado em tempo real por este formulario), ela e programada para rodar com frequencia maior do que o necessario e, a cada execucao, checar aqui se ja esta na hora de rodar de acordo com a frequencia configurada - na pratica, o efeito para quem usa a tela e o mesmo de definir a frequencia diretamente."
 
 # ============================================================
 # 7. PERGUNTAS FREQUENTES
