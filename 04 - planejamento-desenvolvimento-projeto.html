@@ -48,6 +48,9 @@
   .grid{padding:22px 24px; display:grid; grid-template-columns:1fr 1fr; gap:18px 20px}
   .field{display:flex; flex-direction:column; gap:6px}
   .field.full{grid-column:1 / -1}
+  .field-group{margin:0 24px 20px; display:flex; flex-direction:column; gap:12px; border:1px solid var(--line-strong); border-radius:10px; background:var(--surface); padding:16px 18px}
+  .field-group .fg-title{font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+  .field-group .field{background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:12px 14px}
   label{font-size:12px; font-weight:700; letter-spacing:.02em; color:var(--ink)}
   label .req{color:var(--red); margin-left:2px}
   .hint{font-size:11px; color:var(--muted); font-weight:500; margin-top:-2px}
@@ -786,10 +789,14 @@ const STAGES=[
     {kind:'field', key:'produtos', label:'Produtos impactados', type:'textarea'},
     {kind:'field', key:'geografico', label:'Escopo geográfico', type:'textarea'},
     {kind:'field', key:'contexto', label:'Contexto e problemática', type:'textarea'},
-    {kind:'field', key:'objGeral', label:'Objetivo geral', type:'textarea'},
-    {kind:'field', key:'objEspec', label:'Objetivos específicos', type:'textarea'},
-    {kind:'field', key:'escIncluido', label:'Escopo incluído', type:'textarea'},
-    {kind:'field', key:'escExcluido', label:'Escopo excluído', type:'textarea'},
+    {kind:'group', key:'objetivoGrupo', label:'Objetivo do projeto', fields:[
+      {key:'objGeral', label:'Objetivo geral', type:'textarea'},
+      {key:'objEspec', label:'Objetivos específicos', type:'textarea'},
+    ]},
+    {kind:'group', key:'escopoGrupo', label:'Escopo', fields:[
+      {key:'escIncluido', label:'Escopo incluído', type:'textarea'},
+      {key:'escExcluido', label:'Escopo excluído', type:'textarea'},
+    ]},
     {kind:'field', key:'entregaveis', label:'Entregáveis', type:'textarea'},
     {kind:'field', key:'premissas', label:'Premissas', type:'textarea'},
     {kind:'field', key:'restricoes', label:'Restrições', type:'textarea'},
@@ -885,7 +892,7 @@ const STAGES=[
 /* derive flat keys */
 const FIELD_KEYS=[]; const TABLE_DEFS={};
 IDFIELDS.forEach(f=>FIELD_KEYS.push(f.key));
-STAGES.forEach(s=>s.blocks.forEach(b=>{ if(b.kind==='field') FIELD_KEYS.push(b.key); else { TABLE_DEFS[b.key]=b; } }));
+STAGES.forEach(s=>s.blocks.forEach(b=>{ if(b.kind==='field') FIELD_KEYS.push(b.key); else if(b.kind==='group') b.fields.forEach(f=>FIELD_KEYS.push(f.key)); else { TABLE_DEFS[b.key]=b; } }));
 const REQUIRED=IDFIELDS.filter(f=>f.req).map(f=>f.key);
 
 /* ---------- helpers ---------- */
@@ -986,6 +993,10 @@ function buildStages(){
     const flush=()=>{ if(buffer.length){ inner+=`<div class="grid">${buffer.map(fieldHTML).join('')}</div>`; buffer=[]; } };
     s.blocks.forEach(b=>{
       if(b.kind==='field'){ buffer.push({...b, full:true}); }
+      else if(b.kind==='group'){
+        flush();
+        inner+=`<div class="field-group"><div class="fg-title">${b.label}</div>${b.fields.map(f=>fieldHTML({...f, full:true})).join('')}</div>`;
+      }
       else { flush(); inner+=`<div class="dyn" id="dyn-${b.key}"><label class="blocklabel">${b.label}</label></div>`; }
     });
     flush();
@@ -1223,6 +1234,7 @@ function openDrawer(id){
     html+=`<div class="grp">${s.title}</div>`;
     s.blocks.forEach(b=>{
       if(b.kind==='field'){ html+=`<div class="row"><dt>${b.label}</dt><dd>${esc(r[b.key]||'—')}</dd></div>`; }
+      else if(b.kind==='group'){ b.fields.forEach(f=>{ html+=`<div class="row"><dt>${f.label}</dt><dd>${esc(r[f.key]||'—')}</dd></div>`; }); }
       else { html+=`<div class="row"><dt>${b.label}</dt>${roTable(b.key, r[b.key])}</div>`; }
     });
   });
@@ -1300,6 +1312,10 @@ function buildPlanejamentoDocumentoHtml(r){
     s.blocks.forEach(b=>{
       if(b.kind==='field'){
         stagesHtml+='<div class="doc-box"><div class="lbl">'+esc(b.label)+'</div><div class="val">'+(esc(r[b.key])||'&nbsp;')+'</div></div>';
+      } else if(b.kind==='group'){
+        b.fields.forEach(f=>{
+          stagesHtml+='<div class="doc-box"><div class="lbl">'+esc(f.label)+'</div><div class="val">'+(esc(r[f.key])||'&nbsp;')+'</div></div>';
+        });
       } else {
         stagesHtml+='<div class="doc-box"><div class="lbl">'+esc(b.label)+'</div><div class="val">'+docTableRowsPlan(b.key, r[b.key])+'</div></div>';
       }
