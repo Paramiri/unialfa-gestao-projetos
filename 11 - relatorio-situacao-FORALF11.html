@@ -96,7 +96,11 @@ table.proj-t tbody tr:hover{background:var(--surface)}
 .prog-section{padding:14px 20px;border-bottom:1px solid var(--line)}
 .prog-section:last-child{border-bottom:none}
 .prog-section-title{font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
-.marcos-list{display:flex;flex-direction:column;gap:6px}
+.marcos-list{display:flex;flex-direction:column;gap:14px}
+.marco-group{display:flex;flex-direction:column;gap:6px}
+.marco-group-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.marco-group-name{font-size:13px;font-weight:700;color:var(--ink)}
+.marco-group .marco-row{padding-left:14px}
 .marco-row{display:flex;align-items:center;gap:10px}
 .marco-name{flex:1;font-size:12.5px;font-weight:600}
 .marco-date{font-size:11px;color:var(--muted);min-width:76px;text-align:right}
@@ -108,6 +112,9 @@ table.proj-t tbody tr:hover{background:var(--surface)}
 .atd-box.atencao .atd-label{color:#9A3412}
 .atd-box.destaque .atd-label{color:#14532D}
 .atd-text{font-size:12px;line-height:1.5;color:var(--ink)}
+.atd-proj-item{font-size:12px;line-height:1.5;color:var(--ink);margin-bottom:8px}
+.atd-proj-item:last-child{margin-bottom:0}
+.atd-proj-item b{font-weight:700}
 
 /* ── portfolio by year ── */
 .year-table-wrap{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow-x:auto}
@@ -1184,23 +1191,27 @@ function renderProgCards(projs,programs){
     const pp=prog?projs.filter(p=>p.programa===prog):projs;
     if(!pp.length) return;
     const avgPct=Math.round(pp.reduce((a,p)=>a+(parseInt(p.pct)||0),0)/pp.length);
-    const atencao=pp.map(p=>p.atencao).filter(Boolean).join('\n');
-    const destaque=pp.map(p=>p.destaque).filter(Boolean).join('\n');
+    const comAtencao=pp.filter(p=>p.atencao);
+    const comDestaque=pp.filter(p=>p.destaque);
     const card=document.createElement('div');
     card.className='prog-card';
     let marcosHTML='<div class="marcos-list">';
     pp.forEach(p=>{
       if(p.marcos&&p.marcos.length){
+        marcosHTML+=`<div class="marco-group">
+          <div class="marco-group-head"><div class="marco-group-name">${esc(p.nome)}</div><span class="s-badge ${STATUS_CLASS[p.status]||''}" style="font-size:10px">${esc(p.status||'')}</span></div>`;
         p.marcos.forEach(m=>{
           if(!m.nome) return;
           const cls=STATUS_CLASS[m.status]||'';
-          marcosHTML+=`<div class="marco-row"><div class="marco-name">${esc(p.nome)} → ${esc(m.nome)}</div><span class="s-badge ${cls}" style="font-size:10px">${esc(m.status||'')}</span><div class="marco-date">${esc(m.data||'')}</div></div>`;
+          marcosHTML+=`<div class="marco-row"><div class="marco-name">${esc(m.nome)}</div><span class="s-badge ${cls}" style="font-size:10px">${esc(m.status||'')}</span><div class="marco-date">${esc(m.data||'')}</div></div>`;
         });
+        marcosHTML+='</div>';
       } else {
         marcosHTML+=`<div class="marco-row"><div class="marco-name">${esc(p.nome)}</div><span class="s-badge ${STATUS_CLASS[p.status]||''}" style="font-size:10px">${esc(p.status||'')}</span><div class="marco-date">${esc(p.termino||'')}</div></div>`;
       }
     });
     marcosHTML+='</div>';
+    const atdItens=(lista)=>lista.map(p=>`<div class="atd-proj-item"><b>${esc(p.nome)}:</b> ${esc(lista===comAtencao?p.atencao:p.destaque)}</div>`).join('');
     card.innerHTML=`
       <div class="prog-card-head">
         <h3>${esc(prog||'Projetos sem programa')}</h3>
@@ -1208,10 +1219,10 @@ function renderProgCards(projs,programs){
       </div>
       <div class="prog-card-body">
         <div class="prog-section"><div class="prog-section-title">Marcos / Projetos — Situação</div>${marcosHTML}</div>
-        ${(atencao||destaque)?`<div class="prog-section"><div class="prog-section-title">Atenção e destaque</div><div class="atencao-destaque">
-          <div class="atd-box atencao"><div class="atd-label">⚠ Merece atenção</div><div class="atd-text">${esc(atencao||'Nenhum item registrado.')}</div></div>
-          <div class="atd-box destaque"><div class="atd-label">★ Merece destaque</div><div class="atd-text">${esc(destaque||'Nenhum item registrado.')}</div></div>
-        </div></div>`:''}
+        <div class="prog-section"><div class="prog-section-title">Atenção e destaque</div><div class="atencao-destaque">
+          <div class="atd-box atencao"><div class="atd-label">⚠ Merece atenção</div>${comAtencao.length?atdItens(comAtencao):'<div class="atd-text">Nenhum item registrado.</div>'}</div>
+          <div class="atd-box destaque"><div class="atd-label">★ Merece destaque</div>${comDestaque.length?atdItens(comDestaque):'<div class="atd-text">Nenhum item registrado.</div>'}</div>
+        </div></div>
       </div>`;
     container.appendChild(card);
   });
