@@ -1156,7 +1156,13 @@ function renderYearTable(projs){
   html+='<div class="yg-cell yg-head" style="grid-row:1 / span 2">Carteira</div>';
   years.forEach(y=>html+=`<div class="yg-cell yg-head yg-year" style="grid-column:span 2">${esc(y)}</div>`);
   years.forEach(()=>html+='<div class="yg-cell yg-head yg-sub">Em andamento</div><div class="yg-cell yg-head yg-sub">Realizado</div>');
-  const rows=[{label:'Programas',fn:(y)=>{const s=new Set(projs.filter(p=>anoDeData(p.inicio)===y&&(p.programa)).map(p=>p.programa));const d=new Set(projs.filter(p=>anoDeData(p.inicio)===y&&p.status==='Concluído'&&p.programa).map(p=>p.programa));return[s.size-d.size,d.size];}},{label:'Projetos',fn:(y)=>{const a=projs.filter(p=>anoDeData(p.inicio)===y);const d=a.filter(p=>p.status==='Concluído');return[a.length-d.length,d.length];}},];
+  const rows=[{label:'Programas',fn:(y)=>{
+    const porPrograma={};
+    projs.filter(p=>anoDeData(p.inicio)===y&&p.programa).forEach(p=>{(porPrograma[p.programa]=porPrograma[p.programa]||[]).push(p);});
+    let emAndamento=0,realizado=0;
+    Object.values(porPrograma).forEach(lista=>{ if(lista.every(p=>p.status==='Concluído')) realizado++; else emAndamento++; });
+    return[emAndamento,realizado];
+  }},{label:'Projetos',fn:(y)=>{const a=projs.filter(p=>anoDeData(p.inicio)===y);const d=a.filter(p=>p.status==='Concluído');return[a.length-d.length,d.length];}},];
   rows.forEach((row,ri)=>{
     const lastRow=ri===rows.length-1?' yg-last-row':'';
     html+=`<div class="yg-cell yg-label${lastRow}">${esc(row.label)}</div>`;
