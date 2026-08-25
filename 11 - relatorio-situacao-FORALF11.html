@@ -52,6 +52,7 @@ body{font-family:var(--font);color:var(--ink);background:var(--surface);-webkit-
 .kpi.blue::before{background:var(--blue)}
 .kpi-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 .kpi-value{font-size:32px;font-weight:900;line-height:1;color:var(--ink)}
+.kpi-value.kpi-value-text{font-size:13px;font-weight:700;line-height:1.4;word-break:break-word}
 .kpi-sub{font-size:11px;color:var(--muted);margin-top:6px;font-weight:500}
 
 /* ── status legend ── */
@@ -1077,7 +1078,9 @@ function renderPainel(){
 
   document.getElementById('kpi-prog').textContent=programs.length||projs.length;
   document.getElementById('kpi-proj').textContent=projs.length;
-  document.getElementById('kpi-entr').textContent=data.entr||0;
+  const kpiEntrEl=document.getElementById('kpi-entr');
+  kpiEntrEl.textContent=data.entr||0;
+  kpiEntrEl.classList.toggle('kpi-value-text', String(data.entr||'').length>6);
   document.getElementById('kpi-fin').textContent=data.fin?fmtBRL(data.fin):'—';
   document.getElementById('kpi-risco').textContent=projs.filter(p=>calcSinalizacao(p)).length;
 
