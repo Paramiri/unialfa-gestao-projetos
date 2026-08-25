@@ -254,14 +254,45 @@ body.auth-ready{padding-top:34px}
     return r.ok;
   }
 
+  async function refreshSession(){
+    var s = getSession();
+    if(!s || !s.refresh_token) return false;
+    try{
+      var r = await fetch(AUTH_BASE + '/token?grant_type=refresh_token', {
+        method: 'POST', headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: s.refresh_token })
+      });
+      var data = await r.json();
+      if(!r.ok || !data.access_token) return false;
+      saveSession({ access_token: data.access_token, refresh_token: data.refresh_token || s.refresh_token, expires_at: Date.now() + (parseInt(data.expires_in||'3600',10)*1000) });
+      return true;
+    }catch(e){ return false; }
+  }
+
   async function fetchUser(){
     var s = getSession();
     if(!s || !s.access_token) return null;
-    if (s.expires_at && Date.now() > s.expires_at) { clearSession(); return null; }
+    if (s.expires_at && Date.now() > s.expires_at) {
+      if(!(await refreshSession())){ clearSession(); return null; }
+      s = getSession();
+    }
     var r = await fetch(AUTH_BASE + '/user', { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + s.access_token } });
-    if(!r.ok) { clearSession(); return null; }
+    if(!r.ok) {
+      if(await refreshSession()){
+        s = getSession();
+        r = await fetch(AUTH_BASE + '/user', { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + s.access_token } });
+        if(r.ok) return await r.json();
+      }
+      clearSession(); return null;
+    }
     return await r.json();
   }
+
+  setInterval(async function(){
+    var s = getSession();
+    if(!s || !s.access_token || !s.refresh_token) return;
+    if(s.expires_at - Date.now() < 5*60*1000){ await refreshSession(); }
+  }, 60*1000);
 
   function authHeaders(extra){
     var s = getSession();
@@ -343,7 +374,7 @@ body.auth-ready{padding-top:34px}
     REST_BASE: REST_BASE,
     AUTH_BASE: AUTH_BASE,
     getSession: getSession, clearSession: clearSession, captureRedirect: captureRedirect,
-    sendMagicLink: sendMagicLink, fetchUser: fetchUser, authHeaders: authHeaders,
+    sendMagicLink: sendMagicLink, fetchUser: fetchUser, authHeaders: authHeaders, refreshSession: refreshSession,
     fetchProfile: fetchProfile, ensureProfile: ensureProfile, tentarNomeViaGraph: tentarNomeViaGraph,
     papelLabel: function(p){ return PAPEL_LABEL[p]||p; },
     signOut: function(){ clearSession(); location.reload(); },
@@ -611,9 +642,21 @@ function ensureAuthenticated(){
     if (extra) { for (var k in extra) h[k] = extra[k]; }
     return h;
   }
+  async function reqComRenovacao(method, url, extraHeaders, body){
+    var opts = { method: method, headers: headers(extraHeaders) };
+    if (body !== undefined) opts.body = body;
+    var r = await fetch(url, opts);
+    if (r.status === 401 && window.unialfaAuth && window.unialfaAuth.refreshSession) {
+      if (await window.unialfaAuth.refreshSession()) {
+        opts.headers = headers(extraHeaders);
+        r = await fetch(url, opts);
+      }
+    }
+    return r;
+  }
   window.storage = {
     get: async function(key){
-      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key) + '&select=value', { headers: headers() });
+      var r = await reqComRenovacao('GET', base + '?key=eq.' + encodeURIComponent(key) + '&select=value');
       if(!r.ok) return null;
       var rows = await r.json();
       return rows.length ? { value: rows[0].value } : null;
@@ -621,7 +664,7 @@ function ensureAuthenticated(){
     set: async function(key, value){
       var r;
       try{
-        r = await fetch(base + '?on_conflict=key', { method: 'POST', headers: headers({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }) });
+        r = await reqComRenovacao('POST', base + '?on_conflict=key', { 'Prefer': 'resolution=merge-duplicates' }, JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }));
       }catch(netErr){
         var eNet = new Error('network'); eNet.kind = 'network'; throw eNet;
       }
@@ -636,7 +679,7 @@ function ensureAuthenticated(){
     delete: async function(key){
       var r;
       try{
-        r = await fetch(base + '?key=eq.' + encodeURIComponent(key), { method: 'DELETE', headers: headers() });
+        r = await reqComRenovacao('DELETE', base + '?key=eq.' + encodeURIComponent(key));
       }catch(netErr){
         var eNet = new Error('network'); eNet.kind = 'network'; throw eNet;
       }
@@ -648,7 +691,7 @@ function ensureAuthenticated(){
       return true;
     },
     list: async function(prefix){
-      var r = await fetch(base + '?key=like.' + encodeURIComponent(prefix) + '*&select=key', { headers: headers() });
+      var r = await reqComRenovacao('GET', base + '?key=like.' + encodeURIComponent(prefix) + '*&select=key');
       if(!r.ok) return { keys: [] };
       var rows = await r.json();
       return { keys: rows.map(function(x){ return x.key; }) };
@@ -1203,11 +1246,35 @@ function readProjetos(){
   }));
 }
 
+const CHAVE_RASCUNHO_RELENT='unialfa_draft_relatorio_entregas';
+let rascunhoTimer=null;
+function salvarRascunho(){
+  clearTimeout(rascunhoTimer);
+  rascunhoTimer=setTimeout(()=>{
+    try{
+      const snapshot=Object.assign({}, data, { prog:readProg(), projetos:readProjetos() });
+      localStorage.setItem(CHAVE_RASCUNHO_RELENT, JSON.stringify({ data: snapshot, salvoEm: Date.now() }));
+    }catch(e){}
+  }, 800);
+}
+function restaurarRascunhoSeExistir(){
+  try{
+    const bruto=localStorage.getItem(CHAVE_RASCUNHO_RELENT);
+    if(!bruto) return;
+    const r=JSON.parse(bruto);
+    if(r.data) data=r.data;
+    const hora=new Date(r.salvoEm).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    toast('Rascunho não salvo restaurado (de '+hora+')');
+  }catch(e){}
+}
+function limparRascunho(){ try{ localStorage.removeItem(CHAVE_RASCUNHO_RELENT); }catch(e){} }
+
 async function saveAndPreview(){
   data.prog=readProg();
   data.projetos=readProjetos();
   await saveData();
   await saveSnapshot();
+  limparRascunho();
   toast('Dados salvos');
   showView('painel');
 }
@@ -1341,7 +1408,11 @@ async function papelPermitido(chave){
     return;
   }
   document.getElementById('conteudoRelatorio').style.display = 'block';
-  await loadData(); await carregarProjetosAprovados(); renderPainel();
+  await loadData();
+  restaurarRascunhoSeExistir();
+  await carregarProjetosAprovados(); renderPainel();
   window.__iaAssistentePermitido = await assistenteIAPermitido();
 })();
+document.getElementById('view-editar').addEventListener('input', salvarRascunho);
+document.getElementById('view-editar').addEventListener('change', salvarRascunho);
 </script>

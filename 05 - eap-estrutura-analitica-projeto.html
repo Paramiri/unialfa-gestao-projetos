@@ -297,14 +297,45 @@ body.auth-ready .drawer{top:34px;height:calc(100% - 34px)}
     return r.ok;
   }
 
+  async function refreshSession(){
+    var s = getSession();
+    if(!s || !s.refresh_token) return false;
+    try{
+      var r = await fetch(AUTH_BASE + '/token?grant_type=refresh_token', {
+        method: 'POST', headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: s.refresh_token })
+      });
+      var data = await r.json();
+      if(!r.ok || !data.access_token) return false;
+      saveSession({ access_token: data.access_token, refresh_token: data.refresh_token || s.refresh_token, expires_at: Date.now() + (parseInt(data.expires_in||'3600',10)*1000) });
+      return true;
+    }catch(e){ return false; }
+  }
+
   async function fetchUser(){
     var s = getSession();
     if(!s || !s.access_token) return null;
-    if (s.expires_at && Date.now() > s.expires_at) { clearSession(); return null; }
+    if (s.expires_at && Date.now() > s.expires_at) {
+      if(!(await refreshSession())){ clearSession(); return null; }
+      s = getSession();
+    }
     var r = await fetch(AUTH_BASE + '/user', { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + s.access_token } });
-    if(!r.ok) { clearSession(); return null; }
+    if(!r.ok) {
+      if(await refreshSession()){
+        s = getSession();
+        r = await fetch(AUTH_BASE + '/user', { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + s.access_token } });
+        if(r.ok) return await r.json();
+      }
+      clearSession(); return null;
+    }
     return await r.json();
   }
+
+  setInterval(async function(){
+    var s = getSession();
+    if(!s || !s.access_token || !s.refresh_token) return;
+    if(s.expires_at - Date.now() < 5*60*1000){ await refreshSession(); }
+  }, 60*1000);
 
   function authHeaders(extra){
     var s = getSession();
@@ -386,7 +417,7 @@ body.auth-ready .drawer{top:34px;height:calc(100% - 34px)}
     REST_BASE: REST_BASE,
     AUTH_BASE: AUTH_BASE,
     getSession: getSession, clearSession: clearSession, captureRedirect: captureRedirect,
-    sendMagicLink: sendMagicLink, fetchUser: fetchUser, authHeaders: authHeaders,
+    sendMagicLink: sendMagicLink, fetchUser: fetchUser, authHeaders: authHeaders, refreshSession: refreshSession,
     fetchProfile: fetchProfile, ensureProfile: ensureProfile, tentarNomeViaGraph: tentarNomeViaGraph,
     papelLabel: function(p){ return PAPEL_LABEL[p]||p; },
     signOut: function(){ clearSession(); location.reload(); },
@@ -763,9 +794,21 @@ window.unialfaHistorico = {
     if (extra) { for (var k in extra) h[k] = extra[k]; }
     return h;
   }
+  async function reqComRenovacao(method, url, extraHeaders, body){
+    var opts = { method: method, headers: headers(extraHeaders) };
+    if (body !== undefined) opts.body = body;
+    var r = await fetch(url, opts);
+    if (r.status === 401 && window.unialfaAuth && window.unialfaAuth.refreshSession) {
+      if (await window.unialfaAuth.refreshSession()) {
+        opts.headers = headers(extraHeaders);
+        r = await fetch(url, opts);
+      }
+    }
+    return r;
+  }
   window.storage = {
     get: async function(key){
-      var r = await fetch(base + '?key=eq.' + encodeURIComponent(key) + '&select=value', { headers: headers() });
+      var r = await reqComRenovacao('GET', base + '?key=eq.' + encodeURIComponent(key) + '&select=value');
       if(!r.ok) return null;
       var rows = await r.json();
       return rows.length ? { value: rows[0].value } : null;
@@ -773,7 +816,7 @@ window.unialfaHistorico = {
     set: async function(key, value){
       var r;
       try{
-        r = await fetch(base + '?on_conflict=key', { method: 'POST', headers: headers({ 'Prefer': 'resolution=merge-duplicates' }), body: JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }) });
+        r = await reqComRenovacao('POST', base + '?on_conflict=key', { 'Prefer': 'resolution=merge-duplicates' }, JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }));
       }catch(netErr){
         var eNet = new Error('network'); eNet.kind = 'network'; throw eNet;
       }
@@ -788,7 +831,7 @@ window.unialfaHistorico = {
     delete: async function(key){
       var r;
       try{
-        r = await fetch(base + '?key=eq.' + encodeURIComponent(key), { method: 'DELETE', headers: headers() });
+        r = await reqComRenovacao('DELETE', base + '?key=eq.' + encodeURIComponent(key));
       }catch(netErr){
         var eNet = new Error('network'); eNet.kind = 'network'; throw eNet;
       }
@@ -800,7 +843,7 @@ window.unialfaHistorico = {
       return true;
     },
     list: async function(prefix){
-      var r = await fetch(base + '?key=like.' + encodeURIComponent(prefix) + '*&select=key', { headers: headers() });
+      var r = await reqComRenovacao('GET', base + '?key=like.' + encodeURIComponent(prefix) + '*&select=key');
       if(!r.ok) return { keys: [] };
       var rows = await r.json();
       return { keys: rows.map(function(x){ return x.key; }) };
@@ -1047,6 +1090,7 @@ async function submitForm(){
       toast('EAP '+rec.protocolo+' registrada');
     }
     document.getElementById('count').textContent=cache.length;
+    limparRascunho();
     editId=null;
     clearForm(); showView('list');
   }catch(e){toast(mensagemErroSalvar(e),false);}
@@ -1085,10 +1129,42 @@ async function editCurrent(){
   showView('new');
   updateEditBanner();
   if(r.projetoId) await carregarProjetosAprovados(r.projetoId);
+  restaurarRascunhoSeExistir();
 }
 function updateEditBanner(){
   document.getElementById('submitBtn').textContent = editId ? 'Salvar alterações' : 'Registrar EAP';
 }
+
+function chaveRascunho(){ return 'unialfa_draft_eap_' + (editId || 'novo'); }
+let rascunhoTimer=null;
+function salvarRascunho(){
+  clearTimeout(rascunhoTimer);
+  rascunhoTimer=setTimeout(()=>{
+    try{
+      const dados={ nomeProjeto:document.getElementById('nomeProjeto').value, unidade:document.getElementById('unidade').value, gerente:document.getElementById('gerente').value };
+      const n1s=readForm();
+      const projetoId=document.getElementById('projetoSelect').value;
+      localStorage.setItem(chaveRascunho(), JSON.stringify({ dados, n1s, projetoId, salvoEm:Date.now() }));
+    }catch(e){}
+  }, 800);
+}
+function restaurarRascunhoSeExistir(){
+  try{
+    const bruto=localStorage.getItem(chaveRascunho());
+    if(!bruto) return;
+    const r=JSON.parse(bruto);
+    if(r.dados){
+      document.getElementById('nomeProjeto').value=r.dados.nomeProjeto||'';
+      document.getElementById('unidade').value=r.dados.unidade||'';
+      document.getElementById('gerente').value=r.dados.gerente||'';
+    }
+    if(r.n1s && r.n1s.length) rebuildTree(r.n1s);
+    if(r.projetoId){ const sel=document.getElementById('projetoSelect'); if(sel) sel.value=r.projetoId; }
+    const hora=new Date(r.salvoEm).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    toast('Rascunho não salvo restaurado (de '+hora+')');
+  }catch(e){}
+}
+function limparRascunho(){ try{ localStorage.removeItem(chaveRascunho()); }catch(e){} }
 
 function clearFormDOM(){
   _n1c=0; _n2c={}; _n3c={};
@@ -1096,6 +1172,7 @@ function clearFormDOM(){
   b.querySelectorAll('.n1-block').forEach(el=>el.remove());
 }
 function clearForm(){
+  limparRascunho();
   document.getElementById('nomeProjeto').value='';
   document.getElementById('unidade').value='';
   document.getElementById('gerente').value='';
@@ -1365,5 +1442,7 @@ async function sugerirPreenchimentoIA(){
   btn.disabled=false;
 }
 
-(async()=>{ await ensureAuthenticated(); await loadAll(); addN1Block(); renderList(); await carregarProjetosAprovados(); window.__iaAssistentePermitido = await assistenteIAPermitido(); })();
+(async()=>{ await ensureAuthenticated(); await loadAll(); addN1Block(); renderList(); await carregarProjetosAprovados(); window.__iaAssistentePermitido = await assistenteIAPermitido(); restaurarRascunhoSeExistir(); })();
+document.getElementById('view-new').addEventListener('input', salvarRascunho);
+document.getElementById('view-new').addEventListener('change', salvarRascunho);
 </script>
