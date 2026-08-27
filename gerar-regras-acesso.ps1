@@ -148,7 +148,7 @@ Bul "Admin - papel de administracao do sistema, atribuido manualmente por quem j
 
 H2 "3.1 Acoes exclusivas de Admin"
 P "Somente usuarios com papel Admin podem:"
-Bul "Acessar a pagina de Administracao (sempre exclusiva a Admin) e definir quais papeis podem ver o Painel Executivo, o Relatorio de Situacao e o Relatorio de Entregas (ver 3.4)."
+Bul "Acessar a pagina de Administracao (sempre exclusiva a Admin) e definir quais papeis podem ver o Painel Executivo, o Relatorio de Resultados, o Relatorio de Situacao e o Relatorio de Entregas (ver 3.4)."
 Bul "Alterar o papel de outros usuarios."
 Bul "Adicionar ou remover membros da equipe de um projeto."
 Bul "Ativar/desativar as opcoes de `"sem login`" (Solicitacao de Demanda e Ata de Reuniao)."
@@ -179,11 +179,11 @@ P "Limitacao conhecida: os tres formularios que sao documentos unicos e comparti
 P "Controle de acesso (Row Level Security no Supabase): remover um perfil e uma acao restrita por politica `"perfis_delete_admin`" a usuarios com papel Admin - qualquer tentativa de exclusao por outro papel e recusada pelo proprio banco de dados, mesmo que alguem tente contornar a interface."
 P "Remover aqui apaga apenas o perfil (papel, nome, telefone) do sistema de gestao de projetos - a pessoa continua podendo fazer login depois; se fizer, um perfil novo e criado do zero, com o papel padrao Solicitante."
 
-H2 "3.4 Restricao por papel no Painel Executivo e nos dois relatorios"
-P "Tres paginas tem sua visibilidade controlada por uma lista de papeis, definida pelo Admin na aba Configuracoes da Administracao: Painel Executivo, Relatorio de Situacao de Projetos e Relatorio de Entregas e Beneficios. Para cada uma dessas paginas, o Admin marca (com caixas de selecao, podendo marcar mais de um papel) quais papeis conseguem abri-la; quem tem um papel fora da lista ve a mensagem `"Acesso restrito`" ao tentar acessar."
-Bul "Painel Executivo comeca configurado apenas para Admin, mantendo o comportamento original da pagina."
+H2 "3.4 Restricao por papel no Painel Executivo, no Relatorio de Resultados e nos dois relatorios finais"
+P "Quatro paginas tem sua visibilidade controlada por uma lista de papeis, definida pelo Admin na aba Configuracoes da Administracao: Painel Executivo, Relatorio de Resultados, Relatorio de Situacao de Projetos e Relatorio de Entregas e Beneficios. Para cada uma dessas paginas, o Admin marca (com caixas de selecao, podendo marcar mais de um papel) quais papeis conseguem abri-la; quem tem um papel fora da lista ve a mensagem `"Acesso restrito`" ao tentar acessar."
+Bul "Painel Executivo e Relatorio de Resultados comecam configurados apenas para Admin, mantendo o padrao mais restritivo das duas paginas de gestao."
 Bul "Relatorio de Situacao e Relatorio de Entregas comecam configurados para todos os papeis, mantendo o comportamento original (acesso livre a qualquer usuario autenticado) ate que o Admin decida restringir."
-P "Importante: um usuario com papel Admin sempre consegue acessar as tres paginas, mesmo que o papel Admin seja removido da lista por engano - essa trava evita que o proprio Admin fique bloqueado sem ter como reverter a configuracao."
+P "Importante: um usuario com papel Admin sempre consegue acessar as quatro paginas, mesmo que o papel Admin seja removido da lista por engano - essa trava evita que o proprio Admin fique bloqueado sem ter como reverter a configuracao."
 
 H2 "3.5 Importacao de transcricao por IA (Ata de Reuniao)"
 P "A Ata de Reuniao pode preencher automaticamente pauta, participantes, resumo, encaminhamentos e entraves a partir de uma transcricao de reuniao colada pelo usuario, analisada por IA (Claude, via uma Supabase Edge Function - a chave da API fica guardada no servidor, nunca exposta no navegador)."
@@ -308,6 +308,7 @@ $rows = @(
   @("Relatorio de Entregas","Sim (por papel)","Nao","Gate 2 (Admin)"),
   @("Administracao","Sim (so Admin acessa)","-","-"),
   @("Painel Executivo","Sim (por papel, padrao Admin)","-","-"),
+  @("Relatorio de Resultados","Sim (por papel, padrao Admin)","-","-"),
   @("Validador de Projetos","Nao (so p/ vincular projeto)","Nao","-")
 )
 
