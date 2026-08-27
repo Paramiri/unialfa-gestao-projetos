@@ -86,12 +86,15 @@
           <a class="nav-item" href="14 - validador-projetos.html" target="_blank" rel="noopener">
             <span class="tag">◈</span><span class="lbl">Validador de Projetos</span>
           </a>
-          <a class="nav-item" href="15 - central-ajuda.html?v=23" target="_blank" rel="noopener">
+          <a class="nav-item" href="15 - central-ajuda.html?v=24" target="_blank" rel="noopener">
             <span class="tag">?</span><span class="lbl">Central de Ajuda</span>
           </a>
           <div class="sidebar-section-label">Gestão</div>
           <a class="nav-item" href="16 - painel-executivo.html" target="_blank" rel="noopener">
             <span class="tag">▤</span><span class="lbl">Painel Executivo</span>
+          </a>
+          <a class="nav-item" href="17 - relatorio-resultados.html" target="_blank" rel="noopener">
+            <span class="tag">◆</span><span class="lbl">Relatório de Resultados</span>
           </a>
           <a class="nav-item" href="13 - administracao-usuarios.html" target="_blank" rel="noopener">
             <span class="tag">⚙</span><span class="lbl">Administração</span>

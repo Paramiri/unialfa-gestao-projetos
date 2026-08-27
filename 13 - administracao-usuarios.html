@@ -377,7 +377,7 @@ window.unialfaEquipe = {
         <h1>Administração de Usuários</h1>
         <p>Controle de acesso · Papéis e permissões · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=23#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=24#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
     </div>
   </div>
 
@@ -438,6 +438,11 @@ window.unialfaEquipe = {
       <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode ver o Painel Executivo</b>
       <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">Marque os papéis que podem abrir esta página. PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
       <div class="papeis-grupo" id="papeisPainelExecutivo" data-chave="papeis_painel_executivo"></div>
+    </div>
+    <div style="padding:20px 24px; border-top:1px solid var(--line)">
+      <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode ver o Relatório de Resultados</b>
+      <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">Marque os papéis que podem abrir esta página. PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
+      <div class="papeis-grupo" id="papeisRelatorioResultados" data-chave="papeis_relatorio_resultados"></div>
     </div>
     <div style="padding:20px 24px; border-top:1px solid var(--line)">
       <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode ver o Relatório de Situação de Projetos</b>
@@ -828,6 +833,7 @@ function showAba(aba){
     carregarConfigSemLogin('permitir_solicitacao_sem_login', 'toggleSemLogin');
     carregarConfigSemLogin('permitir_ata_sem_login', 'toggleAtaSemLogin');
     carregarConfigPapeis('papeis_painel_executivo', 'papeisPainelExecutivo');
+    carregarConfigPapeis('papeis_relatorio_resultados', 'papeisRelatorioResultados');
     carregarConfigPapeis('papeis_relatorio_situacao', 'papeisRelatorioSituacao');
     carregarConfigPapeis('papeis_relatorio_entregas', 'papeisRelatorioEntregas');
     carregarConfigPapeis('papeis_plano_comunicacao_editar', 'papeisPlanoComunicacao');
