@@ -80,6 +80,12 @@
   .tipo-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 
   @media (max-width:720px){.mkpi-row{grid-template-columns:1fr}}
+  @media print{
+    .auth-topbar,.refresh-bar,.doc-help{display:none !important}
+    body{background:#fff}
+    .wrap{max-width:none;padding:0}
+    .doc-head,.card,.mkpi{box-shadow:none;border-color:#ccc}
+  }
 </style>
 
 <!-- ==== AUTH GATE (HTML) ==== -->
@@ -371,7 +377,11 @@ function ensureAuthenticated(){
   <div id="painelBox" style="display:none">
     <div class="refresh-bar">
       <div style="font-size:11px;color:var(--muted)" id="atualizadoEm">Atualizado agora</div>
-      <button class="btn" onclick="carregarResultados()">↻ Atualizar</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="carregarResultados()">↻ Atualizar</button>
+        <button class="btn" onclick="exportarPDF()">🖨️ Exportar PDF</button>
+        <button class="btn" id="btnGerarPPTX" onclick="gerarApresentacaoPPTX()">⬇ Gerar Apresentação (PPTX)</button>
+      </div>
     </div>
 
     <div id="loadingBox" class="loading">Calculando indicadores…</div>
@@ -613,9 +623,178 @@ async function carregarResultados(){
     }).join('');
   }
 
-  document.getElementById('atualizadoEm').textContent = 'Atualizado em ' + new Date().toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  var atualizadoTexto = 'Atualizado em ' + new Date().toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('atualizadoEm').textContent = atualizadoTexto;
   document.getElementById('loadingBox').style.display = 'none';
   document.getElementById('conteudo').style.display = 'block';
+
+  // Estado consolidado, reaproveitado pela exportação em PPTX (mesmos números exibidos na tela).
+  function estadoIndicador(titulo, sub, pct, meta, nota, trend){
+    var sinal = calcularSinalizacao(pct, meta);
+    return { titulo:titulo, sub:sub, pct:pct, meta:meta, nota:nota, trend:trend, badge:sinal.label, cls:sinal.cls };
+  }
+  window.__resultadosState = {
+    atualizadoEm: atualizadoTexto,
+    indicadores: [
+      estadoIndicador('Marcos no prazo', 'Marcos ativos sem atraso, no portfólio', marcos?marcos.pct:null, metas.meta_marcos_no_prazo,
+        marcos ? (marcos.totalAtivos-marcos.atrasados)+' de '+marcos.totalAtivos+' marcos ativos sem atraso.' : 'Nenhum marco ativo no portfólio.', trendMarcos),
+      estadoIndicador('Projetos dentro do orçamento', 'Custo realizado x estimado no TAP', orc?orc.pct:null, metas.meta_orcamento_dentro,
+        orc ? orc.dentro+' de '+orc.avaliados+' projetos com custo realizado registrado.' : 'Nenhum projeto com custo realizado registrado ainda.', trendOrc),
+      estadoIndicador('Entraves resolvidos', 'Desde o último salvamento do relatório', entr?entr.pct:null, metas.meta_entraves_resolvidos,
+        entr ? entr.resolvidos+' de '+entr.total+' entraves que estavam abertos no último salvamento já foram resolvidos.'
+             : (snapAnterior ? 'Nenhum entrave estava aberto no último salvamento.' : 'Disponível a partir do próximo salvamento do Relatório de Situação.'), null),
+    ],
+    planoDeAcao: itens,
+  };
+}
+
+function toast(msg, ok){
+  var t = document.getElementById('toastMsg');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'toastMsg';
+    t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;padding:10px 18px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.18);transition:opacity .2s;pointer-events:none';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.background = (ok===false) ? '#FBE7EC' : '#E6F4EC';
+  t.style.color = (ok===false) ? '#9F1239' : '#1B7F4B';
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.style.opacity='0'; }, 3200);
+}
+
+function exportarPDF(){
+  window.print();
+}
+
+function carregarScript(src, nomeGlobal){
+  return new Promise(function(resolve, reject){
+    if(window[nomeGlobal]){ resolve(); return; }
+    var s = document.createElement('script');
+    s.src = src;
+    s.onload = function(){ resolve(); };
+    s.onerror = function(){ reject(new Error('Falha ao carregar '+src)); };
+    document.head.appendChild(s);
+  });
+}
+
+async function imagemParaDataUri(url){
+  try{
+    var r = await fetch(url);
+    var blob = await r.blob();
+    return await new Promise(function(resolve){
+      var reader = new FileReader();
+      reader.onloadend = function(){ resolve(reader.result); };
+      reader.readAsDataURL(blob);
+    });
+  }catch(e){ return null; }
+}
+
+var CORES_SINAL = { normal:'1B7F4B', atencao:'B45309', critico:'9F1239', indisponivel:'6A6A70' };
+
+async function gerarApresentacaoPPTX(){
+  var btn = document.getElementById('btnGerarPPTX');
+  var estado = window.__resultadosState;
+  if(!estado){ toast('Aguarde os indicadores carregarem antes de gerar a apresentação.', false); return; }
+  var textoOriginal = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Gerando…';
+  try{
+    await carregarScript('https://cdn.jsdelivr.net/npm/pptxgenjs@4.0.1/dist/pptxgen.bundle.js', 'PptxGenJS');
+    var logoDataUri = await imagemParaDataUri('icons/logo-alfa.png');
+
+    var pres = new window.PptxGenJS();
+    pres.layout = 'LAYOUT_WIDE';
+
+    var RED='B91D2E', INK='1A1A1A', MUTED='6A6A70', LINE='E4E4E7', SURF2='FAFAFB';
+
+    // ---- Slide 1: Capa ----
+    var s1 = pres.addSlide();
+    s1.background = { color: RED };
+    s1.addText('Relatório de\nResultados', { x:0.7, y:2.3, w:9, h:2.2, fontFace:'Arial', fontSize:44, bold:true, color:'FFFFFF', valign:'top' });
+    s1.addText('Reunião de Resultados · Indicadores estratégicos e plano de ação', { x:0.7, y:4.35, w:10, h:0.6, fontFace:'Arial', fontSize:18, bold:true, color:'FFFFFF' });
+    if(logoDataUri){
+      s1.addShape('roundRect', { x:0.7, y:6.6, w:1.15, h:0.62, rectRadius:0.06, fill:{color:'FFFFFF'}, line:{type:'none'} });
+      s1.addImage({ data: logoDataUri, x:0.78, y:6.68, w:1.0, h:0.46 });
+    }
+    s1.addText('GRUPO JOSÉ ALVES', { x:2.05, y:6.75, w:4, h:0.4, fontFace:'Arial', fontSize:11, bold:true, color:'FFFFFF', charSpacing:1 });
+
+    // ---- Slide 2: Indicadores estratégicos ----
+    var s2 = pres.addSlide();
+    s2.background = { color:'FFFFFF' };
+    s2.addText('Indicadores estratégicos', { x:0.5, y:0.35, w:12, h:0.7, fontFace:'Arial', fontSize:30, bold:true, color:INK });
+    s2.addText('Indicadores estratégicos do portfólio de projetos, atualizados em tempo real a partir do Relatório de Situação.', { x:0.5, y:1.05, w:12.3, h:0.5, fontFace:'Arial', fontSize:13, color:MUTED });
+
+    var cardW=3.95, gap=0.25, startX=0.5, cardY=1.75, cardH=4.9;
+    estado.indicadores.forEach(function(ind, i){
+      var x = startX + i*(cardW+gap);
+      var cor = CORES_SINAL[ind.cls] || MUTED;
+      s2.addShape('roundRect', { x:x, y:cardY, w:cardW, h:cardH, rectRadius:0.08, fill:{color:SURF2}, line:{color:LINE, width:0.75} });
+      s2.addText('INDICADOR '+(i+1), { x:x+0.25, y:cardY+0.2, w:2.2, h:0.35, fontFace:'Arial', fontSize:10, bold:true, color:MUTED, charSpacing:1 });
+      s2.addShape('roundRect', { x:x+cardW-1.6, y:cardY+0.18, w:1.35, h:0.35, rectRadius:0.17, fill:{color:cor} });
+      s2.addText((ind.badge||'').toUpperCase(), { x:x+cardW-1.6, y:cardY+0.18, w:1.35, h:0.35, align:'center', valign:'middle', fontFace:'Arial', fontSize:9, bold:true, color:'FFFFFF' });
+      s2.addText(ind.titulo, { x:x+0.25, y:cardY+0.65, w:cardW-0.5, h:0.7, fontFace:'Arial', fontSize:15, bold:true, color:INK });
+      s2.addText(ind.sub, { x:x+0.25, y:cardY+1.3, w:cardW-0.5, h:0.4, fontFace:'Arial', italic:true, fontSize:10.5, color:MUTED });
+      var valorTxt = ind.pct==null ? '—' : ind.pct+'%';
+      s2.addText(valorTxt, { x:x+0.25, y:cardY+1.75, w:2.0, h:0.75, fontFace:'Arial', fontSize:32, bold:true, color: ind.pct==null?MUTED:cor });
+      var metaTxt = ind.meta==null ? 'Meta\nnão definida' : ('Meta\n≥ '+ind.meta+'%');
+      s2.addText(metaTxt, { x:x+cardW-1.5, y:cardY+1.85, w:1.25, h:0.6, align:'right', fontFace:'Arial', fontSize:10, color:MUTED, lineSpacingMultiple:1.1 });
+      var barY=cardY+2.65, barW=cardW-0.5;
+      s2.addShape('roundRect', { x:x+0.25, y:barY, w:barW, h:0.12, rectRadius:0.06, fill:{color:'F1F2F4'}, line:{type:'none'} });
+      var fillW = Math.max(0.03, barW*Math.min(ind.pct||0,100)/100);
+      s2.addShape('roundRect', { x:x+0.25, y:barY, w:fillW, h:0.12, rectRadius:0.06, fill:{color: ind.pct==null?'C9CACC':cor}, line:{type:'none'} });
+      if(ind.meta!=null){
+        var markX = x+0.25 + barW*Math.min(ind.meta,100)/100;
+        s2.addShape('rect', { x:markX-0.012, y:barY-0.05, w:0.025, h:0.22, fill:{color:INK}, line:{type:'none'} });
+      }
+      if(ind.trend){
+        s2.addText('Tendência: '+ind.trend, { x:x+0.25, y:barY+0.28, w:cardW-0.5, h:0.35, fontFace:'Arial', fontSize:10.5, bold:true, color:INK });
+      }
+      s2.addText(ind.nota, { x:x+0.25, y:cardY+cardH-0.95, w:cardW-0.5, h:0.8, fontFace:'Arial', fontSize:9.5, color:MUTED });
+    });
+    s2.addShape('rect', { x:0, y:7.15, w:13.33, h:0.35, fill:{color:RED}, line:{type:'none'} });
+    if(logoDataUri) s2.addImage({ data: logoDataUri, x:12.3, y:7.18, w:0.85, h:0.29 });
+
+    // ---- Slide 3: Plano de ação ----
+    var s3 = pres.addSlide();
+    s3.background = { color:'FFFFFF' };
+    s3.addText('Plano de ação', { x:0.5, y:0.35, w:12, h:0.7, fontFace:'Arial', fontSize:30, bold:true, color:INK });
+    s3.addText('Ações para os entraves e encaminhamentos em aberto no Relatório de Situação.', { x:0.5, y:1.05, w:12.3, h:0.5, fontFace:'Arial', fontSize:13, color:MUTED });
+
+    var linhasTabela = [[
+      {text:'O quê?', options:{bold:true, color:'FFFFFF', fill:{color:INK}}},
+      {text:'Por quê?', options:{bold:true, color:'FFFFFF', fill:{color:INK}}},
+      {text:'Quem?', options:{bold:true, color:'FFFFFF', fill:{color:INK}}},
+      {text:'Quando?', options:{bold:true, color:'FFFFFF', fill:{color:INK}}},
+      {text:'Resultado esperado', options:{bold:true, color:'FFFFFF', fill:{color:INK}}},
+    ]];
+    if(!estado.planoDeAcao.length){
+      linhasTabela.push([{text:'Nenhum entrave ou encaminhamento em aberto no momento.', options:{colspan:5, align:'center', color:MUTED, fill:{color:'FFFFFF'}}}]);
+    } else {
+      estado.planoDeAcao.forEach(function(it, i){
+        var bg = i%2===0 ? 'FFFFFF' : SURF2;
+        linhasTabela.push([
+          {text:(it.tipo==='Entrave'?'ENTRAVE\n':'ENCAMINHAMENTO\n')+(it.desc||'—'), options:{fill:{color:bg}, fontSize:10.5}},
+          {text: it.porque||'—', options:{fill:{color:bg}, fontSize:10.5}},
+          {text: it.resp||'—', options:{fill:{color:bg}, fontSize:10.5}},
+          {text: it.prazo||'—', options:{fill:{color:bg}, fontSize:10.5}},
+          {text: it.resultadoEsperado||'—', options:{fill:{color:bg}, fontSize:10.5}},
+        ]);
+      });
+    }
+    s3.addTable(linhasTabela, { x:0.5, y:1.75, w:12.3, colW:[2.6,2.9,1.8,1.5,3.5], border:{type:'solid', color:LINE, pt:0.75}, fontFace:'Arial', valign:'top', margin:[6,6,6,6] });
+    s3.addShape('rect', { x:0, y:7.15, w:13.33, h:0.35, fill:{color:RED}, line:{type:'none'} });
+    if(logoDataUri) s3.addImage({ data: logoDataUri, x:12.3, y:7.18, w:0.85, h:0.29 });
+
+    var nomeArquivo = 'Relatorio de Resultados - '+new Date().toISOString().slice(0,10)+'.pptx';
+    await pres.writeFile({ fileName: nomeArquivo });
+    toast('Apresentação gerada em PPTX');
+  }catch(e){
+    console.error(e);
+    toast('Não foi possível gerar a apresentação. Tente novamente.', false);
+  }finally{
+    btn.disabled = false; btn.textContent = textoOriginal;
+  }
 }
 
 async function papelPermitido(chave){
