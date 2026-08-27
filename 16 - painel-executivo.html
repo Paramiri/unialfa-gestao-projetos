@@ -34,10 +34,13 @@
   .kpi.warn::before{background:var(--warn)}
   .kpi.blue::before{background:var(--blue)}
   .kpi.bad::before{background:var(--bad)}
+  .kpi.gap::before{background:var(--muted)}
   .kpi-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
   .kpi-value{font-size:30px;font-weight:900;line-height:1;color:var(--ink)}
+  .kpi-value.dash{color:var(--muted);font-size:22px}
   .kpi-sub{font-size:11px;color:var(--muted);margin-top:6px;font-weight:500}
   .kpi-breakdown{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+  .kpi-note{margin-top:10px;font-size:10.5px;color:var(--muted);border-top:1px dashed var(--line-strong);padding-top:8px;line-height:1.5}
 
   .s-badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
   .s-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
@@ -360,6 +363,28 @@ function ensureAuthenticated(){
     <div id="loadingBox" class="loading">Carregando dados de todos os formulários…</div>
 
     <div id="conteudo" style="display:none">
+      <div class="sec-title">Reunião de Resultados (mensal)</div>
+      <div class="kpi-row">
+        <div class="kpi warn">
+          <div class="kpi-label">Marcos atrasados</div>
+          <div class="kpi-value" id="rr-marcos-atrasados">—</div>
+          <div class="kpi-sub" id="rr-marcos-sub">—</div>
+          <div class="kpi-note">Data-alvo já passou e o marco ainda não está Concluído/Cancelado.</div>
+        </div>
+        <div class="kpi gap">
+          <div class="kpi-label">Projetos dentro do orçamento</div>
+          <div class="kpi-value dash">—</div>
+          <div class="kpi-sub">indisponível — sem custo realizado registrado</div>
+          <div class="kpi-note">O sistema hoje só guarda custo estimado (TAP/Canvas), não custo realizado.</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Entraves em aberto</div>
+          <div class="kpi-value" id="rr-entraves">—</div>
+          <div class="kpi-sub">no portfólio, agora</div>
+          <div class="kpi-note">Contagem atual — ainda não é possível saber quantos foram resolvidos neste mês.</div>
+        </div>
+      </div>
+
       <div class="sec-title">Gates de aprovação</div>
       <div class="kpi-row" style="grid-template-columns:1fr 1fr">
         <div class="kpi warn" id="kpi-gate1">
@@ -459,6 +484,16 @@ async function buscarDocumentoUnico(key){
   }catch(e){ console.warn('Falha ao buscar '+key, e); return null; }
 }
 
+function parseBRDate(s){
+  if(!s) return null;
+  var m = String(s).trim().match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if(!m) return null;
+  var d=parseInt(m[1]), mo=parseInt(m[2]), y=m[3]; if(y.length===2) y='20'+y; y=parseInt(y);
+  if(mo<1||mo>12||d<1||d>31) return null;
+  var dt = new Date(y, mo-1, d);
+  return (isNaN(dt.getTime())||dt.getMonth()!==mo-1) ? null : dt;
+}
+
 function contarPorStatus(registros){
   var out = {};
   registros.forEach(function(rec){
@@ -516,6 +551,22 @@ async function carregarPainel(){
   document.getElementById('kpi-entraves').textContent = entraves.filter(function(x){ return x.status === 'Aberto'; }).length;
   document.getElementById('kpi-encaminhamentos').textContent = encaminhamentos.filter(function(x){ return x.status === 'Aberto'; }).length;
   document.getElementById('kpi-resultados').textContent = resultados.length;
+
+  // 4.5) Reunião de Resultados (mensal) — Fase 1: só o que já dá pra afirmar com o dado de hoje
+  var projetosRelsit = (relsit && relsit.projetos) || [];
+  var totalMarcosAtivos = 0, marcosAtrasados = 0, hoje = new Date();
+  projetosRelsit.forEach(function(p){
+    if(['Concluído','Cancelado'].includes(p.status)) return;
+    (p.marcos||[]).forEach(function(m){
+      if(['Concluído','Cancelado'].includes(m.status)) return;
+      totalMarcosAtivos++;
+      var dt = parseBRDate(m.data);
+      if(dt && hoje > dt) marcosAtrasados++;
+    });
+  });
+  document.getElementById('rr-marcos-atrasados').textContent = marcosAtrasados;
+  document.getElementById('rr-marcos-sub').textContent = 'de ' + totalMarcosAtivos + ' marcos ativos no portfólio';
+  document.getElementById('rr-entraves').textContent = entraves.filter(function(x){ return x.status === 'Aberto'; }).length;
 
   // 5) Portfólio de projetos (tabela compartilhada `projetos`)
   var rProj = await fetch(unialfaAuth.REST_BASE + '/projetos?select=status', { headers: unialfaAuth.authHeaders() });
