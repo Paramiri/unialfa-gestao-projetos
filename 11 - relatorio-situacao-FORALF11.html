@@ -1024,11 +1024,16 @@ function showView(v){
 }
 
 /* ── storage ── */
+function novoId(){ return 'g_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8); }
 async function loadData(){
   try{const r=await window.storage.get(KEY);if(r&&r.value){data=JSON.parse(r.value);}}catch(e){console.warn(e);}
   if(!data.entraves) data.entraves=[];
   if(!data.encaminhamentos) data.encaminhamentos=[];
   if(!data.resultados) data.resultados=[];
+  // Identidade estável (id) para comparar o mesmo item entre versões salvas (Relatório de Resultados).
+  // Backfill: itens salvos antes desta mudança ainda não têm id.
+  data.entraves.forEach(function(it){ if(!it.id) it.id=novoId(); });
+  data.encaminhamentos.forEach(function(it){ if(!it.id) it.id=novoId(); });
 }
 async function saveData(){
   try{await window.storage.set(KEY,JSON.stringify(data));}catch(e){toast(mensagemErroSalvar(e));}
@@ -1294,7 +1299,7 @@ function renderEntravesEditor(){
 }
 function addEntrave(){
   if(!data.entraves) data.entraves=[];
-  data.entraves.push({desc:'',resp:'',prazo:'',status:'Aberto',porque:'',resultadoEsperado:''});
+  data.entraves.push({id:novoId(),desc:'',resp:'',prazo:'',status:'Aberto',porque:'',resultadoEsperado:''});
   renderEntravesEditor();
 }
 function removeEntrave(i){data.entraves.splice(i,1);renderEntravesEditor();}
@@ -1308,7 +1313,7 @@ function renderEncaminhamentosEditor(){
 }
 function addEncaminhamento(){
   if(!data.encaminhamentos) data.encaminhamentos=[];
-  data.encaminhamentos.push({desc:'',resp:'',prazo:'',status:'Aberto',porque:'',resultadoEsperado:''});
+  data.encaminhamentos.push({id:novoId(),desc:'',resp:'',prazo:'',status:'Aberto',porque:'',resultadoEsperado:''});
   renderEncaminhamentosEditor();
 }
 function removeEncaminhamento(i){data.encaminhamentos.splice(i,1);renderEncaminhamentosEditor();}

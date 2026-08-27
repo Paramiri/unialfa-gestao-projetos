@@ -27,19 +27,33 @@
   .doc-help:hover{background:rgba(255,255,255,.32)}
 
   .sec-title{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
-  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:6px}
-  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
-  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red)}
-  .kpi.ok::before{background:var(--ok)}
-  .kpi.warn::before{background:var(--warn)}
-  .kpi.blue::before{background:var(--blue)}
-  .kpi.bad::before{background:var(--bad)}
-  .kpi.gap::before{background:var(--muted)}
-  .kpi-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-  .kpi-value{font-size:30px;font-weight:900;line-height:1;color:var(--ink)}
-  .kpi-value.dash{color:var(--muted);font-size:22px}
-  .kpi-sub{font-size:11px;color:var(--muted);margin-top:6px;font-weight:500}
-  .kpi-note{margin-top:10px;font-size:10.5px;color:var(--muted);border-top:1px dashed var(--line-strong);padding-top:8px;line-height:1.5}
+
+  .mkpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:6px}
+  .mkpi{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
+  .mkpi-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .mkpi-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .badge-pill{display:inline-flex;align-items:center;gap:6px;font-size:9.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:4px 10px;border-radius:20px;white-space:nowrap;flex:none}
+  .badge-pill.normal{background:var(--ok-soft);color:var(--ok)}
+  .badge-pill.atencao{background:var(--warn-soft);color:var(--warn)}
+  .badge-pill.critico{background:var(--bad-soft);color:var(--bad)}
+  .badge-pill.indisponivel{background:var(--surface-2);color:var(--muted);border:1px solid var(--line-strong)}
+  .mkpi-title{font-size:13.5px;font-weight:800;margin:2px 0 10px}
+  .mkpi-value-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
+  .mkpi-value{font-size:28px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .mkpi-value.dash{color:var(--muted);font-size:22px}
+  .mkpi-value.normal{color:var(--ok)}
+  .mkpi-value.atencao{color:var(--warn)}
+  .mkpi-value.critico{color:var(--bad)}
+  .mkpi-meta{font-size:10px;color:var(--muted);text-align:right;line-height:1.3}
+  .mkpi-bar{position:relative;height:7px;border-radius:20px;background:var(--surface-2);margin-bottom:10px}
+  .mkpi-bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:20px;background:var(--muted)}
+  .mkpi-bar-fill.normal{background:var(--ok)}
+  .mkpi-bar-fill.atencao{background:var(--warn)}
+  .mkpi-bar-fill.critico{background:var(--bad)}
+  .mkpi-bar-mark{position:absolute;top:-3px;width:2px;height:13px;background:var(--ink)}
+  .mkpi-sub{font-size:11px;color:var(--muted);margin-bottom:8px}
+  .mkpi-trend{font-size:11px;color:var(--ink);font-weight:600;margin-bottom:8px;font-variant-numeric:tabular-nums}
+  .mkpi-note{margin-top:8px;font-size:10.5px;color:var(--muted);border-top:1px dashed var(--line-strong);padding-top:8px;line-height:1.5}
 
   .s-badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
   .s-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
@@ -65,7 +79,7 @@
   .loading{padding:40px 24px;text-align:center;color:var(--muted);font-size:13px}
   .tipo-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 
-  @media (max-width:720px){.kpi-row{grid-template-columns:1fr}}
+  @media (max-width:720px){.mkpi-row{grid-template-columns:1fr}}
 </style>
 
 <!-- ==== AUTH GATE (HTML) ==== -->
@@ -364,24 +378,33 @@ function ensureAuthenticated(){
 
     <div id="conteudo" style="display:none">
       <div class="sec-title">Indicadores estratégicos</div>
-      <div class="kpi-row">
-        <div class="kpi warn">
-          <div class="kpi-label">Marcos atrasados</div>
-          <div class="kpi-value" id="kpi-marcos-atrasados">—</div>
-          <div class="kpi-sub" id="kpi-marcos-sub">—</div>
-          <div class="kpi-note">Data-alvo já passou e o marco ainda não está Concluído/Cancelado.</div>
+      <div class="mkpi-row">
+        <div class="mkpi" id="ind-marcos-card">
+          <div class="mkpi-top"><span class="mkpi-label">Indicador 1</span><span class="badge-pill" id="ind-marcos-badge">—</span></div>
+          <div class="mkpi-title">Marcos no prazo</div>
+          <div class="mkpi-sub">Marcos ativos sem atraso, no portfólio</div>
+          <div class="mkpi-value-row"><span class="mkpi-value" id="ind-marcos-valor">—</span><span class="mkpi-meta" id="ind-marcos-meta">Meta<br>—</span></div>
+          <div class="mkpi-bar"><div class="mkpi-bar-fill" id="ind-marcos-bar" style="width:0%"></div><div class="mkpi-bar-mark" id="ind-marcos-mark" style="display:none"></div></div>
+          <div class="mkpi-trend" id="ind-marcos-trend" style="display:none"></div>
+          <div class="mkpi-note" id="ind-marcos-nota">—</div>
         </div>
-        <div class="kpi" id="kpi-orcamento-card">
-          <div class="kpi-label">Projetos dentro do orçamento</div>
-          <div class="kpi-value" id="kpi-orcamento">—</div>
-          <div class="kpi-sub" id="kpi-orcamento-sub">—</div>
-          <div class="kpi-note" id="kpi-orcamento-nota">Compara o custo realizado (Relatório de Situação) com o custo estimado no TAP, por projeto.</div>
+        <div class="mkpi" id="ind-orcamento-card">
+          <div class="mkpi-top"><span class="mkpi-label">Indicador 2</span><span class="badge-pill" id="ind-orcamento-badge">—</span></div>
+          <div class="mkpi-title">Projetos dentro do orçamento</div>
+          <div class="mkpi-sub">Custo realizado x estimado no TAP</div>
+          <div class="mkpi-value-row"><span class="mkpi-value" id="ind-orcamento-valor">—</span><span class="mkpi-meta" id="ind-orcamento-meta">Meta<br>—</span></div>
+          <div class="mkpi-bar"><div class="mkpi-bar-fill" id="ind-orcamento-bar" style="width:0%"></div><div class="mkpi-bar-mark" id="ind-orcamento-mark" style="display:none"></div></div>
+          <div class="mkpi-trend" id="ind-orcamento-trend" style="display:none"></div>
+          <div class="mkpi-note" id="ind-orcamento-nota">—</div>
         </div>
-        <div class="kpi">
-          <div class="kpi-label">Entraves em aberto</div>
-          <div class="kpi-value" id="kpi-entraves">—</div>
-          <div class="kpi-sub">no portfólio, agora</div>
-          <div class="kpi-note">Contagem atual — ainda não é possível saber quantos foram resolvidos neste mês.</div>
+        <div class="mkpi" id="ind-entraves-card">
+          <div class="mkpi-top"><span class="mkpi-label">Indicador 3</span><span class="badge-pill" id="ind-entraves-badge">—</span></div>
+          <div class="mkpi-title">Entraves resolvidos</div>
+          <div class="mkpi-sub">Desde o último salvamento do relatório</div>
+          <div class="mkpi-value-row"><span class="mkpi-value" id="ind-entraves-valor">—</span><span class="mkpi-meta" id="ind-entraves-meta">Meta<br>—</span></div>
+          <div class="mkpi-bar"><div class="mkpi-bar-fill" id="ind-entraves-bar" style="width:0%"></div><div class="mkpi-bar-mark" id="ind-entraves-mark" style="display:none"></div></div>
+          <div class="mkpi-trend" id="ind-entraves-trend" style="display:none"></div>
+          <div class="mkpi-note" id="ind-entraves-nota">—</div>
         </div>
       </div>
 
@@ -435,59 +458,143 @@ async function buscarDocumentoUnico(key){
   }catch(e){ console.warn('Falha ao buscar '+key, e); return null; }
 }
 
-async function carregarResultados(){
-  document.getElementById('conteudo').style.display = 'none';
-  document.getElementById('loadingBox').style.display = 'block';
-
-  var relsit = await buscarDocumentoUnico('relsit_data');
-  var projetos = (relsit && relsit.projetos) || [];
-  var entraves = (relsit && relsit.entraves) || [];
-  var encaminhamentos = (relsit && relsit.encaminhamentos) || [];
-
-  // Marcos atrasados: data-alvo já passou e o marco ainda não está Concluído/Cancelado
-  var totalMarcosAtivos = 0, marcosAtrasados = 0, hoje = new Date();
-  projetos.forEach(function(p){
+/* ---- indicadores: cálculo, meta e sinalização (Normal/Atenção/Crítico) ---- */
+function pctMarcosNoPrazo(relsitData, refDate){
+  var totalAtivos=0, atrasados=0;
+  ((relsitData && relsitData.projetos)||[]).forEach(function(p){
     if(['Concluído','Cancelado'].includes(p.status)) return;
     (p.marcos||[]).forEach(function(m){
       if(['Concluído','Cancelado'].includes(m.status)) return;
-      totalMarcosAtivos++;
+      totalAtivos++;
       var dt = parseBRDate(m.data);
-      if(dt && hoje > dt) marcosAtrasados++;
+      if(dt && refDate > dt) atrasados++;
     });
   });
-  document.getElementById('kpi-marcos-atrasados').textContent = marcosAtrasados;
-  document.getElementById('kpi-marcos-sub').textContent = 'de ' + totalMarcosAtivos + ' marcos ativos no portfólio';
-
-  // Projetos dentro do orçamento: custo realizado (aqui) x custo estimado (TAP), só para projetos com dado nos dois lados
-  var tapDocs = await listarValoresPorPrefixo('tap:');
+  if(totalAtivos===0) return null;
+  return { pct: Math.round(((totalAtivos-atrasados)/totalAtivos)*100), totalAtivos: totalAtivos, atrasados: atrasados };
+}
+function pctOrcamentoDentro(relsitData, tapDocs){
   function estimadoPorProjeto(projetoId){
     var tap = tapDocs.find(function(t){ return t.projetoId===projetoId; });
     if(!tap || !Array.isArray(tap.custos) || !tap.custos.length) return null;
     return tap.custos.reduce(function(s,c){ return s+parseBRL(c.valor); },0);
   }
-  var avaliados=0, dentroOrcamento=0;
-  projetos.forEach(function(p){
+  var avaliados=0, dentro=0;
+  ((relsitData && relsitData.projetos)||[]).forEach(function(p){
     if(!p.projetoId || !Array.isArray(p.custosRealizados) || !p.custosRealizados.length) return;
     var estimado = estimadoPorProjeto(p.projetoId);
     if(estimado==null || estimado<=0) return;
     var realizado = p.custosRealizados.reduce(function(s,c){ return s+parseBRL(c.valor); },0);
     avaliados++;
-    if(realizado<=estimado) dentroOrcamento++;
+    if(realizado<=estimado) dentro++;
   });
-  var orcEl=document.getElementById('kpi-orcamento'), orcSubEl=document.getElementById('kpi-orcamento-sub'), orcCard=document.getElementById('kpi-orcamento-card');
-  if(avaliados>0){
-    orcEl.textContent = dentroOrcamento + ' de ' + avaliados;
-    orcEl.className='kpi-value';
-    orcSubEl.textContent = 'projetos com custo realizado registrado';
-    orcCard.className='kpi ' + (dentroOrcamento===avaliados?'ok':'warn');
-  } else {
-    orcEl.textContent = '—';
-    orcEl.className='kpi-value dash';
-    orcSubEl.textContent = 'nenhum projeto com custo realizado registrado ainda';
-    orcCard.className='kpi gap';
-  }
+  if(avaliados===0) return null;
+  return { pct: Math.round((dentro/avaliados)*100), avaliados: avaliados, dentro: dentro };
+}
+function pctEntravesResolvidos(entravesAtual, entravesAnterior){
+  if(!entravesAnterior) return null;
+  var estavamAbertos = entravesAnterior.filter(function(e){ return e.status==='Aberto'; });
+  if(!estavamAbertos.length) return null;
+  var resolvidos = 0;
+  estavamAbertos.forEach(function(eAnt){
+    var atual = entravesAtual.find(function(eAtu){
+      if(eAnt.id && eAtu.id) return eAnt.id===eAtu.id;
+      return eAnt.desc===eAtu.desc;
+    });
+    if(atual && atual.status==='Resolvido') resolvidos++;
+  });
+  return { pct: Math.round((resolvidos/estavamAbertos.length)*100), resolvidos: resolvidos, total: estavamAbertos.length };
+}
+function montarTendencia(pcts){
+  var validos = pcts.filter(function(p){ return p!=null; });
+  if(validos.length<2) return null;
+  return validos.map(function(p){ return p+'%'; }).join(' → ');
+}
+async function buscarMetas(){
+  var r = await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=in.(meta_marcos_no_prazo,meta_orcamento_dentro,meta_entraves_resolvidos)&select=chave,valor', { headers: unialfaAuth.authHeaders() });
+  var rows = r.ok ? await r.json() : [];
+  var out = {};
+  rows.forEach(function(x){ out[x.chave] = (x.valor===null||x.valor===undefined) ? null : Number(x.valor); });
+  return out;
+}
+async function buscarSnapshotsRelsit(){
+  var snaps = await listarValoresPorPrefixo('relsit_hist:');
+  snaps.sort(function(a,b){ return new Date(a.savedAt) - new Date(b.savedAt); });
+  return snaps;
+}
+function calcularSinalizacao(pct, meta){
+  if(meta==null) return {label:'Meta não definida', cls:'indisponivel'};
+  if(pct==null) return {label:'Indisponível', cls:'indisponivel'};
+  var gap = meta - pct;
+  if(gap<=0) return {label:'Normal', cls:'normal'};
+  if(gap<=15) return {label:'Atenção', cls:'atencao'};
+  return {label:'Crítico', cls:'critico'};
+}
+function renderIndicador(prefixo, pct, meta, notaTexto, trendTexto){
+  var sinal = calcularSinalizacao(pct, meta);
+  var badgeEl = document.getElementById(prefixo+'-badge');
+  badgeEl.textContent = sinal.label;
+  badgeEl.className = 'badge-pill '+sinal.cls;
+  var valorEl = document.getElementById(prefixo+'-valor');
+  valorEl.textContent = pct==null ? '—' : pct+'%';
+  valorEl.className = 'mkpi-value '+(pct==null?'dash':sinal.cls);
+  var metaEl = document.getElementById(prefixo+'-meta');
+  metaEl.innerHTML = meta==null ? 'Meta<br>não definida' : ('Meta<br>≥ '+meta+'%');
+  var barEl = document.getElementById(prefixo+'-bar');
+  barEl.style.width = (pct==null?0:Math.min(pct,100))+'%';
+  barEl.className = 'mkpi-bar-fill '+(pct==null?'':sinal.cls);
+  var markEl = document.getElementById(prefixo+'-mark');
+  if(meta!=null){ markEl.style.display='block'; markEl.style.left=Math.min(meta,100)+'%'; } else { markEl.style.display='none'; }
+  var trendEl = document.getElementById(prefixo+'-trend');
+  if(trendTexto){ trendEl.style.display='block'; trendEl.textContent='Tendência: '+trendTexto; } else { trendEl.style.display='none'; }
+  document.getElementById(prefixo+'-nota').textContent = notaTexto;
+}
 
-  document.getElementById('kpi-entraves').textContent = entraves.filter(function(x){ return x.status === 'Aberto'; }).length;
+async function carregarResultados(){
+  document.getElementById('conteudo').style.display = 'none';
+  document.getElementById('loadingBox').style.display = 'block';
+
+  var relsit = await buscarDocumentoUnico('relsit_data') || {};
+  var projetos = relsit.projetos || [];
+  var entraves = relsit.entraves || [];
+  var encaminhamentos = relsit.encaminhamentos || [];
+  var tapDocs = await listarValoresPorPrefixo('tap:');
+  var metas = await buscarMetas();
+  var snaps = await buscarSnapshotsRelsit(); // versões salvas anteriormente, mais antiga → mais recente
+  // O salvamento mais recente reflete o mesmo estado do relsit_data atual (foi ele quem o gerou) —
+  // para a tendência, os pontos históricos são os salvamentos ANTERIORES a esse último, com o valor
+  // atual (ao vivo) como o ponto mais recente da série.
+  var snapsHistoricos = snaps.slice(0, -1);
+  var hoje = new Date();
+
+  // ---- Indicador 1: Marcos no prazo ----
+  var marcos = pctMarcosNoPrazo(relsit, hoje);
+  var trendMarcos = montarTendencia(
+    snapsHistoricos.slice(-3).map(function(s){ var r=pctMarcosNoPrazo(s.data, new Date(s.savedAt)); return r?r.pct:null; })
+      .concat([marcos?marcos.pct:null])
+  );
+  renderIndicador('ind-marcos', marcos?marcos.pct:null, metas.meta_marcos_no_prazo,
+    marcos ? (marcos.totalAtivos-marcos.atrasados)+' de '+marcos.totalAtivos+' marcos ativos sem atraso.' : 'Nenhum marco ativo no portfólio.',
+    trendMarcos);
+
+  // ---- Indicador 2: Projetos dentro do orçamento ----
+  var orc = pctOrcamentoDentro(relsit, tapDocs);
+  var trendOrc = montarTendencia(
+    snapsHistoricos.slice(-3).map(function(s){ var r=pctOrcamentoDentro(s.data, tapDocs); return r?r.pct:null; })
+      .concat([orc?orc.pct:null])
+  );
+  renderIndicador('ind-orcamento', orc?orc.pct:null, metas.meta_orcamento_dentro,
+    orc ? orc.dentro+' de '+orc.avaliados+' projetos com custo realizado registrado.' : 'Nenhum projeto com custo realizado registrado ainda.',
+    trendOrc);
+
+  // ---- Indicador 3: Entraves resolvidos (desde o último salvamento) ----
+  var snapAnterior = snapsHistoricos.length ? snapsHistoricos[snapsHistoricos.length-1] : null;
+  var entravesAnt = snapAnterior ? (snapAnterior.data.entraves||[]) : null;
+  var entr = pctEntravesResolvidos(entraves, entravesAnt);
+  renderIndicador('ind-entraves', entr?entr.pct:null, metas.meta_entraves_resolvidos,
+    entr ? entr.resolvidos+' de '+entr.total+' entraves que estavam abertos no último salvamento já foram resolvidos.'
+         : (snapAnterior ? 'Nenhum entrave estava aberto no último salvamento.' : 'Disponível a partir do próximo salvamento do Relatório de Situação.'),
+    null);
 
   // Plano de ação: todo entrave/encaminhamento em aberto
   var itens = [];

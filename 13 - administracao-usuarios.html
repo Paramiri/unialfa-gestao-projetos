@@ -571,6 +571,25 @@ window.unialfaEquipe = {
       <b style="display:block; font-size:12.5px; margin-bottom:4px">Última execução da rotina</b>
       <span id="backupStatusExecucao" style="font-size:12.5px; color:var(--muted)">Carregando…</span>
     </div>
+    <div style="padding:20px 24px; border-top:1px solid var(--line)">
+      <b style="display:block; font-size:13px; margin-bottom:4px">Metas dos indicadores estratégicos (Relatório de Resultados)</b>
+      <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:12px">Define a meta de cada indicador da página Relatório de Resultados. Enquanto uma meta ficar vazia, o cartão correspondente mostra "Meta não definida" em vez de um selo de status.</span>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px 20px">
+        <div>
+          <label style="font-size:11.5px; font-weight:700; display:block; margin-bottom:5px">Marcos no prazo (%)</label>
+          <input type="number" min="0" max="100" id="metaMarcosNoPrazo" placeholder="ex: 90" onblur="salvarConfigTexto('meta_marcos_no_prazo','metaMarcosNoPrazo','Meta salva')" style="width:100%; padding:9px 11px; border:1px solid var(--line-strong,#D1D5DB); border-radius:7px; font-family:inherit; font-size:13px; color:var(--ink,#0F0F0F)">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:700; display:block; margin-bottom:5px">Projetos dentro do orçamento (%)</label>
+          <input type="number" min="0" max="100" id="metaOrcamentoDentro" placeholder="ex: 95" onblur="salvarConfigTexto('meta_orcamento_dentro','metaOrcamentoDentro','Meta salva')" style="width:100%; padding:9px 11px; border:1px solid var(--line-strong,#D1D5DB); border-radius:7px; font-family:inherit; font-size:13px; color:var(--ink,#0F0F0F)">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:700; display:block; margin-bottom:5px">Entraves resolvidos (%)</label>
+          <input type="number" min="0" max="100" id="metaEntravesResolvidos" placeholder="ex: 80" onblur="salvarConfigTexto('meta_entraves_resolvidos','metaEntravesResolvidos','Meta salva')" style="width:100%; padding:9px 11px; border:1px solid var(--line-strong,#D1D5DB); border-radius:7px; font-family:inherit; font-size:13px; color:var(--ink,#0F0F0F)">
+        </div>
+      </div>
+      <span style="font-size:11px; color:var(--muted); display:block; margin-top:10px">O selo de status (Normal/Atenção/Crítico) compara o realizado com a meta: Normal na meta ou acima, Atenção até 15 pontos percentuais abaixo, Crítico além disso.</span>
+    </div>
   </div>
 
   <div class="card" id="treino-card" style="display:none">
@@ -854,6 +873,9 @@ function showAba(aba){
     carregarConfigTexto('backup_emails_acesso_destino', 'backupEmailsAcesso');
     carregarConfigPapeis('papeis_backup_gerenciar', 'papeisBackup');
     carregarStatusBackup();
+    carregarConfigTexto('meta_marcos_no_prazo', 'metaMarcosNoPrazo');
+    carregarConfigTexto('meta_orcamento_dentro', 'metaOrcamentoDentro');
+    carregarConfigTexto('meta_entraves_resolvidos', 'metaEntravesResolvidos');
   }
 }
 
@@ -953,7 +975,7 @@ async function carregarConfigTexto(chave, elId){
   document.getElementById(elId).value = (v===null || v===undefined) ? '' : v;
 }
 
-async function salvarConfigTexto(chave, elId){
+async function salvarConfigTexto(chave, elId, msgSucesso){
   const el=document.getElementById(elId);
   let valor = el.value;
   if(el.type==='number'){ valor = valor==='' ? null : Number(valor); }
@@ -964,7 +986,7 @@ async function salvarConfigTexto(chave, elId){
       body: JSON.stringify({ valor: valor, atualizado_em: new Date().toISOString() })
     });
     if(!r.ok){ const eHttp=new Error('http '+r.status); eHttp.kind='http'; eHttp.status=r.status; throw eHttp; }
-    toast('Configuração de backup salva');
+    toast(msgSucesso || 'Configuração de backup salva');
   }catch(e){
     toast(mensagemErroSalvar(e,'salvar a configuração'), false);
     await carregarConfigTexto(chave, elId);
