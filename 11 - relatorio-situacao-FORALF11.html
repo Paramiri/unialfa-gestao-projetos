@@ -792,6 +792,25 @@ async function buscarCronogramaTAP(projetoId){
   }catch(e){}
   return [];
 }
+async function buscarCustosTAP(projetoId){
+  try{
+    const res=await window.storage.list('tap:');
+    const keys=(res&&res.keys)?res.keys:[];
+    for(const k of keys){
+      const r=await window.storage.get(k);
+      if(!r||!r.value) continue;
+      const tap=JSON.parse(r.value);
+      if(tap.projetoId!==projetoId) continue;
+      return Array.isArray(tap.custos)?tap.custos:[];
+    }
+  }catch(e){}
+  return [];
+}
+function parseBRL(s){
+  if(!s) return 0; s=String(s).replace(/[^\d.,-]/g,'').trim(); if(!s) return 0;
+  if(s.indexOf(',')>-1){ s=s.replace(/\./g,'').replace(',', '.'); }
+  const n=parseFloat(s); return isNaN(n)?0:n;
+}
 async function buscarDatasCronogramaTAP(projetoId){
   const marcos=await buscarCronogramaTAP(projetoId);
   if(!marcos.length) return null;
@@ -824,6 +843,8 @@ async function onProjRowProjetoSelect(i){
   document.getElementById('projRowHist-'+i).style.display='none';
   const importMarcosBtn=document.getElementById('importMarcosBtn-'+i);
   if(importMarcosBtn) importMarcosBtn.style.display=id?'inline-flex':'none';
+  const importCustosBtn=document.getElementById('importCustosBtn-'+i);
+  if(importCustosBtn) importCustosBtn.style.display=id?'inline-flex':'none';
   if(!id) return;
   const pa=projetosAprovados.find(x=>x.id===id);
   if(!pa) return;
@@ -1253,10 +1274,12 @@ function buildGovRow(item,idx,removeFn){
     <input style="flex:1;min-width:130px" placeholder="Responsável" value="${esc(item.resp||'')}">
     <input style="flex:1;min-width:110px" placeholder="Prazo dd/mm/aaaa" value="${esc(item.prazo||'')}">
     <select style="flex:1;min-width:120px">${GOV_STATUS_OPTS.map(s=>`<option ${item.status===s?'selected':''}>${s}</option>`).join('')}</select>
+    <input style="flex:2;min-width:180px" placeholder="Por quê? (causa)" value="${esc(item.porque||'')}">
+    <input style="flex:2;min-width:180px" placeholder="Resultado esperado" value="${esc(item.resultadoEsperado||'')}">
     <button class="btn btn-sm btn-ghost" style="color:var(--bad);flex:none" onclick="${removeFn}(${idx})">×</button>`;
   row.querySelectorAll('input,select').forEach((el,j)=>{
     el.addEventListener('input',()=>{
-      const keys=['desc','resp','prazo','status'];
+      const keys=['desc','resp','prazo','status','porque','resultadoEsperado'];
       item[keys[j]]=el.value;
     });
   });
@@ -1271,7 +1294,7 @@ function renderEntravesEditor(){
 }
 function addEntrave(){
   if(!data.entraves) data.entraves=[];
-  data.entraves.push({desc:'',resp:'',prazo:'',status:'Aberto'});
+  data.entraves.push({desc:'',resp:'',prazo:'',status:'Aberto',porque:'',resultadoEsperado:''});
   renderEntravesEditor();
 }
 function removeEntrave(i){data.entraves.splice(i,1);renderEntravesEditor();}
@@ -1285,7 +1308,7 @@ function renderEncaminhamentosEditor(){
 }
 function addEncaminhamento(){
   if(!data.encaminhamentos) data.encaminhamentos=[];
-  data.encaminhamentos.push({desc:'',resp:'',prazo:'',status:'Aberto'});
+  data.encaminhamentos.push({desc:'',resp:'',prazo:'',status:'Aberto',porque:'',resultadoEsperado:''});
   renderEncaminhamentosEditor();
 }
 function removeEncaminhamento(i){data.encaminhamentos.splice(i,1);renderEncaminhamentosEditor();}
@@ -1362,6 +1385,15 @@ function buildProjCard(p,i){
       <div id="marcos-${i}"></div>
       <button class="btn btn-sm btn-ghost" style="margin-top:6px" onclick="addMarco(${i})">+ Marco</button>
       <button type="button" class="btn btn-sm btn-ghost" style="margin-top:6px; display:${p.projetoId?'inline-flex':'none'}" id="importMarcosBtn-${i}" onclick="importarMarcosTAP(${i})">↓ Importar marcos do TAP</button>
+    </div>
+    <div style="margin-top:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase">Custos realizados</div>
+        <span style="font-size:11px;color:var(--muted)">Total gasto: <b id="custos-total-${i}">R$ 0,00</b></span>
+      </div>
+      <div id="custos-${i}"></div>
+      <button class="btn btn-sm btn-ghost" style="margin-top:6px" onclick="addCustoRealizado(${i})">+ Categoria</button>
+      <button type="button" class="btn btn-sm btn-ghost" style="margin-top:6px; display:${p.projetoId?'inline-flex':'none'}" id="importCustosBtn-${i}" onclick="importarCustosTAP(${i})">↓ Importar categorias do TAP</button>
     </div>`;
   div.querySelectorAll('input,select,textarea').forEach(el=>{
     el.addEventListener('input',()=>{
@@ -1370,6 +1402,7 @@ function buildProjCard(p,i){
     });
   });
   setTimeout(()=>renderMarcosEditor(i,p.marcos||[]),0);
+  setTimeout(()=>renderCustosEditor(i,p.custosRealizados||[]),0);
   setTimeout(()=>atualizarBotaoIA(i),0);
   return div;
 }
@@ -1402,8 +1435,64 @@ function addMarco(pi){
   renderMarcosEditor(pi,data.projetos[pi].marcos);
 }
 function removeMarco(pi,mi){data.projetos[pi].marcos.splice(mi,1);renderMarcosEditor(pi,data.projetos[pi].marcos);}
+
+function renderCustosEditor(pi,custos){
+  const host=document.getElementById('custos-'+pi);
+  if(!host) return;
+  host.innerHTML='';
+  custos.forEach((c,ci)=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap';
+    row.innerHTML=`<input style="flex:2;min-width:160px" placeholder="Categoria / item" value="${esc(c.categoria||'')}">
+      <input style="flex:1;min-width:120px" placeholder="Valor gasto (R$)" value="${esc(c.valor||'')}">
+      <button class="btn btn-sm btn-ghost" style="color:var(--bad);flex:none" onclick="removeCustoRealizado(${pi},${ci})">×</button>`;
+    row.querySelectorAll('input').forEach((el,j)=>{
+      el.addEventListener('input',()=>{
+        const keys=['categoria','valor'];
+        if(!data.projetos[pi].custosRealizados) data.projetos[pi].custosRealizados=[];
+        data.projetos[pi].custosRealizados[ci]=data.projetos[pi].custosRealizados[ci]||{};
+        data.projetos[pi].custosRealizados[ci][keys[j]]=el.value;
+        atualizarTotalCustos(pi);
+      });
+    });
+    host.appendChild(row);
+  });
+  atualizarTotalCustos(pi);
+}
+function atualizarTotalCustos(pi){
+  const totalEl=document.getElementById('custos-total-'+pi);
+  if(!totalEl) return;
+  const custos=data.projetos[pi].custosRealizados||[];
+  const total=custos.reduce((s,c)=>s+parseBRL(c.valor),0);
+  totalEl.textContent=fmtBRL(total.toFixed(2).replace('.',','));
+}
+function addCustoRealizado(pi){
+  if(!data.projetos[pi].custosRealizados) data.projetos[pi].custosRealizados=[];
+  data.projetos[pi].custosRealizados.push({categoria:'',valor:''});
+  renderCustosEditor(pi,data.projetos[pi].custosRealizados);
+}
+function removeCustoRealizado(pi,ci){data.projetos[pi].custosRealizados.splice(ci,1);renderCustosEditor(pi,data.projetos[pi].custosRealizados);}
+async function importarCustosTAP(i){
+  const projetoId=document.getElementById('projVinc-'+i).value;
+  if(!projetoId){ toast('Selecione um Projeto vinculado (Gate 1) primeiro.',false); return; }
+  const custosTAP=await buscarCustosTAP(projetoId);
+  if(!custosTAP.length){ toast('Nenhum custo estimado encontrado no TAP deste projeto.',false); return; }
+  if(!data.projetos[i].custosRealizados) data.projetos[i].custosRealizados=[];
+  const existentes=new Set(data.projetos[i].custosRealizados.map(c=>(c.categoria||'').trim().toLowerCase()).filter(Boolean));
+  let importados=0;
+  custosTAP.forEach(c=>{
+    const categoria=(c.item||'').trim();
+    if(!categoria||existentes.has(categoria.toLowerCase())) return;
+    data.projetos[i].custosRealizados.push({ categoria, valor:'' });
+    existentes.add(categoria.toLowerCase());
+    importados++;
+  });
+  renderCustosEditor(i,data.projetos[i].custosRealizados);
+  toast(importados?`${importados} categoria(s) de custo importada(s) do TAP`:'Todas as categorias do TAP já estão na lista');
+}
+
 function addProjeto(){
-  data.projetos.push({cod:'',nome:'',programa:'',resp:'',status:'A iniciar',pct:'0',inicio:'',termino:'',atencao:'',destaque:'',marcos:[]});
+  data.projetos.push({cod:'',nome:'',programa:'',resp:'',status:'A iniciar',pct:'0',inicio:'',termino:'',atencao:'',destaque:'',marcos:[],custosRealizados:[]});
   const ed=document.getElementById('proj-editor');
   ed.appendChild(buildProjCard(data.projetos[data.projetos.length-1],data.projetos.length-1));
   ed.lastElementChild.scrollIntoView({behavior:'smooth',block:'start'});
