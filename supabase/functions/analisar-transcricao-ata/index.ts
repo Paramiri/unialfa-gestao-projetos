@@ -120,8 +120,8 @@ Deno.serve(async (req: Request) => {
 
   const transcricao = typeof payload.transcricao === "string" ? payload.transcricao.trim() : "";
   if (!transcricao) return json({ error: "Envie o campo 'transcricao' com o texto da reunião" }, 400);
-  if (transcricao.length > 100000) {
-    return json({ error: "Transcrição muito longa (máximo de ~100.000 caracteres)" }, 400);
+  if (transcricao.length > 150000) {
+    return json({ error: "Transcrição muito longa (máximo de ~150.000 caracteres)" }, 400);
   }
 
   try {
