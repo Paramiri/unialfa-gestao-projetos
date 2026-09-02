@@ -204,6 +204,7 @@ body.auth-ready{padding-top:34px}
           <li>Se você não for da equipe do projeto selecionado (e não for Admin), aparece um aviso na tela e o botão de enviar/registrar fica desabilitado.</li>
           <li>A equipe de cada projeto é definida por um Admin, em Administração &gt; Equipes.</li>
         </ul>
+        <div class="tip"><b>Lista mostra só projetos ativos:</b> o campo "Projeto vinculado" só oferece projetos ainda em andamento — assim que um <a href="#passo-8">TEP</a> é registrado para um projeto, ele some da lista de opções para novos vínculos em todos os formulários (incluindo o Relatório de Situação e o Relatório de Entregas). Um documento que já estava vinculado a esse projeto antes dele encerrar continua mostrando o vínculo normalmente, só que com o status ao lado (ex.: "Nome do Projeto — Concluído").</div>
         <div class="note">Os outros 5 formulários (Solicitação de Demanda, Ata de Reunião, Plano de Comunicação, Relatório de Situação e Relatório de Entregas) não usam esse conceito — qualquer usuário autenticado pode criar/editar registros neles.</div>
         <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
       </section>
@@ -343,6 +344,7 @@ body.auth-ready{padding-top:34px}
         <h2>TEP — Termo de Encerramento de Projeto <span style="font-weight:600;font-size:13px;color:var(--muted)">FORALF00341</span><span class="tag eq">exige equipe</span></h2>
         <p class="lead">Quando usar: ao encerrar o projeto, seja por conclusão, paralisação ou cancelamento.</p>
         <p>Selecione o tipo de encerramento (Concluído, Paralisado ou Cancelado — os dois últimos exigem justificativa), registre entregas de resultados, atividades encerradas e a análise de efetividade.</p>
+        <div class="tip"><b>Encerra o projeto no cadastro compartilhado:</b> ao registrar o TEP, o projeto vinculado passa a refletir o tipo de encerramento escolhido (Concluído/Paralisado/Cancelado) e some da lista de <a href="#equipe">Projeto vinculado</a> para novos registros nos demais formulários.</div>
         <div class="tip"><b>Assistente de preenchimento por IA:</b> depois de selecionar o Projeto vinculado, o botão <b>✦ Sugerir com IA</b> compara o TAP, o Planejamento e a EAP com o que as Atas mais recentes confirmam como realizado, sugerindo a justificativa de encerramento, o resumo de atividades encerradas e as considerações finais.</div>
         <p>Clique em <b>Registrar TEP</b> para gerar o protocolo.</p>
         <p>No rodapé do painel de detalhes de um TEP, os botões <b>🖨️ Imprimir</b> e <b>⬇ Exportar Word</b> geram o documento no formato oficial do FORALF00341, pronto para impressão ou para abrir no Word.</p>
@@ -453,7 +455,7 @@ body.auth-ready{padding-top:34px}
           <li><b>Gates de aprovação:</b> contagem de Solicitações de Demanda por status (Gate 1) e o status atual do Relatório de Entregas (Gate 2 — Pactuação).</li>
           <li><b>Governança:</b> quantidade de Entraves e Encaminhamentos ainda Aberto, e quantos Resultados alcançados já foram registrados no Relatório de Situação.</li>
           <li><b>Registros por formulário:</b> total e contagem por status de cada artefato.</li>
-          <li><b>Portfólio de projetos:</b> contagem de projetos Aprovados, Reprovados e em avaliação no Gate 1.</li>
+          <li><b>Portfólio de projetos:</b> contagem de projetos Aprovados, Encerrados (Concluído/Paralisado/Cancelado, via TEP), Reprovados e em avaliação no Gate 1.</li>
         </ul>
         <div class="tip">Por reunir dados de vários formulários numa única tela, o carregamento faz uma consulta para cada um dos 10 formulários de registro — pode levar alguns segundos a mais. Use o botão <b>Atualizar</b> para recarregar os números mais recentes.</div>
         <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
