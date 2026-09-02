@@ -916,9 +916,13 @@ const ATA_LOGO_DATAURI='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI0AAABMCA
 let projetosAprovados=[]; let historicoAberto=false; let projetoSelecionadoId='';
 async function carregarProjetosAprovados(selecionarId){
   projetosAprovados = await unialfaProjeto.listarAprovados();
+  if(selecionarId && !projetosAprovados.some(p=>p.id===selecionarId)){
+    const encerrado = await unialfaProjeto.buscar(selecionarId);
+    if(encerrado) projetosAprovados = projetosAprovados.concat([encerrado]);
+  }
   const sel=document.getElementById('projetoSelect');
   sel.innerHTML='<option value="">Selecione um projeto aprovado (Gate 1) para preencher o campo "Programa/Projeto"…</option>' +
-    projetosAprovados.map(p=>`<option value="${p.id}">${esc(p.nome)}</option>`).join('');
+    projetosAprovados.map(p=>`<option value="${p.id}">${esc(p.nome)}${p.status!=='Aprovado'?' — '+esc(p.status):''}</option>`).join('');
   if(selecionarId){ sel.value=selecionarId; onProjetoSelect(false); }
 }
 function onProjetoSelect(preencherCampo=true){

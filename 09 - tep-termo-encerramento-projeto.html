@@ -916,9 +916,13 @@ const TABEL_ENTREGAS={cols:[{key:'produto',label:'Produto / Serviço',type:'text
 let projetosAprovados=[]; let historicoAberto=false;
 async function carregarProjetosAprovados(selecionarId){
   projetosAprovados = await unialfaProjeto.listarAprovados();
+  if(selecionarId && !projetosAprovados.some(p=>p.id===selecionarId)){
+    const encerrado = await unialfaProjeto.buscar(selecionarId);
+    if(encerrado) projetosAprovados = projetosAprovados.concat([encerrado]);
+  }
   const sel=document.getElementById('projetoSelect');
   sel.innerHTML='<option value="">Selecione um projeto aprovado (Gate 1)…</option>' +
-    projetosAprovados.map(p=>`<option value="${p.id}">${esc(p.nome)}</option>`).join('');
+    projetosAprovados.map(p=>`<option value="${p.id}">${esc(p.nome)}${p.status!=='Aprovado'?' — '+esc(p.status):''}</option>`).join('');
   if(selecionarId){ sel.value=selecionarId; onProjetoSelect(false); }
 }
 async function onProjetoSelect(preencherCampos=true){
@@ -1085,6 +1089,7 @@ async function submitForm(){
     } else {
       cache.unshift(rec);
       toast('TEP '+rec.protocolo+' registrado');
+      unialfaProjeto.atualizarCampo(rec.projetoId, 'status', rec.tipo, 'Aprovado', 'TEP - Termo de Encerramento de Projeto (FORALF00341)').catch(()=>{});
       Promise.all([unialfaNotificar.emailsEquipe(rec.projetoId), unialfaNotificar.emailsAdmins()]).then(([equipe,admins])=>{
         unialfaNotificar.enviar([rec.criadoPorEmail].concat(equipe,admins),
           'Projeto encerrado ('+rec.tipo+') — '+(rec.nomeProjeto||rec.protocolo),

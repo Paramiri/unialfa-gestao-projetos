@@ -858,9 +858,13 @@ let cache=[], currentId=null, editId=null, _n1c=0, _n2c={}, _n3c={};
 let projetosAprovados=[]; let historicoAberto=false;
 async function carregarProjetosAprovados(selecionarId){
   projetosAprovados = await unialfaProjeto.listarAprovados();
+  if(selecionarId && !projetosAprovados.some(p=>p.id===selecionarId)){
+    const encerrado = await unialfaProjeto.buscar(selecionarId);
+    if(encerrado) projetosAprovados = projetosAprovados.concat([encerrado]);
+  }
   const sel=document.getElementById('projetoSelect');
   sel.innerHTML='<option value="">Selecione um projeto aprovado (Gate 1)…</option>' +
-    projetosAprovados.map(p=>`<option value="${p.id}">${p.nome}</option>`).join('');
+    projetosAprovados.map(p=>`<option value="${p.id}">${p.nome}${p.status!=='Aprovado'?' — '+p.status:''}</option>`).join('');
   if(selecionarId){ sel.value=selecionarId; onProjetoSelect(false); }
 }
 async function onProjetoSelect(preencherCampos=true){

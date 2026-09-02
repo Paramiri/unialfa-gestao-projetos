@@ -405,8 +405,9 @@ function ensureAuthenticated(){
       </div>
 
       <div class="sec-title">Portfólio de projetos (Gate 1 aprovados)</div>
-      <div class="kpi-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="kpi-row" style="grid-template-columns:repeat(5,1fr)">
         <div class="kpi ok"><div class="kpi-label">Aprovados</div><div class="kpi-value" id="kpi-proj-aprovado">—</div></div>
+        <div class="kpi blue"><div class="kpi-label">Encerrados</div><div class="kpi-value" id="kpi-proj-concluido">—</div></div>
         <div class="kpi bad"><div class="kpi-label">Reprovados</div><div class="kpi-value" id="kpi-proj-reprovado">—</div></div>
         <div class="kpi warn"><div class="kpi-label">Em avaliação</div><div class="kpi-value" id="kpi-proj-avaliacao">—</div></div>
         <div class="kpi blue"><div class="kpi-label">Total no portfólio</div><div class="kpi-value" id="kpi-proj-total">—</div></div>
@@ -521,9 +522,11 @@ async function carregarPainel(){
   var rProj = await fetch(unialfaAuth.REST_BASE + '/projetos?select=status', { headers: unialfaAuth.authHeaders() });
   var projetos = rProj.ok ? await rProj.json() : [];
   var pCounts = contarPorStatus(projetos.map(function(p){ return { status: p.status }; }));
+  var ENCERRADOS = ['Concluído','Paralisado','Cancelado'];
   document.getElementById('kpi-proj-aprovado').textContent = pCounts['Aprovado'] || 0;
+  document.getElementById('kpi-proj-concluido').textContent = ENCERRADOS.reduce(function(a,k){return a+(pCounts[k]||0);},0);
   document.getElementById('kpi-proj-reprovado').textContent = pCounts['Reprovado'] || 0;
-  document.getElementById('kpi-proj-avaliacao').textContent = (pCounts['Em avaliação']||0) + Object.keys(pCounts).filter(function(k){return k!=='Aprovado'&&k!=='Reprovado'&&k!=='Em avaliação';}).reduce(function(a,k){return a+pCounts[k];},0);
+  document.getElementById('kpi-proj-avaliacao').textContent = (pCounts['Em avaliação']||0) + Object.keys(pCounts).filter(function(k){return k!=='Aprovado'&&k!=='Reprovado'&&k!=='Em avaliação'&&ENCERRADOS.indexOf(k)===-1;}).reduce(function(a,k){return a+pCounts[k];},0);
   document.getElementById('kpi-proj-total').textContent = projetos.length;
 
   document.getElementById('loadingBox').style.display = 'none';

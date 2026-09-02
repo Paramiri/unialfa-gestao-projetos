@@ -705,7 +705,15 @@ function novoGate2(){return{status:'Pendente de pactuação',data:'',aprovador:'
 let data={prog:{cod:'',nome:'',unidade:'',resp:'',just:'',obj:'',impacto:'',alinhamento:'',parceiros:'',restricoes:'',indicadores:[],valores:[]},projetos:[],gate2:novoGate2()};
 
 let projetosAprovados=[];
-async function carregarProjetosAprovados(){ projetosAprovados = await unialfaProjeto.listarAprovados(); }
+async function carregarProjetosAprovados(){
+  projetosAprovados = await unialfaProjeto.listarAprovados();
+  const idsExistentes = new Set(projetosAprovados.map(p=>p.id));
+  const idsFaltando = [...new Set((data.projetos||[]).map(p=>p.projetoId).filter(id=>id && !idsExistentes.has(id)))];
+  for(const id of idsFaltando){
+    const p = await unialfaProjeto.buscar(id);
+    if(p) projetosAprovados.push(p);
+  }
+}
 async function buscarTAPDoProjeto(projetoId){
   try{
     const res=await window.storage.list('tap:');
@@ -1174,7 +1182,7 @@ function buildProjEditor(pr,i){
         <div style="display:flex;gap:8px;align-items:center">
           <select id="projVinc-${i}" style="flex:1" onchange="onProjRowProjetoSelect(${i})">
             <option value="">Nenhum — usar dados digitados abaixo</option>
-            ${projetosAprovados.map(pa=>`<option value="${pa.id}" ${pr.projetoId===pa.id?'selected':''}>${esc(pa.nome)}</option>`).join('')}
+            ${projetosAprovados.map(pa=>`<option value="${pa.id}" ${pr.projetoId===pa.id?'selected':''}>${esc(pa.nome)}${pa.status!=='Aprovado'?' — '+esc(pa.status):''}</option>`).join('')}
           </select>
           <button type="button" class="btn btn-sm btn-ghost" id="histBtn-${i}" style="display:${pr.projetoId?'inline-flex':'none'}" onclick="toggleProjRowHistorico(${i})">Ver histórico</button>
           <button type="button" class="btn-ai-sm" id="iaBtn-${i}" style="display:none" onclick="sugerirLinhaIA(${i})">✦ Sugerir com IA</button>
