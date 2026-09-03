@@ -1033,6 +1033,9 @@ function autoGrow(el){
   el.style.height='auto';
   el.style.height=el.scrollHeight+'px';
 }
+function regrowTextareas(){
+  document.querySelectorAll('table.dyn-t textarea').forEach(autoGrow);
+}
 function readEntregas(){
   const rows=[];
   document.querySelectorAll('#tbl-entregas tbody tr').forEach(tr=>{
@@ -1132,6 +1135,7 @@ async function editCurrent(){
   document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
   closeDrawer();
   showView('new');
+  regrowTextareas();
   updateEditBanner();
   if(r.projetoId) await carregarProjetosAprovados(r.projetoId);
   restaurarRascunhoSeExistir();

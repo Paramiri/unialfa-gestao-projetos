@@ -1004,14 +1004,14 @@ const RISCO_STATUS=['Aberto','Monitorando','Mitigado','Materializado','Encerrado
 
 const TABLES={
   riscos:{cols:[
-    {key:'risco',label:'Risco',type:'text',w:'32%',long:true},
+    {key:'risco',label:'Risco',type:'text',w:'30%',long:true},
     {key:'status',label:'Status',type:'select',options:RISCO_STATUS},
-    {key:'resp',label:'Responsável',type:'text'},
+    {key:'resp',label:'Responsável',type:'text',w:'20%',long:true},
     {key:'revisao',label:'Última revisão',type:'date'},
   ]},
   cronograma:{cols:[
-    {key:'marco',label:'Marcos / Entregas',type:'text',w:'32%',long:true},
-    {key:'resp',label:'Responsável',type:'text'},
+    {key:'marco',label:'Marcos / Entregas',type:'text',w:'28%',long:true},
+    {key:'resp',label:'Responsável',type:'text',w:'18%',long:true},
     {key:'ini',label:'Início previsto',type:'date'},
     {key:'fim',label:'Término previsto',type:'date'},
     {key:'custo',label:'Custo',type:'text'},
@@ -1260,6 +1260,9 @@ function autoGrow(el){
   el.style.height='auto';
   el.style.height=el.scrollHeight+'px';
 }
+function regrowTextareas(){
+  document.querySelectorAll('table.dyn-t textarea').forEach(autoGrow);
+}
 function moveRow(btn,dir){
   const tr=btn.closest('tr'); const tb=tr.parentElement;
   if(dir<0){ const prev=tr.previousElementSibling; if(prev) tb.insertBefore(tr, prev); }
@@ -1410,6 +1413,7 @@ async function editCurrent(){
   document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
   closeDrawer();
   showView('new');
+  regrowTextareas();
   updateEditBanner();
   if(r.projetoId) await carregarProjetosAprovados(r.projetoId);
   restaurarRascunhoSeExistir();

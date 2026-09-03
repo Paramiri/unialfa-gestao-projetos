@@ -867,8 +867,8 @@ const STAGES=[
   ]},
   {id:'crono', tab:'3 · Cronograma', title:'Cronograma', sub:'Marcos e prazos', blocks:[
     {kind:'table', key:'cronograma', label:'Marcos do projeto', seed:3, cols:[
-      {key:'marco',label:'Marco do projeto',type:'text',w:'32%',long:true},
-      {key:'resp',label:'Responsável',type:'text'},
+      {key:'marco',label:'Marco do projeto',type:'text',w:'28%',long:true},
+      {key:'resp',label:'Responsável',type:'text',w:'18%',long:true},
       {key:'duracao',label:'Duração',type:'text'},
       {key:'entrega',label:'Data de entrega',type:'date'},
     ]},
@@ -877,9 +877,9 @@ const STAGES=[
     {kind:'table', key:'entradas', label:'Entradas', cols:[
       {key:'id',label:'ID',type:'text',w:'46px'},
       {key:'categoria',label:'Categoria de entrada',type:'text'},
-      {key:'descricao',label:'Descrição detalhada',type:'text',w:'26%',long:true},
-      {key:'fonte',label:'Fonte / documento de origem',type:'text',w:'20%',long:true},
-      {key:'resp',label:'Responsável',type:'text'},
+      {key:'descricao',label:'Descrição detalhada',type:'text',w:'24%',long:true},
+      {key:'fonte',label:'Fonte / documento de origem',type:'text',w:'18%',long:true},
+      {key:'resp',label:'Responsável',type:'text',w:'14%',long:true},
       {key:'status',label:'Status',type:'select',options:ST_ENTRADA},
     ], seedRows:[
       {id:'E1',categoria:'Requisitos Funcionais',status:'Pendente'},
@@ -904,12 +904,12 @@ const STAGES=[
   {id:'verif', tab:'6 · Verificação', title:'Verificação do projeto', sub:'Conformidade das saídas', blocks:[
     {kind:'table', key:'verificacao', label:'Verificação', cols:[
       {key:'id',label:'ID',type:'text',w:'50px'},
-      {key:'requisito',label:'Requisito de entrada',type:'text',w:'16%',long:true},
-      {key:'saida',label:'Item de saída correspondente',type:'text',w:'16%',long:true},
-      {key:'metodo',label:'Método de verificação',type:'text',w:'16%',long:true},
+      {key:'requisito',label:'Requisito de entrada',type:'text',w:'15%',long:true},
+      {key:'saida',label:'Item de saída correspondente',type:'text',w:'15%',long:true},
+      {key:'metodo',label:'Método de verificação',type:'text',w:'15%',long:true},
       {key:'resultado',label:'Resultado (C/NC)',type:'select',options:RES_CNC},
-      {key:'evidencia',label:'Evidência documental',type:'text',w:'14%',long:true},
-      {key:'resp',label:'Responsável',type:'text'},
+      {key:'evidencia',label:'Evidência documental',type:'text',w:'13%',long:true},
+      {key:'resp',label:'Responsável',type:'text',w:'12%',long:true},
     ], seedRows:[{id:'VR1'},{id:'VR2'},{id:'VR3'},{id:'VR4'},{id:'VR5'},{id:'VR6'},{id:'VR7'}]},
   ]},
   {id:'valid', tab:'7 · Validação', title:'Validação do projeto', sub:'Uso pretendido', blocks:[
@@ -930,7 +930,7 @@ const STAGES=[
       {key:'pontos',label:'Pontos analisados (status)',type:'text',w:'18%',long:true},
       {key:'problemas',label:'Problemas/riscos identificados',type:'text',w:'18%',long:true},
       {key:'acoes',label:'Ações necessárias / decisões',type:'text',w:'18%',long:true},
-      {key:'respPrazo',label:'Responsável e prazo',type:'text'},
+      {key:'respPrazo',label:'Responsável e prazo',type:'text',w:'14%',long:true},
     ], seedRows:[{etapa:'Planejamento'},{etapa:'Pós-verificação'},{etapa:'Pós-validação'},{etapa:'Finalização'}]},
   ]},
 ];
@@ -1063,6 +1063,7 @@ function buildStages(){
 function showStage(id){
   STAGES.forEach(s=>{ document.getElementById('stage-'+s.id).classList.toggle('active', s.id===id); });
   document.querySelectorAll('.stage-btn').forEach((b,i)=>b.setAttribute('aria-selected', STAGES[i].id===id));
+  regrowTextareas(document.getElementById('stage-'+id));
 }
 
 /* ---------- dynamic tables ---------- */
@@ -1089,6 +1090,9 @@ function cellInput(c, v){
 function autoGrow(el){
   el.style.height='auto';
   el.style.height=el.scrollHeight+'px';
+}
+function regrowTextareas(root){
+  (root||document).querySelectorAll('table.dyn-t textarea').forEach(autoGrow);
 }
 function addRow(key, vals){
   const t=TABLE_DEFS[key];
