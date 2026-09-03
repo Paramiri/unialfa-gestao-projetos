@@ -412,6 +412,16 @@ function ensureAuthenticated(){
         <div class="kpi warn"><div class="kpi-label">Em avaliação</div><div class="kpi-value" id="kpi-proj-avaliacao">—</div></div>
         <div class="kpi blue"><div class="kpi-label">Total no portfólio</div><div class="kpi-value" id="kpi-proj-total">—</div></div>
       </div>
+
+      <div class="sec-title">Visão atual por projeto</div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Projeto</th><th>Gerente</th><th>Status (cadastro)</th><th>Situação (Rel. de Situação)</th><th>Progresso do ciclo</th><th>Atualizado em</th></tr></thead>
+            <tbody id="tbody-projetos"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -486,9 +496,11 @@ async function carregarPainel(){
   var tbody = document.getElementById('tbody-formularios');
   tbody.innerHTML = '';
   var demandaRegistros = [];
+  var registrosPorForm = {};
   for(var i=0; i<FORM_DEFS.length; i++){
     var def = FORM_DEFS[i];
     var registros = await listarValoresPorPrefixo(def.prefix);
+    registrosPorForm[def.prefix] = registros;
     if(def.prefix === 'demanda:') demandaRegistros = registros;
     var counts = contarPorStatus(registros);
     var chipsHtml = Object.entries(counts).map(function(e){
@@ -519,7 +531,7 @@ async function carregarPainel(){
   document.getElementById('kpi-resultados').textContent = resultados.length;
 
   // 5) Portfólio de projetos (tabela compartilhada `projetos`)
-  var rProj = await fetch(unialfaAuth.REST_BASE + '/projetos?select=status', { headers: unialfaAuth.authHeaders() });
+  var rProj = await fetch(unialfaAuth.REST_BASE + '/projetos?select=id,nome,unidade,gerente,status,atualizado_em&order=nome', { headers: unialfaAuth.authHeaders() });
   var projetos = rProj.ok ? await rProj.json() : [];
   var pCounts = contarPorStatus(projetos.map(function(p){ return { status: p.status }; }));
   var ENCERRADOS = ['Concluído','Paralisado','Cancelado'];
@@ -529,8 +541,89 @@ async function carregarPainel(){
   document.getElementById('kpi-proj-avaliacao').textContent = (pCounts['Em avaliação']||0) + Object.keys(pCounts).filter(function(k){return k!=='Aprovado'&&k!=='Reprovado'&&k!=='Em avaliação'&&ENCERRADOS.indexOf(k)===-1;}).reduce(function(a,k){return a+pCounts[k];},0);
   document.getElementById('kpi-proj-total').textContent = projetos.length;
 
+  // 6) Visão atual por projeto — cruza cadastro compartilhado + Relatório de Situação + presença nos formulários do ciclo de vida
+  renderVisaoPorProjeto(projetos, relsit, registrosPorForm);
+
   document.getElementById('loadingBox').style.display = 'none';
   document.getElementById('conteudo').style.display = 'block';
+}
+
+function fmtDataHora(iso){
+  if(!iso) return '—';
+  var d = new Date(iso);
+  if(isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function projetoStatusClass(s){
+  var m = {'Aprovado':'s-ok','Concluído':'s-ok','Reprovado':'s-bad','Cancelado':'s-bad','Paralisado':'s-warn','Em avaliação':'s-warn'};
+  return m[s] || 's-neutral';
+}
+
+function situacaoClass(s){
+  var m = {'No prazo':'s-ok','Concluído':'s-ok','Atrasado':'s-bad','Cancelado':'s-bad','Paralisado':'s-warn','A iniciar':'s-warn'};
+  return m[s] || 's-neutral';
+}
+
+/* Ordena: projetos ativos (Aprovado/Em avaliação) primeiro, encerrados/reprovados por último; alfabético dentro de cada grupo. */
+function ordemStatus(s){
+  if(s==='Aprovado' || s==='Em avaliação') return 0;
+  return 1;
+}
+
+function renderVisaoPorProjeto(projetos, relsit, registrosPorForm){
+  var relsitPorProjeto = {};
+  ((relsit && relsit.projetos) || []).forEach(function(p){
+    if(p.projetoId) relsitPorProjeto[p.projetoId] = p;
+  });
+
+  // Quais dos 9 formulários do ciclo de vida já têm registro vinculado a cada projeto
+  var formsPorProjeto = {};
+  FORM_DEFS.forEach(function(def){
+    (registrosPorForm[def.prefix] || []).forEach(function(r){
+      if(!r.projetoId) return;
+      if(!formsPorProjeto[r.projetoId]) formsPorProjeto[r.projetoId] = {};
+      formsPorProjeto[r.projetoId][def.prefix] = true;
+    });
+  });
+
+  var ordenados = projetos.slice().sort(function(a,b){
+    var oa = ordemStatus(a.status), ob = ordemStatus(b.status);
+    if(oa !== ob) return oa - ob;
+    return (a.nome||'').localeCompare(b.nome||'', 'pt-BR');
+  });
+
+  var tbody = document.getElementById('tbody-projetos');
+  if(!ordenados.length){
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum projeto cadastrado ainda.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = ordenados.map(function(p){
+    var sit = relsitPorProjeto[p.id];
+    var sitHtml;
+    if(sit){
+      sitHtml = '<span class="s-badge '+situacaoClass(sit.status)+'">'+esc(sit.status||'—')+'</span>'
+        + (sit.pct ? '<div class="kpi-sub" style="margin-top:4px">'+esc(sit.pct)+'% concluído</div>' : '');
+    } else {
+      sitHtml = '<span class="s-badge s-neutral">Não reportado</span>';
+    }
+
+    var feitos = formsPorProjeto[p.id] || {};
+    var qtdFeitos = FORM_DEFS.filter(function(def){ return feitos[def.prefix]; }).length;
+    var faltando = FORM_DEFS.filter(function(def){ return !feitos[def.prefix]; }).map(function(def){ return def.nome; });
+    var progHtml = '<b>'+qtdFeitos+'/'+FORM_DEFS.length+'</b> formulários'
+      + (faltando.length ? '<div class="kpi-sub" style="margin-top:4px">Faltam: '+esc(faltando.join(', '))+'</div>' : '');
+
+    return '<tr>'
+      + '<td><b>'+esc(p.nome)+'</b><div class="kpi-sub" style="margin-top:2px">'+esc(p.unidade||'—')+'</div></td>'
+      + '<td>'+esc(p.gerente||'—')+'</td>'
+      + '<td><span class="s-badge '+projetoStatusClass(p.status)+'">'+esc(p.status||'—')+'</span></td>'
+      + '<td>'+sitHtml+'</td>'
+      + '<td>'+progHtml+'</td>'
+      + '<td>'+fmtDataHora(p.atualizado_em)+'</td>'
+      + '</tr>';
+  }).join('');
 }
 
 async function papelPermitido(chave){
