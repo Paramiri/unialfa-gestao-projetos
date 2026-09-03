@@ -63,13 +63,14 @@
   /* dynamic tables */
   .dyn{padding:18px 24px 22px}
   .dyn-table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px}
-  table.dyn-t{width:100%; border-collapse:collapse; min-width:560px}
-  table.dyn-t th{font-size:9.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); padding:9px 10px; background:var(--surface-2); border-bottom:1px solid var(--line); text-align:left; white-space:nowrap}
+  table.dyn-t{width:100%; border-collapse:collapse; min-width:680px; table-layout:fixed}
+  table.dyn-t th, table.dyn-t td{overflow-wrap:break-word}
+  table.dyn-t th{font-size:9.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); padding:9px 10px; background:var(--surface-2); border-bottom:1px solid var(--line); text-align:left; white-space:normal; line-height:1.3}
   table.dyn-t td{padding:4px 6px; border-bottom:1px solid var(--surface)}
   table.dyn-t tbody tr:last-child td{border-bottom:none}
-  table.dyn-t input{border:1px solid transparent; border-radius:6px; padding:8px 8px; font-size:12.5px; background:var(--surface-2)}
+  table.dyn-t input{border:1px solid transparent; border-radius:6px; padding:8px 8px; font-size:12.5px; background:var(--surface-2); width:100%; min-width:110px; box-sizing:border-box}
   table.dyn-t input:focus{background:#fff; border-color:var(--red); box-shadow:none}
-  table.dyn-t select{border:1px solid transparent; border-radius:6px; padding:8px 6px; font-size:12.5px; background:var(--surface-2); font-family:var(--font); color:var(--ink)}
+  table.dyn-t select{border:1px solid transparent; border-radius:6px; padding:8px 6px; font-size:12.5px; background:var(--surface-2); font-family:var(--font); color:var(--ink); width:100%; min-width:110px; box-sizing:border-box}
   table.dyn-t select:focus{background:#fff; border-color:var(--red); box-shadow:none}
   .risk-status{display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px}
   .risk-status.aberto{background:var(--bad-soft); color:var(--bad)}
@@ -1001,35 +1002,35 @@ const RISCO_STATUS=['Aberto','Monitorando','Mitigado','Materializado','Encerrado
 
 const TABLES={
   riscos:{cols:[
-    {key:'risco',label:'Risco',type:'text'},
+    {key:'risco',label:'Risco',type:'text',w:'32%'},
     {key:'status',label:'Status',type:'select',options:RISCO_STATUS},
     {key:'resp',label:'Responsável',type:'text'},
     {key:'revisao',label:'Última revisão',type:'date'},
   ]},
   cronograma:{cols:[
-    {key:'marco',label:'Marcos / Entregas',type:'text'},
+    {key:'marco',label:'Marcos / Entregas',type:'text',w:'32%'},
     {key:'resp',label:'Responsável',type:'text'},
     {key:'ini',label:'Início previsto',type:'date'},
     {key:'fim',label:'Término previsto',type:'date'},
     {key:'custo',label:'Custo',type:'text'},
   ]},
   custos:{sum:'valor', cols:[
-    {key:'item',label:'Item',type:'text'},
-    {key:'espec',label:'Especificação',type:'text'},
+    {key:'item',label:'Item',type:'text',w:'24%'},
+    {key:'espec',label:'Especificação',type:'text',w:'24%'},
     {key:'unid',label:'Unid.',type:'text'},
     {key:'qtd',label:'Quant.',type:'number'},
     {key:'valor',label:'Valor total (R$)',type:'text'},
   ]},
   interessadas:{cols:[
-    {key:'nome',label:'Nome',type:'text'},
+    {key:'nome',label:'Nome',type:'text',w:'50%'},
     {key:'unidade',label:'Unidade',type:'text'},
   ]},
   equipe:{cols:[
-    {key:'nome',label:'Nome',type:'text'},
+    {key:'nome',label:'Nome',type:'text',w:'50%'},
     {key:'unidade',label:'Unidade',type:'text'},
   ]},
   indicadores:{cols:[
-    {key:'indicador',label:'Indicador',type:'text'},
+    {key:'indicador',label:'Indicador',type:'text',w:'30%'},
     {key:'vi',label:'Valor inicial',type:'text'},
     {key:'dri',label:'Data ref. inicial',type:'date'},
     {key:'vf',label:'Valor final',type:'text'},
@@ -1217,7 +1218,7 @@ function mountTable(name, host){
   const cfg=TABLES[name];
   const wrap=document.createElement('div');
   wrap.innerHTML=`<div class="dyn-table-wrap"><table class="dyn-t" id="tbl-${name}">
-    <thead><tr>${cfg.cols.map(c=>`<th>${c.label}</th>`).join('')}<th style="width:96px"></th></tr></thead>
+    <thead><tr>${cfg.cols.map(c=>`<th${c.w?` style="width:${c.w}"`:''}>${c.label}</th>`).join('')}<th style="width:96px"></th></tr></thead>
     <tbody></tbody></table></div>
     <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addRow('${name}')">+ Adicionar linha</button>
     ${cfg.sum?`<span class="tbl-total">Total estimado:<b id="total-${name}">R$ 0,00</b></span>`:''}</div>`;
