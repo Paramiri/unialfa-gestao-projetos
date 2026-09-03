@@ -1,4 +1,4 @@
-<!-- Painel Executivo (Admin/PMO) / UNIALFA -->
+<!-- Ficha do Projeto (visão consolidada de um único projeto) / UNIALFA -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,17 +27,16 @@
   .doc-help:hover{background:rgba(255,255,255,.32)}
 
   .sec-title{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
-  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:6px}
-  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:6px}
+  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
   .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red)}
   .kpi.ok::before{background:var(--ok)}
   .kpi.warn::before{background:var(--warn)}
   .kpi.blue::before{background:var(--blue)}
   .kpi.bad::before{background:var(--bad)}
   .kpi-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-  .kpi-value{font-size:30px;font-weight:900;line-height:1;color:var(--ink)}
+  .kpi-value{font-size:22px;font-weight:900;line-height:1.25;color:var(--ink)}
   .kpi-sub{font-size:11px;color:var(--muted);margin-top:6px;font-weight:500}
-  .kpi-breakdown{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
 
   .s-badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
   .s-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
@@ -47,23 +46,52 @@
   .s-neutral{background:var(--surface-2);color:var(--muted);border:1px solid var(--line-strong)}
 
   .card{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-top:0;}
+  .card-pad{padding:18px 20px}
   .table-wrap{overflow-x:auto}
   table{width:100%; border-collapse:collapse; font-size:13px;}
   th{text-align:left; font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding:10px 20px; border-bottom:1px solid var(--line); background:var(--surface-2); white-space:nowrap}
   td{padding:12px 20px; border-bottom:1px solid var(--line); vertical-align:middle;}
   tr:last-child td{border-bottom:none}
   td b{font-weight:700}
-  .empty{padding:40px 24px; text-align:center; color:var(--muted); font-size:13px;}
+  .empty{padding:32px 24px; text-align:center; color:var(--muted); font-size:13px;}
   .denied{padding:48px 24px; text-align:center;}
   .denied h2{font-size:16px; margin:0 0 8px}
   .denied p{color:var(--muted); font-size:13px; margin:0}
-  .status-chips{display:flex;flex-wrap:wrap;gap:6px}
-  .refresh-bar{display:flex;align-items:center;justify-content:space-between;margin-top:26px 0 10px;gap:12px;flex-wrap:wrap}
-  .btn{appearance:none; font-family:var(--font); font-weight:700; font-size:12.5px; border-radius:8px; padding:9px 16px; cursor:pointer; border:1px solid var(--line-strong); background:var(--paper); color:var(--ink);}
+  .refresh-bar{display:flex;align-items:center;justify-content:space-between;margin:26px 0 10px;gap:12px;flex-wrap:wrap}
+  .btn{appearance:none; font-family:var(--font); font-weight:700; font-size:12.5px; border-radius:8px; padding:9px 16px; cursor:pointer; border:1px solid var(--line-strong); background:var(--paper); color:var(--ink); text-decoration:none; display:inline-flex; align-items:center; gap:6px;}
   .btn:hover{border-color:var(--ink)}
   .loading{padding:40px 24px;text-align:center;color:var(--muted);font-size:13px}
 
-  @media (max-width:720px){.kpi-row{grid-template-columns:1fr}}
+  .kv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 24px;padding:18px 20px}
+  .kv-grid .kv-label{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .kv-grid .kv-value{font-size:13.5px;font-weight:600;color:var(--ink)}
+  @media(max-width:720px){.kv-grid{grid-template-columns:1fr 1fr}.kpi-row{grid-template-columns:1fr 1fr}}
+  @media(max-width:480px){.kv-grid{grid-template-columns:1fr}}
+
+  .ciclo-row{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--line)}
+  .ciclo-row:last-child{border-bottom:none}
+  .ciclo-nome{flex:1;font-weight:700;font-size:13px}
+  .ciclo-codigo{font-size:11px;color:var(--muted);font-weight:500}
+  .ciclo-status{display:flex;flex-wrap:wrap;gap:6px}
+  .ciclo-link{font-size:11.5px;font-weight:700;color:var(--red);text-decoration:none;white-space:nowrap}
+  .ciclo-link:hover{text-decoration:underline}
+
+  .hist-panel{max-height:320px;overflow-y:auto}
+  .hist-panel .hi{padding:10px 20px;border-bottom:1px solid var(--line);font-size:12.5px}
+  .hist-panel .hi:last-child{border-bottom:none}
+  .hist-panel .hi b{color:var(--red)}
+  .hist-panel .hi .quando{color:var(--muted);font-size:11px;margin-top:2px}
+
+  .marco-item, .custo-item{display:flex;justify-content:space-between;align-items:center;padding:9px 20px;border-bottom:1px solid var(--line);font-size:12.5px;gap:12px}
+  .marco-item:last-child, .custo-item:last-child{border-bottom:none}
+  .marco-nome{flex:1}
+  .marco-data{color:var(--muted);font-size:11.5px;white-space:nowrap}
+
+  .picker-card{max-width:520px;margin:40px auto;text-align:center;padding:36px 28px}
+  .picker-card select{width:100%;font-family:inherit;font-size:13.5px;border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;margin:14px 0}
+  .note{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--muted);margin-top:12px}
+
+  @media (max-width:720px){.kpi-row{grid-template-columns:1fr 1fr}}
 </style>
 
 <!-- ==== AUTH GATE (HTML) ==== -->
@@ -340,117 +368,105 @@ function ensureAuthenticated(){
     <div class="doc-band">
       <div class="doc-logo"><img src="icons/logo-alfa.png" alt="ALFA" style="height:38px;display:block;background:#fff;border-radius:6px;padding:3px 8px"><small>GRUPO JOSÉ ALVES</small></div>
       <div class="doc-title">
-        <h1>Painel Executivo</h1>
-        <p>Visão consolidada do sistema · Escritório de Projetos</p>
+        <h1>Ficha do Projeto</h1>
+        <p id="docSub">Visão consolidada de um único projeto</p>
       </div>
+      <a class="doc-help" href="15 - central-ajuda.html?v=28#ficha-projeto" title="Ajuda">?</a>
     </div>
   </div>
 
+  <div id="pickerBox" style="display:none" class="card picker-card">
+    <h2 style="margin:0 0 6px;font-size:16px">Selecione um projeto</h2>
+    <p style="margin:0;color:var(--muted);font-size:12.5px">Escolha um projeto do cadastro compartilhado para ver a ficha consolidada.</p>
+    <select id="pickerSelect"><option value="">Carregando projetos…</option></select>
+    <button class="btn" style="width:100%;justify-content:center" onclick="abrirProjetoSelecionado()">Abrir ficha</button>
+  </div>
+
   <div id="deniedBox" style="display:none" class="card"><div class="denied">
-    <h2>Acesso restrito</h2>
-    <p id="deniedMsg"></p>
+    <h2>Projeto não encontrado</h2>
+    <p id="deniedMsg">O projeto informado na URL não existe ou foi removido.</p>
+    <div style="margin-top:16px"><a class="btn" href="18 - ficha-projeto.html">← Escolher outro projeto</a></div>
   </div></div>
 
-  <div id="painelBox" style="display:none">
+  <div id="fichaBox" style="display:none">
     <div class="refresh-bar">
-      <div style="font-size:11px;color:var(--muted)">Dados agregados em tempo real a partir dos 10 formulários de registro e dos 2 relatórios.</div>
-      <button class="btn" onclick="carregarPainel()">↻ Atualizar</button>
+      <a class="btn" href="16 - painel-executivo.html">← Painel Executivo</a>
+      <a class="btn" href="18 - ficha-projeto.html">Trocar projeto</a>
     </div>
 
-    <div id="loadingBox" class="loading">Carregando dados de todos os formulários…</div>
+    <div id="loadingBox" class="loading">Carregando dados do projeto…</div>
 
     <div id="conteudo" style="display:none">
-      <div class="sec-title">Gates de aprovação</div>
-      <div class="kpi-row" style="grid-template-columns:1fr 1fr">
-        <div class="kpi warn" id="kpi-gate1">
-          <div class="kpi-label">Gate 1 — Solicitação de Demanda</div>
-          <div class="kpi-value" id="g1-total">—</div>
-          <div class="kpi-sub">solicitações registradas</div>
-          <div class="kpi-breakdown" id="g1-breakdown"></div>
-        </div>
-        <div class="kpi blue" id="kpi-gate2">
-          <div class="kpi-label">Gate 2 — Relatório de Entregas</div>
-          <div class="kpi-value" id="g2-status" style="font-size:20px">—</div>
-          <div class="kpi-sub" id="g2-sub">—</div>
+      <div class="card">
+        <div class="kv-grid">
+          <div><div class="kv-label">Nome do projeto</div><div class="kv-value" id="f-nome">—</div></div>
+          <div><div class="kv-label">Unidade</div><div class="kv-value" id="f-unidade">—</div></div>
+          <div><div class="kv-label">Gerente</div><div class="kv-value" id="f-gerente">—</div></div>
+          <div><div class="kv-label">Status</div><div class="kv-value" id="f-status">—</div></div>
+          <div><div class="kv-label">Criado em</div><div class="kv-value" id="f-criado">—</div></div>
+          <div><div class="kv-label">Atualizado em</div><div class="kv-value" id="f-atualizado">—</div></div>
         </div>
       </div>
 
-      <div class="sec-title">Governança (Relatório de Situação — FORALF11)</div>
-      <div class="kpi-row">
-        <div class="kpi bad">
-          <div class="kpi-label">Entraves abertos</div>
-          <div class="kpi-value" id="kpi-entraves">—</div>
-          <div class="kpi-sub">bloqueios ativos no portfólio</div>
-        </div>
-        <div class="kpi ok">
-          <div class="kpi-label">Encaminhamentos abertos</div>
-          <div class="kpi-value" id="kpi-encaminhamentos">—</div>
-          <div class="kpi-sub">próximos passos em aberto</div>
-        </div>
-        <div class="kpi blue">
-          <div class="kpi-label">Resultados alcançados</div>
-          <div class="kpi-value" id="kpi-resultados">—</div>
-          <div class="kpi-sub">indicadores/entregas/benefícios registrados</div>
-        </div>
-      </div>
+      <div class="sec-title">Situação atual (Relatório de Situação)</div>
+      <div class="card" id="situacaoCard"></div>
 
-      <div class="sec-title">Registros por formulário</div>
+      <div class="sec-title">Progresso do ciclo de vida</div>
+      <div class="card" id="cicloCard"></div>
+
+      <div class="sec-title">Cronograma e custos planejados (TAP)</div>
+      <div class="card" id="tapCard"></div>
+
+      <div class="sec-title">Equipe do projeto</div>
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Formulário</th><th>Código</th><th>Total</th><th>Status</th></tr></thead>
-            <tbody id="tbody-formularios"></tbody>
+            <thead><tr><th>E-mail</th><th>Papel</th></tr></thead>
+            <tbody id="tbody-equipe"></tbody>
           </table>
         </div>
       </div>
 
-      <div class="sec-title">Portfólio de projetos (Gate 1 aprovados)</div>
-      <div class="kpi-row" style="grid-template-columns:repeat(5,1fr)">
-        <div class="kpi ok"><div class="kpi-label">Aprovados</div><div class="kpi-value" id="kpi-proj-aprovado">—</div></div>
-        <div class="kpi blue"><div class="kpi-label">Encerrados</div><div class="kpi-value" id="kpi-proj-concluido">—</div></div>
-        <div class="kpi bad"><div class="kpi-label">Reprovados</div><div class="kpi-value" id="kpi-proj-reprovado">—</div></div>
-        <div class="kpi warn"><div class="kpi-label">Em avaliação</div><div class="kpi-value" id="kpi-proj-avaliacao">—</div></div>
-        <div class="kpi blue"><div class="kpi-label">Total no portfólio</div><div class="kpi-value" id="kpi-proj-total">—</div></div>
-      </div>
-
-      <div class="sec-title">Visão atual por projeto</div>
-      <div class="card">
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Projeto</th><th>Gerente</th><th>Status (cadastro)</th><th>Situação (Rel. de Situação)</th><th>Progresso do ciclo</th><th>Atualizado em</th></tr></thead>
-            <tbody id="tbody-projetos"></tbody>
-          </table>
-        </div>
-      </div>
+      <div class="sec-title">Histórico de alterações</div>
+      <div class="card hist-panel" id="historicoCard"></div>
     </div>
   </div>
 </div>
 
 <script>
-/* ---- Formulários de registro (10 artefatos com múltiplos registros) ---- */
 const FORM_DEFS = [
-  { prefix:'demanda:', nome:'Solicitação de Demanda', codigo:'FORALF00339' },
-  { prefix:'canvas:',  nome:'Canvas de Projeto',       codigo:'FORALF00344' },
-  { prefix:'tap:',     nome:'TAP — Termo de Abertura',  codigo:'FORALF00338' },
-  { prefix:'plan:',    nome:'Planejamento e Desenvolvimento', codigo:'FORALF00325' },
-  { prefix:'eap:',     nome:'EAP — Estrutura Analítica', codigo:'—' },
-  { prefix:'smp:',     nome:'SMP — Solicitação de Mudança', codigo:'FORALF00343' },
-  { prefix:'ata:',     nome:'Ata de Reunião',           codigo:'FORALF00340' },
-  { prefix:'tep:',     nome:'TEP — Termo de Encerramento', codigo:'FORALF00341' },
-  { prefix:'rla:',     nome:'RLA — Lições Aprendidas',  codigo:'FORALF00342' },
+  { prefix:'demanda:', nome:'Solicitação de Demanda', codigo:'FORALF00339', pagina:'01- solicitacao-demanda.html' },
+  { prefix:'canvas:',  nome:'Canvas de Projeto',       codigo:'FORALF00344', pagina:'02 - canvas-de-projeto.html' },
+  { prefix:'tap:',     nome:'TAP — Termo de Abertura',  codigo:'FORALF00338', pagina:'03 - tap-termo-abertura-projeto.html' },
+  { prefix:'plan:',    nome:'Planejamento e Desenvolvimento', codigo:'FORALF00325', pagina:'04 - planejamento-desenvolvimento-projeto.html' },
+  { prefix:'eap:',     nome:'EAP — Estrutura Analítica', codigo:'—', pagina:'05 - eap-estrutura-analitica-projeto.html' },
+  { prefix:'smp:',     nome:'SMP — Solicitação de Mudança', codigo:'FORALF00343', pagina:'06 - smp-solicitacao-mudanca-projeto.html' },
+  { prefix:'ata:',     nome:'Ata de Reunião',           codigo:'FORALF00340', pagina:'07 - ata-reuniao-FORALF00340.html' },
+  { prefix:'tep:',     nome:'TEP — Termo de Encerramento', codigo:'FORALF00341', pagina:'09 - tep-termo-encerramento-projeto.html' },
+  { prefix:'rla:',     nome:'RLA — Lições Aprendidas',  codigo:'FORALF00342', pagina:'10 - rla-licoes-aprendidas-FORALF00342.html' },
 ];
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
 function statusClass(status){
   var s = String(status||'');
-  if(/aprovad|pactuad|public/i.test(s) && !/n[ãa]o aprovad/i.test(s)) return 's-ok';
-  if(/reprovad|n[ãa]o aprovad|cancelad/i.test(s)) return 's-bad';
-  if(/pendente|rascunho|elabora|planejamento|revis[ãa]o|avalia/i.test(s)) return 's-warn';
+  if(/aprovad|pactuad|public|concluid|no prazo/i.test(s) && !/n[ãa]o aprovad/i.test(s)) return 's-ok';
+  if(/reprovad|n[ãa]o aprovad|cancelad|atrasad/i.test(s)) return 's-bad';
+  if(/pendente|rascunho|elabora|planejamento|revis[ãa]o|avalia|paralisad|a iniciar/i.test(s)) return 's-warn';
   return 's-neutral';
 }
 
-/* Busca todos os valores (registros) de um prefixo em UMA consulta REST, em vez de listar chaves e buscar um a um. */
+function fmtDataHora(iso){
+  if(!iso) return '—';
+  var d = new Date(iso);
+  if(isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+function isoToBR(iso){
+  var m = String(iso||'').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? (m[3]+'/'+m[2]+'/'+m[1]) : (iso||'—');
+}
+
 async function listarValoresPorPrefixo(prefix){
   try{
     var r = await fetch(unialfaAuth.REST_BASE + '/kv_store?key=like.' + encodeURIComponent(prefix) + '*&select=value', { headers: unialfaAuth.authHeaders() });
@@ -470,180 +486,168 @@ async function buscarDocumentoUnico(key){
   }catch(e){ console.warn('Falha ao buscar '+key, e); return null; }
 }
 
-function contarPorStatus(registros){
-  var out = {};
-  registros.forEach(function(rec){
-    var s = rec.status || '—';
-    out[s] = (out[s]||0) + 1;
-  });
-  return out;
-}
-
-function renderBreakdown(hostId, counts){
-  var host = document.getElementById(hostId);
-  var entries = Object.entries(counts);
-  if(!entries.length){ host.innerHTML = '<span class="s-badge s-neutral">Nenhum registro</span>'; return; }
-  host.innerHTML = entries.map(function(e){
-    return '<span class="s-badge '+statusClass(e[0])+'">'+esc(e[0])+' ('+e[1]+')</span>';
-  }).join('');
-}
-
-async function carregarPainel(){
-  document.getElementById('conteudo').style.display = 'none';
-  document.getElementById('loadingBox').style.display = 'block';
-
-  // 1) Contagem por formulário
-  var tbody = document.getElementById('tbody-formularios');
-  tbody.innerHTML = '';
-  var demandaRegistros = [];
-  var registrosPorForm = {};
-  for(var i=0; i<FORM_DEFS.length; i++){
-    var def = FORM_DEFS[i];
-    var registros = await listarValoresPorPrefixo(def.prefix);
-    registrosPorForm[def.prefix] = registros;
-    if(def.prefix === 'demanda:') demandaRegistros = registros;
-    var counts = contarPorStatus(registros);
-    var chipsHtml = Object.entries(counts).map(function(e){
-      return '<span class="s-badge '+statusClass(e[0])+'">'+esc(e[0])+' ('+e[1]+')</span>';
-    }).join('');
-    tbody.innerHTML += '<tr><td><b>'+esc(def.nome)+'</b></td><td>'+esc(def.codigo)+'</td><td>'+registros.length+'</td><td><div class="status-chips">'+(chipsHtml||'<span class="s-badge s-neutral">Nenhum registro</span>')+'</div></td></tr>';
-  }
-
-  // 2) Gate 1 — a partir dos registros de Solicitação de Demanda já buscados
-  var g1counts = contarPorStatus(demandaRegistros);
-  document.getElementById('g1-total').textContent = demandaRegistros.length;
-  renderBreakdown('g1-breakdown', g1counts);
-
-  // 3) Gate 2 — documento único do Relatório de Entregas (FORALF12)
-  var relent = await buscarDocumentoUnico('relent_data');
-  var g2status = (relent && relent.gate2 && relent.gate2.status) || 'Sem relatório registrado';
-  document.getElementById('g2-status').textContent = g2status;
-  document.getElementById('g2-sub').textContent = (relent && relent.prog && relent.prog.nome) ? relent.prog.nome : '—';
-  document.getElementById('kpi-gate2').className = 'kpi ' + (g2status === 'Pactuado' ? 'ok' : 'warn');
-
-  // 4) Entraves / Encaminhamentos / Resultados — documento único do Relatório de Situação (FORALF11)
-  var relsit = await buscarDocumentoUnico('relsit_data');
-  var entraves = (relsit && relsit.entraves) || [];
-  var encaminhamentos = (relsit && relsit.encaminhamentos) || [];
-  var resultados = (relsit && relsit.resultados) || [];
-  document.getElementById('kpi-entraves').textContent = entraves.filter(function(x){ return x.status === 'Aberto'; }).length;
-  document.getElementById('kpi-encaminhamentos').textContent = encaminhamentos.filter(function(x){ return x.status === 'Aberto'; }).length;
-  document.getElementById('kpi-resultados').textContent = resultados.length;
-
-  // 5) Portfólio de projetos (tabela compartilhada `projetos`)
-  var rProj = await fetch(unialfaAuth.REST_BASE + '/projetos?select=id,nome,unidade,gerente,status,atualizado_em&order=nome', { headers: unialfaAuth.authHeaders() });
-  var projetos = rProj.ok ? await rProj.json() : [];
-  var pCounts = contarPorStatus(projetos.map(function(p){ return { status: p.status }; }));
-  var ENCERRADOS = ['Concluído','Paralisado','Cancelado'];
-  document.getElementById('kpi-proj-aprovado').textContent = pCounts['Aprovado'] || 0;
-  document.getElementById('kpi-proj-concluido').textContent = ENCERRADOS.reduce(function(a,k){return a+(pCounts[k]||0);},0);
-  document.getElementById('kpi-proj-reprovado').textContent = pCounts['Reprovado'] || 0;
-  document.getElementById('kpi-proj-avaliacao').textContent = (pCounts['Em avaliação']||0) + Object.keys(pCounts).filter(function(k){return k!=='Aprovado'&&k!=='Reprovado'&&k!=='Em avaliação'&&ENCERRADOS.indexOf(k)===-1;}).reduce(function(a,k){return a+pCounts[k];},0);
-  document.getElementById('kpi-proj-total').textContent = projetos.length;
-
-  // 6) Visão atual por projeto — cruza cadastro compartilhado + Relatório de Situação + presença nos formulários do ciclo de vida
-  renderVisaoPorProjeto(projetos, relsit, registrosPorForm);
-
-  document.getElementById('loadingBox').style.display = 'none';
-  document.getElementById('conteudo').style.display = 'block';
-}
-
-function fmtDataHora(iso){
-  if(!iso) return '—';
-  var d = new Date(iso);
-  if(isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-}
-
 function projetoStatusClass(s){
   var m = {'Aprovado':'s-ok','Concluído':'s-ok','Reprovado':'s-bad','Cancelado':'s-bad','Paralisado':'s-warn','Em avaliação':'s-warn'};
   return m[s] || 's-neutral';
 }
 
-function situacaoClass(s){
-  var m = {'No prazo':'s-ok','Concluído':'s-ok','Atrasado':'s-bad','Cancelado':'s-bad','Paralisado':'s-warn','A iniciar':'s-warn'};
-  return m[s] || 's-neutral';
-}
-
-/* Ordena: projetos ativos (Aprovado/Em avaliação) primeiro, encerrados/reprovados por último; alfabético dentro de cada grupo. */
-function ordemStatus(s){
-  if(s==='Aprovado' || s==='Em avaliação') return 0;
-  return 1;
-}
-
-function renderVisaoPorProjeto(projetos, relsit, registrosPorForm){
-  var relsitPorProjeto = {};
-  ((relsit && relsit.projetos) || []).forEach(function(p){
-    if(p.projetoId) relsitPorProjeto[p.projetoId] = p;
-  });
-
-  // Quais dos 9 formulários do ciclo de vida já têm registro vinculado a cada projeto
-  var formsPorProjeto = {};
-  FORM_DEFS.forEach(function(def){
-    (registrosPorForm[def.prefix] || []).forEach(function(r){
-      if(!r.projetoId) return;
-      if(!formsPorProjeto[r.projetoId]) formsPorProjeto[r.projetoId] = {};
-      formsPorProjeto[r.projetoId][def.prefix] = true;
-    });
-  });
-
-  var ordenados = projetos.slice().sort(function(a,b){
-    var oa = ordemStatus(a.status), ob = ordemStatus(b.status);
-    if(oa !== ob) return oa - ob;
-    return (a.nome||'').localeCompare(b.nome||'', 'pt-BR');
-  });
-
-  var tbody = document.getElementById('tbody-projetos');
-  if(!ordenados.length){
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum projeto cadastrado ainda.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = ordenados.map(function(p){
-    var sit = relsitPorProjeto[p.id];
-    var sitHtml;
-    if(sit){
-      sitHtml = '<span class="s-badge '+situacaoClass(sit.status)+'">'+esc(sit.status||'—')+'</span>'
-        + (sit.pct ? '<div class="kpi-sub" style="margin-top:4px">'+esc(sit.pct)+'% concluído</div>' : '');
-    } else {
-      sitHtml = '<span class="s-badge s-neutral">Não reportado</span>';
-    }
-
-    var feitos = formsPorProjeto[p.id] || {};
-    var qtdFeitos = FORM_DEFS.filter(function(def){ return feitos[def.prefix]; }).length;
-    var faltando = FORM_DEFS.filter(function(def){ return !feitos[def.prefix]; }).map(function(def){ return def.nome; });
-    var progHtml = '<b>'+qtdFeitos+'/'+FORM_DEFS.length+'</b> formulários'
-      + (faltando.length ? '<div class="kpi-sub" style="margin-top:4px">Faltam: '+esc(faltando.join(', '))+'</div>' : '');
-
-    return '<tr>'
-      + '<td><a href="18 - ficha-projeto.html?id='+esc(p.id)+'" style="color:var(--ink);text-decoration:none"><b style="text-decoration:underline">'+esc(p.nome)+'</b></a><div class="kpi-sub" style="margin-top:2px">'+esc(p.unidade||'—')+'</div></td>'
-      + '<td>'+esc(p.gerente||'—')+'</td>'
-      + '<td><span class="s-badge '+projetoStatusClass(p.status)+'">'+esc(p.status||'—')+'</span></td>'
-      + '<td>'+sitHtml+'</td>'
-      + '<td>'+progHtml+'</td>'
-      + '<td>'+fmtDataHora(p.atualizado_em)+'</td>'
-      + '</tr>';
+function renderEquipe(membros){
+  var tbody = document.getElementById('tbody-equipe');
+  if(!membros.length){ tbody.innerHTML = '<tr><td colspan="2" class="empty">Nenhum membro cadastrado nesta equipe.</td></tr>'; return; }
+  tbody.innerHTML = membros.map(function(m){
+    return '<tr><td>'+esc(m.usuario_email)+'</td><td>'+esc(unialfaAuth.papelLabel(m.papel))+'</td></tr>';
   }).join('');
 }
 
-async function papelPermitido(chave){
-  if(window.currentProfile && window.currentProfile.papel==='admin') return true;
-  try{
-    const r = await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=eq.'+chave+'&select=valor', { headers: unialfaAuth.authHeaders() });
-    const rows = r.ok ? await r.json() : [];
-    const permitidos = (rows[0] && Array.isArray(rows[0].valor)) ? rows[0].valor : [];
-    return window.currentProfile ? permitidos.includes(window.currentProfile.papel) : false;
-  }catch(e){ return false; }
+function renderHistorico(itens){
+  var host = document.getElementById('historicoCard');
+  var labels = {nome:'Nome do projeto', unidade:'Unidade', gerente:'Gerente de projeto', status:'Status'};
+  if(!itens.length){ host.innerHTML = '<div class="empty">Nenhuma alteração registrada ainda.</div>'; return; }
+  host.innerHTML = itens.map(function(h){
+    return '<div class="hi"><b>'+esc(labels[h.campo]||h.campo)+'</b>: "'+esc(h.valor_anterior||'—')+'" → "'+esc(h.valor_novo||'—')+'"'
+      + '<div class="quando">'+fmtDataHora(h.criado_em)+' · '+esc(h.formulario_origem||'')+' · '+esc(h.alterado_por_email||'—')+'</div></div>';
+  }).join('');
+}
+
+function renderSituacao(sit){
+  var host = document.getElementById('situacaoCard');
+  if(!sit){
+    host.innerHTML = '<div class="empty">Este projeto ainda não tem uma linha própria no Relatório de Situação — ninguém preencheu o acompanhamento dele ainda.</div>';
+    return;
+  }
+  var html = '<div class="kv-grid" style="padding-bottom:6px">'
+    + '<div><div class="kv-label">Status</div><div class="kv-value"><span class="s-badge '+statusClass(sit.status)+'">'+esc(sit.status||'—')+'</span></div></div>'
+    + '<div><div class="kv-label">% concluído</div><div class="kv-value">'+esc(sit.pct||'0')+'%</div></div>'
+    + '<div><div class="kv-label">Início previsto</div><div class="kv-value">'+esc(sit.inicio||'—')+'</div></div>'
+    + '<div><div class="kv-label">Término previsto</div><div class="kv-value">'+esc(sit.termino||'—')+'</div></div>'
+    + '</div>';
+  if(sit.destaque || sit.atencao){
+    html += '<div class="card-pad" style="padding-top:0">';
+    if(sit.destaque) html += '<div class="note" style="margin-top:0;margin-bottom:8px"><b>Merece destaque:</b> '+esc(sit.destaque)+'</div>';
+    if(sit.atencao) html += '<div class="note" style="margin-top:0"><b>Merece atenção:</b> '+esc(sit.atencao)+'</div>';
+    html += '</div>';
+  }
+  var marcos = sit.marcos || [];
+  html += '<div class="sec-title" style="margin:14px 20px 4px">Marcos</div>';
+  html += marcos.length ? marcos.map(function(m){
+    return '<div class="marco-item"><div class="marco-nome">'+esc(m.nome)+' <span class="s-badge '+statusClass(m.status)+'">'+esc(m.status||'—')+'</span></div><div class="marco-data">'+esc(m.data||'—')+'</div></div>';
+  }).join('') : '<div class="empty">Nenhum marco registrado.</div>';
+  var custos = sit.custosRealizados || [];
+  html += '<div class="sec-title" style="margin:14px 20px 4px">Custos realizados</div>';
+  html += custos.length ? custos.map(function(c){
+    return '<div class="custo-item"><div class="marco-nome">'+esc(c.categoria)+'</div><div class="marco-data">R$ '+esc(c.valor||'0')+'</div></div>';
+  }).join('') : '<div class="empty">Nenhum custo realizado registrado.</div>';
+  host.innerHTML = html;
+}
+
+function renderTap(tap){
+  var host = document.getElementById('tapCard');
+  if(!tap){
+    host.innerHTML = '<div class="empty">Nenhum TAP encontrado para este projeto ainda.</div>';
+    return;
+  }
+  var cronograma = Array.isArray(tap.cronograma) ? tap.cronograma : [];
+  var custos = Array.isArray(tap.custos) ? tap.custos : [];
+  var html = '<div class="sec-title" style="margin:14px 20px 4px">Cronograma de entregas macro</div>';
+  html += cronograma.length ? cronograma.map(function(m){
+    return '<div class="marco-item"><div class="marco-nome">'+esc(m.marco)+'</div><div class="marco-data">'+isoToBR(m.ini)+' → '+isoToBR(m.fim)+'</div></div>';
+  }).join('') : '<div class="empty">Nenhum marco de cronograma registrado no TAP.</div>';
+  html += '<div class="sec-title" style="margin:14px 20px 4px">Custo total estimado</div>';
+  html += custos.length ? custos.map(function(c){
+    return '<div class="custo-item"><div class="marco-nome">'+esc(c.item)+'</div><div class="marco-data">R$ '+esc(c.valor||'0')+'</div></div>';
+  }).join('') : '<div class="empty">Nenhum custo estimado registrado no TAP.</div>';
+  host.innerHTML = html;
+}
+
+function renderCiclo(registrosPorForm){
+  var host = document.getElementById('cicloCard');
+  host.innerHTML = FORM_DEFS.map(function(def){
+    var registros = registrosPorForm[def.prefix] || [];
+    var statusHtml = registros.length
+      ? registros.map(function(r){ return '<span class="s-badge '+statusClass(r.status)+'">'+esc(r.status||'—')+'</span>'; }).join('')
+      : '<span class="s-badge s-neutral">Sem registro</span>';
+    return '<div class="ciclo-row">'
+      + '<div><div class="ciclo-nome">'+esc(def.nome)+'</div><div class="ciclo-codigo">'+esc(def.codigo)+' · '+registros.length+' registro(s)</div></div>'
+      + '<div class="ciclo-status">'+statusHtml+'</div>'
+      + '<a class="ciclo-link" href="'+esc(def.pagina)+'">Abrir →</a>'
+      + '</div>';
+  }).join('');
+}
+
+async function carregarFicha(projetoId){
+  document.getElementById('fichaBox').style.display = 'block';
+  document.getElementById('conteudo').style.display = 'none';
+  document.getElementById('loadingBox').style.display = 'block';
+
+  var rProj = await fetch(unialfaAuth.REST_BASE + '/projetos?id=eq.'+encodeURIComponent(projetoId)+'&select=*', { headers: unialfaAuth.authHeaders() });
+  var projetos = rProj.ok ? await rProj.json() : [];
+  var proj = projetos[0];
+  if(!proj){
+    document.getElementById('fichaBox').style.display = 'none';
+    document.getElementById('deniedBox').style.display = 'block';
+    return;
+  }
+
+  document.getElementById('docSub').textContent = proj.nome;
+  document.getElementById('f-nome').textContent = proj.nome || '—';
+  document.getElementById('f-unidade').textContent = proj.unidade || '—';
+  document.getElementById('f-gerente').textContent = proj.gerente || '—';
+  document.getElementById('f-status').innerHTML = '<span class="s-badge '+projetoStatusClass(proj.status)+'">'+esc(proj.status||'—')+'</span>';
+  document.getElementById('f-criado').textContent = fmtDataHora(proj.criado_em);
+  document.getElementById('f-atualizado').textContent = fmtDataHora(proj.atualizado_em);
+
+  var [rEquipe, rHist, relsit] = await Promise.all([
+    fetch(unialfaAuth.REST_BASE + '/projeto_equipe?projeto_id=eq.'+encodeURIComponent(projetoId)+'&select=*&order=usuario_email', { headers: unialfaAuth.authHeaders() }),
+    fetch(unialfaAuth.REST_BASE + '/projeto_historico?projeto_id=eq.'+encodeURIComponent(projetoId)+'&select=*&order=criado_em.desc', { headers: unialfaAuth.authHeaders() }),
+    buscarDocumentoUnico('relsit_data'),
+  ]);
+  renderEquipe(rEquipe.ok ? await rEquipe.json() : []);
+  renderHistorico(rHist.ok ? await rHist.json() : []);
+
+  var sit = ((relsit && relsit.projetos) || []).find(function(p){ return p.projetoId === projetoId; });
+  renderSituacao(sit);
+
+  var registrosPorForm = {};
+  var tap = null;
+  for(var i=0;i<FORM_DEFS.length;i++){
+    var def = FORM_DEFS[i];
+    var todos = await listarValoresPorPrefixo(def.prefix);
+    var doProjeto = todos.filter(function(r){ return r.projetoId === projetoId; });
+    registrosPorForm[def.prefix] = doProjeto;
+    if(def.prefix === 'tap:' && doProjeto.length) tap = doProjeto[0];
+  }
+  renderCiclo(registrosPorForm);
+  renderTap(tap);
+
+  document.getElementById('loadingBox').style.display = 'none';
+  document.getElementById('conteudo').style.display = 'block';
+}
+
+async function carregarPicker(){
+  var r = await fetch(unialfaAuth.REST_BASE + '/projetos?select=id,nome,unidade,status&order=nome', { headers: unialfaAuth.authHeaders() });
+  var projetos = r.ok ? await r.json() : [];
+  var sel = document.getElementById('pickerSelect');
+  if(!projetos.length){ sel.innerHTML = '<option value="">Nenhum projeto cadastrado</option>'; return; }
+  sel.innerHTML = projetos.map(function(p){
+    return '<option value="'+esc(p.id)+'">'+esc(p.nome)+' — '+esc(p.unidade||'')+' ('+esc(p.status||'')+')</option>';
+  }).join('');
+}
+
+function abrirProjetoSelecionado(){
+  var id = document.getElementById('pickerSelect').value;
+  if(!id) return;
+  location.href = '18 - ficha-projeto.html?id=' + encodeURIComponent(id);
 }
 
 (async()=>{
   await ensureAuthenticated();
-  if(!(await papelPermitido('papeis_painel_executivo'))){
-    document.getElementById('deniedMsg').textContent = 'Esta página não está liberada para o seu papel atual ("'+unialfaAuth.papelLabel(window.currentProfile?window.currentProfile.papel:'solicitante')+'"). Solicite a um administrador para ajustar quem pode ver esta página em Administração > Configurações.';
-    document.getElementById('deniedBox').style.display = 'block';
-    return;
+  var params = new URLSearchParams(location.search);
+  var id = params.get('id');
+  if(id){
+    await carregarFicha(id);
+  } else {
+    document.getElementById('pickerBox').style.display = 'block';
+    await carregarPicker();
   }
-  document.getElementById('painelBox').style.display = 'block';
-  await carregarPainel();
 })();
 </script>
