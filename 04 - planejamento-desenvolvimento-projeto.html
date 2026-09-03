@@ -74,12 +74,15 @@
   .dyn{padding:18px 24px 22px}
   .dyn>label.blocklabel{display:block; margin-bottom:10px; font-size:12px; font-weight:700}
   .dyn-table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px}
-  table.dyn-t{width:100%; border-collapse:collapse; min-width:620px}
-  table.dyn-t th{font-size:9px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); padding:9px 10px; background:var(--surface-2); border-bottom:1px solid var(--line); text-align:left; white-space:nowrap}
+  table.dyn-t{width:100%; border-collapse:collapse; min-width:760px; table-layout:fixed}
+  table.dyn-t th, table.dyn-t td{overflow-wrap:break-word}
+  table.dyn-t th{font-size:9px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); padding:9px 10px; background:var(--surface-2); border-bottom:1px solid var(--line); text-align:left; white-space:normal; line-height:1.3}
   table.dyn-t td{padding:4px 6px; border-bottom:1px solid var(--surface)}
   table.dyn-t tbody tr:last-child td{border-bottom:none}
-  table.dyn-t input, table.dyn-t select{border:1px solid transparent; border-radius:6px; padding:8px; font-size:12.5px; background:var(--surface-2); min-width:120px}
+  table.dyn-t input, table.dyn-t select{border:1px solid transparent; border-radius:6px; padding:8px; font-size:12.5px; background:var(--surface-2); min-width:95px; width:100%; box-sizing:border-box}
   table.dyn-t input:focus, table.dyn-t select:focus{background:#fff; border-color:var(--red); box-shadow:none}
+  table.dyn-t textarea{border:1px solid transparent; border-radius:6px; padding:8px; font-size:12.5px; background:var(--surface-2); min-width:95px; width:100%; box-sizing:border-box; font-family:var(--font); color:var(--ink); resize:none; overflow:hidden; display:block; line-height:1.4; min-height:34px}
+  table.dyn-t textarea:focus{background:#fff; border-color:var(--red); box-shadow:none; outline:none}
   .row-x{appearance:none; border:none; background:transparent; color:var(--muted); font-size:18px; cursor:pointer; width:28px; height:28px; border-radius:6px; line-height:1}
   .row-x:hover{background:var(--bad-soft); color:var(--bad)}
   .row-actions{display:flex; align-items:center; justify-content:flex-end; gap:1px}
@@ -853,8 +856,8 @@ const STAGES=[
     {kind:'field', key:'beneficios', label:'Benefícios do projeto', type:'textarea'},
     {kind:'table', key:'comparacao', label:'Comparação de alternativas', seed:2, cols:[
       {key:'criterio',label:'Critério',type:'text'},
-      {key:'p1',label:'Projeto 1',type:'text'},
-      {key:'p2',label:'Projeto 2',type:'text'},
+      {key:'p1',label:'Projeto 1',type:'text',w:'32%',long:true},
+      {key:'p2',label:'Projeto 2',type:'text',w:'32%',long:true},
     ]},
     {kind:'field', key:'impPos', label:'Impactos esperados — positivos', type:'textarea'},
     {kind:'field', key:'impNeg', label:'Impactos esperados — negativos', type:'textarea'},
@@ -864,7 +867,7 @@ const STAGES=[
   ]},
   {id:'crono', tab:'3 · Cronograma', title:'Cronograma', sub:'Marcos e prazos', blocks:[
     {kind:'table', key:'cronograma', label:'Marcos do projeto', seed:3, cols:[
-      {key:'marco',label:'Marco do projeto',type:'text'},
+      {key:'marco',label:'Marco do projeto',type:'text',w:'32%',long:true},
       {key:'resp',label:'Responsável',type:'text'},
       {key:'duracao',label:'Duração',type:'text'},
       {key:'entrega',label:'Data de entrega',type:'date'},
@@ -872,10 +875,10 @@ const STAGES=[
   ]},
   {id:'entradas', tab:'4 · Entradas', title:'Entradas do projeto', sub:'Requisitos e fontes', blocks:[
     {kind:'table', key:'entradas', label:'Entradas', cols:[
-      {key:'id',label:'ID',type:'text'},
+      {key:'id',label:'ID',type:'text',w:'46px'},
       {key:'categoria',label:'Categoria de entrada',type:'text'},
-      {key:'descricao',label:'Descrição detalhada',type:'text'},
-      {key:'fonte',label:'Fonte / documento de origem',type:'text'},
+      {key:'descricao',label:'Descrição detalhada',type:'text',w:'26%',long:true},
+      {key:'fonte',label:'Fonte / documento de origem',type:'text',w:'20%',long:true},
       {key:'resp',label:'Responsável',type:'text'},
       {key:'status',label:'Status',type:'select',options:ST_ENTRADA},
     ], seedRows:[
@@ -890,43 +893,43 @@ const STAGES=[
   ]},
   {id:'saidas', tab:'5 · Saídas', title:'Saídas do projeto', sub:'Entregáveis e aceitação', blocks:[
     {kind:'table', key:'saidas', label:'Saídas', cols:[
-      {key:'id',label:'ID',type:'text'},
-      {key:'item',label:'Item de saída (entregável)',type:'text'},
-      {key:'requisito',label:'Requisito de entrada (fonte da demanda)',type:'text'},
-      {key:'criterios',label:'Critérios de aceitação',type:'text'},
+      {key:'id',label:'ID',type:'text',w:'46px'},
+      {key:'item',label:'Item de saída (entregável)',type:'text',w:'22%',long:true},
+      {key:'requisito',label:'Requisito de entrada (fonte da demanda)',type:'text',w:'20%',long:true},
+      {key:'criterios',label:'Critérios de aceitação',type:'text',w:'20%',long:true},
       {key:'statusVerif',label:'Status de verificação',type:'select',options:ST_SAIDA_VERIF},
       {key:'aprovacao',label:'Aprovação final',type:'select',options:ST_APROV},
     ], seedRows:[{id:'S1'},{id:'S2'},{id:'S3'},{id:'S4'},{id:'S5'},{id:'S6'},{id:'S7'}]},
   ]},
   {id:'verif', tab:'6 · Verificação', title:'Verificação do projeto', sub:'Conformidade das saídas', blocks:[
     {kind:'table', key:'verificacao', label:'Verificação', cols:[
-      {key:'id',label:'ID',type:'text'},
-      {key:'requisito',label:'Requisito de entrada',type:'text'},
-      {key:'saida',label:'Item de saída correspondente',type:'text'},
-      {key:'metodo',label:'Método de verificação',type:'text'},
+      {key:'id',label:'ID',type:'text',w:'50px'},
+      {key:'requisito',label:'Requisito de entrada',type:'text',w:'16%',long:true},
+      {key:'saida',label:'Item de saída correspondente',type:'text',w:'16%',long:true},
+      {key:'metodo',label:'Método de verificação',type:'text',w:'16%',long:true},
       {key:'resultado',label:'Resultado (C/NC)',type:'select',options:RES_CNC},
-      {key:'evidencia',label:'Evidência documental',type:'text'},
+      {key:'evidencia',label:'Evidência documental',type:'text',w:'14%',long:true},
       {key:'resp',label:'Responsável',type:'text'},
     ], seedRows:[{id:'VR1'},{id:'VR2'},{id:'VR3'},{id:'VR4'},{id:'VR5'},{id:'VR6'},{id:'VR7'}]},
   ]},
   {id:'valid', tab:'7 · Validação', title:'Validação do projeto', sub:'Uso pretendido', blocks:[
     {kind:'table', key:'validacao', label:'Validação', cols:[
-      {key:'id',label:'ID',type:'text'},
-      {key:'requisito',label:'Requisito do usuário / uso pretendido',type:'text'},
-      {key:'metodo',label:'Método de validação (teste prático)',type:'text'},
-      {key:'criterio',label:'Critério de sucesso',type:'text'},
+      {key:'id',label:'ID',type:'text',w:'50px'},
+      {key:'requisito',label:'Requisito do usuário / uso pretendido',type:'text',w:'22%',long:true},
+      {key:'metodo',label:'Método de validação (teste prático)',type:'text',w:'18%',long:true},
+      {key:'criterio',label:'Critério de sucesso',type:'text',w:'18%',long:true},
       {key:'resultado',label:'Resultado',type:'select',options:RES_AV},
-      {key:'evidencia',label:'Evidência (relatório/foto/vídeo)',type:'text'},
+      {key:'evidencia',label:'Evidência (relatório/foto/vídeo)',type:'text',w:'16%',long:true},
     ], seedRows:[{id:'V1'},{id:'V2'},{id:'V3'},{id:'V4'},{id:'V5'},{id:'V6'},{id:'V7'}]},
   ]},
   {id:'analise', tab:'8 · Análise crítica', title:'Análise crítica do projeto', sub:'Pontos de controle', blocks:[
     {kind:'table', key:'analise', label:'Análise crítica', cols:[
       {key:'etapa',label:'Etapa do projeto',type:'text'},
       {key:'dataAnalise',label:'Data da análise',type:'date'},
-      {key:'participantes',label:'Participantes (áreas)',type:'text'},
-      {key:'pontos',label:'Pontos analisados (status)',type:'text'},
-      {key:'problemas',label:'Problemas/riscos identificados',type:'text'},
-      {key:'acoes',label:'Ações necessárias / decisões',type:'text'},
+      {key:'participantes',label:'Participantes (áreas)',type:'text',w:'14%',long:true},
+      {key:'pontos',label:'Pontos analisados (status)',type:'text',w:'18%',long:true},
+      {key:'problemas',label:'Problemas/riscos identificados',type:'text',w:'18%',long:true},
+      {key:'acoes',label:'Ações necessárias / decisões',type:'text',w:'18%',long:true},
       {key:'respPrazo',label:'Responsável e prazo',type:'text'},
     ], seedRows:[{etapa:'Planejamento'},{etapa:'Pós-verificação'},{etapa:'Pós-validação'},{etapa:'Finalização'}]},
   ]},
@@ -1067,7 +1070,7 @@ function mountTable(t){
   const host=document.getElementById('dyn-'+t.key);
   const wrap=document.createElement('div');
   wrap.innerHTML=`<div class="dyn-table-wrap"><table class="dyn-t" id="tbl-${t.key}">
-    <thead><tr>${t.cols.map(c=>`<th>${c.label}</th>`).join('')}<th style="width:96px"></th></tr></thead><tbody></tbody></table></div>
+    <thead><tr>${t.cols.map(c=>`<th${c.w?` style="width:${c.w}"`:''}>${c.label}</th>`).join('')}<th style="width:96px"></th></tr></thead><tbody></tbody></table></div>
     <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addRow('${t.key}')">+ Adicionar linha</button></div>`;
   host.appendChild(wrap);
   if(t.seedRows) t.seedRows.forEach(r=>addRow(t.key, r));
@@ -1077,8 +1080,15 @@ function cellInput(c, v){
   if(c.type==='select'){
     return `<select data-k="${c.key}"><option value="">—</option>${c.options.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`;
   }
+  if(c.long){
+    return `<textarea data-k="${c.key}" rows="1" oninput="autoGrow(this)">${esc(v)}</textarea>`;
+  }
   const t=c.type==='date'?'date':'text';
   return `<input data-k="${c.key}" type="${t}" value="${esc(v)}">`;
+}
+function autoGrow(el){
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
 }
 function addRow(key, vals){
   const t=TABLE_DEFS[key];
@@ -1091,6 +1101,7 @@ function addRow(key, vals){
     <button type="button" class="row-x" title="Remover" onclick="removeRow(this)">×</button>
   </td>`;
   tr.innerHTML=cells; tb.appendChild(tr);
+  tr.querySelectorAll('textarea').forEach(autoGrow);
   updateRowMoveButtons(tb);
 }
 function moveRow(btn,dir){
@@ -1118,7 +1129,7 @@ function readTable(key){
   const rows=[];
   document.querySelectorAll(`#tbl-${key} tbody tr`).forEach(tr=>{
     const obj={}; let any=false;
-    tr.querySelectorAll('input,select').forEach(inp=>{ const val=(inp.value||'').trim(); obj[inp.dataset.k]=val; if(val) any=true; });
+    tr.querySelectorAll('input,select,textarea').forEach(inp=>{ const val=(inp.value||'').trim(); obj[inp.dataset.k]=val; if(val) any=true; });
     if(any) rows.push(obj);
   });
   return rows;

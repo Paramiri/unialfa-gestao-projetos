@@ -72,6 +72,8 @@
   table.dyn-t input:focus{background:#fff; border-color:var(--red); box-shadow:none}
   table.dyn-t select{border:1px solid transparent; border-radius:6px; padding:8px 6px; font-size:12.5px; background:var(--surface-2); font-family:var(--font); color:var(--ink); width:100%; min-width:110px; box-sizing:border-box}
   table.dyn-t select:focus{background:#fff; border-color:var(--red); box-shadow:none}
+  table.dyn-t textarea{border:1px solid transparent; border-radius:6px; padding:8px 8px; font-size:12.5px; background:var(--surface-2); width:100%; min-width:110px; box-sizing:border-box; font-family:var(--font); color:var(--ink); resize:none; overflow:hidden; display:block; line-height:1.4; min-height:34px}
+  table.dyn-t textarea:focus{background:#fff; border-color:var(--red); box-shadow:none; outline:none}
   .risk-status{display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px}
   .risk-status.aberto{background:var(--bad-soft); color:var(--bad)}
   .risk-status.monitorando{background:var(--warn-soft); color:var(--warn)}
@@ -1002,35 +1004,35 @@ const RISCO_STATUS=['Aberto','Monitorando','Mitigado','Materializado','Encerrado
 
 const TABLES={
   riscos:{cols:[
-    {key:'risco',label:'Risco',type:'text',w:'32%'},
+    {key:'risco',label:'Risco',type:'text',w:'32%',long:true},
     {key:'status',label:'Status',type:'select',options:RISCO_STATUS},
     {key:'resp',label:'Responsável',type:'text'},
     {key:'revisao',label:'Última revisão',type:'date'},
   ]},
   cronograma:{cols:[
-    {key:'marco',label:'Marcos / Entregas',type:'text',w:'32%'},
+    {key:'marco',label:'Marcos / Entregas',type:'text',w:'32%',long:true},
     {key:'resp',label:'Responsável',type:'text'},
     {key:'ini',label:'Início previsto',type:'date'},
     {key:'fim',label:'Término previsto',type:'date'},
     {key:'custo',label:'Custo',type:'text'},
   ]},
   custos:{sum:'valor', cols:[
-    {key:'item',label:'Item',type:'text',w:'24%'},
-    {key:'espec',label:'Especificação',type:'text',w:'24%'},
+    {key:'item',label:'Item',type:'text',w:'24%',long:true},
+    {key:'espec',label:'Especificação',type:'text',w:'24%',long:true},
     {key:'unid',label:'Unid.',type:'text'},
     {key:'qtd',label:'Quant.',type:'number'},
     {key:'valor',label:'Valor total (R$)',type:'text'},
   ]},
   interessadas:{cols:[
-    {key:'nome',label:'Nome',type:'text',w:'50%'},
+    {key:'nome',label:'Nome',type:'text',w:'50%',long:true},
     {key:'unidade',label:'Unidade',type:'text'},
   ]},
   equipe:{cols:[
-    {key:'nome',label:'Nome',type:'text',w:'50%'},
+    {key:'nome',label:'Nome',type:'text',w:'50%',long:true},
     {key:'unidade',label:'Unidade',type:'text'},
   ]},
   indicadores:{cols:[
-    {key:'indicador',label:'Indicador',type:'text',w:'30%'},
+    {key:'indicador',label:'Indicador',type:'text',w:'30%',long:true},
     {key:'vi',label:'Valor inicial',type:'text'},
     {key:'dri',label:'Data ref. inicial',type:'date'},
     {key:'vf',label:'Valor final',type:'text'},
@@ -1237,6 +1239,10 @@ function addRow(name, vals){
       cells+=`<td><select data-k="${c.key}">${opts}</select></td>`;
       return;
     }
+    if(c.long){
+      cells+=`<td><textarea data-k="${c.key}" rows="1" oninput="autoGrow(this)">${esc(v)}</textarea></td>`;
+      return;
+    }
     const t=c.type==='date'?'date':(c.type==='number'?'number':'text');
     const oninput=(cfg.sum&&c.key===cfg.sum)?` oninput="recalc('${name}')"`:'';
     cells+=`<td><input data-k="${c.key}" type="${t}" value="${esc(v)}"${oninput}></td>`;
@@ -1248,6 +1254,11 @@ function addRow(name, vals){
   </td>`;
   tr.innerHTML=cells; tb.appendChild(tr);
   updateRowMoveButtons(tb);
+  tr.querySelectorAll('textarea').forEach(autoGrow);
+}
+function autoGrow(el){
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
 }
 function moveRow(btn,dir){
   const tr=btn.closest('tr'); const tb=tr.parentElement;
@@ -1274,7 +1285,7 @@ function readTable(name){
   const rows=[];
   document.querySelectorAll(`#tbl-${name} tbody tr`).forEach(tr=>{
     const obj={}; let any=false;
-    tr.querySelectorAll('input,select').forEach(inp=>{
+    tr.querySelectorAll('input,select,textarea').forEach(inp=>{
       const val=inp.value.trim();
       obj[inp.dataset.k]=val;
       if(val && inp.tagName!=='SELECT') any=true;

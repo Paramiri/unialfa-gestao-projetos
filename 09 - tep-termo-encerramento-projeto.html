@@ -65,12 +65,15 @@ textarea{resize:vertical;min-height:80px}
 /* dynamic tables */
 .dyn{padding:16px 24px 20px}
 .dyn-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
-table.dyn-t{width:100%;border-collapse:collapse;min-width:420px}
-table.dyn-t th{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:9px 10px;background:var(--surface-2);border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+table.dyn-t{width:100%;border-collapse:collapse;min-width:420px;table-layout:fixed}
+table.dyn-t th,table.dyn-t td{overflow-wrap:break-word}
+table.dyn-t th{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:9px 10px;background:var(--surface-2);border-bottom:1px solid var(--line);text-align:left;white-space:normal;line-height:1.3}
 table.dyn-t td{padding:4px 6px;border-bottom:1px solid var(--surface)}
 table.dyn-t tbody tr:last-child td{border-bottom:none}
-table.dyn-t input{border:1px solid transparent;border-radius:6px;padding:8px;font-size:12.5px;background:var(--surface-2);min-width:120px}
+table.dyn-t input{border:1px solid transparent;border-radius:6px;padding:8px;font-size:12.5px;background:var(--surface-2);min-width:120px;width:100%;box-sizing:border-box}
 table.dyn-t input:focus{background:#fff;border-color:var(--red);box-shadow:none;outline:none}
+table.dyn-t textarea{border:1px solid transparent;border-radius:6px;padding:8px;font-size:12.5px;background:var(--surface-2);min-width:120px;width:100%;box-sizing:border-box;font-family:var(--font);color:var(--ink);resize:none;overflow:hidden;display:block;line-height:1.4;min-height:34px}
+table.dyn-t textarea:focus{background:#fff;border-color:var(--red);box-shadow:none;outline:none}
 .row-x{appearance:none;border:none;background:transparent;color:var(--muted);font-size:18px;cursor:pointer;width:28px;height:28px;border-radius:6px;line-height:1;display:flex;align-items:center;justify-content:center}
 .row-x:hover{background:var(--bad-soft);color:var(--bad)}
 .dyn-foot{margin-top:10px}
@@ -911,7 +914,7 @@ let cache=[], currentId=null, editId=null;
 const REQUIRED=['nomeProjeto','unidade','gerente'];
 const SIMPLE=['nomeProjeto','unidade','gerente','programa','justificativa','atividades','linkPasta','outrosDocs','analise'];
 
-const TABEL_ENTREGAS={cols:[{key:'produto',label:'Produto / Serviço',type:'text'},{key:'data',label:'Data',type:'date'}],seed:3};
+const TABEL_ENTREGAS={cols:[{key:'produto',label:'Produto / Serviço',type:'text',w:'75%',long:true},{key:'data',label:'Data',type:'date'}],seed:3};
 
 let projetosAprovados=[]; let historicoAberto=false;
 async function carregarProjetosAprovados(selecionarId){
@@ -1008,7 +1011,7 @@ function mountTable(){
   const host=document.getElementById('dyn-entregas');
   const wrap=document.createElement('div');
   wrap.innerHTML=`<div class="dyn-table-wrap"><table class="dyn-t" id="tbl-entregas">
-    <thead><tr>${TABEL_ENTREGAS.cols.map(c=>`<th>${c.label}</th>`).join('')}<th style="width:36px"></th></tr></thead>
+    <thead><tr>${TABEL_ENTREGAS.cols.map(c=>`<th${c.w?` style="width:${c.w}"`:''}>${c.label}</th>`).join('')}<th style="width:36px"></th></tr></thead>
     <tbody></tbody></table></div>
     <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addRow()">+ Adicionar entrega</button></div>`;
   host.appendChild(wrap);
@@ -1019,16 +1022,22 @@ function addRow(vals){
   const tr=document.createElement('tr');
   let cells=TABEL_ENTREGAS.cols.map(c=>{
     const v=vals?(vals[c.key]||''):'';
+    if(c.long) return `<td><textarea data-k="${c.key}" rows="1" oninput="autoGrow(this)">${esc(v)}</textarea></td>`;
     return `<td><input data-k="${c.key}" type="${c.type==='date'?'date':'text'}" value="${esc(v)}"></td>`;
   }).join('');
   cells+=`<td><button type="button" class="row-x" onclick="this.closest('tr').remove()">×</button></td>`;
   tr.innerHTML=cells; tb.appendChild(tr);
+  tr.querySelectorAll('textarea').forEach(autoGrow);
+}
+function autoGrow(el){
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
 }
 function readEntregas(){
   const rows=[];
   document.querySelectorAll('#tbl-entregas tbody tr').forEach(tr=>{
     const obj={}; let any=false;
-    tr.querySelectorAll('input').forEach(inp=>{const v=(inp.value||'').trim();obj[inp.dataset.k]=v;if(v)any=true;});
+    tr.querySelectorAll('input,textarea').forEach(inp=>{const v=(inp.value||'').trim();obj[inp.dataset.k]=v;if(v)any=true;});
     if(any) rows.push(obj);
   });
   return rows;
