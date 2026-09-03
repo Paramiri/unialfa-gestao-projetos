@@ -132,6 +132,7 @@ body.auth-ready{padding-top:34px}
       <a href="#administracao" data-sec="administracao">Administração</a>
       <a href="#backup" data-sec="backup">Backup automatizado</a>
       <a href="#painel-executivo" data-sec="painel-executivo">Painel Executivo</a>
+      <a href="#ficha-projeto" data-sec="ficha-projeto">Ficha do Projeto</a>
       <a href="#relatorio-resultados" data-sec="relatorio-resultados">Relatório de Resultados</a>
       <div class="grp">Ajuda</div>
       <a href="#faq" data-sec="faq">Perguntas frequentes</a>
@@ -456,10 +457,25 @@ body.auth-ready{padding-top:34px}
           <li><b>Governança:</b> quantidade de Entraves e Encaminhamentos ainda Aberto, e quantos Resultados alcançados já foram registrados no Relatório de Situação.</li>
           <li><b>Registros por formulário:</b> total e contagem por status de cada artefato.</li>
           <li><b>Portfólio de projetos:</b> contagem de projetos Aprovados, Encerrados (Concluído/Paralisado/Cancelado, via TEP), Reprovados e em avaliação no Gate 1.</li>
-          <li><b>Visão atual por projeto:</b> uma linha por projeto do cadastro compartilhado, cruzando o status do cadastro, a situação mais recente do <a href="#relatorio-situacao">Relatório de Situação</a> (com o % concluído do projeto, quando reportado) e quantos dos 9 formulários do ciclo de vida (Demanda a RLA) já têm registro vinculado àquele projeto — mostra também quais etapas ainda faltam.</li>
+          <li><b>Visão atual por projeto:</b> uma linha por projeto do cadastro compartilhado, cruzando o status do cadastro, a situação mais recente do <a href="#relatorio-situacao">Relatório de Situação</a> (com o % concluído do projeto, quando reportado) e quantos dos 9 formulários do ciclo de vida (Demanda a RLA) já têm registro vinculado àquele projeto — mostra também quais etapas ainda faltam. Clicar no nome do projeto abre a <a href="#ficha-projeto">Ficha do Projeto</a>, com o detalhe completo daquele projeto único.</li>
         </ul>
         <div class="tip">Por reunir dados de vários formulários numa única tela, o carregamento faz uma consulta para cada um dos 10 formulários de registro — pode levar alguns segundos a mais. Use o botão <b>Atualizar</b> para recarregar os números mais recentes.</div>
         <div class="tip"><b>Não reportado:</b> na coluna Situação, significa que o projeto ainda não tem uma linha própria no Relatório de Situação — não é um erro, apenas indica que ninguém preencheu o acompanhamento daquele projeto ainda.</div>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="ficha-projeto">
+        <div class="eyebrow">gestão</div>
+        <h2>Ficha do Projeto</h2>
+        <p class="lead">Visão consolidada de um único projeto, reunindo em uma tela só o que hoje está espalhado pelos 9 formulários do ciclo de vida. Aberta clicando no nome de um projeto na tabela <a href="#painel-executivo">Visão atual por projeto</a> do Painel Executivo — abrir a página direto (sem escolher um projeto antes) mostra um seletor com todos os projetos cadastrados. Diferente do Painel Executivo, não tem restrição por papel: qualquer usuário autenticado pode ver a ficha de qualquer projeto, a mesma lógica já usada pelo botão "Ver histórico" em cada formulário.</p>
+        <ul>
+          <li><b>Dados do projeto:</b> nome, unidade, gerente, status do cadastro compartilhado e quando foi criado/atualizado pela última vez.</li>
+          <li><b>Situação atual:</b> a linha desse projeto no Relatório de Situação — status, % concluído, datas previstas, marcos, custos realizados e os campos "Merece destaque"/"Merece atenção", quando preenchidos.</li>
+          <li><b>Progresso do ciclo de vida:</b> quantos registros existem em cada um dos 9 formulários (Demanda a RLA) para esse projeto, com o status de cada um e um link para abrir o formulário correspondente.</li>
+          <li><b>Cronograma e custos planejados (TAP):</b> o cronograma de entregas macro e o custo total estimado do TAP desse projeto, para comparar com os custos realizados do Relatório de Situação.</li>
+          <li><b>Equipe do projeto:</b> mesma lista de Administração &gt; Equipes (seção 6.2), com o papel de cada membro vindo do cadastro global de usuários.</li>
+          <li><b>Histórico de alterações:</b> o mesmo "Ver histórico" já disponível em cada formulário vinculado a esse projeto.</li>
+        </ul>
         <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
       </section>
 
