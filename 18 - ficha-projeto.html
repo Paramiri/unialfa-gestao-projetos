@@ -34,6 +34,7 @@
   .kpi.warn::before{background:var(--warn)}
   .kpi.blue::before{background:var(--blue)}
   .kpi.bad::before{background:var(--bad)}
+  .kpi.neutral::before{background:var(--line-strong)}
   .kpi-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
   .kpi-value{font-size:22px;font-weight:900;line-height:1.25;color:var(--ink)}
   .kpi-sub{font-size:11px;color:var(--muted);margin-top:6px;font-weight:500}
@@ -408,6 +409,9 @@ function ensureAuthenticated(){
         </div>
       </div>
 
+      <div class="sec-title">Saúde do projeto</div>
+      <div class="kpi-row" id="saudeRow"></div>
+
       <div class="sec-title">Situação atual (Relatório de Situação)</div>
       <div class="card" id="situacaoCard"></div>
 
@@ -486,6 +490,63 @@ async function buscarDocumentoUnico(key){
   }catch(e){ console.warn('Falha ao buscar '+key, e); return null; }
 }
 
+function parseBRDate(s){
+  if(!s) return null;
+  var m = String(s).trim().match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if(!m) return null;
+  var d=parseInt(m[1]), mo=parseInt(m[2]), y=m[3]; if(y.length===2) y='20'+y; y=parseInt(y);
+  if(mo<1||mo>12||d<1||d>31) return null;
+  return new Date(y, mo-1, d);
+}
+function parseBRL(s){
+  if(!s) return 0; s=String(s).replace(/[^\d.,-]/g,'').trim(); if(!s) return 0;
+  if(s.indexOf(',')>-1){ s=s.replace(/\./g,'').replace(',', '.'); }
+  var n=parseFloat(s); return isNaN(n)?0:n;
+}
+
+/* Saude do projeto: cruza marcos e custos do Relatorio de Situacao (sit) com os custos estimados do TAP (tap).
+   Mesma definicao de "marco atrasado" e "dentro do orcamento" ja usada no Relatorio de Resultados (secao 6.7). */
+function calcularSaude(sit, tap){
+  var hoje = new Date();
+  var marcos = (sit && sit.marcos) || [];
+  var totalMarcos = marcos.length;
+  var concluidos = marcos.filter(function(m){ return m.status==='Concluído'; }).length;
+  var diasAtraso = [];
+  marcos.forEach(function(m){
+    if(m.status==='Concluído' || m.status==='Cancelado') return;
+    var dt = parseBRDate(m.data);
+    if(dt && hoje > dt) diasAtraso.push(Math.round((hoje-dt)/86400000));
+  });
+  var pctConcluidos = totalMarcos ? Math.round((concluidos/totalMarcos)*100) : null;
+  var piorAtraso = diasAtraso.length ? Math.max.apply(null, diasAtraso) : 0;
+
+  var estimado = (tap && Array.isArray(tap.custos) && tap.custos.length) ? tap.custos.reduce(function(s,c){ return s+parseBRL(c.valor); },0) : null;
+  var realizado = (sit && Array.isArray(sit.custosRealizados) && sit.custosRealizados.length) ? sit.custosRealizados.reduce(function(s,c){ return s+parseBRL(c.valor); },0) : null;
+  var orcamentoAvaliavel = estimado!=null && estimado>0 && realizado!=null;
+  var orcamentoDentro = orcamentoAvaliavel ? (realizado<=estimado) : null;
+  var pctOrcamento = orcamentoAvaliavel ? Math.round((realizado/estimado)*100) : null;
+
+  var encerrado = sit && (sit.status==='Concluído' || sit.status==='Cancelado');
+  var nivel, label;
+  if(!sit){
+    nivel='neutral'; label='Sem dados';
+  } else if(encerrado){
+    nivel='neutral'; label='Encerrado';
+  } else {
+    var sinaisRuins = (sit.status==='Atrasado'?1:0) + (diasAtraso.length>0?1:0) + (orcamentoDentro===false?1:0);
+    if(sinaisRuins>=2){ nivel='bad'; label='Crítico'; }
+    else if(sinaisRuins===1){ nivel='warn'; label='Atenção'; }
+    else { nivel='ok'; label='Normal'; }
+  }
+
+  return {
+    nivel: nivel, label: label,
+    totalMarcos: totalMarcos, concluidos: concluidos, pctConcluidos: pctConcluidos,
+    atrasadosCount: diasAtraso.length, piorAtraso: piorAtraso,
+    orcamentoAvaliavel: orcamentoAvaliavel, orcamentoDentro: orcamentoDentro, pctOrcamento: pctOrcamento,
+  };
+}
+
 function projetoStatusClass(s){
   var m = {'Aprovado':'s-ok','Concluído':'s-ok','Reprovado':'s-bad','Cancelado':'s-bad','Paralisado':'s-warn','Em avaliação':'s-warn'};
   return m[s] || 's-neutral';
@@ -515,6 +576,32 @@ function renderHistorico(itens){
     return '<div class="hi"><b>'+esc(labels[h.campo]||h.campo)+'</b>: "'+esc(h.valor_anterior||'—')+'" → "'+esc(h.valor_novo||'—')+'"'
       + '<div class="quando">'+fmtDataHora(h.criado_em)+' · '+esc(h.formulario_origem||'')+' · '+esc(h.alterado_por_email||'—')+'</div></div>';
   }).join('');
+}
+
+function renderSaude(sit, tap){
+  var s = calcularSaude(sit, tap);
+  var host = document.getElementById('saudeRow');
+  var html = '<div class="kpi '+s.nivel+'"><div class="kpi-label">Selo geral</div><div class="kpi-value"><span class="s-badge s-'+s.nivel+'">'+esc(s.label)+'</span></div></div>';
+
+  html += '<div class="kpi '+(s.totalMarcos ? (s.pctConcluidos===100?'ok':'blue') : 'neutral')+'">'
+    + '<div class="kpi-label">Marcos concluídos</div>'
+    + '<div class="kpi-value">'+(s.totalMarcos ? s.pctConcluidos+'%' : '—')+'</div>'
+    + '<div class="kpi-sub">'+(s.totalMarcos ? s.concluidos+' de '+s.totalMarcos+' marcos' : 'Nenhum marco registrado')+'</div>'
+    + '</div>';
+
+  html += '<div class="kpi '+(s.atrasadosCount>0?'bad':'neutral')+'">'
+    + '<div class="kpi-label">Atraso nos marcos</div>'
+    + '<div class="kpi-value">'+(s.atrasadosCount>0 ? s.piorAtraso+' dia'+(s.piorAtraso===1?'':'s') : '—')+'</div>'
+    + '<div class="kpi-sub">'+(s.atrasadosCount>0 ? s.atrasadosCount+' marco(s) atrasado(s) · pior caso' : 'Nenhum marco atrasado')+'</div>'
+    + '</div>';
+
+  html += '<div class="kpi '+(s.orcamentoAvaliavel ? (s.orcamentoDentro?'ok':'bad') : 'neutral')+'">'
+    + '<div class="kpi-label">Orçamento</div>'
+    + '<div class="kpi-value">'+(s.orcamentoAvaliavel ? s.pctOrcamento+'%' : '—')+'</div>'
+    + '<div class="kpi-sub">'+(s.orcamentoAvaliavel ? (s.orcamentoDentro?'Dentro do estimado no TAP':'Acima do estimado no TAP') : 'Sem custo realizado e/ou estimado registrado')+'</div>'
+    + '</div>';
+
+  host.innerHTML = html;
 }
 
 function renderSituacao(sit){
@@ -626,6 +713,7 @@ async function carregarFicha(projetoId){
   }
   renderCiclo(registrosPorForm);
   renderTap(tap);
+  renderSaude(sit, tap);
 
   document.getElementById('loadingBox').style.display = 'none';
   document.getElementById('conteudo').style.display = 'block';

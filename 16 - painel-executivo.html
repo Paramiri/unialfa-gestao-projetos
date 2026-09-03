@@ -417,7 +417,7 @@ function ensureAuthenticated(){
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Projeto</th><th>Gerente</th><th>Status (cadastro)</th><th>Situação (Rel. de Situação)</th><th>Progresso do ciclo</th><th>Atualizado em</th></tr></thead>
+            <thead><tr><th>Projeto</th><th>Gerente</th><th>Status (cadastro)</th><th>Situação (Rel. de Situação)</th><th>Saúde</th><th>Progresso do ciclo</th><th>Atualizado em</th></tr></thead>
             <tbody id="tbody-projetos"></tbody>
           </table>
         </div>
@@ -565,6 +565,52 @@ function situacaoClass(s){
   return m[s] || 's-neutral';
 }
 
+function parseBRDate(s){
+  if(!s) return null;
+  var m = String(s).trim().match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if(!m) return null;
+  var d=parseInt(m[1]), mo=parseInt(m[2]), y=m[3]; if(y.length===2) y='20'+y; y=parseInt(y);
+  if(mo<1||mo>12||d<1||d>31) return null;
+  return new Date(y, mo-1, d);
+}
+function parseBRL(s){
+  if(!s) return 0; s=String(s).replace(/[^\d.,-]/g,'').trim(); if(!s) return 0;
+  if(s.indexOf(',')>-1){ s=s.replace(/\./g,'').replace(',', '.'); }
+  var n=parseFloat(s); return isNaN(n)?0:n;
+}
+
+/* Saude do projeto: cruza marcos e custos do Relatorio de Situacao (sit) com os custos estimados do TAP (tap).
+   Mesma definicao de "marco atrasado" e "dentro do orcamento" ja usada no Relatorio de Resultados (secao 6.7)
+   e na Ficha do Projeto. */
+function calcularSaude(sit, tap){
+  var hoje = new Date();
+  var marcos = (sit && sit.marcos) || [];
+  var diasAtraso = [];
+  marcos.forEach(function(m){
+    if(m.status==='Concluído' || m.status==='Cancelado') return;
+    var dt = parseBRDate(m.data);
+    if(dt && hoje > dt) diasAtraso.push(Math.round((hoje-dt)/86400000));
+  });
+  var estimado = (tap && Array.isArray(tap.custos) && tap.custos.length) ? tap.custos.reduce(function(s,c){ return s+parseBRL(c.valor); },0) : null;
+  var realizado = (sit && Array.isArray(sit.custosRealizados) && sit.custosRealizados.length) ? sit.custosRealizados.reduce(function(s,c){ return s+parseBRL(c.valor); },0) : null;
+  var orcamentoAvaliavel = estimado!=null && estimado>0 && realizado!=null;
+  var orcamentoDentro = orcamentoAvaliavel ? (realizado<=estimado) : null;
+
+  var encerrado = sit && (sit.status==='Concluído' || sit.status==='Cancelado');
+  var nivel, label;
+  if(!sit){
+    nivel='neutral'; label='Sem dados';
+  } else if(encerrado){
+    nivel='neutral'; label='Encerrado';
+  } else {
+    var sinaisRuins = (sit.status==='Atrasado'?1:0) + (diasAtraso.length>0?1:0) + (orcamentoDentro===false?1:0);
+    if(sinaisRuins>=2){ nivel='bad'; label='Crítico'; }
+    else if(sinaisRuins===1){ nivel='warn'; label='Atenção'; }
+    else { nivel='ok'; label='Normal'; }
+  }
+  return { nivel: nivel, label: label };
+}
+
 /* Ordena: projetos ativos (Aprovado/Em avaliação) primeiro, encerrados/reprovados por último; alfabético dentro de cada grupo. */
 function ordemStatus(s){
   if(s==='Aprovado' || s==='Em avaliação') return 0;
@@ -575,6 +621,11 @@ function renderVisaoPorProjeto(projetos, relsit, registrosPorForm){
   var relsitPorProjeto = {};
   ((relsit && relsit.projetos) || []).forEach(function(p){
     if(p.projetoId) relsitPorProjeto[p.projetoId] = p;
+  });
+
+  var tapPorProjeto = {};
+  (registrosPorForm['tap:'] || []).forEach(function(t){
+    if(t.projetoId) tapPorProjeto[t.projetoId] = t;
   });
 
   // Quais dos 9 formulários do ciclo de vida já têm registro vinculado a cada projeto
@@ -595,7 +646,7 @@ function renderVisaoPorProjeto(projetos, relsit, registrosPorForm){
 
   var tbody = document.getElementById('tbody-projetos');
   if(!ordenados.length){
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum projeto cadastrado ainda.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Nenhum projeto cadastrado ainda.</td></tr>';
     return;
   }
 
@@ -615,11 +666,15 @@ function renderVisaoPorProjeto(projetos, relsit, registrosPorForm){
     var progHtml = '<b>'+qtdFeitos+'/'+FORM_DEFS.length+'</b> formulários'
       + (faltando.length ? '<div class="kpi-sub" style="margin-top:4px">Faltam: '+esc(faltando.join(', '))+'</div>' : '');
 
+    var saude = calcularSaude(sit, tapPorProjeto[p.id]);
+    var saudeHtml = '<span class="s-badge s-'+saude.nivel+'">'+esc(saude.label)+'</span>';
+
     return '<tr>'
       + '<td><a href="18 - ficha-projeto.html?id='+esc(p.id)+'" style="color:var(--ink);text-decoration:none"><b style="text-decoration:underline">'+esc(p.nome)+'</b></a><div class="kpi-sub" style="margin-top:2px">'+esc(p.unidade||'—')+'</div></td>'
       + '<td>'+esc(p.gerente||'—')+'</td>'
       + '<td><span class="s-badge '+projetoStatusClass(p.status)+'">'+esc(p.status||'—')+'</span></td>'
       + '<td>'+sitHtml+'</td>'
+      + '<td>'+saudeHtml+'</td>'
       + '<td>'+progHtml+'</td>'
       + '<td>'+fmtDataHora(p.atualizado_em)+'</td>'
       + '</tr>';
