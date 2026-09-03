@@ -491,11 +491,19 @@ function projetoStatusClass(s){
   return m[s] || 's-neutral';
 }
 
-function renderEquipe(membros){
+async function renderEquipe(membros){
   var tbody = document.getElementById('tbody-equipe');
   if(!membros.length){ tbody.innerHTML = '<tr><td colspan="2" class="empty">Nenhum membro cadastrado nesta equipe.</td></tr>'; return; }
+  var ids = membros.map(function(m){ return m.usuario_id; }).filter(Boolean);
+  var papelPorId = {};
+  if(ids.length){
+    var r = await fetch(unialfaAuth.REST_BASE + '/perfis?id=in.('+ids.join(',')+')&select=id,papel', { headers: unialfaAuth.authHeaders() });
+    var perfis = r.ok ? await r.json() : [];
+    perfis.forEach(function(p){ papelPorId[p.id] = p.papel; });
+  }
   tbody.innerHTML = membros.map(function(m){
-    return '<tr><td>'+esc(m.usuario_email)+'</td><td>'+esc(unialfaAuth.papelLabel(m.papel))+'</td></tr>';
+    var papel = papelPorId[m.usuario_id];
+    return '<tr><td>'+esc(m.usuario_email)+'</td><td>'+esc(papel ? unialfaAuth.papelLabel(papel) : '—')+'</td></tr>';
   }).join('');
 }
 
@@ -601,7 +609,7 @@ async function carregarFicha(projetoId){
     fetch(unialfaAuth.REST_BASE + '/projeto_historico?projeto_id=eq.'+encodeURIComponent(projetoId)+'&select=*&order=criado_em.desc', { headers: unialfaAuth.authHeaders() }),
     buscarDocumentoUnico('relsit_data'),
   ]);
-  renderEquipe(rEquipe.ok ? await rEquipe.json() : []);
+  await renderEquipe(rEquipe.ok ? await rEquipe.json() : []);
   renderHistorico(rHist.ok ? await rHist.json() : []);
 
   var sit = ((relsit && relsit.projetos) || []).find(function(p){ return p.projetoId === projetoId; });
