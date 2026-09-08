@@ -254,13 +254,13 @@
   <div class="auth-card">
     <div class="auth-logo"><img src="icons/logo-alfa.png" alt="ALFA" style="height:40px;display:block"><small>GRUPO JOSÉ ALVES</small></div>
     <h2>Entrar</h2>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="unialfaAuthUI.signInWithAzure()">Entrar com Microsoft - UNIALFA</button>
+    <div style="text-align:center;margin:14px 0;color:var(--muted,#6B7280);font-size:11px;font-weight:600">— ou —</div>
     <p>Digite seu e-mail para receber um link de acesso — sem senha.</p>
     <div id="authStep1">
       <input type="email" id="authEmail" placeholder="seu.nome@email.com.br">
       <button class="btn btn-primary" onclick="unialfaAuthUI.sendLink()">Enviar link de acesso</button>
     </div>
-    <div style="text-align:center;margin:14px 0;color:var(--muted,#6B7280);font-size:11px;font-weight:600">— ou —</div>
-    <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="unialfaAuthUI.signInWithAzure()">Entrar com Microsoft - UNIALFA</button>
     <div id="treinoLoginBloco" style="display:none">
       <div style="text-align:center;margin:14px 0;color:var(--muted,#6B7280);font-size:11px;font-weight:600">— ou —</div>
       <p style="font-size:11.5px;color:var(--muted,#6B7280);margin-bottom:8px">Ambiente de treinamento — selecione um papel para entrar:</p>
