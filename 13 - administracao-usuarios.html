@@ -31,11 +31,14 @@
   .section-h p{margin:0 0 0 auto; font-size:11px; color:var(--muted); font-weight:500}
 
   table{width:100%; border-collapse:collapse; font-size:13px;}
-  th{text-align:left; font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding:10px 24px; border-bottom:1px solid var(--line); background:var(--surface-2);}
-  td{padding:12px 24px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  th{text-align:left; font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding:10px 14px; border-bottom:1px solid var(--line); background:var(--surface-2);}
+  td{padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:middle; overflow-wrap:break-word;}
   tr:last-child td{border-bottom:none}
   td b{font-weight:700}
   td small{display:block; color:var(--muted); font-size:11px; margin-top:2px}
+  .tbl-usuarios{table-layout:fixed}
+  .tbl-usuarios select{width:100%; box-sizing:border-box; padding:7px 8px;}
+  .tbl-usuarios .tel-input{width:100%; box-sizing:border-box;}
   select{font-family:var(--font); font-size:12.5px; font-weight:600; color:var(--ink); border:1px solid var(--line-strong); border-radius:7px; padding:7px 10px; background:var(--paper); cursor:pointer;}
   select:focus{outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(185,29,46,.12);}
   .empty{padding:48px 24px; text-align:center; color:var(--muted); font-size:13px;}
@@ -648,7 +651,7 @@ async function carregarUsuarios(){
   usuariosPendentes = pend;
   document.getElementById('count-label').textContent = rows.length+' usuário(s)'+(pend.length?' · '+pend.length+' pré-cadastro(s) pendente(s)':'');
   if(!rows.length && !pend.length){ body.innerHTML='<div class="empty">Nenhum usuário cadastrado ainda. Use "+ Adicionar usuário" acima ou aguarde o primeiro login via link mágico.</div>'; return; }
-  let html='<table><thead><tr><th>E-mail</th><th>Nome</th><th>Telefone</th><th>Papel atual</th><th>Alterar papel</th><th></th></tr></thead><tbody>';
+  let html='<table class="tbl-usuarios"><thead><tr><th style="width:25%">E-mail</th><th style="width:14%">Nome</th><th style="width:16%">Telefone</th><th style="width:13%">Papel atual</th><th style="width:22%">Alterar papel</th><th style="width:10%"></th></tr></thead><tbody>';
   rows.forEach(u=>{
     html+=`<tr>
       <td><b>${esc(u.email)}</b>${u.id===window.currentUser.id?'<small>Você</small>':''}</td>
