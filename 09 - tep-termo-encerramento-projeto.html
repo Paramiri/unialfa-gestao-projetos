@@ -112,8 +112,8 @@ table.list tbody tr:hover{background:var(--surface-2)}
 .empty p{margin:0;font-size:13px}
 .overlay{position:fixed;inset:0;background:rgba(20,20,22,.45);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
 .overlay.show{opacity:1;pointer-events:auto}
-.drawer{position:fixed;top:0;right:0;height:100%;width:min(580px,96vw);background:var(--paper);box-shadow:-16px 0 50px rgba(0,0,0,.18);transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);z-index:45;display:flex;flex-direction:column}
-.drawer.show{transform:translateX(0)}
+.drawer{position:fixed;top:50%;left:50%;width:min(980px,94vw);max-height:88vh;background:var(--paper);box-shadow:0 24px 70px rgba(0,0,0,.28);border-radius:14px;transform:translate(-50%,-50%) scale(.97);opacity:0;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .2s;z-index:45;display:flex;flex-direction:column;pointer-events:none;overflow:hidden}
+.drawer.show{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
 .drawer-top{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:12px}
 .drawer-top h2{margin:0;font-size:16px;font-weight:700}
 .drawer-top .proto-lg{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:3px}
@@ -192,7 +192,6 @@ table.ro-t tbody tr:last-child td{border-bottom:none}
 .auth-topbar .sair{margin-left:auto;background:none;border:none;color:#fff;opacity:.7;cursor:pointer;font-size:11px;text-decoration:underline;font-family:inherit}
 .auth-topbar .sair:hover{opacity:1}
 body.auth-ready{padding-top:34px}
-body.auth-ready .drawer{top:34px;height:calc(100% - 34px)}
 
 /* projeto vinculado */
 .proj-link-card{background:var(--paper,#fff);border:1px solid var(--line,#E5E7EB);border-radius:var(--radius,10px);box-shadow:var(--shadow);padding:16px 20px;margin-bottom:18px}
