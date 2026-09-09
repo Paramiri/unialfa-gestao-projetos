@@ -15,6 +15,10 @@
 # Exceção: manual de uso da ferramenta, versionado a pedido do usuário
 !Manual de Uso - Ferramenta de Gestao de Projetos.docx
 
+# Exceção: guias técnicos de replicação/migração de infraestrutura, versionados a pedido do usuário
+!Guia de Replicacao Tecnica - Sistema UNIALFA GP.docx
+!Guia de Migracao para Servidor Proprio - Sistema UNIALFA GP.docx
+
 # Exceção: ícones do app (PWA/manifest, notificações push) — fazem parte do app web
 !icons/
 !icons/*.png
