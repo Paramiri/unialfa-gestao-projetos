@@ -80,6 +80,9 @@
   .risk-status.mitigado{background:var(--ok-soft); color:var(--ok)}
   .risk-status.materializado{background:#3730A3; color:#fff}
   .risk-status.encerrado{background:var(--surface-2); color:var(--muted)}
+  .risk-status.baixa, .risk-status.baixo{background:var(--ok-soft); color:var(--ok)}
+  .risk-status.média, .risk-status.médio{background:var(--warn-soft); color:var(--warn)}
+  .risk-status.alta, .risk-status.alto{background:var(--bad-soft); color:var(--bad)}
   .sugestoes-riscos{margin:0 24px 20px; padding:14px 16px; background:var(--surface-2); border:1px dashed var(--line-strong); border-radius:8px}
   .sugestoes-head{font-size:11px; font-weight:700; color:var(--muted); margin-bottom:10px; display:flex; align-items:center; gap:6px}
   .sugestoes-head .ai-dot{width:6px; height:6px; border-radius:50%; background:#7C3AED; flex:none}
@@ -1001,13 +1004,18 @@ const FIELDS=['nomeProjeto','unidade','gerente','dataElab','alinhamento','progra
 const REQUIRED=['nomeProjeto','unidade','gerente','dataElab','justificativa','objetivos'];
 const TABLE_KEYS=['riscos','cronograma','custos','interessadas','equipe','indicadores'];
 const RISCO_STATUS=['Aberto','Monitorando','Mitigado','Materializado','Encerrado'];
+const RISCO_PROB=['Baixa','Média','Alta'];
+const RISCO_IMPACTO=['Baixo','Médio','Alto'];
 
 const TABLES={
   riscos:{cols:[
-    {key:'risco',label:'Risco',type:'text',w:'30%',long:true},
-    {key:'status',label:'Status',type:'select',options:RISCO_STATUS},
-    {key:'resp',label:'Responsável',type:'text',w:'20%',long:true},
-    {key:'revisao',label:'Última revisão',type:'date'},
+    {key:'risco',label:'Risco',type:'text',w:'20%',long:true},
+    {key:'prob',label:'Prob.',type:'select',options:RISCO_PROB,w:'8%'},
+    {key:'impacto',label:'Impacto',type:'select',options:RISCO_IMPACTO,w:'8%'},
+    {key:'mitigacao',label:'Mitigação',type:'text',w:'22%',long:true},
+    {key:'status',label:'Status',type:'select',options:RISCO_STATUS,w:'11%'},
+    {key:'resp',label:'Responsável',type:'text',w:'16%',long:true},
+    {key:'revisao',label:'Última revisão',type:'date',w:'10%'},
   ]},
   cronograma:{cols:[
     {key:'marco',label:'Marcos / Entregas',type:'text',w:'28%',long:true},
