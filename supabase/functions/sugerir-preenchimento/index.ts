@@ -570,7 +570,7 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         model: "claude-sonnet-5",
-        max_tokens: 5000,
+        max_tokens: 8192,
         system: SYSTEM_PROMPTS[formulario as Formulario],
         messages: [{ role: "user", content: `Documentos do projeto "${projeto.nome || ""}":\n\n${contexto}` }],
       }),
