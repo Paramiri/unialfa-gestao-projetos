@@ -865,13 +865,8 @@ const STAGES=[
     {kind:'field', key:'conclusao', label:'Conclusão e recomendação', type:'textarea'},
     {kind:'field', key:'viaAnexos', label:'Anexos', type:'textarea'},
   ]},
-  {id:'crono', tab:'3 · Cronograma', title:'Cronograma', sub:'Marcos e prazos', blocks:[
-    {kind:'table', key:'cronograma', label:'Marcos do projeto', seed:3, cols:[
-      {key:'marco',label:'Marco do projeto',type:'text',w:'28%',long:true},
-      {key:'resp',label:'Responsável',type:'text',w:'18%',long:true},
-      {key:'duracao',label:'Duração',type:'text'},
-      {key:'entrega',label:'Data de entrega',type:'date'},
-    ]},
+  {id:'crono', tab:'3 · Cronograma', title:'Cronograma', sub:'Marcos e prazos (do TAP)', blocks:[
+    {kind:'cronoTap', key:'cronogramaTap', label:'Marcos do projeto'},
   ]},
   {id:'entradas', tab:'4 · Entradas', title:'Entradas do projeto', sub:'Requisitos e fontes', blocks:[
     {kind:'table', key:'entradas', label:'Entradas', cols:[
@@ -938,7 +933,7 @@ const STAGES=[
 /* derive flat keys */
 const FIELD_KEYS=[]; const TABLE_DEFS={};
 IDFIELDS.forEach(f=>FIELD_KEYS.push(f.key));
-STAGES.forEach(s=>s.blocks.forEach(b=>{ if(b.kind==='field') FIELD_KEYS.push(b.key); else if(b.kind==='group') b.fields.forEach(f=>FIELD_KEYS.push(f.key)); else { TABLE_DEFS[b.key]=b; } }));
+STAGES.forEach(s=>s.blocks.forEach(b=>{ if(b.kind==='field') FIELD_KEYS.push(b.key); else if(b.kind==='group') b.fields.forEach(f=>FIELD_KEYS.push(f.key)); else if(b.kind==='table') { TABLE_DEFS[b.key]=b; } }));
 const REQUIRED=IDFIELDS.filter(f=>f.req).map(f=>f.key);
 
 /* ---------- helpers ---------- */
@@ -959,6 +954,7 @@ async function onProjetoSelect(preencherCampos=true){
   const info=document.getElementById('projetoInfo');
   document.getElementById('btnHistorico').style.display = id ? 'inline' : 'none';
   document.getElementById('historicoPanel').style.display='none'; historicoAberto=false;
+  renderCronogramaTAP(id);
   const p=projetosAprovados.find(x=>x.id===id);
   if(!p){ info.style.display='none'; document.getElementById('equipeAviso').style.display='none'; atualizarBotaoEquipe(true); document.getElementById('iaSugestaoBloco').style.display='none'; return; }
   document.getElementById('pi-unidade').textContent=p.unidade||'—';
@@ -1047,6 +1043,7 @@ function buildStages(){
         flush();
         inner+=`<div class="field-group"><div class="fg-title">${b.label}</div>${b.fields.map(f=>fieldHTML({...f, full:true})).join('')}</div>`;
       }
+      else if(b.kind==='cronoTap'){ flush(); inner+=`<div class="dyn"><label class="blocklabel">${b.label}</label><div id="crono-tap-view"></div></div>`; }
       else { flush(); inner+=`<div class="dyn" id="dyn-${b.key}"><label class="blocklabel">${b.label}</label></div>`; }
     });
     flush();
@@ -1156,6 +1153,53 @@ function showView(v){
   if(v==='list') renderList();
 }
 
+function isoToBR(iso){
+  const m=String(iso||'').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? (m[3]+'/'+m[2]+'/'+m[1]) : '';
+}
+async function buscarCronogramaTAP(projetoId){
+  if(!projetoId) return [];
+  try{
+    const res=await window.storage.list('tap:');
+    const keys=(res&&res.keys)?res.keys:[];
+    for(const k of keys){
+      const r=await window.storage.get(k);
+      if(!r||!r.value) continue;
+      const tap=JSON.parse(r.value);
+      if(tap.projetoId!==projetoId) continue;
+      return Array.isArray(tap.cronograma)?tap.cronograma:[];
+    }
+  }catch(e){}
+  return [];
+}
+async function renderCronogramaTAP(projetoId){
+  const host=document.getElementById('crono-tap-view');
+  if(!host) return;
+  if(!projetoId){
+    host.innerHTML='<div style="font-size:12px;color:var(--muted,#6A6A70)">Selecione o projeto vinculado para ver o cronograma registrado no TAP.</div>';
+    return;
+  }
+  const marcos=await buscarCronogramaTAP(projetoId);
+  if(!marcos.length){
+    host.innerHTML='<div style="font-size:12px;color:var(--muted,#6A6A70)">Este projeto ainda não tem marcos cadastrados no cronograma do TAP.</div>';
+    return;
+  }
+  host.innerHTML='<div class="dyn-table-wrap"><table class="dyn-t"><thead><tr>'
+    +'<th style="width:26%">Marco / Entrega</th><th style="width:16%">Responsável</th>'
+    +'<th style="width:13%">Início previsto</th><th style="width:13%">Término previsto</th>'
+    +'<th style="width:13%">Conclusão real</th><th style="width:10%">Custo</th>'
+    +'</tr></thead><tbody>'
+    + marcos.map(m=>`<tr>
+        <td>${esc(m.marco||'—')}</td>
+        <td>${esc(m.resp||'—')}</td>
+        <td>${m.ini?isoToBR(m.ini):'—'}</td>
+        <td>${m.fim?isoToBR(m.fim):'—'}</td>
+        <td>${m.concl?isoToBR(m.concl):'—'}</td>
+        <td>${esc(m.custo||'—')}</td>
+      </tr>`).join('')
+    +'</tbody></table></div>'
+    +'<div class="dyn-foot" style="font-size:11.5px;color:var(--muted,#6A6A70)">Este cronograma é o mesmo registrado no TAP do projeto — para alterá-lo, edite o TAP.</div>';
+}
 async function loadAll(){
   cache=[];
   try{
@@ -1322,8 +1366,9 @@ function renderList(){
   html+='</tbody></table>'; body.innerHTML=html;
 }
 
-function openDrawer(id){
+async function openDrawer(id){
   const r=cache.find(x=>x.id===id); if(!r) return; currentId=id;
+  const cronogramaTap=await buscarCronogramaTAP(r.projetoId);
   document.getElementById('d-proj').textContent=r.nomeProjeto;
   document.getElementById('d-proto').textContent=r.protocolo+' · elaborado em '+fmtDate(r.data);
   document.getElementById('d-status').value=r.status;
@@ -1337,6 +1382,13 @@ function openDrawer(id){
     s.blocks.forEach(b=>{
       if(b.kind==='field'){ html+=`<div class="row"><dt>${b.label}</dt><dd>${esc(r[b.key]||'—')}</dd></div>`; }
       else if(b.kind==='group'){ b.fields.forEach(f=>{ html+=`<div class="row"><dt>${f.label}</dt><dd>${esc(r[f.key]||'—')}</dd></div>`; }); }
+      else if(b.kind==='cronoTap'){
+        const preenchidos=cronogramaTap.filter(m=>m.marco);
+        const ro=preenchidos.length ? ('<div class="ro-wrap"><table class="ro-t"><thead><tr><th>Marco / Entrega</th><th>Responsável</th><th>Início previsto</th><th>Término previsto</th><th>Conclusão real</th><th>Custo</th></tr></thead><tbody>'
+          + preenchidos.map(m=>'<tr><td>'+esc(m.marco||'—')+'</td><td>'+esc(m.resp||'—')+'</td><td>'+(m.ini?fmtDate(m.ini):'—')+'</td><td>'+(m.fim?fmtDate(m.fim):'—')+'</td><td>'+(m.concl?fmtDate(m.concl):'—')+'</td><td>'+esc(m.custo||'—')+'</td></tr>').join('')
+          + '</tbody></table></div>') : '—';
+        html+=`<div class="row"><dt>${b.label}</dt><dd>${ro}</dd></div>`;
+      }
       else { html+=`<div class="row"><dt>${b.label}</dt>${roTable(b.key, r[b.key])}</div>`; }
     });
   });
@@ -1382,8 +1434,9 @@ function docTableRowsPlan(key,rows){
   if(!body) return '<p style="margin:0;color:#6A6A70">Nenhum registro.</p>';
   return '<table class="doc-t"><thead><tr>'+cols+'</tr></thead><tbody>'+body+'</tbody></table>';
 }
-function buildPlanejamentoDocumentoHtml(r){
+async function buildPlanejamentoDocumentoHtml(r){
   const hoje=new Date().toLocaleDateString('pt-BR');
+  const cronogramaTap=await buscarCronogramaTAP(r.projetoId);
   const style=[
     'body{font-family:Calibri,Arial,sans-serif;color:#1A1A1A;margin:24px;font-size:12px}',
     '.doc-head{display:flex;border:1px solid #1A1A1A;margin-bottom:14px}',
@@ -1418,6 +1471,12 @@ function buildPlanejamentoDocumentoHtml(r){
         b.fields.forEach(f=>{
           stagesHtml+='<div class="doc-box"><div class="lbl">'+esc(f.label)+'</div><div class="val">'+(esc(r[f.key])||'&nbsp;')+'</div></div>';
         });
+      } else if(b.kind==='cronoTap'){
+        const preenchidos=cronogramaTap.filter(m=>m.marco);
+        const corpo=preenchidos.length ? ('<table class="doc-t"><thead><tr><th>Marco / Entrega</th><th>Responsável</th><th>Início previsto</th><th>Término previsto</th><th>Conclusão real</th><th>Custo</th></tr></thead><tbody>'
+          + preenchidos.map(m=>'<tr><td>'+(esc(m.marco)||'&nbsp;')+'</td><td>'+(esc(m.resp)||'&nbsp;')+'</td><td>'+(m.ini?fmtDate(m.ini):'&nbsp;')+'</td><td>'+(m.fim?fmtDate(m.fim):'&nbsp;')+'</td><td>'+(m.concl?fmtDate(m.concl):'&nbsp;')+'</td><td>'+(esc(m.custo)||'&nbsp;')+'</td></tr>').join('')
+          + '</tbody></table>') : '<p style="margin:0;color:#6A6A70">Nenhum registro.</p>';
+        stagesHtml+='<div class="doc-box"><div class="lbl">'+esc(b.label)+'</div><div class="val">'+corpo+'</div></div>';
       } else {
         stagesHtml+='<div class="doc-box"><div class="lbl">'+esc(b.label)+'</div><div class="val">'+docTableRowsPlan(b.key, r[b.key])+'</div></div>';
       }
@@ -1448,9 +1507,9 @@ function buildPlanejamentoDocumentoHtml(r){
     +'<div class="doc-gen">Documento gerado pelo Sistema de Gestao de Projetos UNIALFA em '+hoje+' &mdash; Status: '+esc(r.status)+'</div>'
     +'</body></html>';
 }
-function imprimirPlanejamento(){
+async function imprimirPlanejamento(){
   const r=cache.find(x=>x.id===currentId); if(!r){toast('Selecione um dossiê para imprimir',false);return;}
-  const html=buildPlanejamentoDocumentoHtml(r);
+  const html=await buildPlanejamentoDocumentoHtml(r);
   const iframe=document.createElement('iframe');
   iframe.style.position='fixed'; iframe.style.right='0'; iframe.style.bottom='0';
   iframe.style.width='0'; iframe.style.height='0'; iframe.style.border='0';
@@ -1462,9 +1521,9 @@ function imprimirPlanejamento(){
     setTimeout(function(){document.body.removeChild(iframe);},1000);
   };
 }
-function exportarPlanejamentoWord(){
+async function exportarPlanejamentoWord(){
   const r=cache.find(x=>x.id===currentId); if(!r){toast('Selecione um dossiê para exportar',false);return;}
-  const html=buildPlanejamentoDocumentoHtml(r);
+  const html=await buildPlanejamentoDocumentoHtml(r);
   const wordHtml=html.replace('<!doctype html><html>',"<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>");
   const blob=new Blob([wordHtml],{type:'application/msword'});
   const url=URL.createObjectURL(blob); const a=document.createElement('a');
@@ -1543,7 +1602,6 @@ async function sugerirPreenchimentoIA(){
       const el=document.getElementById(id);
       if(el && !el.value.trim() && d[id]){ el.value=d[id]; marcarCampoSugerido(id); preenchidos++; }
     });
-    if(sugerirTabela('cronograma', d.cronograma)) preenchidos++;
     if(!preenchidos){
       setIAStatus('ok','Nenhum campo vazio para sugerir — os campos já preenchidos não são sobrescritos.');
     } else {

@@ -508,13 +508,18 @@ function parseBRL(s){
    Mesma definicao de "marco atrasado" e "dentro do orcamento" ja usada no Relatorio de Resultados (secao 6.7). */
 function calcularSaude(sit, tap){
   var hoje = new Date();
-  var marcos = (sit && sit.marcos) || [];
+  var marcosTap = (tap && Array.isArray(tap.cronograma)) ? tap.cronograma : [];
+  var statusPorNome = {};
+  ((sit && sit.marcos) || []).forEach(function(m){ if(m.nome) statusPorNome[m.nome.trim().toLowerCase()] = m.status; });
+  var marcos = marcosTap.map(function(m){
+    return { nome: m.marco, status: statusPorNome[(m.marco||'').trim().toLowerCase()] || 'A iniciar', fim: m.fim, concl: m.concl };
+  });
   var totalMarcos = marcos.length;
-  var concluidos = marcos.filter(function(m){ return m.status==='Concluído'; }).length;
+  var concluidos = marcos.filter(function(m){ return m.status==='Concluído' || !!m.concl; }).length;
   var diasAtraso = [];
   marcos.forEach(function(m){
-    if(m.status==='Concluído' || m.status==='Cancelado') return;
-    var dt = parseBRDate(m.data);
+    if(m.status==='Concluído' || m.status==='Cancelado' || m.concl) return;
+    var dt = m.fim ? new Date(m.fim+'T00:00:00') : null;
     if(dt && hoje > dt) diasAtraso.push(Math.round((hoje-dt)/86400000));
   });
   var pctConcluidos = totalMarcos ? Math.round((concluidos/totalMarcos)*100) : null;
@@ -604,7 +609,7 @@ function renderSaude(sit, tap){
   host.innerHTML = html;
 }
 
-function renderSituacao(sit){
+function renderSituacao(sit, tap){
   var host = document.getElementById('situacaoCard');
   if(!sit){
     host.innerHTML = '<div class="empty">Este projeto ainda não tem uma linha própria no Relatório de Situação — ninguém preencheu o acompanhamento dele ainda.</div>';
@@ -623,9 +628,12 @@ function renderSituacao(sit){
     html += '</div>';
   }
   var marcos = sit.marcos || [];
+  var fimPorNome = {};
+  ((tap && tap.cronograma)||[]).forEach(function(c){ if(c.marco) fimPorNome[c.marco.trim().toLowerCase()]=c.fim; });
   html += '<div class="sec-title" style="margin:14px 20px 4px">Marcos</div>';
   html += marcos.length ? marcos.map(function(m){
-    return '<div class="marco-item"><div class="marco-nome">'+esc(m.nome)+' <span class="s-badge '+statusClass(m.status)+'">'+esc(m.status||'—')+'</span></div><div class="marco-data">'+esc(m.data||'—')+'</div></div>';
+    var fim = m.nome ? fimPorNome[m.nome.trim().toLowerCase()] : null;
+    return '<div class="marco-item"><div class="marco-nome">'+esc(m.nome)+' <span class="s-badge '+statusClass(m.status)+'">'+esc(m.status||'—')+'</span></div><div class="marco-data">'+(fim?esc(isoToBR(fim)):'—')+'</div></div>';
   }).join('') : '<div class="empty">Nenhum marco registrado.</div>';
   var custos = sit.custosRealizados || [];
   html += '<div class="sec-title" style="margin:14px 20px 4px">Custos realizados</div>';
@@ -700,7 +708,6 @@ async function carregarFicha(projetoId){
   renderHistorico(rHist.ok ? await rHist.json() : []);
 
   var sit = ((relsit && relsit.projetos) || []).find(function(p){ return p.projetoId === projetoId; });
-  renderSituacao(sit);
 
   var registrosPorForm = {};
   var tap = null;
@@ -713,6 +720,7 @@ async function carregarFicha(projetoId){
   }
   renderCiclo(registrosPorForm);
   renderTap(tap);
+  renderSituacao(sit, tap);
   renderSaude(sit, tap);
 
   document.getElementById('loadingBox').style.display = 'none';

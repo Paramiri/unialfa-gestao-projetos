@@ -584,11 +584,16 @@ function parseBRL(s){
    e na Ficha do Projeto. */
 function calcularSaude(sit, tap){
   var hoje = new Date();
-  var marcos = (sit && sit.marcos) || [];
+  var marcosTap = (tap && Array.isArray(tap.cronograma)) ? tap.cronograma : [];
+  var statusPorNome = {};
+  ((sit && sit.marcos) || []).forEach(function(m){ if(m.nome) statusPorNome[m.nome.trim().toLowerCase()] = m.status; });
+  var marcos = marcosTap.map(function(m){
+    return { nome: m.marco, status: statusPorNome[(m.marco||'').trim().toLowerCase()] || 'A iniciar', fim: m.fim, concl: m.concl };
+  });
   var diasAtraso = [];
   marcos.forEach(function(m){
-    if(m.status==='Concluído' || m.status==='Cancelado') return;
-    var dt = parseBRDate(m.data);
+    if(m.status==='Concluído' || m.status==='Cancelado' || m.concl) return;
+    var dt = m.fim ? new Date(m.fim+'T00:00:00') : null;
     if(dt && hoje > dt) diasAtraso.push(Math.round((hoje-dt)/86400000));
   });
   var estimado = (tap && Array.isArray(tap.custos) && tap.custos.length) ? tap.custos.reduce(function(s,c){ return s+parseBRL(c.valor); },0) : null;

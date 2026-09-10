@@ -786,7 +786,8 @@ function isoToBR(iso){
   const m=String(iso||'').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m ? (m[3]+'/'+m[2]+'/'+m[1]) : '';
 }
-async function buscarCronogramaTAP(projetoId){
+async function buscarCronogramaTAPTodos(){
+  const porProjeto={};
   try{
     const res=await window.storage.list('tap:');
     const keys=(res&&res.keys)?res.keys:[];
@@ -794,11 +795,15 @@ async function buscarCronogramaTAP(projetoId){
       const r=await window.storage.get(k);
       if(!r||!r.value) continue;
       const tap=JSON.parse(r.value);
-      if(tap.projetoId!==projetoId) continue;
-      return Array.isArray(tap.cronograma)?tap.cronograma:[];
+      if(!tap.projetoId) continue;
+      porProjeto[tap.projetoId]=Array.isArray(tap.cronograma)?tap.cronograma:[];
     }
   }catch(e){}
-  return [];
+  return porProjeto;
+}
+async function buscarCronogramaTAP(projetoId){
+  const todos=await buscarCronogramaTAPTodos();
+  return todos[projetoId]||[];
 }
 async function buscarCustosTAP(projetoId){
   try{
@@ -826,33 +831,14 @@ async function buscarDatasCronogramaTAP(projetoId){
   const fims=marcos.map(m=>m.fim).filter(Boolean).sort();
   return { inicio: inis.length?isoToBR(inis[0]):'', termino: fims.length?isoToBR(fims[fims.length-1]):'' };
 }
-async function importarMarcosTAP(i){
-  const projetoId=document.getElementById('projVinc-'+i).value;
-  if(!projetoId){ toast('Selecione um Projeto vinculado (Gate 1) primeiro.',false); return; }
-  const marcosTAP=await buscarCronogramaTAP(projetoId);
-  if(!marcosTAP.length){ toast('Nenhum marco de cronograma encontrado no TAP deste projeto.',false); return; }
-  if(!data.projetos[i].marcos) data.projetos[i].marcos=[];
-  const existentes=new Set(data.projetos[i].marcos.map(m=>(m.nome||'').trim().toLowerCase()).filter(Boolean));
-  let importados=0;
-  marcosTAP.forEach(m=>{
-    const nome=(m.marco||'').trim();
-    if(!nome||existentes.has(nome.toLowerCase())) return;
-    data.projetos[i].marcos.push({ nome, status:'A iniciar', data:isoToBR(m.fim) });
-    existentes.add(nome.toLowerCase());
-    importados++;
-  });
-  renderMarcosEditor(i,data.projetos[i].marcos);
-  toast(importados?`${importados} marco(s) importado(s) do TAP`:'Todos os marcos do TAP já estão na lista');
-}
 async function onProjRowProjetoSelect(i){
   const id=document.getElementById('projVinc-'+i).value;
   data.projetos[i].projetoId=id;
   document.getElementById('histBtn-'+i).style.display=id?'inline-flex':'none';
   document.getElementById('projRowHist-'+i).style.display='none';
-  const importMarcosBtn=document.getElementById('importMarcosBtn-'+i);
-  if(importMarcosBtn) importMarcosBtn.style.display=id?'inline-flex':'none';
   const importCustosBtn=document.getElementById('importCustosBtn-'+i);
   if(importCustosBtn) importCustosBtn.style.display=id?'inline-flex':'none';
+  renderMarcosEditor(i,data.projetos[i].marcos||[]);
   if(!id) return;
   const pa=projetosAprovados.find(x=>x.id===id);
   if(!pa) return;
@@ -1102,7 +1088,8 @@ function voltarVersaoAtual(){
 }
 
 /* ── render painel ── */
-function renderPainel(){
+async function renderPainel(){
+  const cronoPorProjeto=await buscarCronogramaTAPTodos();
   // header
   document.getElementById('hd-ref').textContent=fmtRef(data.ref);
   document.getElementById('hd-resp').textContent=data.resp||'—';
@@ -1147,7 +1134,7 @@ function renderPainel(){
   renderYearTable(projs);
 
   // program cards
-  renderProgCards(projs,programs);
+  renderProgCards(projs,programs,cronoPorProjeto);
 }
 
 function renderGovTable(wrapId,items,emptyMsg){
@@ -1216,7 +1203,8 @@ function renderYearTable(projs){
   wrap.innerHTML=html;
 }
 
-function renderProgCards(projs,programs){
+function renderProgCards(projs,programs,cronoPorProjeto){
+  cronoPorProjeto=cronoPorProjeto||{};
   const sec=document.getElementById('sec-programas-title');
   const container=document.getElementById('prog-cards');
   container.innerHTML='';
@@ -1234,13 +1222,16 @@ function renderProgCards(projs,programs){
     card.className='prog-card';
     let marcosHTML='<div class="marcos-list">';
     pp.forEach(p=>{
-      if(p.marcos&&p.marcos.length){
+      const cronoTAP=(p.projetoId&&cronoPorProjeto[p.projetoId])||[];
+      const statusPorNome={};
+      (p.marcos||[]).forEach(m=>{ if(m.nome) statusPorNome[m.nome.trim().toLowerCase()]=m.status; });
+      const marcosVivos=cronoTAP.filter(c=>c.marco).map(c=>({nome:c.marco.trim(),fim:c.fim,status:statusPorNome[c.marco.trim().toLowerCase()]||'A iniciar'}));
+      if(marcosVivos.length){
         marcosHTML+=`<div class="marco-group">
           <div class="marco-group-head"><div class="marco-group-name">${esc(p.nome)}</div><span class="s-badge ${STATUS_CLASS[p.status]||''}" style="font-size:10px">${esc(p.status||'')}</span></div>`;
-        p.marcos.forEach(m=>{
-          if(!m.nome) return;
+        marcosVivos.forEach(m=>{
           const cls=STATUS_CLASS[m.status]||'';
-          marcosHTML+=`<div class="marco-row"><div class="marco-name">${esc(m.nome)}</div><span class="s-badge ${cls}" style="font-size:10px">${esc(m.status||'')}</span><div class="marco-date">${esc(m.data||'')}</div></div>`;
+          marcosHTML+=`<div class="marco-row"><div class="marco-name">${esc(m.nome)}</div><span class="s-badge ${cls}" style="font-size:10px">${esc(m.status||'')}</span><div class="marco-date">${m.fim?isoToBR(m.fim):''}</div></div>`;
         });
         marcosHTML+='</div>';
       } else {
@@ -1394,10 +1385,8 @@ function buildProjCard(p,i){
       <div class="field full"><label>★ Merece destaque</label><textarea data-pi="${i}" data-k="destaque" rows="2">${esc(p.destaque||'')}</textarea></div>
     </div>
     <div style="margin-top:12px">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Marcos</div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Marcos (do cronograma do TAP)</div>
       <div id="marcos-${i}"></div>
-      <button class="btn btn-sm btn-ghost" style="margin-top:6px" onclick="addMarco(${i})">+ Marco</button>
-      <button type="button" class="btn btn-sm btn-ghost" style="margin-top:6px; display:${p.projetoId?'inline-flex':'none'}" id="importMarcosBtn-${i}" onclick="importarMarcosTAP(${i})">↓ Importar marcos do TAP</button>
     </div>
     <div style="margin-top:16px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -1420,34 +1409,33 @@ function buildProjCard(p,i){
   return div;
 }
 
-function renderMarcosEditor(pi,marcos){
+async function renderMarcosEditor(pi,marcosSalvos){
   const host=document.getElementById('marcos-'+pi);
   if(!host) return;
-  host.innerHTML='';
-  marcos.forEach((m,mi)=>{
-    const row=document.createElement('div');
-    row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap';
-    row.innerHTML=`<input style="flex:2;min-width:140px" placeholder="Nome do marco" value="${esc(m.nome||'')}">
-      <select style="flex:1;min-width:110px">${STATUS_OPTS.map(s=>`<option ${m.status===s?'selected':''}>${s}</option>`).join('')}</select>
-      <input style="flex:1;min-width:100px" placeholder="Data" value="${esc(m.data||'')}">
-      <button class="btn btn-sm btn-ghost" style="color:var(--bad);flex:none" onclick="removeMarco(${pi},${mi})">×</button>`;
-    row.querySelectorAll('input,select').forEach((el,j)=>{
-      el.addEventListener('input',()=>{
-        const keys=['nome','status','data'];
-        if(!data.projetos[pi].marcos) data.projetos[pi].marcos=[];
-        data.projetos[pi].marcos[mi]=data.projetos[pi].marcos[mi]||{};
-        data.projetos[pi].marcos[mi][keys[j]]=el.value;
-      });
-    });
-    host.appendChild(row);
-  });
+  const projetoId=data.projetos[pi].projetoId;
+  if(!projetoId){
+    host.innerHTML='<div style="font-size:12px;color:var(--muted)">Selecione o Projeto vinculado para ver os marcos do cronograma do TAP.</div>';
+    data.projetos[pi].marcos=[];
+    return;
+  }
+  const marcosTAP=await buscarCronogramaTAP(projetoId);
+  if(!marcosTAP.length){
+    host.innerHTML='<div style="font-size:12px;color:var(--muted)">Este projeto ainda não tem marcos cadastrados no cronograma do TAP.</div>';
+    data.projetos[pi].marcos=[];
+    return;
+  }
+  const statusPorNome={};
+  (marcosSalvos||[]).forEach(m=>{ if(m.nome) statusPorNome[m.nome.trim().toLowerCase()]=m.status; });
+  const marcos=marcosTAP.map(m=>({ nome:(m.marco||'').trim(), ini:m.ini, fim:m.fim, concl:m.concl, status:statusPorNome[(m.marco||'').trim().toLowerCase()]||'A iniciar' }));
+  data.projetos[pi].marcos=marcos.map(m=>({nome:m.nome,status:m.status}));
+  host.innerHTML=marcos.map((m,mi)=>`
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+      <div style="flex:2;min-width:140px;font-size:12.5px">${esc(m.nome||'—')}</div>
+      <div style="flex:1;min-width:90px;font-size:11.5px;color:var(--muted)">${m.ini?isoToBR(m.ini):'—'} → ${m.fim?isoToBR(m.fim):'—'}</div>
+      <div style="flex:1;min-width:90px;font-size:11.5px;color:var(--muted)">${m.concl?('Concluído: '+isoToBR(m.concl)):'—'}</div>
+      <select style="flex:1;min-width:110px" onchange="data.projetos[${pi}].marcos[${mi}].status=this.value">${STATUS_OPTS.map(s=>`<option ${m.status===s?'selected':''}>${s}</option>`).join('')}</select>
+    </div>`).join('');
 }
-function addMarco(pi){
-  if(!data.projetos[pi].marcos) data.projetos[pi].marcos=[];
-  data.projetos[pi].marcos.push({nome:'',status:'A iniciar',data:''});
-  renderMarcosEditor(pi,data.projetos[pi].marcos);
-}
-function removeMarco(pi,mi){data.projetos[pi].marcos.splice(mi,1);renderMarcosEditor(pi,data.projetos[pi].marcos);}
 
 function renderCustosEditor(pi,custos){
   const host=document.getElementById('custos-'+pi);

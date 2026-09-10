@@ -469,14 +469,19 @@ async function buscarDocumentoUnico(key){
 }
 
 /* ---- indicadores: cálculo, meta e sinalização (Normal/Atenção/Crítico) ---- */
-function pctMarcosNoPrazo(relsitData, refDate){
+function pctMarcosNoPrazo(relsitData, refDate, tapDocs){
   var totalAtivos=0, atrasados=0;
   ((relsitData && relsitData.projetos)||[]).forEach(function(p){
     if(['Concluído','Cancelado'].includes(p.status)) return;
+    var tap = (tapDocs||[]).find(function(t){ return t.projetoId===p.projetoId; });
+    var fimPorNome = {};
+    ((tap && tap.cronograma)||[]).forEach(function(c){ if(c.marco) fimPorNome[c.marco.trim().toLowerCase()]=c; });
     (p.marcos||[]).forEach(function(m){
       if(['Concluído','Cancelado'].includes(m.status)) return;
+      var c = m.nome ? fimPorNome[m.nome.trim().toLowerCase()] : null;
+      if(c && c.concl) return; // concluído de fato no TAP, mesmo que o status aqui nao reflita
       totalAtivos++;
-      var dt = parseBRDate(m.data);
+      var dt = (c && c.fim) ? new Date(c.fim+'T00:00:00') : null;
       if(dt && refDate > dt) atrasados++;
     });
   });
@@ -578,9 +583,9 @@ async function carregarResultados(){
   var hoje = new Date();
 
   // ---- Indicador 1: Marcos no prazo ----
-  var marcos = pctMarcosNoPrazo(relsit, hoje);
+  var marcos = pctMarcosNoPrazo(relsit, hoje, tapDocs);
   var trendMarcos = montarTendencia(
-    snapsHistoricos.slice(-3).map(function(s){ var r=pctMarcosNoPrazo(s.data, new Date(s.savedAt)); return r?r.pct:null; })
+    snapsHistoricos.slice(-3).map(function(s){ var r=pctMarcosNoPrazo(s.data, new Date(s.savedAt), tapDocs); return r?r.pct:null; })
       .concat([marcos?marcos.pct:null])
   );
   renderIndicador('ind-marcos', marcos?marcos.pct:null, metas.meta_marcos_no_prazo,

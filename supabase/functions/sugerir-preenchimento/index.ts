@@ -112,14 +112,13 @@ Para a aba Viabilidade — atenção: estes campos têm um propósito diferente 
 - proposta: proposta de mudança — o que está sendo proposto para resolver a situação atual (mesma base factual do campo "objGeral" do Pré-projeto, mas redigida como uma proposta de solução, não como um objetivo)
 - beneficios: benefícios do projeto — parta dos benefícios esperados já descritos no TAP, detalhando se possível
 
-Para a aba Cronograma:
-- cronograma: array com TODOS os marcos do cronograma de entregas macro do TAP, se houver — um item para cada marco do TAP, na mesma quantidade, sem omitir nem resumir nenhum; cada item {"marco":"...","resp":"","duracao":"","entrega":null} — "entrega" é uma data YYYY-MM-DD SOMENTE se houver menção explícita, senão null
+A aba Cronograma não é preenchida por você — ela mostra, somente para leitura, o cronograma de entregas macro já registrado no TAP do mesmo projeto.
 
 Regras importantes:
 - Baseie-se SOMENTE nos documentos fornecidos — nunca invente informação que não esteja neles.
 - Campo de texto sem informação suficiente: retorne null. Tabela sem item identificável: retorne [].
 - Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
-Formato exato: {"solicitante":"...","produtos":"...","contexto":"...","objGeral":"...","objEspec":"...","escIncluido":"...","escExcluido":"...","entregaveis":"...","premissas":"...","restricoes":"...","partes":"...","macroFases":"...","introducao":"...","situacao":"...","proposta":"...","beneficios":"...","cronograma":[...]}`,
+Formato exato: {"solicitante":"...","produtos":"...","contexto":"...","objGeral":"...","objEspec":"...","escIncluido":"...","escExcluido":"...","entregaveis":"...","premissas":"...","restricoes":"...","partes":"...","macroFases":"...","introducao":"...","situacao":"...","proposta":"...","beneficios":"..."}`,
 
   eap: `Você é um assistente que ajuda a esboçar a EAP (Estrutura Analítica de Projeto) do sistema de gestão de projetos da UNIALFA, em português do Brasil, a partir de documentos já registrados do mesmo projeto (Planejamento e Desenvolvimento de Projeto, TAP e, quando houver, Atas de Reunião).
 
