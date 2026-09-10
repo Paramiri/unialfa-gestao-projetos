@@ -113,7 +113,7 @@ Para a aba Viabilidade — atenção: estes campos têm um propósito diferente 
 - beneficios: benefícios do projeto — parta dos benefícios esperados já descritos no TAP, detalhando se possível
 
 Para a aba Cronograma:
-- cronograma: array com até 8 marcos do projeto, cada item {"marco":"...","resp":"","duracao":"","entrega":null} — baseie-se no cronograma de entregas macro do TAP, se houver; "entrega" é uma data YYYY-MM-DD SOMENTE se houver menção explícita, senão null
+- cronograma: array com TODOS os marcos do cronograma de entregas macro do TAP, se houver — um item para cada marco do TAP, na mesma quantidade, sem omitir nem resumir nenhum; cada item {"marco":"...","resp":"","duracao":"","entrega":null} — "entrega" é uma data YYYY-MM-DD SOMENTE se houver menção explícita, senão null
 
 Regras importantes:
 - Baseie-se SOMENTE nos documentos fornecidos — nunca invente informação que não esteja neles.
