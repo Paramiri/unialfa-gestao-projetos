@@ -64,6 +64,14 @@
   .custo-status-badge.dentro{background:var(--ok-soft); color:var(--ok)}
   .custo-status-badge.acima{background:var(--bad-soft); color:var(--bad)}
   .custo-status-badge.neutro{background:var(--surface-2); color:var(--muted); border:1px solid var(--line-strong)}
+  .entrega-status{display:inline-flex; align-items:center; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px; white-space:nowrap}
+  .entrega-status.concluida{background:var(--ok-soft); color:var(--ok)}
+  .entrega-status.atrasada{background:var(--bad-soft); color:var(--bad)}
+  .entrega-status.no-prazo{background:var(--surface-2); color:var(--muted); border:1px solid var(--line-strong)}
+  .entrega-status.sem-cronograma{background:transparent; color:var(--muted); border:1px dashed var(--line-strong)}
+  .eap-resumo{padding:12px 20px; font-size:12px; color:var(--muted); font-weight:600; border-bottom:1px solid var(--line)}
+  .eap-resumo b{color:var(--ink); font-weight:800}
+  .eap-pacote-nome{padding:9px 20px 3px; font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
   .denied{padding:48px 24px; text-align:center;}
   .denied h2{font-size:16px; margin:0 0 8px}
   .denied p{color:var(--muted); font-size:13px; margin:0}
@@ -381,7 +389,7 @@ function ensureAuthenticated(){
         <h1>Ficha do Projeto</h1>
         <p id="docSub">Visão consolidada de um único projeto</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=47#ficha-projeto" title="Ajuda">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=48#ficha-projeto" title="Ajuda">?</a>
     </div>
   </div>
 
@@ -423,6 +431,9 @@ function ensureAuthenticated(){
 
       <div class="sec-title">Custos: Estimado (TAP) x Realizado</div>
       <div class="card" id="custosComparativoCard"></div>
+
+      <div class="sec-title">Entregas da EAP: status automático</div>
+      <div class="card" id="eapEntregasCard"></div>
 
       <div class="sec-title">Situação atual (Relatório de Situação)</div>
       <div class="card" id="situacaoCard"></div>
@@ -723,6 +734,44 @@ function renderComparativoCustos(custosRealizados, custosTAP){
   host.innerHTML = '<div class="table-wrap"><table class="custo-comp-t"><thead><tr><th>Categoria</th><th>Estimado (TAP)</th><th>Realizado</th><th>%</th><th>Status</th></tr></thead><tbody>'+rowsHtml+'</tbody></table></div>';
 }
 
+/* Status automatico de uma Entrega (nivel 2) da EAP, casando pelo nome com o marco correspondente
+   no cronograma do Planejamento - mesmo casamento por nome e mesma logica ja usados na propria EAP
+   (Passo 5) e no rollup de portfolio do Painel Executivo (secao 6.4). Sem nenhum campo novo. */
+function statusEntregaEAP(nomeEntrega, cronoPorNome){
+  var marco = cronoPorNome ? cronoPorNome[(nomeEntrega||'').trim().toLowerCase()] : null;
+  if(!marco) return {cls:'sem-cronograma', label:'Sem cronograma vinculado'};
+  if(marco.concl && marco.concl.trim()) return {cls:'concluida', label:'Concluída'};
+  var fim = marco.fim ? new Date(marco.fim+'T00:00:00') : null;
+  if(fim && new Date()>fim) return {cls:'atrasada', label:'Atrasada'};
+  return {cls:'no-prazo', label:'No prazo'};
+}
+function renderEntregasEAP(eap, plan){
+  var host = document.getElementById('eapEntregasCard');
+  if(!eap || !Array.isArray(eap.n1s) || !eap.n1s.length){
+    host.innerHTML = '<div class="empty">Nenhuma EAP com pacote/entrega cadastrado para este projeto ainda.</div>';
+    return;
+  }
+  var cronoPorNome = {};
+  (plan && Array.isArray(plan.cronograma) ? plan.cronograma : []).forEach(function(m){
+    var nome=(m.marco||'').trim().toLowerCase();
+    if(nome) cronoPorNome[nome]=m;
+  });
+  var total=0, concluidas=0;
+  var pacotesHtml = eap.n1s.map(function(n1){
+    var entregas = Array.isArray(n1.n2s) ? n1.n2s : [];
+    if(!entregas.length) return '';
+    var itensHtml = entregas.map(function(n2){
+      total++;
+      var st = statusEntregaEAP(n2.name, cronoPorNome);
+      if(st.cls==='concluida') concluidas++;
+      return '<div class="marco-item"><div class="marco-nome">'+esc(n2.name||'(sem nome)')+'</div><span class="entrega-status '+st.cls+'">'+st.label+'</span></div>';
+    }).join('');
+    return '<div class="eap-pacote-nome">'+esc(n1.name||'(sem nome)')+'</div>'+itensHtml;
+  }).join('');
+  var resumoHtml = total ? '<div class="eap-resumo"><b>'+Math.round((concluidas/total)*100)+'%</b> das entregas concluídas ('+concluidas+' de '+total+')</div>' : '';
+  host.innerHTML = resumoHtml + (pacotesHtml || '<div class="empty">Nenhuma entrega cadastrada nos pacotes de trabalho desta EAP ainda.</div>');
+}
+
 function renderTap(tap, plan){
   var host = document.getElementById('tapCard');
   if(!tap && !plan){
@@ -790,7 +839,7 @@ async function carregarFicha(projetoId){
   var sit = ((relsit && relsit.projetos) || []).find(function(p){ return p.projetoId === projetoId; });
 
   var registrosPorForm = {};
-  var tap = null; var plan = null;
+  var tap = null; var plan = null; var eap = null;
   for(var i=0;i<FORM_DEFS.length;i++){
     var def = FORM_DEFS[i];
     var todos = await listarValoresPorPrefixo(def.prefix);
@@ -798,12 +847,14 @@ async function carregarFicha(projetoId){
     registrosPorForm[def.prefix] = doProjeto;
     if(def.prefix === 'tap:' && doProjeto.length) tap = doProjeto[0];
     if(def.prefix === 'plan:' && doProjeto.length) plan = doProjeto[0];
+    if(def.prefix === 'eap:' && doProjeto.length) eap = doProjeto[0];
   }
   renderCiclo(registrosPorForm);
   renderTap(tap, plan);
   renderSituacao(sit, plan);
   renderSaude(sit, tap, plan);
   renderComparativoCustos(sit && sit.custosRealizados, tap && tap.custos);
+  renderEntregasEAP(eap, plan);
 
   document.getElementById('loadingBox').style.display = 'none';
   document.getElementById('conteudo').style.display = 'block';

@@ -418,6 +418,20 @@ function ensureAuthenticated(){
         </div>
       </div>
 
+      <div class="sec-title">Entregas da EAP (portfólio)</div>
+      <div class="kpi-row" style="grid-template-columns:1fr 1fr">
+        <div class="kpi blue">
+          <div class="kpi-label">% de entregas concluídas</div>
+          <div class="kpi-value" id="kpi-eap-pct">—</div>
+          <div class="kpi-sub" id="kpi-eap-pct-sub">entregas com marco correspondente no cronograma</div>
+        </div>
+        <div class="kpi bad">
+          <div class="kpi-label">Projetos com entrega atrasada</div>
+          <div class="kpi-value" id="kpi-eap-atrasados">—</div>
+          <div class="kpi-sub">pelo menos uma entrega sem conclusão e com prazo vencido</div>
+        </div>
+      </div>
+
       <div class="sec-title">Registros por formulário</div>
       <div class="card">
         <div class="table-wrap">
@@ -583,6 +597,20 @@ async function carregarPainel(){
     }).join('');
   }
 
+  // 4.3) Entregas da EAP (portfolio) — % de entregas (nivel 2) concluidas e quantos projetos tem
+  // entrega atrasada, casando pelo nome de cada entrega com o cronograma do Planejamento do mesmo
+  // projeto (mesmo calculo automatico usado na propria EAP, Passo 5, Fase 1 da proposta)
+  var eapPortfolio = calcularEntregasPortfolioEAP(registrosPorForm['eap:'], registrosPorForm['plan:']);
+  if(eapPortfolio.totalEntregas>0){
+    var pctEapPortfolio = Math.round((eapPortfolio.concluidas/eapPortfolio.totalEntregas)*100);
+    document.getElementById('kpi-eap-pct').textContent = pctEapPortfolio+'%';
+    document.getElementById('kpi-eap-pct-sub').textContent = eapPortfolio.concluidas+' de '+eapPortfolio.totalEntregas+' entregas concluídas';
+  } else {
+    document.getElementById('kpi-eap-pct').textContent = '—';
+    document.getElementById('kpi-eap-pct-sub').textContent = 'Nenhuma EAP com pacote/entrega cadastrado ainda';
+  }
+  document.getElementById('kpi-eap-atrasados').textContent = eapPortfolio.projetosComAtraso;
+
   // 5) Portfólio de projetos (tabela compartilhada `projetos`)
   var rProj = await fetch(unialfaAuth.REST_BASE + '/projetos?select=id,nome,unidade,gerente,status,atualizado_em&order=nome', { headers: unialfaAuth.authHeaders() });
   var projetos = rProj.ok ? await rProj.json() : [];
@@ -685,6 +713,48 @@ function calcularCustosPorCategoriaPortfolio(relsit, tapDocs){
   });
   return Object.values(porCategoria).filter(function(c){ return c.comEstimativa>0; })
     .sort(function(a,b){ return b.acima-a.acima || b.comEstimativa-a.comEstimativa; });
+}
+/* Status automatico de uma Entrega (nivel 2) da EAP, casando pelo nome com o marco correspondente
+   no cronograma do Planejamento do mesmo projeto - mesmo calculo usado na propria EAP (Passo 5):
+   "concluida" (concl preenchida), "atrasada" (sem concl e com fim/prazo ja passado), "no-prazo"
+   (demais casos) ou null quando nao ha cronograma/marco correspondente para essa entrega. */
+function statusEntregaEAP(nomeEntrega, cronoPorNome){
+  var marco = cronoPorNome ? cronoPorNome[(nomeEntrega||'').trim().toLowerCase()] : null;
+  if(!marco) return null;
+  if(marco.concl && marco.concl.trim()) return 'concluida';
+  var fim = marco.fim ? new Date(marco.fim+'T00:00:00') : null;
+  if(fim && new Date()>fim) return 'atrasada';
+  return 'no-prazo';
+}
+/* Agrega, para todo o portfolio, quantas entregas (nivel 2) de todas as EAPs estao concluidas
+   (sobre o total de entregas cadastradas - inclui as sem cronograma vinculado, que contam para o
+   total mas nunca para concluidas) e em quantos projetos existe pelo menos uma entrega atrasada. */
+function calcularEntregasPortfolioEAP(eapDocs, planDocs){
+  var cronoPorProjeto = {};
+  (planDocs||[]).forEach(function(p){
+    if(!p.projetoId) return;
+    var porNome = {};
+    (Array.isArray(p.cronograma)?p.cronograma:[]).forEach(function(m){
+      var nome=(m.marco||'').trim().toLowerCase();
+      if(nome) porNome[nome]=m;
+    });
+    cronoPorProjeto[p.projetoId]=porNome;
+  });
+  var totalEntregas=0, concluidas=0, projetosComAtraso=0;
+  (eapDocs||[]).forEach(function(e){
+    var cronoPorNome = e.projetoId ? cronoPorProjeto[e.projetoId] : null;
+    var temAtraso=false;
+    (Array.isArray(e.n1s)?e.n1s:[]).forEach(function(n1){
+      (Array.isArray(n1.n2s)?n1.n2s:[]).forEach(function(n2){
+        totalEntregas++;
+        var st = statusEntregaEAP(n2.name, cronoPorNome);
+        if(st==='concluida') concluidas++;
+        else if(st==='atrasada') temAtraso=true;
+      });
+    });
+    if(temAtraso) projetosComAtraso++;
+  });
+  return { totalEntregas: totalEntregas, concluidas: concluidas, projetosComAtraso: projetosComAtraso };
 }
 /* Saude do projeto: cruza marcos do Planejamento e Desenvolvimento de Projeto (plan), custos do
    Relatorio de Situacao (sit) com os custos estimados do TAP (tap), e riscos Alto/Critico em aberto
