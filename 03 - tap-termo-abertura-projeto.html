@@ -80,6 +80,7 @@
   .risk-status.mitigado{background:var(--ok-soft); color:var(--ok)}
   .risk-status.materializado{background:#3730A3; color:#fff}
   .risk-status.encerrado{background:var(--surface-2); color:var(--muted)}
+  .risk-status.bloqueado{background:var(--bad-soft); color:var(--bad)}
   .risk-status.baixa, .risk-status.baixo{background:var(--ok-soft); color:var(--ok)}
   .risk-status.média, .risk-status.médio{background:var(--warn-soft); color:var(--warn)}
   .risk-status.alta, .risk-status.alto{background:var(--bad-soft); color:var(--bad)}
@@ -1018,12 +1019,13 @@ const TABLES={
     {key:'revisao',label:'Última revisão',type:'date',w:'15%'},
   ]},
   cronograma:{cols:[
-    {key:'marco',label:'Marcos / Entregas',type:'text',w:'19%',long:true},
-    {key:'resp',label:'Responsável',type:'text',w:'14%',long:true},
+    {key:'marco',label:'Marcos / Entregas',type:'text',w:'15%',long:true},
+    {key:'resp',label:'Responsável',type:'text',w:'10%',long:true},
     {key:'ini',label:'Início previsto',type:'date',w:'15%'},
     {key:'fim',label:'Término previsto',type:'date',w:'15%'},
     {key:'concl',label:'Conclusão real',type:'date',w:'15%'},
-    {key:'custo',label:'Custo',type:'text',w:'11%',long:true},
+    {key:'custo',label:'Custo',type:'text',w:'8%',long:true},
+    {key:'dep',label:'Depende de',type:'text',w:'12%',long:true},
   ]},
   custos:{sum:'valor', cols:[
     {key:'item',label:'Item',type:'text',w:'24%',long:true},
@@ -1314,6 +1316,17 @@ function recalc(name){
   });
   const el=document.getElementById('total-'+name); if(el) el.textContent=brl(total);
 }
+/* Retorna o nome do marco que bloqueia r (dependencia em atraso), ou null se nao houver bloqueio.
+   Definicao simples: r.dep aponta pelo nome a outro marco do mesmo cronograma; se esse marco
+   nao tem Conclusao real e o Termino previsto ja passou, r esta bloqueado por ele. */
+function marcoBloqueadoPor(rows, r){
+  if(!r||!r.dep) return null;
+  const alvo=(rows||[]).find(x=>(x.marco||'').trim().toLowerCase()===r.dep.trim().toLowerCase());
+  if(!alvo||alvo.concl) return null;
+  if(!alvo.fim) return null;
+  const fim=new Date(alvo.fim+'T00:00:00');
+  return (new Date()>fim) ? alvo.marco : null;
+}
 function roTable(name, rows){
   const cfg=TABLES[name];
   if(!Array.isArray(rows)||!rows.length) return '<dd>—</dd>';
@@ -1322,6 +1335,10 @@ function roTable(name, rows){
     let v=r[c.key]||'';
     if(c.type==='date'&&v) v=fmtDate(v);
     if(c.type==='select'&&v) return `<td><span class="risk-status ${v.toLowerCase()}">${esc(v)}</span></td>`;
+    if(name==='cronograma'&&c.key==='dep'&&v){
+      const bloq=marcoBloqueadoPor(rows,r);
+      return `<td>${esc(v)}${bloq?' <span class="risk-status bloqueado">⚠ bloqueado</span>':''}</td>`;
+    }
     return `<td>${esc(v||'—')}</td>`;
   }).join('')+'</tr>'; });
   h+='</tbody></table></div></dd>'; return h;
@@ -1578,7 +1595,14 @@ function docTableRowsTap(name,rows){
   const cols=cfg.cols.map(c=>'<th>'+esc(c.label)+'</th>').join('');
   const preenchidas=(rows||[]).filter(r=>Object.values(r).some(v=>v));
   const body=preenchidas.map(r=>{
-    const tds=cfg.cols.map(c=>{let v=r[c.key]||''; if(c.type==='date'&&v)v=fmtDate(v); return '<td>'+(esc(v)||'&nbsp;')+'</td>';}).join('');
+    const tds=cfg.cols.map(c=>{
+      let v=r[c.key]||''; if(c.type==='date'&&v)v=fmtDate(v);
+      if(name==='cronograma'&&c.key==='dep'&&v){
+        const bloq=marcoBloqueadoPor(rows,r);
+        return '<td>'+esc(v)+(bloq?' (bloqueado por atraso)':'')+'</td>';
+      }
+      return '<td>'+(esc(v)||'&nbsp;')+'</td>';
+    }).join('');
     return '<tr>'+tds+'</tr>';
   }).join('');
   if(!body) return '<p style="margin:0;color:#6A6A70">Nenhum registro.</p>';

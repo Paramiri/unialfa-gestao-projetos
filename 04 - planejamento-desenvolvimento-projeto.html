@@ -1172,6 +1172,14 @@ async function buscarCronogramaTAP(projetoId){
   }catch(e){}
   return [];
 }
+function marcoBloqueadoPor(rows, r){
+  if(!r||!r.dep) return null;
+  const alvo=(rows||[]).find(x=>(x.marco||'').trim().toLowerCase()===r.dep.trim().toLowerCase());
+  if(!alvo||alvo.concl) return null;
+  if(!alvo.fim) return null;
+  const fim=new Date(alvo.fim+'T00:00:00');
+  return (new Date()>fim) ? alvo.marco : null;
+}
 async function renderCronogramaTAP(projetoId){
   const host=document.getElementById('crono-tap-view');
   if(!host) return;
@@ -1185,18 +1193,23 @@ async function renderCronogramaTAP(projetoId){
     return;
   }
   host.innerHTML='<div class="dyn-table-wrap"><table class="dyn-t"><thead><tr>'
-    +'<th style="width:26%">Marco / Entrega</th><th style="width:16%">Responsável</th>'
-    +'<th style="width:13%">Início previsto</th><th style="width:13%">Término previsto</th>'
-    +'<th style="width:13%">Conclusão real</th><th style="width:10%">Custo</th>'
+    +'<th style="width:20%">Marco / Entrega</th><th style="width:13%">Responsável</th>'
+    +'<th style="width:12%">Início previsto</th><th style="width:12%">Término previsto</th>'
+    +'<th style="width:12%">Conclusão real</th><th style="width:9%">Custo</th>'
+    +'<th style="width:12%">Depende de</th>'
     +'</tr></thead><tbody>'
-    + marcos.map(m=>`<tr>
+    + marcos.map(m=>{
+        const bloq=marcoBloqueadoPor(marcos,m);
+        return `<tr>
         <td>${esc(m.marco||'—')}</td>
         <td>${esc(m.resp||'—')}</td>
         <td>${m.ini?isoToBR(m.ini):'—'}</td>
         <td>${m.fim?isoToBR(m.fim):'—'}</td>
         <td>${m.concl?isoToBR(m.concl):'—'}</td>
         <td>${esc(m.custo||'—')}</td>
-      </tr>`).join('')
+        <td>${esc(m.dep||'—')}${bloq?' <span style="color:var(--bad,#9F1239);font-weight:700;font-size:10.5px">⚠ bloqueado</span>':''}</td>
+      </tr>`;
+      }).join('')
     +'</tbody></table></div>'
     +'<div class="dyn-foot" style="font-size:11.5px;color:var(--muted,#6A6A70)">Este cronograma é o mesmo registrado no TAP do projeto — para alterá-lo, edite o TAP.</div>';
 }
@@ -1384,8 +1397,11 @@ async function openDrawer(id){
       else if(b.kind==='group'){ b.fields.forEach(f=>{ html+=`<div class="row"><dt>${f.label}</dt><dd>${esc(r[f.key]||'—')}</dd></div>`; }); }
       else if(b.kind==='cronoTap'){
         const preenchidos=cronogramaTap.filter(m=>m.marco);
-        const ro=preenchidos.length ? ('<div class="ro-wrap"><table class="ro-t"><thead><tr><th>Marco / Entrega</th><th>Responsável</th><th>Início previsto</th><th>Término previsto</th><th>Conclusão real</th><th>Custo</th></tr></thead><tbody>'
-          + preenchidos.map(m=>'<tr><td>'+esc(m.marco||'—')+'</td><td>'+esc(m.resp||'—')+'</td><td>'+(m.ini?fmtDate(m.ini):'—')+'</td><td>'+(m.fim?fmtDate(m.fim):'—')+'</td><td>'+(m.concl?fmtDate(m.concl):'—')+'</td><td>'+esc(m.custo||'—')+'</td></tr>').join('')
+        const ro=preenchidos.length ? ('<div class="ro-wrap"><table class="ro-t"><thead><tr><th>Marco / Entrega</th><th>Responsável</th><th>Início previsto</th><th>Término previsto</th><th>Conclusão real</th><th>Custo</th><th>Depende de</th></tr></thead><tbody>'
+          + preenchidos.map(m=>{
+              const bloq=marcoBloqueadoPor(preenchidos,m);
+              return '<tr><td>'+esc(m.marco||'—')+'</td><td>'+esc(m.resp||'—')+'</td><td>'+(m.ini?fmtDate(m.ini):'—')+'</td><td>'+(m.fim?fmtDate(m.fim):'—')+'</td><td>'+(m.concl?fmtDate(m.concl):'—')+'</td><td>'+esc(m.custo||'—')+'</td><td>'+esc(m.dep||'—')+(bloq?' <span style="color:var(--bad,#9F1239);font-weight:700;font-size:10.5px">⚠ bloqueado</span>':'')+'</td></tr>';
+            }).join('')
           + '</tbody></table></div>') : '—';
         html+=`<div class="row"><dt>${b.label}</dt><dd>${ro}</dd></div>`;
       }
@@ -1473,8 +1489,11 @@ async function buildPlanejamentoDocumentoHtml(r){
         });
       } else if(b.kind==='cronoTap'){
         const preenchidos=cronogramaTap.filter(m=>m.marco);
-        const corpo=preenchidos.length ? ('<table class="doc-t"><thead><tr><th>Marco / Entrega</th><th>Responsável</th><th>Início previsto</th><th>Término previsto</th><th>Conclusão real</th><th>Custo</th></tr></thead><tbody>'
-          + preenchidos.map(m=>'<tr><td>'+(esc(m.marco)||'&nbsp;')+'</td><td>'+(esc(m.resp)||'&nbsp;')+'</td><td>'+(m.ini?fmtDate(m.ini):'&nbsp;')+'</td><td>'+(m.fim?fmtDate(m.fim):'&nbsp;')+'</td><td>'+(m.concl?fmtDate(m.concl):'&nbsp;')+'</td><td>'+(esc(m.custo)||'&nbsp;')+'</td></tr>').join('')
+        const corpo=preenchidos.length ? ('<table class="doc-t"><thead><tr><th>Marco / Entrega</th><th>Responsável</th><th>Início previsto</th><th>Término previsto</th><th>Conclusão real</th><th>Custo</th><th>Depende de</th></tr></thead><tbody>'
+          + preenchidos.map(m=>{
+              const bloq=marcoBloqueadoPor(preenchidos,m);
+              return '<tr><td>'+(esc(m.marco)||'&nbsp;')+'</td><td>'+(esc(m.resp)||'&nbsp;')+'</td><td>'+(m.ini?fmtDate(m.ini):'&nbsp;')+'</td><td>'+(m.fim?fmtDate(m.fim):'&nbsp;')+'</td><td>'+(m.concl?fmtDate(m.concl):'&nbsp;')+'</td><td>'+(esc(m.custo)||'&nbsp;')+'</td><td>'+(esc(m.dep)||'&nbsp;')+(bloq?' (bloqueado por atraso)':'')+'</td></tr>';
+            }).join('')
           + '</tbody></table>') : '<p style="margin:0;color:#6A6A70">Nenhum registro.</p>';
         stagesHtml+='<div class="doc-box"><div class="lbl">'+esc(b.label)+'</div><div class="val">'+corpo+'</div></div>';
       } else {

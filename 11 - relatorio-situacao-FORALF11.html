@@ -786,6 +786,14 @@ function isoToBR(iso){
   const m=String(iso||'').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m ? (m[3]+'/'+m[2]+'/'+m[1]) : '';
 }
+function marcoBloqueadoPor(rows, r){
+  if(!r||!r.dep) return null;
+  const alvo=(rows||[]).find(x=>(x.marco||'').trim().toLowerCase()===r.dep.trim().toLowerCase());
+  if(!alvo||alvo.concl) return null;
+  if(!alvo.fim) return null;
+  const fim=new Date(alvo.fim+'T00:00:00');
+  return (new Date()>fim) ? alvo.marco : null;
+}
 async function buscarCronogramaTAPTodos(){
   const porProjeto={};
   try{
@@ -1225,13 +1233,14 @@ function renderProgCards(projs,programs,cronoPorProjeto){
       const cronoTAP=(p.projetoId&&cronoPorProjeto[p.projetoId])||[];
       const statusPorNome={};
       (p.marcos||[]).forEach(m=>{ if(m.nome) statusPorNome[m.nome.trim().toLowerCase()]=m.status; });
-      const marcosVivos=cronoTAP.filter(c=>c.marco).map(c=>({nome:c.marco.trim(),fim:c.fim,status:statusPorNome[c.marco.trim().toLowerCase()]||'A iniciar'}));
+      const marcosVivos=cronoTAP.filter(c=>c.marco).map(c=>({nome:c.marco.trim(),fim:c.fim,dep:c.dep,status:statusPorNome[c.marco.trim().toLowerCase()]||'A iniciar'}));
       if(marcosVivos.length){
         marcosHTML+=`<div class="marco-group">
           <div class="marco-group-head"><div class="marco-group-name">${esc(p.nome)}</div><span class="s-badge ${STATUS_CLASS[p.status]||''}" style="font-size:10px">${esc(p.status||'')}</span></div>`;
         marcosVivos.forEach(m=>{
           const cls=STATUS_CLASS[m.status]||'';
-          marcosHTML+=`<div class="marco-row"><div class="marco-name">${esc(m.nome)}</div><span class="s-badge ${cls}" style="font-size:10px">${esc(m.status||'')}</span><div class="marco-date">${m.fim?isoToBR(m.fim):''}</div></div>`;
+          const bloq=marcoBloqueadoPor(cronoTAP,{marco:m.nome,dep:m.dep});
+          marcosHTML+=`<div class="marco-row"><div class="marco-name">${esc(m.nome)}${bloq?' <span style="color:var(--bad,#9F1239);font-weight:700;font-size:10px">⚠ bloqueado</span>':''}</div><span class="s-badge ${cls}" style="font-size:10px">${esc(m.status||'')}</span><div class="marco-date">${m.fim?isoToBR(m.fim):''}</div></div>`;
         });
         marcosHTML+='</div>';
       } else {
@@ -1426,15 +1435,18 @@ async function renderMarcosEditor(pi,marcosSalvos){
   }
   const statusPorNome={};
   (marcosSalvos||[]).forEach(m=>{ if(m.nome) statusPorNome[m.nome.trim().toLowerCase()]=m.status; });
-  const marcos=marcosTAP.map(m=>({ nome:(m.marco||'').trim(), ini:m.ini, fim:m.fim, concl:m.concl, status:statusPorNome[(m.marco||'').trim().toLowerCase()]||'A iniciar' }));
+  const marcos=marcosTAP.map(m=>({ nome:(m.marco||'').trim(), ini:m.ini, fim:m.fim, concl:m.concl, dep:m.dep, status:statusPorNome[(m.marco||'').trim().toLowerCase()]||'A iniciar' }));
   data.projetos[pi].marcos=marcos.map(m=>({nome:m.nome,status:m.status}));
-  host.innerHTML=marcos.map((m,mi)=>`
+  host.innerHTML=marcos.map((m,mi)=>{
+    const bloq=marcoBloqueadoPor(marcosTAP,{marco:m.nome,dep:m.dep});
+    return `
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
-      <div style="flex:2;min-width:140px;font-size:12.5px">${esc(m.nome||'—')}</div>
+      <div style="flex:2;min-width:140px;font-size:12.5px">${esc(m.nome||'—')}${bloq?' <span style="color:var(--bad,#9F1239);font-weight:700;font-size:10.5px">⚠ bloqueado por: '+esc(bloq)+'</span>':''}</div>
       <div style="flex:1;min-width:90px;font-size:11.5px;color:var(--muted)">${m.ini?isoToBR(m.ini):'—'} → ${m.fim?isoToBR(m.fim):'—'}</div>
       <div style="flex:1;min-width:90px;font-size:11.5px;color:var(--muted)">${m.concl?('Concluído: '+isoToBR(m.concl)):'—'}</div>
       <select style="flex:1;min-width:110px" onchange="data.projetos[${pi}].marcos[${mi}].status=this.value">${STATUS_OPTS.map(s=>`<option ${m.status===s?'selected':''}>${s}</option>`).join('')}</select>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function renderCustosEditor(pi,custos){
