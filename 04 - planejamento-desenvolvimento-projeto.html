@@ -74,6 +74,36 @@
   .dyn{padding:18px 24px 22px}
   .dyn>label.blocklabel{display:block; margin-bottom:10px; font-size:12px; font-weight:700}
   .dyn-table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px}
+  .gantt-toggle{display:flex; gap:6px; margin:10px 0 8px}
+  .gantt-toggle-btn{appearance:none; font-family:var(--font); font-weight:700; font-size:11.5px; border-radius:999px; padding:6px 14px; cursor:pointer; border:1px solid var(--line-strong,#D4D4D8); background:var(--paper,#fff); color:var(--muted)}
+  .gantt-toggle-btn.active{background:var(--ink); border-color:var(--ink); color:#fff}
+  .gantt-empty{padding:20px; text-align:center; color:var(--muted); font-size:12.5px; border:1px solid var(--line); border-radius:8px}
+  .gantt-wrap{display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden}
+  .gantt-labels{flex:none; width:210px; border-right:1px solid var(--line); background:var(--surface-2)}
+  .gantt-label-header{height:28px; border-bottom:1px solid var(--line)}
+  .gantt-label-row{height:32px; display:flex; align-items:center; gap:7px; padding:0 10px; font-size:11.5px; border-bottom:1px solid var(--surface); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .gantt-label-row .n{font-weight:700; color:var(--muted); flex:none; font-size:10.5px}
+  .gantt-label-row .t{overflow:hidden; text-overflow:ellipsis}
+  .gantt-scroll{flex:1; overflow-x:auto}
+  .gantt-timeline{position:relative}
+  .gantt-header{height:28px; position:relative; border-bottom:1px solid var(--line)}
+  .gantt-grid-col{position:absolute; top:0; bottom:0; width:1px; background:var(--surface)}
+  .gantt-month-lbl{position:absolute; top:8px; font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; white-space:nowrap}
+  .gantt-body{position:relative}
+  .gantt-today{position:absolute; top:0; bottom:0; width:2px; background:var(--red); z-index:2}
+  .gantt-today::after{content:'HOJE'; position:absolute; top:-14px; left:-13px; font-size:8px; font-weight:800; color:var(--red); letter-spacing:.03em}
+  .gantt-bar{position:absolute; height:20px; border-radius:5px; display:flex; align-items:center; padding:0 6px; font-size:10px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; box-sizing:border-box}
+  .gantt-bar.normal{background:#1D4ED8}
+  .gantt-bar.concluido{background:var(--ok)}
+  .gantt-bar.atrasado{background:var(--bad)}
+  .gantt-bar.bloqueado{outline:2px solid var(--bad); outline-offset:1px}
+  .gantt-legend{display:flex; flex-wrap:wrap; gap:14px; margin-top:8px; font-size:11px; color:var(--muted)}
+  .gantt-legend span{display:inline-flex; align-items:center; gap:5px}
+  .gantt-legend i{width:10px; height:10px; border-radius:3px; display:inline-block}
+  .gantt-legend i.normal{background:#1D4ED8}
+  .gantt-legend i.concluido{background:var(--ok)}
+  .gantt-legend i.atrasado{background:var(--bad)}
+  .gantt-legend i.bloqueado{background:#fff; outline:2px solid var(--bad); outline-offset:-1px}
   table.dyn-t{width:100%; border-collapse:collapse; min-width:760px; table-layout:fixed}
   table.dyn-t th, table.dyn-t td{overflow-wrap:break-word}
   table.dyn-t th{font-size:9px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); padding:9px 10px; background:var(--surface-2); border-bottom:1px solid var(--line); text-align:left; white-space:normal; line-height:1.3}
@@ -641,7 +671,7 @@ window.unialfaHistorico = {
         <h1>Planejamento e Desenvolvimento de Projeto</h1>
         <p>Dossiê de ciclo de vida do projeto · Gerência de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=37#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=38#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00325</b></div>
@@ -1066,6 +1096,111 @@ function buildStages(){
   }).join('');
   // mount tables
   Object.values(TABLE_DEFS).forEach(t=>mountTable(t));
+  mountGanttToggle('cronograma', document.getElementById('dyn-cronograma'));
+}
+/* Alterna entre a tabela de marcos e uma visualização em linha do tempo (Gantt), somente leitura.
+   A edição continua sempre pela tabela — o Gantt é um resumo visual, recalculado a partir dela. */
+function mountGanttToggle(key, host){
+  const bar=document.createElement('div');
+  bar.className='gantt-toggle';
+  bar.innerHTML=`<button type="button" class="gantt-toggle-btn active" data-view="tabela">📋 Tabela</button>
+    <button type="button" class="gantt-toggle-btn" data-view="gantt">📊 Linha do tempo</button>`;
+  const ganttHost=document.createElement('div');
+  ganttHost.id='gantt-'+key;
+  ganttHost.style.display='none';
+  host.appendChild(bar);
+  host.appendChild(ganttHost);
+  const tableWrap=host.querySelector('.dyn-table-wrap');
+  const tableFoot=host.querySelector('.dyn-foot');
+  bar.querySelectorAll('.gantt-toggle-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      bar.querySelectorAll('.gantt-toggle-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const showGantt=btn.dataset.view==='gantt';
+      tableWrap.style.display=showGantt?'none':'';
+      tableFoot.style.display=showGantt?'none':'';
+      ganttHost.style.display=showGantt?'':'none';
+      if(showGantt) renderGanttTimeline(readTable(key), ganttHost);
+    });
+  });
+}
+/* Renderiza uma linha do tempo simples (barras por marco, coloridas por status) a partir das mesmas
+   linhas exibidas na tabela — cores: azul (no prazo), verde (concluído), vermelho (atrasado), com
+   contorno vermelho extra para marcos bloqueados por dependência. Não editável: para mudar um marco,
+   use a tabela. */
+function renderGanttTimeline(rows, host){
+  if(!host) return;
+  const all=(rows||[]).filter(r=>r.marco&&r.marco.trim());
+  if(!all.length){ host.innerHTML='<div class="gantt-empty">Nenhum marco cadastrado ainda.</div>'; return; }
+  const withSeq=all.map((r,i)=>({row:r, seq:i+1}));
+  const parseD=d=>d?new Date(d+'T00:00:00'):null;
+  const dated=withSeq.filter(x=>parseD(x.row.ini)||parseD(x.row.fim));
+  if(!dated.length){ host.innerHTML='<div class="gantt-empty">Nenhum marco com datas preenchidas para mostrar na linha do tempo.</div>'; return; }
+
+  const allDates=[];
+  dated.forEach(x=>{ const i=parseD(x.row.ini), f=parseD(x.row.fim); if(i) allDates.push(i); if(f) allDates.push(f); });
+  let minD=new Date(Math.min.apply(null,allDates)), maxD=new Date(Math.max.apply(null,allDates));
+  const rangeMs=Math.max(maxD-minD, 86400000);
+  const padMs=Math.max(rangeMs*0.06, 3*86400000);
+  minD=new Date(minD.getTime()-padMs); maxD=new Date(maxD.getTime()+padMs);
+  const totalDays=Math.max(Math.ceil((maxD-minD)/86400000),1);
+  const pxPerDay=totalDays>240?7:(totalDays>120?11:(totalDays>60?16:(totalDays>30?22:30)));
+  const timelineWidth=Math.max(totalDays*pxPerDay, 480);
+  const dayToX=d=>Math.round(((d-minD)/86400000)*pxPerDay);
+
+  const months=[]; let cur=new Date(minD.getFullYear(), minD.getMonth(), 1);
+  while(cur<=maxD){ months.push(new Date(cur)); cur=new Date(cur.getFullYear(), cur.getMonth()+1, 1); }
+
+  const today=new Date(); today.setHours(0,0,0,0);
+  const todayX=(today>=minD&&today<=maxD)?dayToX(today):null;
+
+  const rowH=32, topPad=6;
+  const bodyH=dated.length*rowH+topPad*2;
+
+  const gridLinesHtml=months.map(m=>{
+    const x=dayToX(m<minD?minD:m);
+    return `<div class="gantt-grid-col" style="left:${x}px"></div>`;
+  }).join('');
+  const monthLabelsHtml=months.map(m=>{
+    const x=dayToX(m<minD?minD:m);
+    const label=m.toLocaleDateString('pt-BR',{month:'short'}).replace('.','').toUpperCase()+(m.getMonth()===0?('/'+m.getFullYear()):'');
+    return `<div class="gantt-month-lbl" style="left:${x+4}px">${esc(label)}</div>`;
+  }).join('');
+
+  const todayHtml=todayX!=null?`<div class="gantt-today" style="left:${todayX}px"></div>`:'';
+
+  const barsHtml=dated.map((x,i)=>{
+    const r=x.row;
+    const ini=parseD(r.ini)||parseD(r.fim);
+    const fim=parseD(r.fim)||parseD(r.ini);
+    const x1=dayToX(ini), x2=Math.max(dayToX(fim), x1+10);
+    const top=topPad+i*rowH+(rowH-20)/2;
+    const concluido=!!(r.concl&&r.concl.trim());
+    const atrasado=!concluido&&fim&&today>fim;
+    const bloq=marcoBloqueadoPor(all, r);
+    const cls='gantt-bar '+(concluido?'concluido':(atrasado?'atrasado':'normal'))+(bloq?' bloqueado':'');
+    const icone=bloq?'⚠ ':(concluido?'✓ ':'');
+    const tip=esc(r.marco)+(bloq?' — bloqueado por atraso na dependência':(atrasado?' — atrasado':(concluido?' — concluído':'')));
+    return `<div class="${cls}" style="left:${x1}px; width:${x2-x1}px; top:${top}px" title="${tip}">${icone}${esc(r.marco)}</div>`;
+  }).join('');
+
+  const labelsHtml=dated.map(x=>{
+    return `<div class="gantt-label-row"><span class="n">${x.seq}</span><span class="t">${esc(x.row.marco)}</span></div>`;
+  }).join('');
+
+  host.innerHTML=`<div class="gantt-wrap">
+    <div class="gantt-labels"><div class="gantt-label-header"></div>${labelsHtml}</div>
+    <div class="gantt-scroll"><div class="gantt-timeline" style="width:${timelineWidth}px">
+      <div class="gantt-header">${monthLabelsHtml}</div>
+      <div class="gantt-body" style="height:${bodyH}px">${gridLinesHtml}${todayHtml}${barsHtml}</div>
+    </div></div>
+  </div>
+  <div class="gantt-legend">
+    <span><i class="normal"></i>No prazo</span>
+    <span><i class="concluido"></i>Concluído</span>
+    <span><i class="atrasado"></i>Atrasado</span>
+    <span><i class="bloqueado"></i>Bloqueado</span>
+  </div>`;
 }
 
 function showStage(id){
