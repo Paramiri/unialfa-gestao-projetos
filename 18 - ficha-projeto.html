@@ -372,7 +372,7 @@ function ensureAuthenticated(){
         <h1>Ficha do Projeto</h1>
         <p id="docSub">Visão consolidada de um único projeto</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=35#ficha-projeto" title="Ajuda">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=36#ficha-projeto" title="Ajuda">?</a>
     </div>
   </div>
 
@@ -418,7 +418,7 @@ function ensureAuthenticated(){
       <div class="sec-title">Progresso do ciclo de vida</div>
       <div class="card" id="cicloCard"></div>
 
-      <div class="sec-title">Cronograma e custos planejados (TAP)</div>
+      <div class="sec-title">Cronograma (Planejamento) e custos planejados (TAP)</div>
       <div class="card" id="tapCard"></div>
 
       <div class="sec-title">Equipe do projeto</div>
@@ -504,14 +504,15 @@ function parseBRL(s){
   var n=parseFloat(s); return isNaN(n)?0:n;
 }
 
-/* Saude do projeto: cruza marcos e custos do Relatorio de Situacao (sit) com os custos estimados do TAP (tap).
+/* Saude do projeto: cruza marcos do Planejamento e Desenvolvimento de Projeto (plan) e custos do
+   Relatorio de Situacao (sit) com os custos estimados do TAP (tap).
    Mesma definicao de "marco atrasado" e "dentro do orcamento" ja usada no Relatorio de Resultados (secao 6.7). */
-function calcularSaude(sit, tap){
+function calcularSaude(sit, tap, plan){
   var hoje = new Date();
-  var marcosTap = (tap && Array.isArray(tap.cronograma)) ? tap.cronograma : [];
+  var marcosPlan = (plan && Array.isArray(plan.cronograma)) ? plan.cronograma : [];
   var statusPorNome = {};
   ((sit && sit.marcos) || []).forEach(function(m){ if(m.nome) statusPorNome[m.nome.trim().toLowerCase()] = m.status; });
-  var marcos = marcosTap.map(function(m){
+  var marcos = marcosPlan.map(function(m){
     return { nome: m.marco, status: statusPorNome[(m.marco||'').trim().toLowerCase()] || 'A iniciar', fim: m.fim, concl: m.concl };
   });
   var totalMarcos = marcos.length;
@@ -583,8 +584,8 @@ function renderHistorico(itens){
   }).join('');
 }
 
-function renderSaude(sit, tap){
-  var s = calcularSaude(sit, tap);
+function renderSaude(sit, tap, plan){
+  var s = calcularSaude(sit, tap, plan);
   var host = document.getElementById('saudeRow');
   var html = '<div class="kpi '+s.nivel+'"><div class="kpi-label">Selo geral</div><div class="kpi-value"><span class="s-badge s-'+s.nivel+'">'+esc(s.label)+'</span></div></div>';
 
@@ -609,7 +610,7 @@ function renderSaude(sit, tap){
   host.innerHTML = html;
 }
 
-function renderSituacao(sit, tap){
+function renderSituacao(sit, plan){
   var host = document.getElementById('situacaoCard');
   if(!sit){
     host.innerHTML = '<div class="empty">Este projeto ainda não tem uma linha própria no Relatório de Situação — ninguém preencheu o acompanhamento dele ainda.</div>';
@@ -629,7 +630,7 @@ function renderSituacao(sit, tap){
   }
   var marcos = sit.marcos || [];
   var fimPorNome = {};
-  ((tap && tap.cronograma)||[]).forEach(function(c){ if(c.marco) fimPorNome[c.marco.trim().toLowerCase()]=c.fim; });
+  ((plan && plan.cronograma)||[]).forEach(function(c){ if(c.marco) fimPorNome[c.marco.trim().toLowerCase()]=c.fim; });
   html += '<div class="sec-title" style="margin:14px 20px 4px">Marcos</div>';
   html += marcos.length ? marcos.map(function(m){
     var fim = m.nome ? fimPorNome[m.nome.trim().toLowerCase()] : null;
@@ -643,19 +644,19 @@ function renderSituacao(sit, tap){
   host.innerHTML = html;
 }
 
-function renderTap(tap){
+function renderTap(tap, plan){
   var host = document.getElementById('tapCard');
-  if(!tap){
-    host.innerHTML = '<div class="empty">Nenhum TAP encontrado para este projeto ainda.</div>';
+  if(!tap && !plan){
+    host.innerHTML = '<div class="empty">Nenhum TAP nem Planejamento encontrado para este projeto ainda.</div>';
     return;
   }
-  var cronograma = Array.isArray(tap.cronograma) ? tap.cronograma : [];
-  var custos = Array.isArray(tap.custos) ? tap.custos : [];
-  var html = '<div class="sec-title" style="margin:14px 20px 4px">Cronograma de entregas macro</div>';
+  var cronograma = (plan && Array.isArray(plan.cronograma)) ? plan.cronograma : [];
+  var custos = (tap && Array.isArray(tap.custos)) ? tap.custos : [];
+  var html = '<div class="sec-title" style="margin:14px 20px 4px">Cronograma de entregas macro (Planejamento)</div>';
   html += cronograma.length ? cronograma.map(function(m){
     return '<div class="marco-item"><div class="marco-nome">'+esc(m.marco)+'</div><div class="marco-data">'+isoToBR(m.ini)+' → '+isoToBR(m.fim)+'</div></div>';
-  }).join('') : '<div class="empty">Nenhum marco de cronograma registrado no TAP.</div>';
-  html += '<div class="sec-title" style="margin:14px 20px 4px">Custo total estimado</div>';
+  }).join('') : '<div class="empty">Nenhum marco de cronograma registrado no Planejamento.</div>';
+  html += '<div class="sec-title" style="margin:14px 20px 4px">Custo total estimado (TAP)</div>';
   html += custos.length ? custos.map(function(c){
     return '<div class="custo-item"><div class="marco-nome">'+esc(c.item)+'</div><div class="marco-data">R$ '+esc(c.valor||'0')+'</div></div>';
   }).join('') : '<div class="empty">Nenhum custo estimado registrado no TAP.</div>';
@@ -710,18 +711,19 @@ async function carregarFicha(projetoId){
   var sit = ((relsit && relsit.projetos) || []).find(function(p){ return p.projetoId === projetoId; });
 
   var registrosPorForm = {};
-  var tap = null;
+  var tap = null; var plan = null;
   for(var i=0;i<FORM_DEFS.length;i++){
     var def = FORM_DEFS[i];
     var todos = await listarValoresPorPrefixo(def.prefix);
     var doProjeto = todos.filter(function(r){ return r.projetoId === projetoId; });
     registrosPorForm[def.prefix] = doProjeto;
     if(def.prefix === 'tap:' && doProjeto.length) tap = doProjeto[0];
+    if(def.prefix === 'plan:' && doProjeto.length) plan = doProjeto[0];
   }
   renderCiclo(registrosPorForm);
-  renderTap(tap);
-  renderSituacao(sit, tap);
-  renderSaude(sit, tap);
+  renderTap(tap, plan);
+  renderSituacao(sit, plan);
+  renderSaude(sit, tap, plan);
 
   document.getElementById('loadingBox').style.display = 'none';
   document.getElementById('conteudo').style.display = 'block';

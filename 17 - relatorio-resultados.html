@@ -365,7 +365,7 @@ function ensureAuthenticated(){
         <h1>Relatório de Resultados</h1>
         <p>Reunião de Resultados · Indicadores estratégicos e plano de ação</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=35#relatorio-resultados" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=36#relatorio-resultados" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
     </div>
   </div>
 
@@ -469,17 +469,17 @@ async function buscarDocumentoUnico(key){
 }
 
 /* ---- indicadores: cálculo, meta e sinalização (Normal/Atenção/Crítico) ---- */
-function pctMarcosNoPrazo(relsitData, refDate, tapDocs){
+function pctMarcosNoPrazo(relsitData, refDate, planDocs){
   var totalAtivos=0, atrasados=0;
   ((relsitData && relsitData.projetos)||[]).forEach(function(p){
     if(['Concluído','Cancelado'].includes(p.status)) return;
-    var tap = (tapDocs||[]).find(function(t){ return t.projetoId===p.projetoId; });
+    var plan = (planDocs||[]).find(function(t){ return t.projetoId===p.projetoId; });
     var fimPorNome = {};
-    ((tap && tap.cronograma)||[]).forEach(function(c){ if(c.marco) fimPorNome[c.marco.trim().toLowerCase()]=c; });
+    ((plan && plan.cronograma)||[]).forEach(function(c){ if(c.marco) fimPorNome[c.marco.trim().toLowerCase()]=c; });
     (p.marcos||[]).forEach(function(m){
       if(['Concluído','Cancelado'].includes(m.status)) return;
       var c = m.nome ? fimPorNome[m.nome.trim().toLowerCase()] : null;
-      if(c && c.concl) return; // concluído de fato no TAP, mesmo que o status aqui nao reflita
+      if(c && c.concl) return; // concluído de fato no Planejamento, mesmo que o status aqui nao reflita
       totalAtivos++;
       var dt = (c && c.fim) ? new Date(c.fim+'T00:00:00') : null;
       if(dt && refDate > dt) atrasados++;
@@ -574,6 +574,7 @@ async function carregarResultados(){
   var entraves = relsit.entraves || [];
   var encaminhamentos = relsit.encaminhamentos || [];
   var tapDocs = await listarValoresPorPrefixo('tap:');
+  var planDocs = await listarValoresPorPrefixo('plan:');
   var metas = await buscarMetas();
   var snaps = await buscarSnapshotsRelsit(); // versões salvas anteriormente, mais antiga → mais recente
   // O salvamento mais recente reflete o mesmo estado do relsit_data atual (foi ele quem o gerou) —
@@ -583,9 +584,9 @@ async function carregarResultados(){
   var hoje = new Date();
 
   // ---- Indicador 1: Marcos no prazo ----
-  var marcos = pctMarcosNoPrazo(relsit, hoje, tapDocs);
+  var marcos = pctMarcosNoPrazo(relsit, hoje, planDocs);
   var trendMarcos = montarTendencia(
-    snapsHistoricos.slice(-3).map(function(s){ var r=pctMarcosNoPrazo(s.data, new Date(s.savedAt), tapDocs); return r?r.pct:null; })
+    snapsHistoricos.slice(-3).map(function(s){ var r=pctMarcosNoPrazo(s.data, new Date(s.savedAt), planDocs); return r?r.pct:null; })
       .concat([marcos?marcos.pct:null])
   );
   renderIndicador('ind-marcos', marcos?marcos.pct:null, metas.meta_marcos_no_prazo,

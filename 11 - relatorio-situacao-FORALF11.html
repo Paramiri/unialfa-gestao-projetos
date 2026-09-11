@@ -523,7 +523,7 @@ function ensureAuthenticated(){
       <h1>Relatório de Situação de Projetos</h1>
       <p>Escritório de Projetos · Visão geral e por programa/projeto</p>
     </div>
-    <a class="head-help" href="15 - central-ajuda.html?v=35#relatorio-situacao" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
+    <a class="head-help" href="15 - central-ajuda.html?v=36#relatorio-situacao" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
     <div class="head-meta">
       <div class="head-meta-item"><span>Referência</span><b id="hd-ref">—</b></div>
       <div class="head-meta-item"><span>Responsável</span><b id="hd-resp">—</b></div>
@@ -786,31 +786,40 @@ function isoToBR(iso){
   const m=String(iso||'').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m ? (m[3]+'/'+m[2]+'/'+m[1]) : '';
 }
+/* Retorna o marco que bloqueia r (dependencia em atraso), ou null se nao houver bloqueio.
+   r.dep aponta pelo numero (Nº) a outro marco do mesmo cronograma (numeracao atribuida no
+   Planejamento e Desenvolvimento de Projeto); se esse marco nao tem Conclusao real e o
+   Termino previsto ja passou, r esta bloqueado por ele. */
 function marcoBloqueadoPor(rows, r){
   if(!r||!r.dep) return null;
-  const alvo=(rows||[]).find(x=>(x.marco||'').trim().toLowerCase()===r.dep.trim().toLowerCase());
-  if(!alvo||alvo.concl) return null;
+  const n=parseInt(r.dep,10);
+  if(!n||n<1) return null;
+  let seq=0, alvo=null;
+  for(const row of (rows||[])){
+    if((row.marco||'').trim()){ seq++; if(seq===n){ alvo=row; break; } }
+  }
+  if(!alvo||alvo===r||alvo.concl) return null;
   if(!alvo.fim) return null;
   const fim=new Date(alvo.fim+'T00:00:00');
-  return (new Date()>fim) ? alvo.marco : null;
+  return (new Date()>fim) ? alvo : null;
 }
-async function buscarCronogramaTAPTodos(){
+async function buscarCronogramaPlanTodos(){
   const porProjeto={};
   try{
-    const res=await window.storage.list('tap:');
+    const res=await window.storage.list('plan:');
     const keys=(res&&res.keys)?res.keys:[];
     for(const k of keys){
       const r=await window.storage.get(k);
       if(!r||!r.value) continue;
-      const tap=JSON.parse(r.value);
-      if(!tap.projetoId) continue;
-      porProjeto[tap.projetoId]=Array.isArray(tap.cronograma)?tap.cronograma:[];
+      const plan=JSON.parse(r.value);
+      if(!plan.projetoId) continue;
+      porProjeto[plan.projetoId]=Array.isArray(plan.cronograma)?plan.cronograma:[];
     }
   }catch(e){}
   return porProjeto;
 }
-async function buscarCronogramaTAP(projetoId){
-  const todos=await buscarCronogramaTAPTodos();
+async function buscarCronogramaPlan(projetoId){
+  const todos=await buscarCronogramaPlanTodos();
   return todos[projetoId]||[];
 }
 async function buscarCustosTAP(projetoId){
@@ -832,8 +841,8 @@ function parseBRL(s){
   if(s.indexOf(',')>-1){ s=s.replace(/\./g,'').replace(',', '.'); }
   const n=parseFloat(s); return isNaN(n)?0:n;
 }
-async function buscarDatasCronogramaTAP(projetoId){
-  const marcos=await buscarCronogramaTAP(projetoId);
+async function buscarDatasCronogramaPlan(projetoId){
+  const marcos=await buscarCronogramaPlan(projetoId);
   if(!marcos.length) return null;
   const inis=marcos.map(m=>m.ini).filter(Boolean).sort();
   const fims=marcos.map(m=>m.fim).filter(Boolean).sort();
@@ -857,7 +866,7 @@ async function onProjRowProjetoSelect(i){
   const inicioEl=document.querySelector(`input[data-pi="${i}"][data-k="inicio"]`);
   const terminoEl=document.querySelector(`input[data-pi="${i}"][data-k="termino"]`);
   if((inicioEl && !inicioEl.value.trim()) || (terminoEl && !terminoEl.value.trim())){
-    const datas=await buscarDatasCronogramaTAP(id);
+    const datas=await buscarDatasCronogramaPlan(id);
     if(datas){
       if(inicioEl && !inicioEl.value.trim() && datas.inicio){ inicioEl.value=datas.inicio; data.projetos[i].inicio=datas.inicio; }
       if(terminoEl && !terminoEl.value.trim() && datas.termino){ terminoEl.value=datas.termino; data.projetos[i].termino=datas.termino; }
@@ -1097,7 +1106,7 @@ function voltarVersaoAtual(){
 
 /* ── render painel ── */
 async function renderPainel(){
-  const cronoPorProjeto=await buscarCronogramaTAPTodos();
+  const cronoPorProjeto=await buscarCronogramaPlanTodos();
   // header
   document.getElementById('hd-ref').textContent=fmtRef(data.ref);
   document.getElementById('hd-resp').textContent=data.resp||'—';
@@ -1230,16 +1239,16 @@ function renderProgCards(projs,programs,cronoPorProjeto){
     card.className='prog-card';
     let marcosHTML='<div class="marcos-list">';
     pp.forEach(p=>{
-      const cronoTAP=(p.projetoId&&cronoPorProjeto[p.projetoId])||[];
+      const cronoPlan=(p.projetoId&&cronoPorProjeto[p.projetoId])||[];
       const statusPorNome={};
       (p.marcos||[]).forEach(m=>{ if(m.nome) statusPorNome[m.nome.trim().toLowerCase()]=m.status; });
-      const marcosVivos=cronoTAP.filter(c=>c.marco).map(c=>({nome:c.marco.trim(),fim:c.fim,dep:c.dep,status:statusPorNome[c.marco.trim().toLowerCase()]||'A iniciar'}));
+      const marcosVivos=cronoPlan.filter(c=>c.marco).map(c=>({nome:c.marco.trim(),fim:c.fim,dep:c.dep,status:statusPorNome[c.marco.trim().toLowerCase()]||'A iniciar'}));
       if(marcosVivos.length){
         marcosHTML+=`<div class="marco-group">
           <div class="marco-group-head"><div class="marco-group-name">${esc(p.nome)}</div><span class="s-badge ${STATUS_CLASS[p.status]||''}" style="font-size:10px">${esc(p.status||'')}</span></div>`;
         marcosVivos.forEach(m=>{
           const cls=STATUS_CLASS[m.status]||'';
-          const bloq=marcoBloqueadoPor(cronoTAP,{marco:m.nome,dep:m.dep});
+          const bloq=marcoBloqueadoPor(cronoPlan,{marco:m.nome,dep:m.dep});
           marcosHTML+=`<div class="marco-row"><div class="marco-name">${esc(m.nome)}${bloq?' <span style="color:var(--bad,#9F1239);font-weight:700;font-size:10px">⚠ bloqueado</span>':''}</div><span class="s-badge ${cls}" style="font-size:10px">${esc(m.status||'')}</span><div class="marco-date">${m.fim?isoToBR(m.fim):''}</div></div>`;
         });
         marcosHTML+='</div>';
@@ -1394,7 +1403,7 @@ function buildProjCard(p,i){
       <div class="field full"><label>★ Merece destaque</label><textarea data-pi="${i}" data-k="destaque" rows="2">${esc(p.destaque||'')}</textarea></div>
     </div>
     <div style="margin-top:12px">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Marcos (do cronograma do TAP)</div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Marcos (do cronograma do Planejamento)</div>
       <div id="marcos-${i}"></div>
     </div>
     <div style="margin-top:16px">
@@ -1423,25 +1432,25 @@ async function renderMarcosEditor(pi,marcosSalvos){
   if(!host) return;
   const projetoId=data.projetos[pi].projetoId;
   if(!projetoId){
-    host.innerHTML='<div style="font-size:12px;color:var(--muted)">Selecione o Projeto vinculado para ver os marcos do cronograma do TAP.</div>';
+    host.innerHTML='<div style="font-size:12px;color:var(--muted)">Selecione o Projeto vinculado para ver os marcos do cronograma do Planejamento.</div>';
     data.projetos[pi].marcos=[];
     return;
   }
-  const marcosTAP=await buscarCronogramaTAP(projetoId);
-  if(!marcosTAP.length){
-    host.innerHTML='<div style="font-size:12px;color:var(--muted)">Este projeto ainda não tem marcos cadastrados no cronograma do TAP.</div>';
+  const marcosPlan=await buscarCronogramaPlan(projetoId);
+  if(!marcosPlan.length){
+    host.innerHTML='<div style="font-size:12px;color:var(--muted)">Este projeto ainda não tem marcos cadastrados no cronograma do Planejamento.</div>';
     data.projetos[pi].marcos=[];
     return;
   }
   const statusPorNome={};
   (marcosSalvos||[]).forEach(m=>{ if(m.nome) statusPorNome[m.nome.trim().toLowerCase()]=m.status; });
-  const marcos=marcosTAP.map(m=>({ nome:(m.marco||'').trim(), ini:m.ini, fim:m.fim, concl:m.concl, dep:m.dep, status:statusPorNome[(m.marco||'').trim().toLowerCase()]||'A iniciar' }));
+  const marcos=marcosPlan.map(m=>({ nome:(m.marco||'').trim(), ini:m.ini, fim:m.fim, concl:m.concl, dep:m.dep, status:statusPorNome[(m.marco||'').trim().toLowerCase()]||'A iniciar' }));
   data.projetos[pi].marcos=marcos.map(m=>({nome:m.nome,status:m.status}));
   host.innerHTML=marcos.map((m,mi)=>{
-    const bloq=marcoBloqueadoPor(marcosTAP,{marco:m.nome,dep:m.dep});
+    const bloq=marcoBloqueadoPor(marcosPlan,{marco:m.nome,dep:m.dep});
     return `
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
-      <div style="flex:2;min-width:140px;font-size:12.5px">${esc(m.nome||'—')}${bloq?' <span style="color:var(--bad,#9F1239);font-weight:700;font-size:10.5px">⚠ bloqueado por: '+esc(bloq)+'</span>':''}</div>
+      <div style="flex:2;min-width:140px;font-size:12.5px">${esc(m.nome||'—')}${bloq?' <span style="color:var(--bad,#9F1239);font-weight:700;font-size:10.5px">⚠ bloqueado por: '+esc(bloq.marco||'')+'</span>':''}</div>
       <div style="flex:1;min-width:90px;font-size:11.5px;color:var(--muted)">${m.ini?isoToBR(m.ini):'—'} → ${m.fim?isoToBR(m.fim):'—'}</div>
       <div style="flex:1;min-width:90px;font-size:11.5px;color:var(--muted)">${m.concl?('Concluído: '+isoToBR(m.concl)):'—'}</div>
       <select style="flex:1;min-width:110px" onchange="data.projetos[${pi}].marcos[${mi}].status=this.value">${STATUS_OPTS.map(s=>`<option ${m.status===s?'selected':''}>${s}</option>`).join('')}</select>

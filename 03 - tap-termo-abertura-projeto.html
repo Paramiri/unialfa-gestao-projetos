@@ -679,7 +679,7 @@ window.unialfaEquipe = {
         <h1>Termo de Abertura de Projeto — TAP</h1>
         <p>Autorização formal e diretrizes iniciais do projeto · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=35#passo-3" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=36#passo-3" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00338</b></div>
@@ -842,8 +842,8 @@ window.unialfaEquipe = {
 
     <!-- 10 Cronograma -->
     <div class="card">
-      <div class="section-h"><div class="n">10</div><h2>Cronograma de entregas macro</h2><p>Marcos e prazos</p></div>
-      <div class="dyn" id="dyn-cronograma"></div>
+      <div class="section-h"><div class="n">10</div><h2>Cronograma de entregas macro</h2><p>Marcos e prazos — editado no Planejamento e Desenvolvimento de Projeto</p></div>
+      <div class="dyn"><div id="crono-plan-view"></div></div>
     </div>
 
     <!-- 11 Custos -->
@@ -1003,7 +1003,7 @@ function realKey(r){ return (r&&r.__key) || (KEY_PREFIX+(r&&r.id)); }
 
 const FIELDS=['nomeProjeto','unidade','gerente','dataElab','alinhamento','programa','justificativa','objetivos','publico','beneficios','exclusoes','premissas','restricoes','criterios'];
 const REQUIRED=['nomeProjeto','unidade','gerente','dataElab','justificativa','objetivos'];
-const TABLE_KEYS=['riscos','cronograma','custos','interessadas','equipe','indicadores'];
+const TABLE_KEYS=['riscos','custos','interessadas','equipe','indicadores'];
 const RISCO_STATUS=['Aberto','Monitorando','Mitigado','Materializado','Encerrado'];
 const RISCO_PROB=['Baixa','Média','Alta'];
 const RISCO_IMPACTO=['Baixo','Médio','Alto'];
@@ -1019,13 +1019,14 @@ const TABLES={
     {key:'revisao',label:'Última revisão',type:'date',w:'15%'},
   ]},
   cronograma:{cols:[
-    {key:'marco',label:'Marcos / Entregas',type:'text',w:'15%',long:true},
-    {key:'resp',label:'Responsável',type:'text',w:'10%',long:true},
+    {key:'seq',label:'Nº',type:'text',w:'5%'},
+    {key:'marco',label:'Marcos / Entregas',type:'text',w:'18%',long:true},
+    {key:'resp',label:'Responsável',type:'text',w:'12%',long:true},
     {key:'ini',label:'Início previsto',type:'date',w:'15%'},
     {key:'fim',label:'Término previsto',type:'date',w:'15%'},
     {key:'concl',label:'Conclusão real',type:'date',w:'15%'},
     {key:'custo',label:'Custo',type:'text',w:'8%',long:true},
-    {key:'dep',label:'Depende de',type:'text',w:'12%',long:true},
+    {key:'dep',label:'Depende do nº',type:'text',w:'7%'},
   ]},
   custos:{sum:'valor', cols:[
     {key:'item',label:'Item',type:'text',w:'24%',long:true},
@@ -1090,6 +1091,7 @@ async function onProjetoSelect(preencherCampos=true){
   const info=document.getElementById('projetoInfo');
   document.getElementById('btnHistorico').style.display = id ? 'inline' : 'none';
   document.getElementById('historicoPanel').style.display='none'; historicoAberto=false;
+  renderCronogramaPlan(id);
   const p=projetosAprovados.find(x=>x.id===id);
   if(!p){ info.style.display='none'; document.getElementById('equipeAviso').style.display='none'; atualizarBotaoEquipe(true); carregarSugestoesRiscos(null); document.getElementById('iaSugestaoBloco').style.display='none'; return; }
   document.getElementById('pi-unidade').textContent=p.unidade||'—';
@@ -1316,16 +1318,22 @@ function recalc(name){
   });
   const el=document.getElementById('total-'+name); if(el) el.textContent=brl(total);
 }
-/* Retorna o nome do marco que bloqueia r (dependencia em atraso), ou null se nao houver bloqueio.
-   Definicao simples: r.dep aponta pelo nome a outro marco do mesmo cronograma; se esse marco
-   nao tem Conclusao real e o Termino previsto ja passou, r esta bloqueado por ele. */
+/* Retorna o marco que bloqueia r (dependencia em atraso), ou null se nao houver bloqueio.
+   r.dep aponta pelo numero (Nº) a outro marco do mesmo cronograma (numeracao atribuida no
+   Planejamento e Desenvolvimento de Projeto); se esse marco nao tem Conclusao real e o
+   Termino previsto ja passou, r esta bloqueado por ele. */
 function marcoBloqueadoPor(rows, r){
   if(!r||!r.dep) return null;
-  const alvo=(rows||[]).find(x=>(x.marco||'').trim().toLowerCase()===r.dep.trim().toLowerCase());
-  if(!alvo||alvo.concl) return null;
+  const n=parseInt(r.dep,10);
+  if(!n||n<1) return null;
+  let seq=0, alvo=null;
+  for(const row of (rows||[])){
+    if((row.marco||'').trim()){ seq++; if(seq===n){ alvo=row; break; } }
+  }
+  if(!alvo||alvo===r||alvo.concl) return null;
   if(!alvo.fim) return null;
   const fim=new Date(alvo.fim+'T00:00:00');
-  return (new Date()>fim) ? alvo.marco : null;
+  return (new Date()>fim) ? alvo : null;
 }
 function roTable(name, rows){
   const cfg=TABLES[name];
@@ -1342,6 +1350,39 @@ function roTable(name, rows){
     return `<td>${esc(v||'—')}</td>`;
   }).join('')+'</tr>'; });
   h+='</tbody></table></div></dd>'; return h;
+}
+/* Cronograma agora e editado no Planejamento e Desenvolvimento de Projeto — o TAP so exibe
+   um espelho somente-leitura, buscado ao vivo pelo projeto vinculado. */
+async function buscarCronogramaPlan(projetoId){
+  if(!projetoId) return [];
+  try{
+    const res=await window.storage.list('plan:');
+    const keys=(res&&res.keys)?res.keys:[];
+    for(const k of keys){
+      const r=await window.storage.get(k);
+      if(!r||!r.value) continue;
+      const plan=JSON.parse(r.value);
+      if(plan.projetoId!==projetoId) continue;
+      return Array.isArray(plan.cronograma)?plan.cronograma:[];
+    }
+  }catch(e){}
+  return [];
+}
+async function renderCronogramaPlan(projetoId){
+  const host=document.getElementById('crono-plan-view');
+  if(!host) return;
+  if(!projetoId){
+    host.innerHTML='<div style="font-size:12px;color:var(--muted,#6A6A70)">Selecione o projeto vinculado para ver o cronograma registrado no Planejamento.</div>';
+    return;
+  }
+  const marcos=await buscarCronogramaPlan(projetoId);
+  if(!marcos.length){
+    host.innerHTML='<div style="font-size:12px;color:var(--muted,#6A6A70)">Este projeto ainda não tem marcos cadastrados no cronograma do Planejamento.</div>';
+    return;
+  }
+  const roHtml=roTable('cronograma', marcos).replace(/^<dd>/,'').replace(/<\/dd>$/,'');
+  host.innerHTML=roHtml
+    +'<div class="dyn-foot" style="font-size:11.5px;color:var(--muted,#6A6A70)">Este cronograma é o mesmo registrado no Planejamento e Desenvolvimento de Projeto — para alterá-lo, edite o Planejamento.</div>';
 }
 
 /* ---------- views ---------- */
@@ -1522,8 +1563,9 @@ function renderList(){
 let listRows=[];
 function openDrawerAt(i){ const r=listRows[i]; if(!r) return; openDrawer(r.id); }
 
-function openDrawer(id){
+async function openDrawer(id){
   const r=cache.find(x=>x.id===id); if(!r) return; currentId=id; currentKey=realKey(r);
+  const cronogramaPlan=await buscarCronogramaPlan(r.projetoId);
   document.getElementById('d-proj').textContent=r.nomeProjeto;
   document.getElementById('d-proto').textContent=r.protocolo+' · elaborado em '+fmtDate(r.dataElab);
   document.getElementById('d-status').value=r.status;
@@ -1534,7 +1576,8 @@ function openDrawer(id){
   for(const it of DETAIL){
     if(it.grp) html+=`<div class="grp">${it.grp}</div>`;
     if(it.table){
-      html+=`<div class="row"><dt>${it.l}</dt>${roTable(it.k, r[it.k])}`;
+      const dados = it.k==='cronograma' ? cronogramaPlan : r[it.k];
+      html+=`<div class="row"><dt>${it.l}</dt>${roTable(it.k, dados)}`;
       if(it.total){ let t=0; (r[it.k]||[]).forEach(row=>t+=parseBRL(row.valor)); html+=`<dd style="margin-top:6px; font-weight:700">Total estimado: ${brl(t)}</dd>`; }
       html+=`</div>`;
     } else {
@@ -1613,8 +1656,9 @@ function docTableRowsTap(name,rows){
   }
   return '<table class="doc-t"><thead><tr>'+cols+'</tr></thead><tbody>'+body+foot+'</tbody></table>';
 }
-function buildTapDocumentoHtml(r){
+async function buildTapDocumentoHtml(r){
   const hoje=new Date().toLocaleDateString('pt-BR');
+  const cronogramaPlan=await buscarCronogramaPlan(r.projetoId);
   const style=[
     'body{font-family:Calibri,Arial,sans-serif;color:#1A1A1A;margin:24px;font-size:12px}',
     '.doc-head{display:flex;border:1px solid #1A1A1A;margin-bottom:14px}',
@@ -1667,7 +1711,7 @@ function buildTapDocumentoHtml(r){
     +'<div class="doc-box"><div class="lbl">8 - Criterios de aceitacao</div><div class="val">'+(esc(r.criterios)||'&nbsp;')+'</div></div>'
     +'<div class="pgbreak"></div>'
     +'<div class="doc-box"><div class="lbl">9 - Registro de riscos</div><div class="val">'+docTableRowsTap('riscos',r.riscos)+'</div></div>'
-    +'<div class="doc-box"><div class="lbl">10 - Cronograma de entregas macro</div><div class="val">'+docTableRowsTap('cronograma',r.cronograma)+'</div></div>'
+    +'<div class="doc-box"><div class="lbl">10 - Cronograma de entregas macro</div><div class="val">'+docTableRowsTap('cronograma',cronogramaPlan)+'</div></div>'
     +'<div class="doc-box"><div class="lbl">11 - Custo total estimado do projeto</div><div class="val">'+docTableRowsTap('custos',r.custos)+'</div></div>'
     +'<div class="doc-box"><div class="lbl">12.1 - Partes interessadas</div><div class="val">'+docTableRowsTap('interessadas',r.interessadas)+'</div></div>'
     +'<div class="doc-box"><div class="lbl">12.2 - Equipe do projeto</div><div class="val">'+docTableRowsTap('equipe',r.equipe)+'</div></div>'
@@ -1676,9 +1720,9 @@ function buildTapDocumentoHtml(r){
     +'<div class="doc-gen">Documento gerado pelo Sistema de Gestao de Projetos UNIALFA em '+hoje+' &mdash; Status: '+esc(r.status)+'</div>'
     +'</body></html>';
 }
-function imprimirTap(){
+async function imprimirTap(){
   const r=cache.find(x=>x.id===currentId); if(!r){toast('Selecione um TAP para imprimir',false);return;}
-  const html=buildTapDocumentoHtml(r);
+  const html=await buildTapDocumentoHtml(r);
   const iframe=document.createElement('iframe');
   iframe.style.position='fixed'; iframe.style.right='0'; iframe.style.bottom='0';
   iframe.style.width='0'; iframe.style.height='0'; iframe.style.border='0';
@@ -1690,9 +1734,9 @@ function imprimirTap(){
     setTimeout(function(){document.body.removeChild(iframe);},1000);
   };
 }
-function exportarTapWord(){
+async function exportarTapWord(){
   const r=cache.find(x=>x.id===currentId); if(!r){toast('Selecione um TAP para exportar',false);return;}
-  const html=buildTapDocumentoHtml(r);
+  const html=await buildTapDocumentoHtml(r);
   const wordHtml=html.replace('<!doctype html><html>',"<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>");
   const blob=new Blob([wordHtml],{type:'application/msword'});
   const url=URL.createObjectURL(blob); const a=document.createElement('a');
@@ -1704,7 +1748,6 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
 
 /* ---------- init ---------- */
 mountTable('riscos', document.getElementById('dyn-riscos'));
-mountTable('cronograma', document.getElementById('dyn-cronograma'));
 mountTable('custos', document.getElementById('dyn-custos'));
 mountTable('interessadas', document.getElementById('dyn-interessadas'));
 mountTable('equipe', document.getElementById('dyn-equipe'));
@@ -1775,7 +1818,7 @@ async function sugerirPreenchimentoIA(){
       const el=document.getElementById(id);
       if(el && !el.value.trim() && d[id]){ el.value=d[id]; marcarCampoSugerido(id); preenchidos++; }
     });
-    ['riscos','cronograma','custos','interessadas'].forEach(name=>{
+    ['riscos','custos','interessadas'].forEach(name=>{
       if(sugerirTabela(name, d[name])) preenchidos++;
     });
     if(!preenchidos){

@@ -78,7 +78,6 @@ Extraia/redija:
 - restricoes: restrições
 - criterios: critérios de aceitação
 - riscos: array com até 5 riscos, cada item {"risco":"...","status":"Aberto","resp":""} — status sempre "Aberto" para riscos novos; "resp" vazio se os documentos não indicarem um responsável
-- cronograma: array com até 6 marcos de entrega macro, cada item {"marco":"...","resp":"","ini":null,"fim":null,"custo":""} — datas em YYYY-MM-DD SOMENTE se houver menção explícita, senão null
 - custos: array com até 6 itens, cada item {"item":"...","espec":"","unid":"","qtd":"","valor":""} — deixe campos vazios quando o documento não der o detalhe, nunca invente números
 - interessadas: array de partes interessadas já nomeadas nos documentos, cada item {"nome":"","unidade":""}
 
@@ -86,7 +85,7 @@ Regras importantes:
 - Baseie-se SOMENTE nos documentos fornecidos — nunca invente nomes, valores, datas ou responsáveis que não estejam neles.
 - Campo de texto sem informação suficiente: retorne null. Tabela sem item identificável: retorne [].
 - Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
-Formato exato: {"justificativa":"...","objetivos":"...","publico":"...","beneficios":"...","exclusoes":"...","premissas":"...","restricoes":"...","criterios":"...","riscos":[...],"cronograma":[...],"custos":[...],"interessadas":[...]}`,
+Formato exato: {"justificativa":"...","objetivos":"...","publico":"...","beneficios":"...","exclusoes":"...","premissas":"...","restricoes":"...","criterios":"...","riscos":[...],"custos":[...],"interessadas":[...]}`,
 
   planejamento: `Você é um assistente que ajuda a preencher o dossiê de Planejamento e Desenvolvimento de Projeto do sistema de gestão de projetos da UNIALFA, em português do Brasil, a partir de documentos já registrados do mesmo projeto (Solicitação de Demanda, TAP, Canvas de Projeto e, quando houver, Atas de Reunião).
 
@@ -104,7 +103,7 @@ Para a aba Pré-projeto:
 - premissas: premissas assumidas — parta das já descritas no TAP, detalhando se possível
 - restricoes: restrições — parta das já descritas no TAP, detalhando se possível
 - partes: partes interessadas — parta das já descritas no TAP, detalhando se possível
-- macroFases: macro fases do projeto (ex.: levantamento, desenvolvimento, implantação...) — parta do cronograma de entregas macro do TAP, se houver, resumindo os marcos como fases em texto corrido
+- macroFases: macro fases do projeto (ex.: levantamento, desenvolvimento, implantação...) — parta dos entregáveis e do escopo já descritos no TAP, se houver, resumindo-os como fases em texto corrido
 
 Para a aba Viabilidade — atenção: estes campos têm um propósito diferente dos campos do Pré-projeto acima, mesmo baseando-se nos mesmos fatos. Redija cada um com a redação própria do que é pedido, nunca copiando literalmente o texto de outro campo:
 - introducao: introdução breve ao problema/oportunidade, para quem vai avaliar a viabilidade
@@ -112,13 +111,14 @@ Para a aba Viabilidade — atenção: estes campos têm um propósito diferente 
 - proposta: proposta de mudança — o que está sendo proposto para resolver a situação atual (mesma base factual do campo "objGeral" do Pré-projeto, mas redigida como uma proposta de solução, não como um objetivo)
 - beneficios: benefícios do projeto — parta dos benefícios esperados já descritos no TAP, detalhando se possível
 
-A aba Cronograma não é preenchida por você — ela mostra, somente para leitura, o cronograma de entregas macro já registrado no TAP do mesmo projeto.
+Para a aba Cronograma:
+- cronograma: array com até 6 marcos de entrega macro, cada item {"marco":"...","resp":"","ini":null,"fim":null,"custo":""} — datas em YYYY-MM-DD SOMENTE se houver menção explícita, senão null. Baseie-se nos entregáveis/escopo do TAP e do próprio dossiê e, quando houver, nas Atas de Reunião.
 
 Regras importantes:
 - Baseie-se SOMENTE nos documentos fornecidos — nunca invente informação que não esteja neles.
 - Campo de texto sem informação suficiente: retorne null. Tabela sem item identificável: retorne [].
 - Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
-Formato exato: {"solicitante":"...","produtos":"...","contexto":"...","objGeral":"...","objEspec":"...","escIncluido":"...","escExcluido":"...","entregaveis":"...","premissas":"...","restricoes":"...","partes":"...","macroFases":"...","introducao":"...","situacao":"...","proposta":"...","beneficios":"..."}`,
+Formato exato: {"solicitante":"...","produtos":"...","contexto":"...","objGeral":"...","objEspec":"...","escIncluido":"...","escExcluido":"...","entregaveis":"...","premissas":"...","restricoes":"...","partes":"...","macroFases":"...","introducao":"...","situacao":"...","proposta":"...","beneficios":"...","cronograma":[...]}`,
 
   eap: `Você é um assistente que ajuda a esboçar a EAP (Estrutura Analítica de Projeto) do sistema de gestão de projetos da UNIALFA, em português do Brasil, a partir de documentos já registrados do mesmo projeto (Planejamento e Desenvolvimento de Projeto, TAP e, quando houver, Atas de Reunião).
 
@@ -356,9 +356,6 @@ function formatCanvas(c: any): string | null {
 }
 
 function formatTap(t: any): string | null {
-  const cronogramaResumo = Array.isArray(t.cronograma) && t.cronograma.length
-    ? t.cronograma.map((c: any) => `- ${c.marco || ""}${c.resp ? ` (responsável: ${c.resp})` : ""}${c.fim ? ` (término: ${c.fim})` : ""}`).join("\n")
-    : "";
   return bloco(`TAP - TERMO DE ABERTURA DE PROJETO (protocolo ${t.protocolo || "—"})`, [
     ["Alinhamento estratégico", t.alinhamento],
     ["Programa vinculado", t.programa],
@@ -370,13 +367,15 @@ function formatTap(t: any): string | null {
     ["Premissas", t.premissas],
     ["Restrições", t.restricoes],
     ["Critérios de aceitação", t.criterios],
-    ["Cronograma de entregas macro", cronogramaResumo || null],
   ]);
 }
 
 function formatPlanejamento(p: any): string | null {
   const saidasResumo = Array.isArray(p.saidas) && p.saidas.length
     ? p.saidas.map((s: any) => `- ${s.item || ""}`).filter((l: string) => l !== "- ").join("\n")
+    : "";
+  const cronogramaResumo = Array.isArray(p.cronograma) && p.cronograma.length
+    ? p.cronograma.map((c: any) => `- ${c.marco || ""}${c.resp ? ` (responsável: ${c.resp})` : ""}${c.fim ? ` (término: ${c.fim})` : ""}`).join("\n")
     : "";
   return bloco(`PLANEJAMENTO E DESENVOLVIMENTO DE PROJETO (protocolo ${p.protocolo || "—"})`, [
     ["Produtos impactados", p.produtos],
@@ -388,6 +387,7 @@ function formatPlanejamento(p: any): string | null {
     ["Entregáveis", p.entregaveis],
     ["Benefícios do projeto", p.beneficios],
     ["Saídas / entregáveis detalhados", saidasResumo || null],
+    ["Cronograma de entregas macro", cronogramaResumo || null],
   ]);
 }
 
