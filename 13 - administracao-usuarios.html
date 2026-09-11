@@ -423,7 +423,7 @@ window.unialfaHistorico = {
         <h1>Administração de Usuários</h1>
         <p>Controle de acesso · Papéis e permissões · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=50#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=51#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
     </div>
   </div>
 
@@ -686,7 +686,7 @@ function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;'
 let todosUsuarios=[];
 let usuariosPendentes=[];
 let historicoAbertoId=null;
-const HIST_LABELS_USUARIO = { papel:'Papel', telefone:'Telefone' };
+const HIST_LABELS_USUARIO = { papel:'Papel', telefone:'Telefone', status:'Status' };
 
 async function carregarUsuarios(){
   const body=document.getElementById('content-body');
@@ -844,10 +844,11 @@ const FORM_LABELS={
 
 async function verificarVinculosUsuario(usuario){
   const motivos=[];
-  const [rEquipe, rProjetos, rKv]=await Promise.all([
+  const [rEquipe, rProjetos, rKv, rPush]=await Promise.all([
     fetch(unialfaAuth.REST_BASE+'/projeto_equipe?usuario_id=eq.'+usuario.id+'&select=projeto_id', { headers: unialfaAuth.authHeaders() }),
     fetch(unialfaAuth.REST_BASE+'/projetos?criado_por=eq.'+usuario.id+'&select=id,nome', { headers: unialfaAuth.authHeaders() }),
     fetch(unialfaAuth.REST_BASE+'/kv_store?select=key,value', { headers: unialfaAuth.authHeaders() }),
+    fetch(unialfaAuth.REST_BASE+'/push_subscriptions?user_email=eq.'+encodeURIComponent(usuario.email)+'&select=endpoint', { headers: unialfaAuth.authHeaders() }),
   ]);
 
   const equipe = rEquipe.ok ? await rEquipe.json() : [];
@@ -869,6 +870,9 @@ async function verificarVinculosUsuario(usuario){
   });
   if(formsEncontrados.size) motivos.push('Tem registro criado em: '+[...formsEncontrados].join(', ')+'.');
 
+  const pushRows = rPush.ok ? await rPush.json() : [];
+  if(pushRows.length) motivos.push('Tem '+pushRows.length+' inscrição(ões) de notificação push registrada(s) neste e-mail.');
+
   return motivos;
 }
 
@@ -881,8 +885,11 @@ async function removerUsuario(id, email, btnEl){
       return;
     }
     if(!confirm('Remover '+email+' do sistema?\n\nA pessoa não tem equipe, projeto nem registro vinculado. Se ela fizer login de novo depois, o perfil é recriado do zero (papel Solicitante).')) return;
+    const usuario = todosUsuarios.find(u=>u.id===id);
+    const papelNoMomento = usuario ? unialfaAuth.papelLabel(usuario.papel) : '—';
     const r=await fetch(unialfaAuth.REST_BASE+'/perfis?id=eq.'+id, { method:'DELETE', headers: unialfaAuth.authHeaders() });
     if(!r.ok){ const eHttp=new Error('http '+r.status); eHttp.kind='http'; eHttp.status=r.status; throw eHttp; }
+    await unialfaHistorico.registrar('perfil:'+id, 'Administração de Usuários', {status:'Ativo (papel '+papelNoMomento+')'}, {status:'Removido'});
     toast('Usuário removido');
     await carregarUsuarios();
   }catch(e){
