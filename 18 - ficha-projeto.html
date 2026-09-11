@@ -55,6 +55,15 @@
   tr:last-child td{border-bottom:none}
   td b{font-weight:700}
   .empty{padding:32px 24px; text-align:center; color:var(--muted); font-size:13px;}
+  .custo-comp-t{width:100%; border-collapse:collapse; font-size:12.5px}
+  .custo-comp-t th{text-align:left; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); padding:8px 10px; border-bottom:1px solid var(--line); background:var(--surface-2)}
+  .custo-comp-t td{padding:8px 10px; border-bottom:1px solid var(--line)}
+  .custo-comp-t tr:last-child td{border-bottom:none}
+  .custo-comp-row.acima{background:var(--bad-soft)}
+  .custo-status-badge{display:inline-flex; align-items:center; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px; white-space:nowrap}
+  .custo-status-badge.dentro{background:var(--ok-soft); color:var(--ok)}
+  .custo-status-badge.acima{background:var(--bad-soft); color:var(--bad)}
+  .custo-status-badge.neutro{background:var(--surface-2); color:var(--muted); border:1px solid var(--line-strong)}
   .denied{padding:48px 24px; text-align:center;}
   .denied h2{font-size:16px; margin:0 0 8px}
   .denied p{color:var(--muted); font-size:13px; margin:0}
@@ -372,7 +381,7 @@ function ensureAuthenticated(){
         <h1>Ficha do Projeto</h1>
         <p id="docSub">Visão consolidada de um único projeto</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=45#ficha-projeto" title="Ajuda">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=46#ficha-projeto" title="Ajuda">?</a>
     </div>
   </div>
 
@@ -411,6 +420,9 @@ function ensureAuthenticated(){
 
       <div class="sec-title">Saúde do projeto</div>
       <div class="kpi-row" id="saudeRow"></div>
+
+      <div class="sec-title">Custos: Estimado (TAP) x Realizado</div>
+      <div class="card" id="custosComparativoCard"></div>
 
       <div class="sec-title">Situação atual (Relatório de Situação)</div>
       <div class="card" id="situacaoCard"></div>
@@ -503,6 +515,7 @@ function parseBRL(s){
   if(s.indexOf(',')>-1){ s=s.replace(/\./g,'').replace(',', '.'); }
   var n=parseFloat(s); return isNaN(n)?0:n;
 }
+function fmtBRL(s){ if(!s) return '—'; return 'R$ '+String(s).replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
 
 /* Severidade de um risco = Probabilidade x Impacto (escala 1-3 cada), mesma matriz classica usada
    no Registro de riscos do TAP (Passo 3): 1-2 = Baixo, 3-4 = Medio, 6 = Alto, 9 = Critico. */
@@ -672,6 +685,44 @@ function renderSituacao(sit, plan){
   host.innerHTML = html;
 }
 
+/* Compara, por categoria, o custo Estimado no TAP (campo `item`) com o Realizado no Relatorio de
+   Situacao (campo `categoria`) - mesmo casamento de nome (sem acento/maiuscula) ja usado pelo botao
+   `Importar categorias do TAP` (Relatorio de Situacao) e pelo Comparativo por categoria de la. */
+function renderComparativoCustos(custosRealizados, custosTAP){
+  var host = document.getElementById('custosComparativoCard');
+  var porCategoria = {};
+  (custosTAP||[]).forEach(function(c){
+    var nome=(c.item||'').trim();
+    if(!nome) return;
+    if(!porCategoria[nome]) porCategoria[nome]={estimado:0, realizado:0};
+    porCategoria[nome].estimado+=parseBRL(c.valor);
+  });
+  (custosRealizados||[]).forEach(function(c){
+    var nome=(c.categoria||'').trim();
+    if(!nome) return;
+    var key=Object.keys(porCategoria).find(function(k){ return k.toLowerCase()===nome.toLowerCase(); });
+    if(!key){ key=nome; porCategoria[key]={estimado:0, realizado:0}; }
+    porCategoria[key].realizado+=parseBRL(c.valor);
+  });
+  var categorias = Object.keys(porCategoria);
+  if(!categorias.length){ host.innerHTML='<div class="empty">Nenhuma categoria de custo estimado no TAP ou realizado no Relatório de Situação para comparar.</div>'; return; }
+  var rowsHtml = categorias.map(function(nome){
+    var v = porCategoria[nome];
+    var temEstimado = v.estimado>0;
+    var pct = temEstimado ? Math.round((v.realizado/v.estimado)*100) : null;
+    var statusCls = !temEstimado ? 'neutro' : (v.realizado<=v.estimado ? 'dentro' : 'acima');
+    var statusTxt = !temEstimado ? 'Sem estimativa no TAP' : (v.realizado<=v.estimado ? 'Dentro do estimado' : 'Acima do estimado');
+    return '<tr class="custo-comp-row '+statusCls+'">'
+      +'<td>'+esc(nome)+'</td>'
+      +'<td>'+(temEstimado?fmtBRL(v.estimado.toFixed(2).replace('.',',')):'—')+'</td>'
+      +'<td>'+fmtBRL(v.realizado.toFixed(2).replace('.',','))+'</td>'
+      +'<td>'+(pct!=null?pct+'%':'—')+'</td>'
+      +'<td><span class="custo-status-badge '+statusCls+'">'+statusTxt+'</span></td>'
+      +'</tr>';
+  }).join('');
+  host.innerHTML = '<div class="table-wrap"><table class="custo-comp-t"><thead><tr><th>Categoria</th><th>Estimado (TAP)</th><th>Realizado</th><th>%</th><th>Status</th></tr></thead><tbody>'+rowsHtml+'</tbody></table></div>';
+}
+
 function renderTap(tap, plan){
   var host = document.getElementById('tapCard');
   if(!tap && !plan){
@@ -752,6 +803,7 @@ async function carregarFicha(projetoId){
   renderTap(tap, plan);
   renderSituacao(sit, plan);
   renderSaude(sit, tap, plan);
+  renderComparativoCustos(sit && sit.custosRealizados, tap && tap.custos);
 
   document.getElementById('loadingBox').style.display = 'none';
   document.getElementById('conteudo').style.display = 'block';
