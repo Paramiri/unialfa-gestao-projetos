@@ -394,6 +394,20 @@ function ensureAuthenticated(){
         </div>
       </div>
 
+      <div class="sec-title">Riscos do portfólio (TAP)</div>
+      <div class="kpi-row" style="grid-template-columns:1fr 1fr">
+        <div class="kpi bad">
+          <div class="kpi-label">Riscos críticos abertos</div>
+          <div class="kpi-value" id="kpi-riscos-criticos">—</div>
+          <div class="kpi-sub">severidade Crítico (Prob. × Impacto), status diferente de Encerrado</div>
+        </div>
+        <div class="kpi warn">
+          <div class="kpi-label">Riscos altos abertos</div>
+          <div class="kpi-value" id="kpi-riscos-altos">—</div>
+          <div class="kpi-sub">severidade Alto, status diferente de Encerrado</div>
+        </div>
+      </div>
+
       <div class="sec-title">Registros por formulário</div>
       <div class="card">
         <div class="table-wrap">
@@ -530,6 +544,21 @@ async function carregarPainel(){
   document.getElementById('kpi-encaminhamentos').textContent = encaminhamentos.filter(function(x){ return x.status === 'Aberto'; }).length;
   document.getElementById('kpi-resultados').textContent = resultados.length;
 
+  // 4.1) Riscos do portfolio — todos os riscos em aberto (Status != Encerrado) de todos os TAPs, por severidade
+  var todosOsTaps = registrosPorForm['tap:'] || [];
+  var riscosCriticos = 0, riscosAltosCount = 0;
+  todosOsTaps.forEach(function(t){
+    (Array.isArray(t.riscos) ? t.riscos : []).forEach(function(r){
+      if(r.status==='Encerrado') return;
+      var sev = severidadeRisco(r.prob, r.impacto);
+      if(!sev) return;
+      if(sev.nivel==='Crítico') riscosCriticos++;
+      else if(sev.nivel==='Alto') riscosAltosCount++;
+    });
+  });
+  document.getElementById('kpi-riscos-criticos').textContent = riscosCriticos;
+  document.getElementById('kpi-riscos-altos').textContent = riscosAltosCount;
+
   // 5) Portfólio de projetos (tabela compartilhada `projetos`)
   var rProj = await fetch(unialfaAuth.REST_BASE + '/projetos?select=id,nome,unidade,gerente,status,atualizado_em&order=nome', { headers: unialfaAuth.authHeaders() });
   var projetos = rProj.ok ? await rProj.json() : [];
@@ -579,9 +608,29 @@ function parseBRL(s){
   var n=parseFloat(s); return isNaN(n)?0:n;
 }
 
-/* Saude do projeto: cruza marcos do Planejamento e Desenvolvimento de Projeto (plan) e custos do
-   Relatorio de Situacao (sit) com os custos estimados do TAP (tap). Mesma definicao de "marco atrasado"
-   e "dentro do orcamento" ja usada no Relatorio de Resultados (secao 6.7) e na Ficha do Projeto. */
+/* Severidade de um risco = Probabilidade x Impacto (escala 1-3 cada), mesma matriz classica usada
+   no Registro de riscos do TAP (Passo 3): 1-2 = Baixo, 3-4 = Medio, 6 = Alto, 9 = Critico. */
+var RISCO_PROB_NIVEL = {'Baixa':1,'Média':2,'Alta':3};
+var RISCO_IMPACTO_NIVEL = {'Baixo':1,'Médio':2,'Alto':3};
+function severidadeRisco(prob, impacto){
+  var p = RISCO_PROB_NIVEL[prob], i = RISCO_IMPACTO_NIVEL[impacto];
+  if(!p || !i) return null;
+  var score = p*i;
+  var nivel = score>=9 ? 'Crítico' : (score>=6 ? 'Alto' : (score>=3 ? 'Médio' : 'Baixo'));
+  return { score: score, nivel: nivel };
+}
+function riscosAltosAbertos(tap){
+  if(!tap || !Array.isArray(tap.riscos)) return 0;
+  return tap.riscos.filter(function(r){
+    if(r.status==='Encerrado') return false;
+    var sev = severidadeRisco(r.prob, r.impacto);
+    return sev && (sev.nivel==='Alto' || sev.nivel==='Crítico');
+  }).length;
+}
+/* Saude do projeto: cruza marcos do Planejamento e Desenvolvimento de Projeto (plan), custos do
+   Relatorio de Situacao (sit) com os custos estimados do TAP (tap), e riscos Alto/Critico em aberto
+   do TAP. Mesma definicao de "marco atrasado" e "dentro do orcamento" ja usada no Relatorio de
+   Resultados (secao 6.7) e na Ficha do Projeto. */
 function calcularSaude(sit, tap, plan){
   var hoje = new Date();
   var marcosPlan = (plan && Array.isArray(plan.cronograma)) ? plan.cronograma : [];
@@ -600,6 +649,7 @@ function calcularSaude(sit, tap, plan){
   var realizado = (sit && Array.isArray(sit.custosRealizados) && sit.custosRealizados.length) ? sit.custosRealizados.reduce(function(s,c){ return s+parseBRL(c.valor); },0) : null;
   var orcamentoAvaliavel = estimado!=null && estimado>0 && realizado!=null;
   var orcamentoDentro = orcamentoAvaliavel ? (realizado<=estimado) : null;
+  var riscosAltos = riscosAltosAbertos(tap);
 
   var encerrado = sit && (sit.status==='Concluído' || sit.status==='Cancelado');
   var nivel, label;
@@ -608,7 +658,7 @@ function calcularSaude(sit, tap, plan){
   } else if(encerrado){
     nivel='neutral'; label='Encerrado';
   } else {
-    var sinaisRuins = (sit.status==='Atrasado'?1:0) + (diasAtraso.length>0?1:0) + (orcamentoDentro===false?1:0);
+    var sinaisRuins = (sit.status==='Atrasado'?1:0) + (diasAtraso.length>0?1:0) + (orcamentoDentro===false?1:0) + (riscosAltos>0?1:0);
     if(sinaisRuins>=2){ nivel='bad'; label='Crítico'; }
     else if(sinaisRuins===1){ nivel='warn'; label='Atenção'; }
     else { nivel='ok'; label='Normal'; }
