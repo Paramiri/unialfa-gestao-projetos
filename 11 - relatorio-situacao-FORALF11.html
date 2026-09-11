@@ -57,6 +57,9 @@
 .gantt-connector{stroke:var(--ink); stroke-width:1.5; fill:none; opacity:.55}
 .gantt-connector-arrow{fill:var(--ink); opacity:.55}
 .gantt-legend i.critico{background:transparent; border:2px dashed rgba(0,0,0,.55)}
+.carga-bar{position:absolute; height:18px; border-radius:4px; background:rgba(29,78,216,.45)}
+.gantt-label-row.sobrecarga{background:rgba(159,18,57,.08)}
+.gantt-legend i.carga-swatch{background:rgba(29,78,216,.6); border-radius:3px}
 body{font-family:var(--font);color:var(--ink);background:var(--surface);-webkit-font-smoothing:antialiased;line-height:1.5;font-size:14px}
 .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 72px}
 
@@ -558,7 +561,7 @@ function ensureAuthenticated(){
       <h1>Relatório de Situação de Projetos</h1>
       <p>Escritório de Projetos · Visão geral e por programa/projeto</p>
     </div>
-    <a class="head-help" href="15 - central-ajuda.html?v=39#relatorio-situacao" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
+    <a class="head-help" href="15 - central-ajuda.html?v=40#relatorio-situacao" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
     <div class="head-meta">
       <div class="head-meta-item"><span>Referência</span><b id="hd-ref">—</b></div>
       <div class="head-meta-item"><span>Responsável</span><b id="hd-resp">—</b></div>
@@ -964,6 +967,103 @@ function renderGanttTimeline(rows, host){
     <span><i class="atrasado"></i>Atrasado</span>
     <span><i class="bloqueado"></i>Bloqueado</span>
     ${legendCritico}
+  </div>`;
+}
+/* Visualização leve de carga por responsável: agrupa os marcos pelos nomes extraídos do campo
+   Responsável (separado por "/", "," ou ";" — o mesmo campo aceita texto livre com vários nomes ou
+   áreas), e desenha uma barra por marco na linha daquele responsável, na mesma escala de tempo da
+   linha do tempo. Barras semi-transparentes que se sobrepõem ficam mais escuras — sinal visual de
+   marcos concorrentes atribuídos à mesma pessoa/área no mesmo período, marcado como ⚠ possível
+   sobrecarga. Não calcula horas nem capacidade: é só uma leitura do texto já digitado no campo
+   Responsável. Somente leitura: para mudar um marco, edite o Planejamento. */
+function renderCargaRecursos(rows, host){
+  if(!host) return;
+  const all=(rows||[]).filter(r=>r.marco&&r.marco.trim());
+  const parseD=d=>d?new Date(d+'T00:00:00'):null;
+  const porRecurso={};
+  all.forEach(r=>{
+    const ini=parseD(r.ini), fim=parseD(r.fim);
+    if(!ini&&!fim) return;
+    const nomes=(r.resp||'').split(/[\/,;]/).map(s=>s.trim()).filter(Boolean);
+    if(!nomes.length) nomes.push('(sem responsável)');
+    nomes.forEach(nome=>{
+      if(!porRecurso[nome]) porRecurso[nome]=[];
+      porRecurso[nome].push({marco:r.marco, ini:ini||fim, fim:fim||ini});
+    });
+  });
+  let recursos=Object.keys(porRecurso);
+  if(!recursos.length){ host.innerHTML='<div class="gantt-empty">Nenhum marco com responsável e datas preenchidos para calcular a carga.</div>'; return; }
+
+  const sobrecarga={};
+  recursos.forEach(nome=>{
+    const items=porRecurso[nome].slice().sort((a,b)=>a.ini-b.ini);
+    let maxEnd=null, over=false;
+    items.forEach(it=>{
+      if(maxEnd&&it.ini<maxEnd) over=true;
+      if(!maxEnd||it.fim>maxEnd) maxEnd=it.fim;
+    });
+    porRecurso[nome]=items;
+    sobrecarga[nome]=over;
+  });
+  recursos.sort((a,b)=>{
+    if(sobrecarga[a]!==sobrecarga[b]) return sobrecarga[a]?-1:1;
+    if(porRecurso[b].length!==porRecurso[a].length) return porRecurso[b].length-porRecurso[a].length;
+    return a.localeCompare(b,'pt-BR');
+  });
+
+  const allDates=[];
+  recursos.forEach(nome=>porRecurso[nome].forEach(it=>{ allDates.push(it.ini); allDates.push(it.fim); }));
+  let minD=new Date(Math.min.apply(null,allDates)), maxD=new Date(Math.max.apply(null,allDates));
+  const rangeMs=Math.max(maxD-minD, 86400000);
+  const padMs=Math.max(rangeMs*0.06, 3*86400000);
+  minD=new Date(minD.getTime()-padMs); maxD=new Date(maxD.getTime()+padMs);
+  const totalDays=Math.max(Math.ceil((maxD-minD)/86400000),1);
+  const pxPerDay=totalDays>240?7:(totalDays>120?11:(totalDays>60?16:(totalDays>30?22:30)));
+  const timelineWidth=Math.max(totalDays*pxPerDay, 480);
+  const dayToX=d=>Math.round(((d-minD)/86400000)*pxPerDay);
+
+  const months=[]; let cur=new Date(minD.getFullYear(), minD.getMonth(), 1);
+  while(cur<=maxD){ months.push(new Date(cur)); cur=new Date(cur.getFullYear(), cur.getMonth()+1, 1); }
+  const today=new Date(); today.setHours(0,0,0,0);
+  const todayX=(today>=minD&&today<=maxD)?dayToX(today):null;
+
+  const rowH=32, topPad=6;
+  const bodyH=recursos.length*rowH+topPad*2;
+
+  const gridLinesHtml=months.map(m=>{
+    const x=dayToX(m<minD?minD:m);
+    return `<div class="gantt-grid-col" style="left:${x}px"></div>`;
+  }).join('');
+  const monthLabelsHtml=months.map(m=>{
+    const x=dayToX(m<minD?minD:m);
+    const label=m.toLocaleDateString('pt-BR',{month:'short'}).replace('.','').toUpperCase()+(m.getMonth()===0?('/'+m.getFullYear()):'');
+    return `<div class="gantt-month-lbl" style="left:${x+4}px">${esc(label)}</div>`;
+  }).join('');
+  const todayHtml=todayX!=null?`<div class="gantt-today" style="left:${todayX}px"></div>`:'';
+
+  const barsHtml=recursos.map((nome,i)=>{
+    const top=topPad+i*rowH+(rowH-18)/2;
+    return porRecurso[nome].map(it=>{
+      const x1=dayToX(it.ini), x2=Math.max(dayToX(it.fim), x1+10);
+      return `<div class="carga-bar" style="left:${x1}px; width:${x2-x1}px; top:${top}px" title="${esc(nome)} — ${esc(it.marco)}"></div>`;
+    }).join('');
+  }).join('');
+
+  const labelsHtml=recursos.map(nome=>{
+    const n=porRecurso[nome].length;
+    return `<div class="gantt-label-row${sobrecarga[nome]?' sobrecarga':''}"><span class="t">${esc(nome)}</span><span class="n">${n}${sobrecarga[nome]?' ⚠':''}</span></div>`;
+  }).join('');
+
+  host.innerHTML=`<div class="gantt-wrap">
+    <div class="gantt-labels"><div class="gantt-label-header"></div>${labelsHtml}</div>
+    <div class="gantt-scroll"><div class="gantt-timeline" style="width:${timelineWidth}px">
+      <div class="gantt-header">${monthLabelsHtml}</div>
+      <div class="gantt-body" style="height:${bodyH}px">${gridLinesHtml}${todayHtml}${barsHtml}</div>
+    </div></div>
+  </div>
+  <div class="gantt-legend">
+    <span><i class="carga-swatch"></i>Marco atribuído (mais escuro = mais marcos ao mesmo tempo)</span>
+    <span>⚠ Possível sobrecarga (marcos com datas sobrepostas)</span>
   </div>`;
 }
 async function buscarCronogramaPlanTodos(){
@@ -1622,17 +1722,21 @@ async function renderMarcosEditor(pi,marcosSalvos){
   host.innerHTML='<div class="gantt-toggle">'
     +'<button type="button" class="gantt-toggle-btn active" data-view="lista">📋 Lista</button>'
     +'<button type="button" class="gantt-toggle-btn" data-view="gantt">📊 Linha do tempo</button>'
+    +'<button type="button" class="gantt-toggle-btn" data-view="carga">👥 Carga por responsável</button>'
     +'</div>'
     +'<div id="marcos-lista-'+pi+'">'+listaHtml+'</div>'
-    +'<div id="marcos-gantt-'+pi+'" style="display:none"></div>';
+    +'<div id="marcos-gantt-'+pi+'" style="display:none"></div>'
+    +'<div id="marcos-carga-'+pi+'" style="display:none"></div>';
   host.querySelectorAll('.gantt-toggle-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       host.querySelectorAll('.gantt-toggle-btn').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
-      const showGantt=btn.dataset.view==='gantt';
-      document.getElementById('marcos-lista-'+pi).style.display=showGantt?'none':'';
-      document.getElementById('marcos-gantt-'+pi).style.display=showGantt?'':'none';
-      if(showGantt) renderGanttTimeline(marcosPlan, document.getElementById('marcos-gantt-'+pi));
+      const view=btn.dataset.view;
+      document.getElementById('marcos-lista-'+pi).style.display=view==='lista'?'':'none';
+      document.getElementById('marcos-gantt-'+pi).style.display=view==='gantt'?'':'none';
+      document.getElementById('marcos-carga-'+pi).style.display=view==='carga'?'':'none';
+      if(view==='gantt') renderGanttTimeline(marcosPlan, document.getElementById('marcos-gantt-'+pi));
+      if(view==='carga') renderCargaRecursos(marcosPlan, document.getElementById('marcos-carga-'+pi));
     });
   });
 }
