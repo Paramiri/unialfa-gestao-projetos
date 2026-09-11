@@ -48,6 +48,12 @@
   .role-tag{display:inline-block; font-size:10px; font-weight:700; letter-spacing:.03em; padding:3px 9px; border-radius:999px; background:var(--surface-2); border:1px solid var(--line-strong); color:var(--muted);}
   .role-tag.admin{background:var(--bad-soft); color:var(--bad); border-color:transparent}
   .pending-tag{display:inline-block; font-size:10px; font-weight:700; letter-spacing:.03em; padding:3px 9px; border-radius:999px; background:var(--warn-soft); color:var(--warn); margin-top:4px;}
+  .hist-link{font-size:11.5px; font-weight:700; color:var(--red); background:none; border:none; cursor:pointer; text-decoration:underline; font-family:inherit; padding:0; white-space:nowrap}
+  .hist-row td{padding:0 14px 14px; background:var(--surface-2)}
+  .hist-panel{background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:10px 14px; font-size:12px; max-height:220px; overflow-y:auto}
+  .hist-panel .hi{padding:6px 0; border-bottom:1px solid var(--line)}
+  .hist-panel .hi:last-child{border-bottom:none}
+  .hist-panel .hi b{color:var(--red)}
   .user-add{padding:16px 24px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:var(--surface-2);}
   .user-add input, .user-add select{flex:1; min-width:150px; font-family:var(--font); font-size:12.5px; font-weight:600; color:var(--ink); border:1px solid var(--line-strong); border-radius:7px; padding:8px 10px; background:var(--paper);}
   .user-add input:focus, .user-add select:focus{outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(185,29,46,.12);}
@@ -370,6 +376,43 @@ window.unialfaEquipe = {
     return r.ok;
   },
 };
+
+/* ---- Historico de alteracoes por registro (mesma tabela/convencao ja usada pelos 9 formularios
+   do ciclo de vida - aqui aplicada aos registros de perfis, com registro_key = 'perfil:<id>') ---- */
+window.unialfaHistorico = {
+  async registrar(registroKey, formulario, camposAntigos, camposNovos){
+    var user = window.currentUser;
+    var entries = [];
+    for(var campo in camposNovos){
+      var novo = (camposNovos[campo]==null?'':String(camposNovos[campo])).trim();
+      var antigo = (camposAntigos[campo]==null?'':String(camposAntigos[campo])).trim();
+      if(novo !== antigo){
+        entries.push({ registro_key: registroKey, formulario: formulario, campo: campo, valor_anterior: antigo, valor_novo: novo, alterado_por: user?user.id:null, alterado_por_email: user?user.email:null });
+      }
+    }
+    if(!entries.length) return;
+    await fetch(unialfaAuth.REST_BASE + '/registro_historico', {
+      method:'POST', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}), body: JSON.stringify(entries)
+    });
+  },
+  async listar(registroKey){
+    var r = await fetch(unialfaAuth.REST_BASE + '/registro_historico?registro_key=eq.'+encodeURIComponent(registroKey)+'&select=*&order=criado_em.desc', { headers: unialfaAuth.authHeaders() });
+    return r.ok ? await r.json() : [];
+  },
+  async mostrar(registroKey, hostEl, labels){
+    var itens = await this.listar(registroKey);
+    if(!itens.length){ hostEl.innerHTML = '<div class="hist-panel"><i>Nenhuma alteração registrada ainda.</i></div>'; return; }
+    var html = '<div class="hist-panel">';
+    itens.forEach(function(h){
+      var d = new Date(h.criado_em);
+      var lbl = (labels && labels[h.campo]) || h.campo;
+      html += '<div class="hi"><b>'+lbl+'</b>: "'+(h.valor_anterior||'—')+'" → "'+(h.valor_novo||'—')+'"<br>'+
+        '<span style="color:var(--muted)">'+d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+(h.alterado_por_email||'—')+'</span></div>';
+    });
+    html += '</div>';
+    hostEl.innerHTML = html;
+  },
+};
 </script>
 
 <div class="wrap">
@@ -380,7 +423,7 @@ window.unialfaEquipe = {
         <h1>Administração de Usuários</h1>
         <p>Controle de acesso · Papéis e permissões · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=48#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=49#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
     </div>
   </div>
 
@@ -642,6 +685,8 @@ function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;'
 
 let todosUsuarios=[];
 let usuariosPendentes=[];
+let historicoAbertoId=null;
+const HIST_LABELS_USUARIO = { papel:'Papel', telefone:'Telefone' };
 
 async function carregarUsuarios(){
   const body=document.getElementById('content-body');
@@ -655,8 +700,9 @@ async function carregarUsuarios(){
   usuariosPendentes = pend;
   document.getElementById('count-label').textContent = rows.length+' usuário(s)'+(pend.length?' · '+pend.length+' pré-cadastro(s) pendente(s)':'');
   if(!rows.length && !pend.length){ body.innerHTML='<div class="empty">Nenhum usuário cadastrado ainda. Use "+ Adicionar usuário" acima ou aguarde o primeiro login via link mágico.</div>'; return; }
-  let html='<table class="tbl-usuarios"><thead><tr><th style="width:25%">E-mail</th><th style="width:14%">Nome</th><th style="width:16%">Telefone</th><th style="width:13%">Papel atual</th><th style="width:22%">Alterar papel</th><th style="width:10%"></th></tr></thead><tbody>';
+  let html='<table class="tbl-usuarios"><thead><tr><th style="width:21%">E-mail</th><th style="width:12%">Nome</th><th style="width:14%">Telefone</th><th style="width:11%">Papel atual</th><th style="width:18%">Alterar papel</th><th style="width:14%">Histórico</th><th style="width:10%"></th></tr></thead><tbody>';
   rows.forEach(u=>{
+    const historicoAberto = historicoAbertoId===u.id;
     html+=`<tr>
       <td><b>${esc(u.email)}</b>${u.id===window.currentUser.id?'<small>Você</small>':''}</td>
       <td>${esc(u.nome)||'—'}</td>
@@ -665,8 +711,9 @@ async function carregarUsuarios(){
       <td><select onchange="alterarPapel('${u.id}', this.value, this)">
         ${PAPEIS.map(p=>`<option value="${p}" ${p===u.papel?'selected':''}>${unialfaAuth.papelLabel(p)}</option>`).join('')}
       </select></td>
+      <td><button type="button" class="hist-link" onclick="toggleHistoricoUsuario('${u.id}')">${historicoAberto?'Fechar':'Ver'} histórico</button></td>
       <td>${u.id===window.currentUser.id?'':`<button class="btn-remove" onclick="removerUsuario('${u.id}','${esc(u.email)}', this)">Remover</button>`}</td>
-    </tr>`;
+    </tr>${historicoAberto?`<tr class="hist-row"><td colspan="7"><div class="hist-panel" id="hist-panel-${u.id}">Carregando…</div></td></tr>`:''}`;
   });
   pend.forEach(u=>{
     html+=`<tr style="opacity:.8">
@@ -686,12 +733,15 @@ async function carregarUsuarios(){
 
 async function alterarPapel(userId, novoPapel, selectEl){
   selectEl.disabled=true;
+  const usuario = todosUsuarios.find(u=>u.id===userId);
+  const papelAntigo = usuario ? usuario.papel : '';
   try{
     const r=await fetch(unialfaAuth.REST_BASE+'/perfis?id=eq.'+userId, {
       method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
       body: JSON.stringify({ papel: novoPapel })
     });
     if(!r.ok){ const eHttp=new Error('http '+r.status); eHttp.kind='http'; eHttp.status=r.status; throw eHttp; }
+    await unialfaHistorico.registrar('perfil:'+userId, 'Administração de Usuários', {papel: papelAntigo}, {papel: novoPapel});
     toast('Papel atualizado para "'+unialfaAuth.papelLabel(novoPapel)+'"');
     await carregarUsuarios();
   }catch(e){
@@ -703,17 +753,31 @@ async function alterarPapel(userId, novoPapel, selectEl){
 
 async function alterarTelefone(userId, novoTelefone, inputEl){
   inputEl.disabled=true;
+  const usuario = todosUsuarios.find(u=>u.id===userId);
+  const telefoneAntigo = usuario ? usuario.telefone : '';
   try{
+    const telefoneNovo = novoTelefone.trim()||null;
     const r=await fetch(unialfaAuth.REST_BASE+'/perfis?id=eq.'+userId, {
       method:'PATCH', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
-      body: JSON.stringify({ telefone: novoTelefone.trim()||null })
+      body: JSON.stringify({ telefone: telefoneNovo })
     });
     if(!r.ok){ const eHttp=new Error('http '+r.status); eHttp.kind='http'; eHttp.status=r.status; throw eHttp; }
+    await unialfaHistorico.registrar('perfil:'+userId, 'Administração de Usuários', {telefone: telefoneAntigo}, {telefone: telefoneNovo});
+    if(usuario) usuario.telefone = telefoneNovo;
     toast('Telefone atualizado');
   }catch(e){
     toast(mensagemErroSalvar(e,'atualizar o telefone'), false);
   }finally{
     inputEl.disabled=false;
+  }
+}
+
+async function toggleHistoricoUsuario(userId){
+  historicoAbertoId = (historicoAbertoId===userId) ? null : userId;
+  await carregarUsuarios();
+  if(historicoAbertoId===userId){
+    const panel = document.getElementById('hist-panel-'+userId);
+    if(panel) await unialfaHistorico.mostrar('perfil:'+userId, panel, HIST_LABELS_USUARIO);
   }
 }
 
