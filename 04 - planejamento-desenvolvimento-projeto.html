@@ -104,6 +104,11 @@
   .gantt-legend i.concluido{background:var(--ok)}
   .gantt-legend i.atrasado{background:var(--bad)}
   .gantt-legend i.bloqueado{background:#fff; outline:2px solid var(--bad); outline-offset:-1px}
+  .gantt-bar.critico{border:2px dashed rgba(0,0,0,.55)}
+  .gantt-label-row.critico{background:rgba(0,0,0,.035)}
+  .gantt-connector{stroke:var(--ink); stroke-width:1.5; fill:none; opacity:.55}
+  .gantt-connector-arrow{fill:var(--ink); opacity:.55}
+  .gantt-legend i.critico{background:transparent; border:2px dashed rgba(0,0,0,.55)}
   table.dyn-t{width:100%; border-collapse:collapse; min-width:760px; table-layout:fixed}
   table.dyn-t th, table.dyn-t td{overflow-wrap:break-word}
   table.dyn-t th{font-size:9px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); padding:9px 10px; background:var(--surface-2); border-bottom:1px solid var(--line); text-align:left; white-space:normal; line-height:1.3}
@@ -671,7 +676,7 @@ window.unialfaHistorico = {
         <h1>Planejamento e Desenvolvimento de Projeto</h1>
         <p>Dossiê de ciclo de vida do projeto · Gerência de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=38#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=39#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00325</b></div>
@@ -1124,10 +1129,35 @@ function mountGanttToggle(key, host){
     });
   });
 }
+/* Calcula um "caminho critico" leve: a partir do marco com o Termino previsto mais tardio, anda
+   para tras pela cadeia de dependencias (campo Depende nº) ate nao encontrar mais dependencia. E o
+   unico caminho de marcos que, se atrasar, atrasa a data final do cronograma — nao e um CPM completo
+   (sem calculo de folga/float), so a cadeia que hoje determina o fim do projeto. Cadeias triviais (um
+   marco isolado, sem nenhuma dependencia encadeada) nao contam como caminho critico. */
+function calcularCaminhoCritico(all){
+  const parseD=d=>d?new Date(d+'T00:00:00'):null;
+  let endIdx=-1, endDate=null;
+  all.forEach((r,i)=>{
+    const d=parseD(r.fim)||parseD(r.ini);
+    if(d&&(!endDate||d>endDate)){ endDate=d; endIdx=i; }
+  });
+  if(endIdx===-1) return {set:new Set(), chain:[]};
+  const chain=[]; let cur=endIdx; const visited=new Set();
+  while(cur!=null && cur>=0 && cur<all.length && !visited.has(cur)){
+    visited.add(cur);
+    chain.push(cur+1);
+    const depNum=parseInt(all[cur].dep,10);
+    if(!depNum||depNum<1||depNum>all.length) break;
+    cur=depNum-1;
+  }
+  if(chain.length<2) return {set:new Set(), chain:[]};
+  chain.reverse();
+  return {set:new Set(chain), chain};
+}
 /* Renderiza uma linha do tempo simples (barras por marco, coloridas por status) a partir das mesmas
    linhas exibidas na tabela — cores: azul (no prazo), verde (concluído), vermelho (atrasado), com
-   contorno vermelho extra para marcos bloqueados por dependência. Não editável: para mudar um marco,
-   use a tabela. */
+   contorno vermelho extra para marcos bloqueados por dependência e contorno tracejado + 🎯 para o
+   caminho crítico. Não editável: para mudar um marco, use a tabela. */
 function renderGanttTimeline(rows, host){
   if(!host) return;
   const all=(rows||[]).filter(r=>r.marco&&r.marco.trim());
@@ -1136,6 +1166,8 @@ function renderGanttTimeline(rows, host){
   const parseD=d=>d?new Date(d+'T00:00:00'):null;
   const dated=withSeq.filter(x=>parseD(x.row.ini)||parseD(x.row.fim));
   if(!dated.length){ host.innerHTML='<div class="gantt-empty">Nenhum marco com datas preenchidas para mostrar na linha do tempo.</div>'; return; }
+
+  const {set:critical, chain:criticalChain}=calcularCaminhoCritico(all);
 
   const allDates=[];
   dated.forEach(x=>{ const i=parseD(x.row.ini), f=parseD(x.row.fim); if(i) allDates.push(i); if(f) allDates.push(f); });
@@ -1169,30 +1201,52 @@ function renderGanttTimeline(rows, host){
 
   const todayHtml=todayX!=null?`<div class="gantt-today" style="left:${todayX}px"></div>`:'';
 
+  const pos={};
   const barsHtml=dated.map((x,i)=>{
     const r=x.row;
     const ini=parseD(r.ini)||parseD(r.fim);
     const fim=parseD(r.fim)||parseD(r.ini);
     const x1=dayToX(ini), x2=Math.max(dayToX(fim), x1+10);
     const top=topPad+i*rowH+(rowH-20)/2;
+    pos[x.seq]={x1,x2,y:top+10};
     const concluido=!!(r.concl&&r.concl.trim());
     const atrasado=!concluido&&fim&&today>fim;
     const bloq=marcoBloqueadoPor(all, r);
-    const cls='gantt-bar '+(concluido?'concluido':(atrasado?'atrasado':'normal'))+(bloq?' bloqueado':'');
-    const icone=bloq?'⚠ ':(concluido?'✓ ':'');
-    const tip=esc(r.marco)+(bloq?' — bloqueado por atraso na dependência':(atrasado?' — atrasado':(concluido?' — concluído':'')));
+    const critico=critical.has(x.seq);
+    const cls='gantt-bar '+(concluido?'concluido':(atrasado?'atrasado':'normal'))+(bloq?' bloqueado':'')+(critico?' critico':'');
+    let icone=''; if(bloq) icone+='⚠ '; if(critico) icone+='🎯 '; if(concluido) icone+='✓ ';
+    let tip=esc(r.marco);
+    if(bloq) tip+=' — bloqueado por atraso na dependência'; else if(atrasado) tip+=' — atrasado'; else if(concluido) tip+=' — concluído';
+    if(critico) tip+=' — caminho crítico';
     return `<div class="${cls}" style="left:${x1}px; width:${x2-x1}px; top:${top}px" title="${tip}">${icone}${esc(r.marco)}</div>`;
   }).join('');
 
+  let connectorsHtml='';
+  for(let i=0;i<criticalChain.length-1;i++){
+    const a=pos[criticalChain[i]], b=pos[criticalChain[i+1]];
+    if(!a||!b) continue;
+    const midX=a.x2+8;
+    connectorsHtml+=`<path class="gantt-connector" d="M${a.x2},${a.y} L${midX},${a.y} L${midX},${b.y} L${b.x1},${b.y}" marker-end="url(#gantt-arrow-${host.id})"></path>`;
+  }
+  const svgConnectors=connectorsHtml
+    ? `<svg class="gantt-connectors" style="position:absolute;top:0;left:0;width:${timelineWidth}px;height:${bodyH}px;pointer-events:none">
+        <defs><marker id="gantt-arrow-${host.id}" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" class="gantt-connector-arrow"></path></marker></defs>
+        ${connectorsHtml}
+      </svg>`
+    : '';
+
   const labelsHtml=dated.map(x=>{
-    return `<div class="gantt-label-row"><span class="n">${x.seq}</span><span class="t">${esc(x.row.marco)}</span></div>`;
+    const critico=critical.has(x.seq);
+    return `<div class="gantt-label-row${critico?' critico':''}"><span class="n">${x.seq}</span><span class="t">${esc(x.row.marco)}</span></div>`;
   }).join('');
+
+  const legendCritico=criticalChain.length>1?'<span><i class="critico"></i>Caminho crítico</span>':'';
 
   host.innerHTML=`<div class="gantt-wrap">
     <div class="gantt-labels"><div class="gantt-label-header"></div>${labelsHtml}</div>
     <div class="gantt-scroll"><div class="gantt-timeline" style="width:${timelineWidth}px">
       <div class="gantt-header">${monthLabelsHtml}</div>
-      <div class="gantt-body" style="height:${bodyH}px">${gridLinesHtml}${todayHtml}${barsHtml}</div>
+      <div class="gantt-body" style="height:${bodyH}px">${gridLinesHtml}${todayHtml}${barsHtml}${svgConnectors}</div>
     </div></div>
   </div>
   <div class="gantt-legend">
@@ -1200,6 +1254,7 @@ function renderGanttTimeline(rows, host){
     <span><i class="concluido"></i>Concluído</span>
     <span><i class="atrasado"></i>Atrasado</span>
     <span><i class="bloqueado"></i>Bloqueado</span>
+    ${legendCritico}
   </div>`;
 }
 
