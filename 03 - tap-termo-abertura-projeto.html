@@ -122,6 +122,23 @@
   .risk-status.baixa, .risk-status.baixo{background:var(--ok-soft); color:var(--ok)}
   .risk-status.média, .risk-status.médio{background:var(--warn-soft); color:var(--warn)}
   .risk-status.alta, .risk-status.alto{background:var(--bad-soft); color:var(--bad)}
+  .risk-status.crítico{background:var(--bad); color:#fff}
+  .risk-matrix-wrap{display:flex; align-items:center; gap:8px}
+  .risk-matrix{border-collapse:collapse}
+  .risk-matrix th, .risk-matrix td{border:1px solid var(--line); padding:10px 14px; text-align:center; font-size:12px}
+  .risk-matrix thead th{font-size:10px; font-weight:700; text-transform:uppercase; color:var(--muted); background:var(--surface-2)}
+  .risk-matrix tbody th{font-size:10px; font-weight:700; text-transform:uppercase; color:var(--muted); background:var(--surface-2); text-align:right; padding-right:10px}
+  .risk-matrix-cell{font-weight:800; font-size:15px; min-width:56px}
+  .risk-matrix-cell.baixo{background:var(--ok-soft); color:var(--ok)}
+  .risk-matrix-cell.médio{background:var(--warn-soft); color:var(--warn)}
+  .risk-matrix-cell.alto{background:var(--bad-soft); color:var(--bad)}
+  .risk-matrix-cell.crítico{background:var(--bad); color:#fff}
+  .risk-matrix-axis-x{text-align:center; font-size:10px; font-weight:700; text-transform:uppercase; color:var(--muted); margin-top:4px}
+  .risk-matrix-axis-y{writing-mode:vertical-rl; transform:rotate(180deg); font-size:10px; font-weight:700; text-transform:uppercase; color:var(--muted)}
+  .gantt-legend i.baixo{background:var(--ok-soft); border:1px solid var(--ok)}
+  .gantt-legend i.médio{background:var(--warn-soft); border:1px solid var(--warn)}
+  .gantt-legend i.alto{background:var(--bad-soft); border:1px solid var(--bad)}
+  .gantt-legend i.crítico{background:var(--bad)}
   .sugestoes-riscos{margin:0 24px 20px; padding:14px 16px; background:var(--surface-2); border:1px dashed var(--line-strong); border-radius:8px}
   .sugestoes-head{font-size:11px; font-weight:700; color:var(--muted); margin-bottom:10px; display:flex; align-items:center; gap:6px}
   .sugestoes-head .ai-dot{width:6px; height:6px; border-radius:50%; background:#7C3AED; flex:none}
@@ -717,7 +734,7 @@ window.unialfaEquipe = {
         <h1>Termo de Abertura de Projeto — TAP</h1>
         <p>Autorização formal e diretrizes iniciais do projeto · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=40#passo-3" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=41#passo-3" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00338</b></div>
@@ -1048,12 +1065,13 @@ const RISCO_IMPACTO=['Baixo','Médio','Alto'];
 
 const TABLES={
   riscos:{cols:[
-    {key:'risco',label:'Risco',type:'text',w:'15%',long:true},
+    {key:'risco',label:'Risco',type:'text',w:'13%',long:true},
     {key:'prob',label:'Prob.',type:'select',options:RISCO_PROB,w:'10%'},
     {key:'impacto',label:'Impacto',type:'select',options:RISCO_IMPACTO,w:'11%'},
-    {key:'mitigacao',label:'Mitigação',type:'text',w:'14%',long:true},
-    {key:'status',label:'Status',type:'select',options:RISCO_STATUS,w:'16%'},
-    {key:'resp',label:'Responsável',type:'text',w:'12%',long:true},
+    {key:'severidade',label:'Severidade',type:'computed',w:'9%'},
+    {key:'mitigacao',label:'Mitigação',type:'text',w:'12%',long:true},
+    {key:'status',label:'Status',type:'select',options:RISCO_STATUS,w:'14%'},
+    {key:'resp',label:'Responsável',type:'text',w:'11%',long:true},
     {key:'revisao',label:'Última revisão',type:'date',w:'15%'},
   ]},
   cronograma:{cols:[
@@ -1285,6 +1303,10 @@ function addRow(name, vals){
   let cells='';
   cfg.cols.forEach(c=>{
     const v=vals?(vals[c.key]||''):'';
+    if(c.type==='computed'){
+      cells+=`<td class="risk-sev"></td>`;
+      return;
+    }
     if(c.type==='select'){
       const opts=c.options.map(o=>`<option value="${esc(o)}"${o===v?' selected':''}>${esc(o)}</option>`).join('');
       cells+=`<td><select data-k="${c.key}">${opts}</select></td>`;
@@ -1304,6 +1326,93 @@ function addRow(name, vals){
   </td>`;
   tr.innerHTML=cells; tb.appendChild(tr);
   tr.querySelectorAll('textarea').forEach(autoGrow);
+  if(name==='riscos'){
+    const probSel=tr.querySelector('[data-k="prob"]');
+    const impSel=tr.querySelector('[data-k="impacto"]');
+    const sync=()=>syncSeveridadeRow(tr);
+    if(probSel) probSel.addEventListener('change', sync);
+    if(impSel) impSel.addEventListener('change', sync);
+    sync();
+  }
+}
+/* Severidade de um risco = Probabilidade x Impacto (escala 1-3 cada), na matriz classica de gestao
+   de riscos: 1-2 = Baixo, 3-4 = Medio, 6 = Alto, 9 = Critico. Calculado ao vivo a partir dos campos
+   Prob./Impacto ja preenchidos - nao e um campo salvo, so uma leitura derivada. */
+const RISCO_PROB_NIVEL={'Baixa':1,'Média':2,'Alta':3};
+const RISCO_IMPACTO_NIVEL={'Baixo':1,'Médio':2,'Alto':3};
+function severidadeRisco(prob, impacto){
+  const p=RISCO_PROB_NIVEL[prob], i=RISCO_IMPACTO_NIVEL[impacto];
+  if(!p||!i) return null;
+  const score=p*i;
+  const nivel=score>=9?'Crítico':(score>=6?'Alto':(score>=3?'Médio':'Baixo'));
+  return {score, nivel};
+}
+function syncSeveridadeRow(tr){
+  const sevTd=tr.querySelector('.risk-sev');
+  if(!sevTd) return;
+  const probSel=tr.querySelector('[data-k="prob"]');
+  const impSel=tr.querySelector('[data-k="impacto"]');
+  const sev=severidadeRisco(probSel?probSel.value:'', impSel?impSel.value:'');
+  sevTd.innerHTML=sev?`<span class="risk-status ${sev.nivel.toLowerCase()}">${esc(sev.nivel)}</span>`:'';
+}
+/* Alterna entre a tabela de riscos e uma matriz de risco (heatmap Probabilidade x Impacto),
+   somente leitura. A edição continua sempre pela tabela. */
+function mountMatrizRiscoToggle(host){
+  const bar=document.createElement('div');
+  bar.className='gantt-toggle';
+  bar.innerHTML=`<button type="button" class="gantt-toggle-btn active" data-view="tabela">📋 Tabela</button>
+    <button type="button" class="gantt-toggle-btn" data-view="matriz">🔥 Matriz de risco</button>`;
+  const matrizHost=document.createElement('div');
+  matrizHost.id='matriz-risco';
+  matrizHost.style.display='none';
+  host.appendChild(bar);
+  host.appendChild(matrizHost);
+  const tableWrap=host.querySelector('.dyn-table-wrap');
+  const tableFoot=host.querySelector('.dyn-foot');
+  bar.querySelectorAll('.gantt-toggle-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      bar.querySelectorAll('.gantt-toggle-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const showMatriz=btn.dataset.view==='matriz';
+      tableWrap.style.display=showMatriz?'none':'';
+      tableFoot.style.display=showMatriz?'none':'';
+      matrizHost.style.display=showMatriz?'':'none';
+      if(showMatriz) renderMatrizRisco(readTable('riscos'), matrizHost);
+    });
+  });
+}
+/* Matriz de risco: conta quantos riscos EM ABERTO (Status != Encerrado) caem em cada combinação de
+   Probabilidade x Impacto, coloridos pela mesma escala de severidade usada na tabela. Riscos ja
+   encerrados nao contam, pois nao representam exposicao atual do projeto. */
+function renderMatrizRisco(rows, host){
+  if(!host) return;
+  const abertos=(rows||[]).filter(r=>r.risco&&r.risco.trim()&&r.status!=='Encerrado');
+  if(!abertos.length){ host.innerHTML='<div class="gantt-empty">Nenhum risco em aberto para mostrar na matriz.</div>'; return; }
+  const counts={};
+  abertos.forEach(r=>{
+    const key=(r.prob||'')+'|'+(r.impacto||'');
+    if(!r.prob||!r.impacto) return;
+    counts[key]=(counts[key]||0)+1;
+  });
+  const semClassificacao=abertos.filter(r=>!r.prob||!r.impacto).length;
+  const probs=['Alta','Média','Baixa'];
+  const impactos=['Baixo','Médio','Alto'];
+  let grid='<table class="risk-matrix"><thead><tr><th></th>'+impactos.map(i=>`<th>${esc(i)}</th>`).join('')+'</tr></thead><tbody>';
+  probs.forEach(p=>{
+    grid+=`<tr><th>${esc(p)}</th>`;
+    impactos.forEach(i=>{
+      const n=counts[p+'|'+i]||0;
+      const sev=severidadeRisco(p,i);
+      const cls=sev?sev.nivel.toLowerCase():'';
+      grid+=`<td class="risk-matrix-cell ${cls}">${n||''}</td>`;
+    });
+    grid+='</tr>';
+  });
+  grid+='</tbody></table>';
+  host.innerHTML='<div class="risk-matrix-wrap"><div class="risk-matrix-axis-y">Probabilidade</div>'+grid+'</div>'
+    +'<div class="risk-matrix-axis-x">Impacto</div>'
+    +'<div class="gantt-legend"><span><i class="baixo"></i>Baixo</span><span><i class="médio"></i>Médio</span><span><i class="alto"></i>Alto</span><span><i class="crítico"></i>Crítico</span></div>'
+    +(semClassificacao?`<div class="gantt-empty" style="margin-top:8px;text-align:left;padding:10px 12px">${semClassificacao} risco(s) em aberto sem Probabilidade ou Impacto preenchido não entram na matriz.</div>`:'');
 }
 function autoGrow(el){
   el.style.height='auto';
@@ -1378,6 +1487,10 @@ function roTable(name, rows){
   if(!Array.isArray(rows)||!rows.length) return '<dd>—</dd>';
   let h='<dd><div class="ro-wrap"><table class="ro-t"><thead><tr>'+cfg.cols.map(c=>`<th>${c.label}</th>`).join('')+'</tr></thead><tbody>';
   rows.forEach(r=>{ h+='<tr>'+cfg.cols.map(c=>{
+    if(name==='riscos'&&c.key==='severidade'){
+      const sev=severidadeRisco(r.prob, r.impacto);
+      return sev?`<td><span class="risk-status ${sev.nivel.toLowerCase()}">${esc(sev.nivel)}</span></td>`:'<td>—</td>';
+    }
     let v=r[c.key]||'';
     if(c.type==='date'&&v) v=fmtDate(v);
     if(c.type==='select'&&v) return `<td><span class="risk-status ${v.toLowerCase()}">${esc(v)}</span></td>`;
@@ -1923,6 +2036,10 @@ function docTableRowsTap(name,rows){
   const preenchidas=(rows||[]).filter(r=>Object.values(r).some(v=>v));
   const body=preenchidas.map(r=>{
     const tds=cfg.cols.map(c=>{
+      if(name==='riscos'&&c.key==='severidade'){
+        const sev=severidadeRisco(r.prob, r.impacto);
+        return '<td>'+(sev?esc(sev.nivel):'&nbsp;')+'</td>';
+      }
       let v=r[c.key]||''; if(c.type==='date'&&v)v=fmtDate(v);
       if(name==='cronograma'&&c.key==='dep'&&v){
         const bloq=marcoBloqueadoPor(rows,r);
@@ -2032,6 +2149,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
 
 /* ---------- init ---------- */
 mountTable('riscos', document.getElementById('dyn-riscos'));
+mountMatrizRiscoToggle(document.getElementById('dyn-riscos'));
 mountTable('custos', document.getElementById('dyn-custos'));
 mountTable('interessadas', document.getElementById('dyn-interessadas'));
 mountTable('equipe', document.getElementById('dyn-equipe'));
