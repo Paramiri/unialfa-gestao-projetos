@@ -86,6 +86,13 @@ input:focus, select:focus{outline:none; border-color:var(--red); box-shadow:0 0 
 .prio-tag.P0{color:var(--bad); background:var(--bad-soft)}
 .prio-tag.P1{color:var(--warn); background:var(--warn-soft)}
 .prio-tag.P2{color:var(--ok); background:var(--ok-soft)}
+.entrega-status{display:block; font-size:8.5px; font-weight:800; letter-spacing:.03em; padding:2px 7px; border-radius:20px; margin-top:5px; white-space:nowrap}
+.entrega-status.concluida{color:var(--ok); background:var(--ok-soft)}
+.entrega-status.atrasada{color:var(--bad); background:var(--bad-soft)}
+.entrega-status.no-prazo{color:var(--muted); background:var(--surface-2); border:1px solid var(--line-strong)}
+.entrega-status.sem-cronograma{color:var(--muted); background:transparent; border:1px dashed var(--line-strong)}
+.eap-resumo{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px; font-size:11.5px; color:var(--muted); font-weight:600}
+.eap-resumo b{color:var(--ink); font-weight:800}
 .add-btn{appearance:none; border:1.5px dashed; border-radius:7px; background:transparent; font-family:var(--font); font-weight:600; font-size:12px; cursor:pointer; padding:7px 14px; transition:all .15s; margin-top:6px; display:inline-flex; align-items:center; gap:6px;}
 .add-n2{border-color:#93C5FD; color:var(--n2)} .add-n2:hover{background:#EFF6FF}
 .add-n3{border-color:#5EEAD4; color:var(--n3)} .add-n3:hover{background:#F0FDFA}
@@ -637,7 +644,7 @@ window.unialfaHistorico = {
         <h1>Estrutura Analítica de Projeto — EAP</h1>
         <p>Work Breakdown Structure (WBS) · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=46#passo-5" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=47#passo-5" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Referência</span><b>EAP / WBS</b></div>
@@ -733,6 +740,7 @@ window.unialfaHistorico = {
           <button class="btn btn-ghost btn-sm" onclick="document.getElementById('tree-preview').style.display='none'">Fechar</button>
         </div>
       </div>
+      <div id="tree-resumo"></div>
       <div class="tree-area" id="tree-area"></div>
     </div>
   </div>
@@ -1006,7 +1014,67 @@ function readForm(){
 function n3Nome(n3){ return typeof n3==='string' ? n3 : (n3&&n3.nome)||''; }
 function n3Prio(n3){ return (n3&&typeof n3==='object'&&n3.prioridade)||''; }
 
-function renderTree(nome,n1s,host,hintId){
+/* Busca o cronograma (marcos/entregas) do Planejamento e Desenvolvimento de Projeto para um
+   projeto, indexado por nome (trim + minusculo) - mesmo casamento por nome ja usado pelo
+   Relatorio de Situacao para juntar seus marcos ao cronograma do Planejamento. Usado para
+   derivar automaticamente o status de cada Entrega (nivel 2) da EAP, sem nenhum campo novo
+   digitado aqui: "Concluida" (concl preenchida no cronograma), "Atrasada" (sem concl e com
+   prazo/fim ja passado) ou "No prazo" (demais casos). Entregas sem nome correspondente no
+   cronograma ficam "Sem cronograma vinculado".*/
+async function buscarCronogramaPlanPorNome(projetoId){
+  if(!projetoId) return null;
+  const porNome={};
+  try{
+    const res=await window.storage.list('plan:');
+    const keys=(res&&res.keys)?res.keys:[];
+    for(const k of keys){
+      const r=await window.storage.get(k);
+      if(!r||!r.value) continue;
+      const plan=JSON.parse(r.value);
+      if(plan.projetoId!==projetoId) continue;
+      (Array.isArray(plan.cronograma)?plan.cronograma:[]).forEach(m=>{
+        const nome=(m.marco||'').trim().toLowerCase();
+        if(nome) porNome[nome]=m;
+      });
+      break;
+    }
+  }catch(e){}
+  return porNome;
+}
+function statusEntregaEAP(nomeEntrega, cronoPorNome){
+  if(!cronoPorNome) return null;
+  const marco=cronoPorNome[(nomeEntrega||'').trim().toLowerCase()];
+  if(!marco) return {cls:'sem-cronograma', label:'Sem cronograma vinculado'};
+  const concluida=!!(marco.concl&&marco.concl.trim());
+  if(concluida) return {cls:'concluida', label:'Concluída'};
+  const fim=marco.fim?new Date(marco.fim+'T00:00:00'):null;
+  if(fim&&new Date()>fim) return {cls:'atrasada', label:'Atrasada'};
+  return {cls:'no-prazo', label:'No prazo'};
+}
+/* Resumo de entregas (nivel 2) do projeto todo, a partir do mesmo casamento por nome com o
+   cronograma - usado no topo da arvore (preview e drawer). */
+function resumoEntregasEAP(n1s, cronoPorNome){
+  let total=0, concluidas=0, atrasadas=0;
+  (n1s||[]).forEach(n1=>(n1.n2s||[]).forEach(n2=>{
+    total++;
+    const st=statusEntregaEAP(n2.name, cronoPorNome);
+    if(st&&st.cls==='concluida') concluidas++;
+    else if(st&&st.cls==='atrasada') atrasadas++;
+  }));
+  return {total, concluidas, atrasadas};
+}
+function renderResumoEntregas(n1s, cronoPorNome, host){
+  if(!host) return;
+  if(!cronoPorNome){ host.innerHTML=''; return; }
+  const r=resumoEntregasEAP(n1s, cronoPorNome);
+  if(!r.total){ host.innerHTML=''; return; }
+  const pct=Math.round((r.concluidas/r.total)*100);
+  host.innerHTML=`<div class="eap-resumo">`
+    +`<span><b>${pct}%</b> das entregas concluídas (${r.concluidas} de ${r.total})</span>`
+    +(r.atrasadas?`<span><b>${r.atrasadas}</b> entrega${r.atrasadas===1?'':'s'} atrasada${r.atrasadas===1?'':'s'}</span>`:'')
+    +`</div>`;
+}
+function renderTree(nome,n1s,host,hintId,cronoPorNome){
   if(!n1s||!n1s.length){host.innerHTML='<p style="color:var(--muted);font-size:13px;text-align:center">Nenhum pacote de trabalho cadastrado.</p>'; if(hintId){const h=document.getElementById(hintId); if(h) h.style.display='none';} return;}
   let html=`<div class="t-root"><div class="t-root-box">${esc(nome)}</div><div class="t-vline"></div><div class="t-hrow">`;
   n1s.forEach((n1,i)=>{
@@ -1014,7 +1082,8 @@ function renderTree(nome,n1s,host,hintId){
     if(n1.n2s&&n1.n2s.length){
       html+=`<div class="t-vline2"></div><div class="t-hrow2">`;
       n1.n2s.forEach((n2,j)=>{
-        html+=`<div class="t-col2"><div class="t-n2">${esc(n2.name||'(sem nome)')}<div class="t-code">${i+1}.${j+1}</div></div>`;
+        const st=statusEntregaEAP(n2.name, cronoPorNome);
+        html+=`<div class="t-col2"><div class="t-n2">${esc(n2.name||'(sem nome)')}<div class="t-code">${i+1}.${j+1}</div>${st?`<span class="entrega-status ${st.cls}">${st.label}</span>`:''}</div>`;
         if(n2.n3s&&n2.n3s.length){
           html+=`<div class="t-n3list">`;
           n2.n3s.forEach((n3,k)=>{
@@ -1037,11 +1106,17 @@ function renderTree(nome,n1s,host,hintId){
   }
 }
 
-function previewTree(){
+async function previewTree(){
   const nome=(document.getElementById('nomeProjeto').value||'').trim()||'(Projeto)';
+  const n1s=readForm();
+  const projetoId=document.getElementById('projetoSelect').value;
   document.getElementById('tree-preview').style.display='block';
-  renderTree(nome, readForm(), document.getElementById('tree-area'), 'tree-hint');
   document.getElementById('tree-preview').scrollIntoView({behavior:'smooth',block:'start'});
+  renderTree(nome, n1s, document.getElementById('tree-area'), 'tree-hint');
+  document.getElementById('tree-resumo').innerHTML='';
+  const cronoPorNome=await buscarCronogramaPlanPorNome(projetoId);
+  renderTree(nome, n1s, document.getElementById('tree-area'), 'tree-hint', cronoPorNome);
+  renderResumoEntregas(n1s, cronoPorNome, document.getElementById('tree-resumo'));
 }
 
 function scrollTreeBy(id,dir){
@@ -1230,13 +1305,14 @@ function renderList(){
   html+='</tbody></table>'; body.innerHTML=html;
 }
 
-function openDrawer(id){
+async function openDrawer(id){
   const r=cache.find(x=>x.id===id); if(!r) return; currentId=id;
   document.getElementById('d-proj').textContent=r.nomeProjeto;
   document.getElementById('d-proto').textContent=r.protocolo+' · '+fmtStamp(r.createdAt);
   document.getElementById('d-status').value=r.status;
   const body=document.getElementById('d-body');
   body.innerHTML=`<p style="font-size:11px;color:var(--muted);font-weight:600;margin:0 0 14px">GERENTE: ${esc(r.gerente||'—')} &nbsp;|&nbsp; UNIDADE: ${esc(r.unidade||'—')}</p>
+    <div id="d-resumo"></div>
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
       <span class="tree-hint" id="d-tree-hint" style="display:none">Role para o lado para ver todos os itens</span>
       <div class="tree-nav" style="margin-left:auto">
@@ -1250,6 +1326,10 @@ function openDrawer(id){
   regHistoricoAberto=false;
   document.getElementById('overlay').classList.add('show');
   document.getElementById('drawer').classList.add('show');
+  const cronoPorNome=await buscarCronogramaPlanPorNome(r.projetoId);
+  if(currentId!==id) return;
+  renderTree(r.nomeProjeto, r.n1s, document.getElementById('drawer-tree'), 'd-tree-hint', cronoPorNome);
+  renderResumoEntregas(r.n1s, cronoPorNome, document.getElementById('d-resumo'));
 }
 function closeDrawer(){document.getElementById('overlay').classList.remove('show'); document.getElementById('drawer').classList.remove('show'); currentId=null;}
 let regHistoricoAberto=false;
