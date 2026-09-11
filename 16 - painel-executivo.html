@@ -408,6 +408,16 @@ function ensureAuthenticated(){
         </div>
       </div>
 
+      <div class="sec-title">Custos por categoria (portfólio)</div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Categoria</th><th>Projetos com esta categoria</th><th>Acima do estimado</th><th>% estourado</th></tr></thead>
+            <tbody id="tbody-custos-categoria"></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="sec-title">Registros por formulário</div>
       <div class="card">
         <div class="table-wrap">
@@ -559,6 +569,20 @@ async function carregarPainel(){
   document.getElementById('kpi-riscos-criticos').textContent = riscosCriticos;
   document.getElementById('kpi-riscos-altos').textContent = riscosAltosCount;
 
+  // 4.2) Custos por categoria (portfolio) — em quantos projetos cada categoria estoura o estimado do TAP
+  var custosCategoria = calcularCustosPorCategoriaPortfolio(relsit, todosOsTaps);
+  var tbodyCustos = document.getElementById('tbody-custos-categoria');
+  if(!custosCategoria.length){
+    tbodyCustos.innerHTML = '<tr><td colspan="4" class="empty">Nenhum projeto com custo estimado no TAP e custo realizado no Relatório de Situação ainda.</td></tr>';
+  } else {
+    tbodyCustos.innerHTML = custosCategoria.map(function(c){
+      var pctEstourado = Math.round((c.acima/c.comEstimativa)*100);
+      var cls = c.acima===0 ? 's-ok' : (pctEstourado>=50 ? 's-bad' : 's-warn');
+      return '<tr><td><b>'+esc(c.nome)+'</b></td><td>'+c.comEstimativa+'</td><td>'+c.acima+'</td>'
+        + '<td><span class="s-badge '+cls+'">'+pctEstourado+'%</span></td></tr>';
+    }).join('');
+  }
+
   // 5) Portfólio de projetos (tabela compartilhada `projetos`)
   var rProj = await fetch(unialfaAuth.REST_BASE + '/projetos?select=id,nome,unidade,gerente,status,atualizado_em&order=nome', { headers: unialfaAuth.authHeaders() });
   var projetos = rProj.ok ? await rProj.json() : [];
@@ -626,6 +650,41 @@ function riscosAltosAbertos(tap){
     var sev = severidadeRisco(r.prob, r.impacto);
     return sev && (sev.nivel==='Alto' || sev.nivel==='Crítico');
   }).length;
+}
+/* Para cada categoria de custo (casada pelo nome, sem acento/maiuscula - mesmo casamento do botao
+   "Importar categorias do TAP"), conta em quantos projetos do portfolio ela tem estimativa no TAP
+   e em quantos desses o Realizado (Relatorio de Situacao) ultrapassou o Estimado - para achar
+   categorias que estouram o orcamento sistematicamente, nao so num projeto isolado. So entram
+   projetos com Projeto vinculado, custo estimado no TAP e custo realizado registrado. */
+function calcularCustosPorCategoriaPortfolio(relsit, tapDocs){
+  var porCategoria = {};
+  ((relsit && relsit.projetos) || []).forEach(function(p){
+    if(!p.projetoId || !Array.isArray(p.custosRealizados) || !p.custosRealizados.length) return;
+    var tap = (tapDocs||[]).find(function(t){ return t.projetoId===p.projetoId; });
+    if(!tap || !Array.isArray(tap.custos) || !tap.custos.length) return;
+    var estimadoPorCat = {};
+    tap.custos.forEach(function(c){
+      var nome=(c.item||'').trim();
+      if(!nome) return;
+      var key=nome.toLowerCase();
+      estimadoPorCat[key] = (estimadoPorCat[key]||0) + parseBRL(c.valor);
+      if(!porCategoria[key]) porCategoria[key] = { nome: nome, comEstimativa: 0, acima: 0 };
+    });
+    var realizadoPorCat = {};
+    p.custosRealizados.forEach(function(c){
+      var nome=(c.categoria||'').trim();
+      if(!nome) return;
+      var key=nome.toLowerCase();
+      realizadoPorCat[key] = (realizadoPorCat[key]||0) + parseBRL(c.valor);
+    });
+    Object.keys(estimadoPorCat).forEach(function(key){
+      if(estimadoPorCat[key]<=0) return;
+      porCategoria[key].comEstimativa++;
+      if((realizadoPorCat[key]||0) > estimadoPorCat[key]) porCategoria[key].acima++;
+    });
+  });
+  return Object.values(porCategoria).filter(function(c){ return c.comEstimativa>0; })
+    .sort(function(a,b){ return b.acima-a.acima || b.comEstimativa-a.comEstimativa; });
 }
 /* Saude do projeto: cruza marcos do Planejamento e Desenvolvimento de Projeto (plan), custos do
    Relatorio de Situacao (sit) com os custos estimados do TAP (tap), e riscos Alto/Critico em aberto
