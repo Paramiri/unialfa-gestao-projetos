@@ -57,6 +57,15 @@
 .gantt-connector{stroke:var(--ink); stroke-width:1.5; fill:none; opacity:.55}
 .gantt-connector-arrow{fill:var(--ink); opacity:.55}
 .gantt-legend i.critico{background:transparent; border:2px dashed rgba(0,0,0,.55)}
+.custo-comp-t{width:100%; border-collapse:collapse; font-size:12.5px}
+.custo-comp-t th{text-align:left; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); padding:8px 10px; border-bottom:1px solid var(--line); background:var(--surface-2)}
+.custo-comp-t td{padding:8px 10px; border-bottom:1px solid var(--line)}
+.custo-comp-t tr:last-child td{border-bottom:none}
+.custo-comp-row.acima{background:var(--bad-soft,#FBE7EC)}
+.custo-status-badge{display:inline-flex; align-items:center; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px; white-space:nowrap}
+.custo-status-badge.dentro{background:var(--ok-soft); color:var(--ok)}
+.custo-status-badge.acima{background:var(--bad-soft); color:var(--bad)}
+.custo-status-badge.neutro{background:var(--surface-2); color:var(--muted); border:1px solid var(--line-strong)}
 .carga-bar{position:absolute; height:18px; border-radius:4px; background:rgba(29,78,216,.45)}
 .gantt-label-row.sobrecarga{background:rgba(159,18,57,.08)}
 .gantt-legend i.carga-swatch{background:rgba(29,78,216,.6); border-radius:3px}
@@ -561,7 +570,7 @@ function ensureAuthenticated(){
       <h1>Relatório de Situação de Projetos</h1>
       <p>Escritório de Projetos · Visão geral e por programa/projeto</p>
     </div>
-    <a class="head-help" href="15 - central-ajuda.html?v=43#relatorio-situacao" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
+    <a class="head-help" href="15 - central-ajuda.html?v=44#relatorio-situacao" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
     <div class="head-meta">
       <div class="head-meta-item"><span>Referência</span><b id="hd-ref">—</b></div>
       <div class="head-meta-item"><span>Responsável</span><b id="hd-resp">—</b></div>
@@ -1712,9 +1721,16 @@ function buildProjCard(p,i){
         <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase">Custos realizados</div>
         <span style="font-size:11px;color:var(--muted)">Total gasto: <b id="custos-total-${i}">R$ 0,00</b></span>
       </div>
-      <div id="custos-${i}"></div>
-      <button class="btn btn-sm btn-ghost" style="margin-top:6px" onclick="addCustoRealizado(${i})">+ Categoria</button>
-      <button type="button" class="btn btn-sm btn-ghost" style="margin-top:6px; display:${p.projetoId?'inline-flex':'none'}" id="importCustosBtn-${i}" onclick="importarCustosTAP(${i})">↓ Importar categorias do TAP</button>
+      <div class="gantt-toggle">
+        <button type="button" class="gantt-toggle-btn active" data-view="lista">📋 Lista</button>
+        <button type="button" class="gantt-toggle-btn" data-view="comparativo">📊 Comparativo por categoria</button>
+      </div>
+      <div id="custos-lista-${i}">
+        <div id="custos-${i}"></div>
+        <button class="btn btn-sm btn-ghost" style="margin-top:6px" onclick="addCustoRealizado(${i})">+ Categoria</button>
+        <button type="button" class="btn btn-sm btn-ghost" style="margin-top:6px; display:${p.projetoId?'inline-flex':'none'}" id="importCustosBtn-${i}" onclick="importarCustosTAP(${i})">↓ Importar categorias do TAP</button>
+      </div>
+      <div id="custos-comparativo-${i}" style="display:none"></div>
     </div>`;
   div.querySelectorAll('input,select,textarea').forEach(el=>{
     el.addEventListener('input',()=>{
@@ -1725,7 +1741,68 @@ function buildProjCard(p,i){
   setTimeout(()=>renderMarcosEditor(i,p.marcos||[]),0);
   setTimeout(()=>renderCustosEditor(i,p.custosRealizados||[]),0);
   setTimeout(()=>atualizarBotaoIA(i),0);
+  setTimeout(()=>mountCustosToggle(i),0);
   return div;
+}
+/* Alterna entre a lista editavel de custos realizados e um comparativo por categoria (Estimado no
+   TAP x Realizado), somente leitura. A edicao continua sempre pela lista. */
+function mountCustosToggle(pi){
+  const listaEl=document.getElementById('custos-lista-'+pi);
+  const div=listaEl?listaEl.parentElement:null;
+  if(!div) return;
+  div.querySelectorAll('.gantt-toggle-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      div.querySelectorAll('.gantt-toggle-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const view=btn.dataset.view;
+      document.getElementById('custos-lista-'+pi).style.display=view==='lista'?'':'none';
+      document.getElementById('custos-comparativo-'+pi).style.display=view==='comparativo'?'':'none';
+      if(view==='comparativo'){
+        const projetoId=data.projetos[pi].projetoId;
+        const custosTAP=projetoId?await buscarCustosTAP(projetoId):[];
+        renderComparativoCustos(data.projetos[pi].custosRealizados||[], custosTAP, document.getElementById('custos-comparativo-'+pi));
+      }
+    });
+  });
+}
+/* Compara, por categoria, o custo Estimado no TAP (campo `item`) com o Realizado no Relatorio de
+   Situacao (campo `categoria`) - mesmo casamento de nome (sem acento/maiuscula) ja usado pelo botao
+   `Importar categorias do TAP`. Categorias que so existem de um lado tambem aparecem, marcadas como
+   `Sem estimativa no TAP` (realizado sem contrapartida) ou com Realizado zerado (estimado ainda nao
+   gasto). */
+function renderComparativoCustos(custosRealizados, custosTAP, host){
+  if(!host) return;
+  const porCategoria={};
+  (custosTAP||[]).forEach(c=>{
+    const nome=(c.item||'').trim();
+    if(!nome) return;
+    if(!porCategoria[nome]) porCategoria[nome]={estimado:0, realizado:0};
+    porCategoria[nome].estimado+=parseBRL(c.valor);
+  });
+  (custosRealizados||[]).forEach(c=>{
+    const nome=(c.categoria||'').trim();
+    if(!nome) return;
+    let key=Object.keys(porCategoria).find(function(k){ return k.toLowerCase()===nome.toLowerCase(); });
+    if(!key){ key=nome; porCategoria[key]={estimado:0, realizado:0}; }
+    porCategoria[key].realizado+=parseBRL(c.valor);
+  });
+  const categorias=Object.keys(porCategoria);
+  if(!categorias.length){ host.innerHTML='<div class="gantt-empty">Nenhuma categoria de custo estimado ou realizado para comparar.</div>'; return; }
+  const rowsHtml=categorias.map(function(nome){
+    const v=porCategoria[nome];
+    const temEstimado=v.estimado>0;
+    const pct=temEstimado?Math.round((v.realizado/v.estimado)*100):null;
+    const statusCls=!temEstimado?'neutro':(v.realizado<=v.estimado?'dentro':'acima');
+    const statusTxt=!temEstimado?'Sem estimativa no TAP':(v.realizado<=v.estimado?'Dentro do estimado':'Acima do estimado');
+    return '<tr class="custo-comp-row '+statusCls+'">'
+      +'<td>'+esc(nome)+'</td>'
+      +'<td>'+(temEstimado?fmtBRL(v.estimado.toFixed(2).replace('.',',')):'—')+'</td>'
+      +'<td>'+fmtBRL(v.realizado.toFixed(2).replace('.',','))+'</td>'
+      +'<td>'+(pct!=null?pct+'%':'—')+'</td>'
+      +'<td><span class="custo-status-badge '+statusCls+'">'+statusTxt+'</span></td>'
+      +'</tr>';
+  }).join('');
+  host.innerHTML='<div class="table-wrap"><table class="custo-comp-t"><thead><tr><th>Categoria</th><th>Estimado (TAP)</th><th>Realizado</th><th>%</th><th>Status</th></tr></thead><tbody>'+rowsHtml+'</tbody></table></div>';
 }
 
 async function renderMarcosEditor(pi,marcosSalvos){
