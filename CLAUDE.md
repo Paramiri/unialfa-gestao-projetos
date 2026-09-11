@@ -50,7 +50,16 @@ Como sincronizar:
 3. Confirmar a publicação fazendo polling no GitHub Pages do espelho (`https://paramiri.github.io/unialfa-gestao-projetos-treino/...`) até o conteúdo novo aparecer — mesmo procedimento do "Padrão de deploy" abaixo, aplicado ao repositório-espelho.
 4. Se a mudança envolver uma Edge Function nova ou alterada, reimplantá-la também no projeto de treinamento (`supabase functions deploy <nome> --project-ref uuxvdulunrwppbmofyux`) — sem copiar nenhum secret real de e-mail/IA (`RESEND_API_KEY`, `VAPID_*`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`) para lá, propositalmente, para o ambiente de treino nunca poder disparar e-mail real, push real nem chamada de IA paga.
 
-Se a mudança alterar o formato dos dados salvos por algum formulário (novo campo no objeto salvo no `kv_store`, nova coluna em `projetos`/`projeto_equipe`/`projeto_historico`), também avaliar se `treino/treino_seed.sql` precisa de ajuste para continuar gerando dados de exemplo válidos.
+**Regra permanente (dados de exemplo):** sempre que uma mudança alterar o formato dos dados salvos por algum formulário (novo campo no objeto do `kv_store`, nova coluna em `projetos`/`projeto_equipe`/`projeto_historico`/`registro_historico`) ou introduzir uma funcionalidade que dependa de dado que os 7 projetos de exemplo do treino ainda não têm (ex.: severidade de risco no TAP, datas reais no cronograma, nomes de entrega/categoria casando entre formulários) — atualizar `treino/treino_seed.sql` para os exemplos passarem a **demonstrar** a funcionalidade nova, não só aceitar o dado sem erro. Isso vale tanto para mudanças feitas por mim quanto pelo usuário — mesmo padrão de obrigatoriedade já usado para o Manual de Uso e a Central de Ajuda, não uma avaliação opcional. Já aconteceu de o seed ficar desatualizado por vários ciclos de feature sem ninguém perceber (riscos sem severidade, cronograma com campos antigos) — o `?` do sistema não mostra isso, só fica visível quando alguém entra no ambiente de treino.
+
+Como sincronizar os dados de exemplo (além do código, no item acima):
+1. Editar `treino/treino_seed.sql` com o ajuste necessário, validando cada bloco JSON alterado antes de aplicar (ex.: `ConvertFrom-Json` via PowerShell, já que este ambiente não tem Node/Python).
+2. Replicar a MESMA mudança dentro da constante `SEED_SQL` embutida em `supabase/functions/reset-treino/index.ts` — os dois precisam ficar com o mesmo conteúdo (ver o comentário no topo do arquivo); reconstruir o arquivo colando o novo `treino_seed.sql` entre o prefixo/sufixo existentes é mais seguro que editar o `.ts` linha a linha.
+3. Reimplantar a Edge Function atualizada em produção: `supabase functions deploy reset-treino --project-ref fiarntunpqteopwjkhjg`.
+4. Rodar o reset diretamente no banco de treinamento via Supabase CLI, para o ambiente já refletir a mudança sem exigir que alguém clique no botão manualmente:
+   `supabase link --project-ref uuxvdulunrwppbmofyux` → `supabase db query --linked --file treino/treino_reset.sql` → `supabase db query --linked --file treino/treino_seed.sql` → `supabase link --project-ref fiarntunpqteopwjkhjg` (voltar para produção).
+5. Conferir o resultado com uma consulta rápida (`supabase db query --linked "select ..."`) antes de considerar concluído.
+6. Commitar `treino/treino_seed.sql` e `supabase/functions/reset-treino/index.ts` juntos — esses dois arquivos só existem no repositório de produção, não no espelho, então não entram no passo de cópia para o repositório-espelho acima.
 
 ## Padrão de deploy
 
