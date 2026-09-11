@@ -80,6 +80,9 @@
   table.dyn-t td{padding:4px 6px; border-bottom:1px solid var(--surface)}
   table.dyn-t tbody tr:last-child td{border-bottom:none}
   table.dyn-t input, table.dyn-t select{border:1px solid transparent; border-radius:6px; padding:8px; font-size:12.5px; background:var(--surface-2); min-width:95px; width:100%; box-sizing:border-box}
+  #tbl-cronograma input[data-k="dep"]{min-width:48px; padding-left:6px; padding-right:6px}
+  #tbl-cronograma textarea[data-k="custo"]{min-width:60px}
+  #tbl-cronograma textarea[data-k="resp"]{min-width:56px}
   table.dyn-t input:focus, table.dyn-t select:focus{background:#fff; border-color:var(--red); box-shadow:none}
   table.dyn-t textarea{border:1px solid transparent; border-radius:6px; padding:8px; font-size:12.5px; background:var(--surface-2); min-width:95px; width:100%; box-sizing:border-box; font-family:var(--font); color:var(--ink); resize:none; overflow:hidden; display:block; line-height:1.4; min-height:34px}
   table.dyn-t textarea:focus{background:#fff; border-color:var(--red); box-shadow:none; outline:none}
@@ -638,7 +641,7 @@ window.unialfaHistorico = {
         <h1>Planejamento e Desenvolvimento de Projeto</h1>
         <p>Dossiê de ciclo de vida do projeto · Gerência de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=36#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=37#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00325</b></div>
@@ -868,14 +871,14 @@ const STAGES=[
   ]},
   {id:'crono', tab:'3 · Cronograma', title:'Cronograma', sub:'Marcos e prazos', blocks:[
     {kind:'table', key:'cronograma', label:'Marcos do projeto', mainKey:'marco', seed:3, cols:[
-      {key:'seq',label:'Nº',type:'auto',w:'5%'},
-      {key:'marco',label:'Marco / Entrega',type:'text',w:'18%',long:true},
-      {key:'resp',label:'Responsável',type:'text',w:'12%',long:true},
+      {key:'seq',label:'Nº',type:'auto',w:'4%'},
+      {key:'marco',label:'Marco / Entrega',type:'text',w:'14%',long:true},
+      {key:'resp',label:'Responsável',type:'text',w:'9%',long:true},
       {key:'ini',label:'Início previsto',type:'date',w:'15%'},
       {key:'fim',label:'Término previsto',type:'date',w:'15%'},
       {key:'concl',label:'Conclusão real',type:'date',w:'15%'},
-      {key:'custo',label:'Custo',type:'text',w:'8%',long:true},
-      {key:'dep',label:'Depende do nº',type:'text',w:'7%'},
+      {key:'custo',label:'Custo',type:'text',w:'12%',long:true},
+      {key:'dep',label:'Depende nº',type:'text',w:'9%'},
     ]},
   ]},
   {id:'entradas', tab:'4 · Entradas', title:'Entradas do projeto', sub:'Requisitos e fontes', blocks:[
