@@ -570,7 +570,7 @@ function ensureAuthenticated(){
       <h1>Relatório de Situação de Projetos</h1>
       <p>Escritório de Projetos · Visão geral e por programa/projeto</p>
     </div>
-    <a class="head-help" href="15 - central-ajuda.html?v=57#relatorio-situacao" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
+    <a class="head-help" href="15 - central-ajuda.html?v=58#relatorio-situacao" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
     <div class="head-meta">
       <div class="head-meta-item"><span>Referência</span><b id="hd-ref">—</b></div>
       <div class="head-meta-item"><span>Responsável</span><b id="hd-resp">—</b></div>
@@ -1463,9 +1463,9 @@ function sinalizacaoBadge(sig){
   return `<span class="s-badge ${cls}"${title}>${sig.label}</span>`;
 }
 
-function showView(v){
+async function showView(v){
   if(__liveData && v!=='painel'){ toast('Volte à versão atual para editar (botão no aviso amarelo).',false); return; }
-  if(v==='editar'){ iniciarLock(KEY); iniciarAvisoAoVivo(KEY); } else { liberarLock(); pararAvisoAoVivo(); }
+  if(v==='editar'){ iniciarLock(KEY); iniciarAvisoAoVivo(KEY); await entrarModoEdicao(); } else { liberarLock(); pararAvisoAoVivo(); sairModoEdicao(); }
   ['painel','editar','importar'].forEach(x=>{document.getElementById('view-'+x).style.display=x===v?'block':'none';});
   document.querySelectorAll('.vtab').forEach((b,i)=>b.setAttribute('aria-selected',['painel','editar','importar'][i]===v));
   if(v==='painel') renderPainel();
@@ -1476,18 +1476,87 @@ function showView(v){
 function novoId(){ return 'g_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8); }
 async function loadData(){
   try{const r=await window.storage.get(KEY);if(r&&r.value){data=JSON.parse(r.value);}dataBaseUpdatedAt=r?r.updatedAt:null;}catch(e){console.warn(e);}
+  if(!data.projetos) data.projetos=[];
   if(!data.entraves) data.entraves=[];
   if(!data.encaminhamentos) data.encaminhamentos=[];
   if(!data.resultados) data.resultados=[];
-  // Identidade estável (id) para comparar o mesmo item entre versões salvas (Relatório de Resultados).
-  // Backfill: itens salvos antes desta mudança ainda não têm id.
+  // Identidade estável (id) para comparar o mesmo item entre versões salvas (Relatório de Resultados) e para mesclar
+  // edições concorrentes por item (edição simultânea). Backfill: itens salvos antes desta mudança ainda não têm id.
+  data.projetos.forEach(function(it){ if(!it.id) it.id=novoId(); });
   data.entraves.forEach(function(it){ if(!it.id) it.id=novoId(); });
   data.encaminhamentos.forEach(function(it){ if(!it.id) it.id=novoId(); });
+  data.resultados.forEach(function(it){ if(!it.id) it.id=novoId(); });
+}
+
+/* ---------- edição simultânea: mesclagem por item (em vez de bloquear o relatório inteiro) ---------- */
+const RELSIT_HEADER_FIELDS=['ref','resp','fin','entr'];
+const RELSIT_LISTAS=['projetos','entraves','encaminhamentos','resultados'];
+let dataBaseline=null; // estado das listas e do cabeçalho no início da sessão de edição
+let sessaoEdicaoAtiva=false;
+function snapshotBaseline(d){
+  const b={};
+  RELSIT_HEADER_FIELDS.forEach(c=>b[c]=d[c]);
+  RELSIT_LISTAS.forEach(l=>b[l]=JSON.parse(JSON.stringify(d[l]||[])));
+  return b;
+}
+function camposMudaram(baseline,atual,campos){
+  return campos.some(c=>JSON.stringify(baseline?baseline[c]:undefined)!==JSON.stringify(atual?atual[c]:undefined));
+}
+function mesclarLista(baseline,minha,deles,chave){
+  baseline=baseline||[]; minha=minha||[]; deles=deles||[];
+  const baseStr=new Map(baseline.map(x=>[x[chave],JSON.stringify(x)]));
+  const minhaMap=new Map(minha.map(x=>[x[chave],x]));
+  const delesMap=new Map(deles.map(x=>[x[chave],x]));
+  const meusToques=new Map();
+  minhaMap.forEach((item,k)=>{ const antigo=baseStr.get(k); if(antigo===undefined||antigo!==JSON.stringify(item)) meusToques.set(k,item); });
+  const minhasExclusoes=new Set();
+  baseStr.forEach((_,k)=>{ if(!minhaMap.has(k)) minhasExclusoes.add(k); });
+  const resultadoMap=new Map(delesMap);
+  minhasExclusoes.forEach(k=>resultadoMap.delete(k));
+  meusToques.forEach((item,k)=>resultadoMap.set(k,item));
+  const ordem=[];
+  deles.forEach(x=>{ if(resultadoMap.has(x[chave])&&!ordem.includes(x[chave])) ordem.push(x[chave]); });
+  minha.forEach(x=>{ if(resultadoMap.has(x[chave])&&!ordem.includes(x[chave])) ordem.push(x[chave]); });
+  return ordem.map(k=>resultadoMap.get(k));
+}
+async function entrarModoEdicao(){
+  if(sessaoEdicaoAtiva) return;
+  try{
+    const fresh=await window.storage.get(KEY);
+    if(fresh&&fresh.value){
+      const freshData=JSON.parse(fresh.value);
+      if(!freshData.projetos) freshData.projetos=[];
+      if(!freshData.entraves) freshData.entraves=[];
+      if(!freshData.encaminhamentos) freshData.encaminhamentos=[];
+      if(!freshData.resultados) freshData.resultados=[];
+      data=freshData;
+      dataBaseUpdatedAt=fresh.updatedAt;
+    }
+  }catch(e){}
+  dataBaseline=snapshotBaseline(data);
+  sessaoEdicaoAtiva=true;
+}
+function sairModoEdicao(){
+  sessaoEdicaoAtiva=false;
+  dataBaseline=null;
 }
 async function saveData(){
   try{
-    const r=await window.storage.set(KEY,JSON.stringify(data),dataBaseUpdatedAt);
+    if(!dataBaseline){
+      const r=await window.storage.set(KEY,JSON.stringify(data),dataBaseUpdatedAt);
+      if(r&&r.updatedAt) dataBaseUpdatedAt=r.updatedAt;
+      return true;
+    }
+    const fresh=await window.storage.get(KEY);
+    const freshData=(fresh&&fresh.value)?JSON.parse(fresh.value):{ref:'',resp:'',fin:'',entr:'',projetos:[],entraves:[],encaminhamentos:[],resultados:[]};
+    if(camposMudaram(dataBaseline,freshData,RELSIT_HEADER_FIELDS)){
+      toast(mensagemErroSalvar({kind:'conflict'}));
+      return false;
+    }
+    RELSIT_LISTAS.forEach(l=>{ data[l]=mesclarLista(dataBaseline[l],data[l],freshData[l],'id'); });
+    const r=await window.storage.set(KEY,JSON.stringify(data),fresh?fresh.updatedAt:dataBaseUpdatedAt);
     if(r&&r.updatedAt) dataBaseUpdatedAt=r.updatedAt;
+    dataBaseline=snapshotBaseline(data);
     return true;
   }catch(e){ toast(mensagemErroSalvar(e)); return false; }
 }
@@ -1803,7 +1872,7 @@ function renderResultadosEditor(){
 }
 function addResultado(){
   if(!data.resultados) data.resultados=[];
-  data.resultados.push({desc:'',tipo:'Indicador',planejado:'',alcancado:''});
+  data.resultados.push({id:novoId(),desc:'',tipo:'Indicador',planejado:'',alcancado:''});
   renderResultadosEditor();
 }
 function removeResultado(i){data.resultados.splice(i,1);renderResultadosEditor();}
@@ -2044,7 +2113,7 @@ async function importarCustosTAP(i){
 }
 
 function addProjeto(){
-  data.projetos.push({cod:'',nome:'',programa:'',resp:'',status:'A iniciar',pct:'0',inicio:'',termino:'',atencao:'',destaque:'',marcos:[],custosRealizados:[]});
+  data.projetos.push({id:novoId(),cod:'',nome:'',programa:'',resp:'',status:'A iniciar',pct:'0',inicio:'',termino:'',atencao:'',destaque:'',marcos:[],custosRealizados:[]});
   const ed=document.getElementById('proj-editor');
   ed.appendChild(buildProjCard(data.projetos[data.projetos.length-1],data.projetos.length-1));
   ed.lastElementChild.scrollIntoView({behavior:'smooth',block:'start'});
@@ -2161,7 +2230,7 @@ async function confirmImport(){
   const novos=importedRows.filter(r=>cols.colNome&&r[cols.colNome]).map(r=>{
     const pct=parseInt(r[cols.colPct])||0;
     const status=pct===100?'Concluído':pct===0?'A iniciar':pct<50?'Atrasado':'No prazo';
-    return{cod:'',nome:r[cols.colNome]||'',programa:'',resp:r[cols.colResp]||'',status,pct:String(pct),inicio:r[cols.colInicio]||'',termino:r[cols.colTermino]||'',atencao:'',destaque:'',marcos:[]};
+    return{id:novoId(),cod:'',nome:r[cols.colNome]||'',programa:'',resp:r[cols.colResp]||'',status,pct:String(pct),inicio:r[cols.colInicio]||'',termino:r[cols.colTermino]||'',atencao:'',destaque:'',marcos:[]};
   });
   data.projetos=[...data.projetos,...novos];
   const ok=await saveData();

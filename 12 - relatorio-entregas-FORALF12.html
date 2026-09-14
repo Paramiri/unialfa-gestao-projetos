@@ -522,7 +522,7 @@ function ensureAuthenticated(){
       <h1>Relatório de Entregas e Benefícios</h1>
       <p>Ficha de programa e projetos vinculados · Escritório de Projetos</p>
     </div>
-    <a class="head-help" href="15 - central-ajuda.html?v=57#relatorio-entregas" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
+    <a class="head-help" href="15 - central-ajuda.html?v=58#relatorio-entregas" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
     <div class="head-badge">FORALF12</div>
   </div>
 
@@ -1014,11 +1014,79 @@ function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;',
 function nl(s){return esc(s).replace(/\n/g,'<br>')}
 
 /* ── storage ── */
-async function loadData(){try{const r=await window.storage.get(KEY);if(r&&r.value)data=JSON.parse(r.value);dataBaseUpdatedAt=r?r.updatedAt:null;}catch(e){console.warn(e);}if(!data.gate2)data.gate2=novoGate2();}
+function novoId(){ return 'g_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8); }
+async function loadData(){
+  try{const r=await window.storage.get(KEY);if(r&&r.value)data=JSON.parse(r.value);dataBaseUpdatedAt=r?r.updatedAt:null;}catch(e){console.warn(e);}
+  if(!data.gate2)data.gate2=novoGate2();
+  if(!data.projetos)data.projetos=[];
+  // Identidade estável (id) para mesclar edições concorrentes por item (edição simultânea).
+  // Backfill: itens salvos antes desta mudança ainda não têm id.
+  data.projetos.forEach(function(it){ if(!it.id) it.id=novoId(); });
+}
+
+/* ---------- edição simultânea: mesclagem por item (em vez de bloquear o relatório inteiro) ---------- */
+const RELENT_HEADER_FIELDS=['prog','gate2'];
+let dataBaseline=null; // estado de projetos e do cabeçalho (prog/gate2) no início da sessão de edição
+let sessaoEdicaoAtiva=false;
+function snapshotBaseline(d){
+  return { prog:JSON.parse(JSON.stringify(d.prog||{})), gate2:JSON.parse(JSON.stringify(d.gate2||novoGate2())), projetos:JSON.parse(JSON.stringify(d.projetos||[])) };
+}
+function camposMudaram(baseline,atual,campos){
+  return campos.some(c=>JSON.stringify(baseline?baseline[c]:undefined)!==JSON.stringify(atual?atual[c]:undefined));
+}
+function mesclarLista(baseline,minha,deles,chave){
+  baseline=baseline||[]; minha=minha||[]; deles=deles||[];
+  const baseStr=new Map(baseline.map(x=>[x[chave],JSON.stringify(x)]));
+  const minhaMap=new Map(minha.map(x=>[x[chave],x]));
+  const delesMap=new Map(deles.map(x=>[x[chave],x]));
+  const meusToques=new Map();
+  minhaMap.forEach((item,k)=>{ const antigo=baseStr.get(k); if(antigo===undefined||antigo!==JSON.stringify(item)) meusToques.set(k,item); });
+  const minhasExclusoes=new Set();
+  baseStr.forEach((_,k)=>{ if(!minhaMap.has(k)) minhasExclusoes.add(k); });
+  const resultadoMap=new Map(delesMap);
+  minhasExclusoes.forEach(k=>resultadoMap.delete(k));
+  meusToques.forEach((item,k)=>resultadoMap.set(k,item));
+  const ordem=[];
+  deles.forEach(x=>{ if(resultadoMap.has(x[chave])&&!ordem.includes(x[chave])) ordem.push(x[chave]); });
+  minha.forEach(x=>{ if(resultadoMap.has(x[chave])&&!ordem.includes(x[chave])) ordem.push(x[chave]); });
+  return ordem.map(k=>resultadoMap.get(k));
+}
+async function entrarModoEdicao(){
+  if(sessaoEdicaoAtiva) return;
+  try{
+    const fresh=await window.storage.get(KEY);
+    if(fresh&&fresh.value){
+      const freshData=JSON.parse(fresh.value);
+      if(!freshData.gate2) freshData.gate2=novoGate2();
+      if(!freshData.projetos) freshData.projetos=[];
+      data=freshData;
+      dataBaseUpdatedAt=fresh.updatedAt;
+    }
+  }catch(e){}
+  dataBaseline=snapshotBaseline(data);
+  sessaoEdicaoAtiva=true;
+}
+function sairModoEdicao(){
+  sessaoEdicaoAtiva=false;
+  dataBaseline=null;
+}
 async function saveData(){
   try{
-    const r=await window.storage.set(KEY,JSON.stringify(data),dataBaseUpdatedAt);
+    if(!dataBaseline){
+      const r=await window.storage.set(KEY,JSON.stringify(data),dataBaseUpdatedAt);
+      if(r&&r.updatedAt) dataBaseUpdatedAt=r.updatedAt;
+      return true;
+    }
+    const fresh=await window.storage.get(KEY);
+    const freshData=(fresh&&fresh.value)?JSON.parse(fresh.value):{prog:{},gate2:novoGate2(),projetos:[]};
+    if(camposMudaram(dataBaseline,freshData,RELENT_HEADER_FIELDS)){
+      toast(mensagemErroSalvar({kind:'conflict'}));
+      return false;
+    }
+    data.projetos=mesclarLista(dataBaseline.projetos,data.projetos,freshData.projetos,'id');
+    const r=await window.storage.set(KEY,JSON.stringify(data),fresh?fresh.updatedAt:dataBaseUpdatedAt);
     if(r&&r.updatedAt) dataBaseUpdatedAt=r.updatedAt;
+    dataBaseline=snapshotBaseline(data);
     return true;
   }catch(e){ toast(mensagemErroSalvar(e)); return false; }
 }
@@ -1078,9 +1146,9 @@ function voltarVersaoAtual(){
 }
 
 /* ── views ── */
-function showView(v){
+async function showView(v){
   if(__liveData && v!=='painel'){ toast('Volte à versão atual para editar (botão no aviso amarelo).',false); return; }
-  if(v==='editar'){ iniciarLock(KEY); iniciarAvisoAoVivo(KEY); } else { liberarLock(); pararAvisoAoVivo(); }
+  if(v==='editar'){ iniciarLock(KEY); iniciarAvisoAoVivo(KEY); await entrarModoEdicao(); } else { liberarLock(); pararAvisoAoVivo(); sairModoEdicao(); }
   document.getElementById('view-painel').style.display=v==='painel'?'block':'none';
   document.getElementById('view-editar').style.display=v==='editar'?'block':'none';
   document.querySelectorAll('.vtab').forEach((b,i)=>b.setAttribute('aria-selected',['painel','editar'][i]===v));
@@ -1362,7 +1430,7 @@ function buildProjEditor(pr,i){
 }
 
 function addProjeto(){
-  data.projetos.push({codAcao:'',nome:'',unidade:'',resp:'',obj:'',publico:'',riscos:'',impacto:'',entregas:[],indicadores:[],valores:[]});
+  data.projetos.push({id:novoId(),codAcao:'',nome:'',unidade:'',resp:'',obj:'',publico:'',riscos:'',impacto:'',entregas:[],indicadores:[],valores:[]});
   renderProjEditor();
   document.querySelector('.add-proj-btn').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
