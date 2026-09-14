@@ -413,7 +413,7 @@ function ensureAuthenticated(){
       <h1>Plano de Comunicação de Projeto</h1>
       <p>Tipos de comunicação e o que é comunicado em cada uma · Escritório de Projetos</p>
     </div>
-    <a class="head-help" href="15 - central-ajuda.html?v=56#passo-10" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+    <a class="head-help" href="15 - central-ajuda.html?v=57#passo-10" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
   </div>
 
   <div class="view-tabs">
@@ -482,6 +482,7 @@ function ensureAuthenticated(){
 
 <div class="toast" id="toast"><span class="dot"></span><span id="toast-msg"></span></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 /* ---- Armazenamento persistente via Supabase (substitui window.storage) ---- */
 (function(){
@@ -629,22 +630,25 @@ let lockOwnedKey = null; // só fica preenchido quando NÓS somos donos do lock 
 function meuNomeEdicao(){ return (window.currentProfile && window.currentProfile.nome) || (window.currentUser && window.currentUser.email) || 'Alguém'; }
 function meuEmailEdicao(){ return window.currentUser ? window.currentUser.email : null; }
 function mostrarAvisoConflito(who, atIso){
+  if(avisoSalvouAtivo) return; // não sobrescreve o aviso mais urgente de "salvou agora" (Fase 3)
   let el=document.getElementById('lockBanner');
   if(!el){
     el=document.createElement('div');
     el.id='lockBanner';
-    el.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#FEF3C7;border-bottom:2px solid #F5E1B8;color:#92400E;padding:10px 20px;font-size:12.5px;font-weight:600;text-align:center';
     document.body.insertBefore(el, document.body.firstChild);
   }
+  el.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#FEF3C7;border-bottom:2px solid #F5E1B8;color:#92400E;padding:10px 20px;font-size:12.5px;font-weight:600;text-align:center';
   const hora=new Date(atIso).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   el.innerHTML='⚠ <b>'+esc(who)+'</b> está editando este registro desde '+hora+'. Combine com essa pessoa antes de salvar, para evitar conflito.';
   el.style.display='block';
 }
 function esconderAvisoConflito(){
+  if(avisoSalvouAtivo) return;
   const el=document.getElementById('lockBanner');
   if(el) el.style.display='none';
 }
 async function lockTick(key){
+  atualizarAuthRealtime();
   try{
     const r=await window.storage.get('lock:'+key);
     const meuEmail=meuEmailEdicao();
@@ -677,6 +681,58 @@ async function liberarLock(){
   const key=lockOwnedKey;
   pararLock();
   if(key){ try{ await window.storage.delete('lock:'+key); }catch(e){} }
+}
+
+/* ---------- edição simultânea: aviso ao vivo quando alguém salva (Fase 3, Supabase Realtime) ---------- */
+let rtClient = null;
+let rtChannel = null;
+let avisoSalvouAtivo = false;
+function rtSupabaseUrl(){ return window.unialfaAuth.REST_BASE.replace(/\/rest\/v1$/, ''); }
+function getRtClient(){
+  if(!rtClient && window.supabase && window.supabase.createClient){
+    try{ rtClient = window.supabase.createClient(rtSupabaseUrl(), window.unialfaAuth.ANON_KEY); }catch(e){}
+  }
+  return rtClient;
+}
+function atualizarAuthRealtime(){
+  const c = getRtClient();
+  const s = window.unialfaAuth ? window.unialfaAuth.getSession() : null;
+  if(c && s && s.access_token){ try{ c.realtime.setAuth(s.access_token); }catch(e){} }
+}
+function mostrarAvisoSalvouAoVivo(who){
+  avisoSalvouAtivo = true;
+  let el=document.getElementById('lockBanner');
+  if(!el){
+    el=document.createElement('div');
+    el.id='lockBanner';
+    document.body.insertBefore(el, document.body.firstChild);
+  }
+  el.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#FEE2E2;border-bottom:2px solid #FCA5A5;color:#991B1B;padding:10px 20px;font-size:12.5px;font-weight:600;text-align:center';
+  el.innerHTML='🔔 <b>'+esc(who)+'</b> salvou uma alteração neste registro agora, enquanto você editava. Atualize a página antes de continuar, para não perder nada. <button type="button" onclick="document.getElementById(\'lockBanner\').style.display=\'none\'; avisoSalvouAtivo=false;" style="margin-left:10px;background:transparent;border:1px solid #991B1B;color:#991B1B;border-radius:5px;padding:2px 8px;cursor:pointer;font-weight:700">Ok</button>';
+  el.style.display='block';
+}
+function iniciarAvisoAoVivo(key){
+  pararAvisoAoVivo();
+  const c = getRtClient();
+  if(!c) return;
+  atualizarAuthRealtime();
+  try{
+    rtChannel = c.channel('kv-'+key)
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'kv_store', filter:'key=eq.'+key }, async ()=>{
+        let quem='Alguém';
+        try{
+          const l=await window.storage.get('lock:'+key);
+          if(l&&l.value){ const p=JSON.parse(l.value); if(p.email!==meuEmailEdicao()) quem=p.nome||p.email||quem; }
+        }catch(e){}
+        mostrarAvisoSalvouAoVivo(quem);
+      })
+      .subscribe();
+  }catch(e){}
+}
+function pararAvisoAoVivo(){
+  if(rtClient && rtChannel){ try{ rtClient.removeChannel(rtChannel); }catch(e){} }
+  rtChannel = null;
+  avisoSalvouAtivo = false;
 }
 function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function nl(s){return esc(s).replace(/\n/g,'<br>');}
@@ -711,7 +767,7 @@ async function papelPermitido(chave){
 
 function showView(v){
   if(v==='editar' && !podeEditarPlano){ toast('A edição deste plano é restrita a PMO/Admin', false); return; }
-  if(v==='editar') iniciarLock(KEY); else liberarLock();
+  if(v==='editar'){ iniciarLock(KEY); iniciarAvisoAoVivo(KEY); } else { liberarLock(); pararAvisoAoVivo(); }
   document.getElementById('view-painel').style.display = v==='painel' ? 'block' : 'none';
   document.getElementById('view-editar').style.display = v==='editar' ? 'block' : 'none';
   document.querySelectorAll('.vtab').forEach((b,i)=>b.setAttribute('aria-selected', ['painel','editar'][i]===v));
