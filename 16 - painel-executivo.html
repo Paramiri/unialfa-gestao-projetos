@@ -432,6 +432,20 @@ function ensureAuthenticated(){
         </div>
       </div>
 
+      <div class="sec-title">Tarefas do cronograma (portfólio)</div>
+      <div class="kpi-row" style="grid-template-columns:1fr 1fr">
+        <div class="kpi blue">
+          <div class="kpi-label">% de tarefas concluídas</div>
+          <div class="kpi-value" id="kpi-tarefas-pct">—</div>
+          <div class="kpi-sub" id="kpi-tarefas-pct-sub">tarefas cadastradas dentro de marcos do cronograma</div>
+        </div>
+        <div class="kpi warn">
+          <div class="kpi-label">Projetos com tarefa pendente</div>
+          <div class="kpi-value" id="kpi-tarefas-pendentes">—</div>
+          <div class="kpi-sub">pelo menos uma tarefa ainda não concluída</div>
+        </div>
+      </div>
+
       <div class="sec-title">Registros por formulário</div>
       <div class="card">
         <div class="table-wrap">
@@ -611,6 +625,20 @@ async function carregarPainel(){
   }
   document.getElementById('kpi-eap-atrasados').textContent = eapPortfolio.projetosComAtraso;
 
+  // 4.4) Tarefas do cronograma (portfolio) — % de tarefas concluidas somando os marcos de todos os
+  // projetos, e em quantos projetos existe pelo menos uma tarefa pendente (Fase 3 da proposta de
+  // detalhamento do cronograma, Passo 4, aba 3)
+  var tarefasPortfolio = calcularTarefasPortfolioCronograma(registrosPorForm['plan:']);
+  if(tarefasPortfolio.total>0){
+    var pctTarefasPortfolio = Math.round((tarefasPortfolio.done/tarefasPortfolio.total)*100);
+    document.getElementById('kpi-tarefas-pct').textContent = pctTarefasPortfolio+'%';
+    document.getElementById('kpi-tarefas-pct-sub').textContent = tarefasPortfolio.done+' de '+tarefasPortfolio.total+' tarefas concluídas';
+  } else {
+    document.getElementById('kpi-tarefas-pct').textContent = '—';
+    document.getElementById('kpi-tarefas-pct-sub').textContent = 'Nenhum marco com tarefa cadastrada ainda';
+  }
+  document.getElementById('kpi-tarefas-pendentes').textContent = tarefasPortfolio.projetosComPendente;
+
   // 5) Portfólio de projetos (tabela compartilhada `projetos`)
   var rProj = await fetch(unialfaAuth.REST_BASE + '/projetos?select=id,nome,unidade,gerente,status,atualizado_em&order=nome', { headers: unialfaAuth.authHeaders() });
   var projetos = rProj.ok ? await rProj.json() : [];
@@ -755,6 +783,24 @@ function calcularEntregasPortfolioEAP(eapDocs, planDocs){
     if(temAtraso) projetosComAtraso++;
   });
   return { totalEntregas: totalEntregas, concluidas: concluidas, projetosComAtraso: projetosComAtraso };
+}
+/* Tarefas do cronograma (portfolio) — soma as tarefas de todos os marcos de todos os projetos com
+   Planejamento cadastrado (Fase 1 da proposta de detalhamento do cronograma) e conta em quantos
+   projetos existe pelo menos uma tarefa ainda nao concluida. */
+function calcularTarefasPortfolioCronograma(planDocs){
+  var total=0, done=0, projetosComPendente=0;
+  (planDocs||[]).forEach(function(p){
+    var temPendente=false;
+    (Array.isArray(p.cronograma)?p.cronograma:[]).forEach(function(m){
+      (Array.isArray(m.tarefas)?m.tarefas:[]).forEach(function(tf){
+        total++;
+        if(tf.concluida) done++;
+        else temPendente=true;
+      });
+    });
+    if(temPendente) projetosComPendente++;
+  });
+  return { total: total, done: done, projetosComPendente: projetosComPendente };
 }
 /* Saude do projeto: cruza marcos do Planejamento e Desenvolvimento de Projeto (plan), custos do
    Relatorio de Situacao (sit) com os custos estimados do TAP (tap), e riscos Alto/Critico em aberto
