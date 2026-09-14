@@ -2140,8 +2140,15 @@ async function changeStatus(){
   const statusAntigo=r.status;
   r.status=document.getElementById('d-status').value;
   try{
-    const toSave=Object.assign({},r); delete toSave.__key;
-    await window.storage.set(realKey(r), JSON.stringify(toSave));
+    const fresh=await window.storage.get(realKey(r));
+    if(fresh && fresh.value){
+      const atual=JSON.parse(fresh.value); delete atual.__key;
+      atual.status=r.status;
+      await window.storage.set(realKey(r), JSON.stringify(atual), fresh.updatedAt);
+    } else {
+      const toSave=Object.assign({},r); delete toSave.__key;
+      await window.storage.set(realKey(r), JSON.stringify(toSave));
+    }
     if(r.status!==statusAntigo && r.status==='Aprovado'){
       Promise.all([unialfaNotificar.emailsEquipe(r.projetoId), unialfaNotificar.emailsAdmins()]).then(([equipe,admins])=>{
         unialfaNotificar.enviar([r.criadoPorEmail].concat(equipe,admins),
@@ -2151,7 +2158,11 @@ async function changeStatus(){
     }
     renderList(); toast('Status atualizado para "'+r.status+'"');
   }
-  catch(e){ toast(mensagemErroSalvar(e,'atualizar o status'), false); }
+  catch(e){
+    r.status=statusAntigo;
+    document.getElementById('d-status').value=statusAntigo;
+    toast(mensagemErroSalvar(e,'atualizar o status'), false);
+  }
 }
 async function deleteCurrent(){
   const r=cache.find(x=>x.id===currentId); if(!r) return;

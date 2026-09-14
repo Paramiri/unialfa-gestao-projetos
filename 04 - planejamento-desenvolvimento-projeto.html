@@ -1985,9 +1985,24 @@ async function toggleRegistroHistorico(){
 }
 async function changeStatus(){
   const r=cache.find(x=>x.id===currentId); if(!r) return;
+  const statusAntigo=r.status;
   r.status=document.getElementById('d-status').value;
-  try{ await window.storage.set(KEY_PREFIX+r.id, JSON.stringify(r)); renderList(); toast('Status atualizado para "'+r.status+'"'); }
-  catch(e){ toast(mensagemErroSalvar(e,'atualizar o status'), false); }
+  try{
+    const fresh=await window.storage.get(KEY_PREFIX+r.id);
+    if(fresh && fresh.value){
+      const atual=JSON.parse(fresh.value);
+      atual.status=r.status;
+      await window.storage.set(KEY_PREFIX+r.id, JSON.stringify(atual), fresh.updatedAt);
+    } else {
+      await window.storage.set(KEY_PREFIX+r.id, JSON.stringify(r));
+    }
+    renderList(); toast('Status atualizado para "'+r.status+'"');
+  }
+  catch(e){
+    r.status=statusAntigo;
+    document.getElementById('d-status').value=statusAntigo;
+    toast(mensagemErroSalvar(e,'atualizar o status'), false);
+  }
 }
 async function deleteCurrent(){
   const r=cache.find(x=>x.id===currentId); if(!r) return;
