@@ -91,6 +91,8 @@ input:focus, select:focus{outline:none; border-color:var(--red); box-shadow:0 0 
 .entrega-status.atrasada{color:var(--bad); background:var(--bad-soft)}
 .entrega-status.no-prazo{color:var(--muted); background:var(--surface-2); border:1px solid var(--line-strong)}
 .entrega-status.sem-cronograma{color:var(--muted); background:transparent; border:1px dashed var(--line-strong)}
+.entrega-status.pendente{color:var(--warn); background:var(--warn-soft)}
+.entrega-status.sem-tarefa{color:var(--muted); background:transparent; border:1px dashed var(--line-strong)}
 .eap-resumo{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px; font-size:11.5px; color:var(--muted); font-weight:600}
 .eap-resumo b{color:var(--ink); font-weight:800}
 .add-btn{appearance:none; border:1.5px dashed; border-radius:7px; background:transparent; font-family:var(--font); font-weight:600; font-size:12px; cursor:pointer; padding:7px 14px; transition:all .15s; margin-top:6px; display:inline-flex; align-items:center; gap:6px;}
@@ -644,7 +646,7 @@ window.unialfaHistorico = {
         <h1>Estrutura Analítica de Projeto — EAP</h1>
         <p>Work Breakdown Structure (WBS) · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=52#passo-5" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=53#passo-5" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Referência</span><b>EAP / WBS</b></div>
@@ -1051,6 +1053,40 @@ function statusEntregaEAP(nomeEntrega, cronoPorNome){
   if(fim&&new Date()>fim) return {cls:'atrasada', label:'Atrasada'};
   return {cls:'no-prazo', label:'No prazo'};
 }
+/* Tarefas de todos os marcos do cronograma do Planejamento (Passo 4, aba 3), indexadas por nome
+   (trim + minusculo) - mesmo casamento por nome ja usado pelas Entregas com o marco inteiro, aqui
+   um nivel mais fundo: Atividade (nivel 3) com uma tarefa dentro de QUALQUER marco do projeto. */
+async function buscarTarefasPlanPorNome(projetoId){
+  if(!projetoId) return null;
+  const porNome={};
+  try{
+    const res=await window.storage.list('plan:');
+    const keys=(res&&res.keys)?res.keys:[];
+    for(const k of keys){
+      const r=await window.storage.get(k);
+      if(!r||!r.value) continue;
+      const plan=JSON.parse(r.value);
+      if(plan.projetoId!==projetoId) continue;
+      (Array.isArray(plan.cronograma)?plan.cronograma:[]).forEach(m=>{
+        (Array.isArray(m.tarefas)?m.tarefas:[]).forEach(tf=>{
+          const nome=(tf.nome||'').trim().toLowerCase();
+          if(nome) porNome[nome]=tf;
+        });
+      });
+      break;
+    }
+  }catch(e){}
+  return porNome;
+}
+/* Status automatico de uma Atividade (nivel 3), casando pelo nome com uma tarefa de algum marco
+   do cronograma. Sem data - a tarefa so tem nome/concluida - entao so ha "Concluida"/"Pendente"
+   (ou "Sem tarefa vinculada", quando nao ha correspondencia por nome). */
+function statusAtividadeEAP(nomeAtividade, tarefaPorNome){
+  if(!tarefaPorNome) return null;
+  const tf=tarefaPorNome[(nomeAtividade||'').trim().toLowerCase()];
+  if(!tf) return {cls:'sem-tarefa', label:'Sem tarefa vinculada'};
+  return tf.concluida ? {cls:'concluida', label:'Concluída'} : {cls:'pendente', label:'Pendente'};
+}
 /* Resumo de entregas (nivel 2) do projeto todo, a partir do mesmo casamento por nome com o
    cronograma - usado no topo da arvore (preview e drawer). */
 function resumoEntregasEAP(n1s, cronoPorNome){
@@ -1074,7 +1110,7 @@ function renderResumoEntregas(n1s, cronoPorNome, host){
     +(r.atrasadas?`<span><b>${r.atrasadas}</b> entrega${r.atrasadas===1?'':'s'} atrasada${r.atrasadas===1?'':'s'}</span>`:'')
     +`</div>`;
 }
-function renderTree(nome,n1s,host,hintId,cronoPorNome){
+function renderTree(nome,n1s,host,hintId,cronoPorNome,tarefaPorNome){
   if(!n1s||!n1s.length){host.innerHTML='<p style="color:var(--muted);font-size:13px;text-align:center">Nenhum pacote de trabalho cadastrado.</p>'; if(hintId){const h=document.getElementById(hintId); if(h) h.style.display='none';} return;}
   let html=`<div class="t-root"><div class="t-root-box">${esc(nome)}</div><div class="t-vline"></div><div class="t-hrow">`;
   n1s.forEach((n1,i)=>{
@@ -1088,7 +1124,8 @@ function renderTree(nome,n1s,host,hintId,cronoPorNome){
           html+=`<div class="t-n3list">`;
           n2.n3s.forEach((n3,k)=>{
             const nome=n3Nome(n3), prio=n3Prio(n3);
-            html+=`<div class="t-n3">${esc(nome||'(sem nome)')}${prio?`<span class="prio-tag ${prio}">${prio}</span>`:''}<div class="t-code">${i+1}.${j+1}.${k+1}</div></div>`;
+            const stA=statusAtividadeEAP(nome, tarefaPorNome);
+            html+=`<div class="t-n3">${esc(nome||'(sem nome)')}${prio?`<span class="prio-tag ${prio}">${prio}</span>`:''}<div class="t-code">${i+1}.${j+1}.${k+1}</div>${stA?`<span class="entrega-status ${stA.cls}">${stA.label}</span>`:''}</div>`;
           });
           html+=`</div>`;
         }
@@ -1114,8 +1151,8 @@ async function previewTree(){
   document.getElementById('tree-preview').scrollIntoView({behavior:'smooth',block:'start'});
   renderTree(nome, n1s, document.getElementById('tree-area'), 'tree-hint');
   document.getElementById('tree-resumo').innerHTML='';
-  const cronoPorNome=await buscarCronogramaPlanPorNome(projetoId);
-  renderTree(nome, n1s, document.getElementById('tree-area'), 'tree-hint', cronoPorNome);
+  const [cronoPorNome, tarefaPorNome]=await Promise.all([buscarCronogramaPlanPorNome(projetoId), buscarTarefasPlanPorNome(projetoId)]);
+  renderTree(nome, n1s, document.getElementById('tree-area'), 'tree-hint', cronoPorNome, tarefaPorNome);
   renderResumoEntregas(n1s, cronoPorNome, document.getElementById('tree-resumo'));
 }
 
@@ -1326,9 +1363,9 @@ async function openDrawer(id){
   regHistoricoAberto=false;
   document.getElementById('overlay').classList.add('show');
   document.getElementById('drawer').classList.add('show');
-  const cronoPorNome=await buscarCronogramaPlanPorNome(r.projetoId);
+  const [cronoPorNome, tarefaPorNome]=await Promise.all([buscarCronogramaPlanPorNome(r.projetoId), buscarTarefasPlanPorNome(r.projetoId)]);
   if(currentId!==id) return;
-  renderTree(r.nomeProjeto, r.n1s, document.getElementById('drawer-tree'), 'd-tree-hint', cronoPorNome);
+  renderTree(r.nomeProjeto, r.n1s, document.getElementById('drawer-tree'), 'd-tree-hint', cronoPorNome, tarefaPorNome);
   renderResumoEntregas(r.n1s, cronoPorNome, document.getElementById('d-resumo'));
 }
 function closeDrawer(){document.getElementById('overlay').classList.remove('show'); document.getElementById('drawer').classList.remove('show'); currentId=null;}
