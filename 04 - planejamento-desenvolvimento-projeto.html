@@ -133,6 +133,22 @@
   .row-drag:active{cursor:grabbing}
   table.dyn-t tbody tr.dragging{opacity:.4}
   .dyn-foot{display:flex; align-items:center; gap:14px; margin-top:12px}
+  .tarefas-toggle{appearance:none; border:1px solid var(--line-strong); background:var(--paper); color:var(--ink); font-family:var(--font); font-weight:700; font-size:11px; border-radius:999px; padding:5px 10px; cursor:pointer; white-space:nowrap}
+  .tarefas-toggle:hover{border-color:var(--red)}
+  .tarefas-toggle.tem-pendente{border-color:var(--warn); color:var(--warn)}
+  table.dyn-t tr.tarefas-row td{background:var(--surface-2); padding:12px 16px}
+  .tarefas-box{max-width:480px}
+  .tarefas-list{margin-bottom:8px}
+  .tarefa-item{display:flex; align-items:center; gap:8px; padding:5px 0; font-size:12.5px}
+  .tarefa-item input[type=checkbox]{margin:0; flex:none}
+  .tarefa-nome{flex:1}
+  .tarefa-nome.done{text-decoration:line-through; color:var(--muted)}
+  .tarefa-x{appearance:none; border:none; background:transparent; color:var(--muted); font-size:15px; cursor:pointer; width:22px; height:22px; border-radius:5px; line-height:1; flex:none}
+  .tarefa-x:hover{background:var(--bad-soft); color:var(--bad)}
+  .tarefas-empty{font-size:12px; color:var(--muted); padding:4px 0}
+  .tarefas-add{display:flex; gap:8px}
+  .tarefas-add input{flex:1; border:1px solid var(--line-strong); border-radius:6px; padding:7px 9px; font-size:12.5px; font-family:var(--font)}
+  .tarefas-add input:focus{outline:none; border-color:var(--red)}
 
   .actions{display:flex; align-items:center; gap:12px; padding:18px 24px; margin-top:18px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-2); box-shadow:var(--shadow);}
   .btn{appearance:none; font-family:var(--font); font-weight:700; font-size:13px; letter-spacing:.02em; border-radius:8px; padding:11px 22px; cursor:pointer; border:1px solid transparent; transition:all .15s ease; display:inline-flex; align-items:center; gap:8px;}
@@ -679,7 +695,7 @@ window.unialfaHistorico = {
         <h1>Planejamento e Desenvolvimento de Projeto</h1>
         <p>Dossiê de ciclo de vida do projeto · Gerência de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=51#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=52#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00325</b></div>
@@ -910,13 +926,14 @@ const STAGES=[
   {id:'crono', tab:'3 · Cronograma', title:'Cronograma', sub:'Marcos e prazos', blocks:[
     {kind:'table', key:'cronograma', label:'Marcos do projeto', mainKey:'marco', seed:3, cols:[
       {key:'seq',label:'Nº',type:'auto',w:'4%'},
-      {key:'marco',label:'Marco / Entrega',type:'text',w:'14%',long:true},
-      {key:'resp',label:'Responsável',type:'text',w:'9%',long:true},
-      {key:'ini',label:'Início previsto',type:'date',w:'15%'},
-      {key:'fim',label:'Término previsto',type:'date',w:'15%'},
-      {key:'concl',label:'Conclusão real',type:'date',w:'15%'},
-      {key:'custo',label:'Custo',type:'text',w:'12%',long:true},
-      {key:'dep',label:'Depende nº',type:'text',w:'9%'},
+      {key:'marco',label:'Marco / Entrega',type:'text',w:'13%',long:true},
+      {key:'resp',label:'Responsável',type:'text',w:'8%',long:true},
+      {key:'ini',label:'Início previsto',type:'date',w:'13%'},
+      {key:'fim',label:'Término previsto',type:'date',w:'13%'},
+      {key:'concl',label:'Conclusão real',type:'date',w:'13%'},
+      {key:'custo',label:'Custo',type:'text',w:'10%',long:true},
+      {key:'dep',label:'Depende nº',type:'text',w:'8%'},
+      {key:'tarefas',label:'Tarefas',type:'tasks',w:'10%'},
     ]},
   ]},
   {id:'entradas', tab:'4 · Entradas', title:'Entradas do projeto', sub:'Requisitos e fontes', blocks:[
@@ -1403,7 +1420,11 @@ function addRow(key, vals){
   const t=TABLE_DEFS[key];
   const tb=document.querySelector(`#tbl-${key} tbody`);
   const tr=document.createElement('tr');
-  let cells=t.cols.map(c=>c.type==='auto' ? `<td class="dyn-seq"></td>` : `<td>${cellInput(c, vals?(vals[c.key]||''):'')}</td>`).join('');
+  let cells=t.cols.map(c=>{
+    if(c.type==='auto') return `<td class="dyn-seq"></td>`;
+    if(c.type==='tasks') return `<td><button type="button" class="tarefas-toggle" onclick="toggleTarefas(this)"></button></td>`;
+    return `<td>${cellInput(c, vals?(vals[c.key]||''):'')}</td>`;
+  }).join('');
   cells+=`<td class="row-actions">
     <span class="row-drag" draggable="true" title="Arrastar para reordenar" ondragstart="rowDragStart(event)" ondragend="rowDragEnd(event)">⠿</span>
     <button type="button" class="row-x" title="Remover" onclick="removeRow(this)">×</button>
@@ -1413,6 +1434,10 @@ function addRow(key, vals){
   if(t.mainKey){
     const mainInp=tr.querySelector(`[data-k="${t.mainKey}"]`);
     if(mainInp) mainInp.addEventListener('input',()=>syncTableAux(tb));
+  }
+  if(t.cols.some(c=>c.type==='tasks')){
+    tr._tarefas=(vals && Array.isArray(vals.tarefas)) ? vals.tarefas.map(tf=>({nome:tf.nome, concluida:!!tf.concluida})) : [];
+    updateTarefasBadge(tr);
   }
   syncTableAux(tb);
 }
@@ -1462,8 +1487,10 @@ function readTable(key){
   const t=TABLE_DEFS[key];
   const rows=[];
   document.querySelectorAll(`#tbl-${key} tbody tr`).forEach(tr=>{
+    if(tr.classList.contains('tarefas-row')) return;
     const obj={}; let any=false;
     tr.querySelectorAll('input,select,textarea').forEach(inp=>{ const val=(inp.value||'').trim(); obj[inp.dataset.k]=val; if(val) any=true; });
+    if(tr._tarefas && tr._tarefas.length) obj.tarefas=tr._tarefas.map(tf=>({nome:tf.nome, concluida:!!tf.concluida}));
     if(any) rows.push(obj);
   });
   if(t && t.mainKey){
@@ -1472,11 +1499,90 @@ function readTable(key){
   }
   return rows;
 }
+/* Tarefas dentro de um marco do cronograma - checklist leve e opcional, guardado direto no
+   elemento <tr> (tr._tarefas) para acompanhar a linha em reordenacao/remocao sem depender de
+   indice/posicao (diferente do campo `dep`, que referencia outro marco pelo Nº recalculado a
+   cada leitura - convencao mais fragil que nao vale repetir aqui). */
+function tarefasLabel(tarefas){
+  if(!tarefas || !tarefas.length) return '+ Tarefas';
+  const done=tarefas.filter(tf=>tf.concluida).length;
+  return 'Tarefas ('+done+'/'+tarefas.length+')';
+}
+function updateTarefasBadge(tr){
+  const btn=tr.querySelector('.tarefas-toggle');
+  if(!btn) return;
+  const tarefas=tr._tarefas||[];
+  btn.textContent=tarefasLabel(tarefas);
+  const pendente=tarefas.length>0 && tarefas.some(tf=>!tf.concluida);
+  btn.classList.toggle('tem-pendente', pendente);
+}
+function toggleTarefas(btn){
+  const tr=btn.closest('tr');
+  const next=tr.nextElementSibling;
+  if(next && next.classList.contains('tarefas-row')){ next.remove(); return; }
+  const key=tr.closest('table').id.replace(/^tbl-/,'');
+  const ncols=TABLE_DEFS[key].cols.length+1;
+  const sub=document.createElement('tr');
+  sub.className='tarefas-row';
+  sub.innerHTML=`<td colspan="${ncols}"></td>`;
+  tr.after(sub);
+  renderTarefasBox(tr, sub.querySelector('td'));
+}
+function renderTarefasBox(tr, host){
+  const tarefas=tr._tarefas||(tr._tarefas=[]);
+  host.innerHTML=`<div class="tarefas-box">
+    <div class="tarefas-list">${tarefas.length?tarefas.map((tf,i)=>`
+      <label class="tarefa-item" data-i="${i}">
+        <input type="checkbox" ${tf.concluida?'checked':''} onchange="toggleTarefaConcluida(this)">
+        <span class="tarefa-nome${tf.concluida?' done':''}">${esc(tf.nome)}</span>
+        <button type="button" class="tarefa-x" title="Remover" onclick="removeTarefa(this)">×</button>
+      </label>`).join(''):'<div class="tarefas-empty">Nenhuma tarefa ainda — opcional, use só se precisar detalhar este marco.</div>'}
+    </div>
+    <div class="tarefas-add">
+      <input type="text" placeholder="Nova tarefa..." onkeydown="if(event.key==='Enter'){event.preventDefault();addTarefa(this);}">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="addTarefa(this.previousElementSibling)">+ Adicionar</button>
+    </div>
+  </div>`;
+}
+function addTarefa(inputEl){
+  const nome=(inputEl.value||'').trim();
+  if(!nome) return;
+  const subTr=inputEl.closest('tr');
+  const tr=subTr.previousElementSibling;
+  (tr._tarefas=tr._tarefas||[]).push({nome, concluida:false});
+  renderTarefasBox(tr, subTr.querySelector('td'));
+  updateTarefasBadge(tr);
+  salvarRascunho();
+}
+function removeTarefa(btn){
+  const subTr=btn.closest('tr');
+  const tr=subTr.previousElementSibling;
+  const idx=parseInt(btn.closest('.tarefa-item').dataset.i,10);
+  tr._tarefas.splice(idx,1);
+  renderTarefasBox(tr, subTr.querySelector('td'));
+  updateTarefasBadge(tr);
+  salvarRascunho();
+}
+function toggleTarefaConcluida(chk){
+  const subTr=chk.closest('tr');
+  const tr=subTr.previousElementSibling;
+  const idx=parseInt(chk.closest('.tarefa-item').dataset.i,10);
+  tr._tarefas[idx].concluida=chk.checked;
+  chk.nextElementSibling.classList.toggle('done', chk.checked);
+  updateTarefasBadge(tr);
+  salvarRascunho();
+}
 function roTable(key, rows){
   const t=TABLE_DEFS[key];
   if(!rows||!rows.length) return '<dd>—</dd>';
   let h='<dd><div class="ro-wrap"><table class="ro-t"><thead><tr>'+t.cols.map(c=>`<th>${c.label}</th>`).join('')+'</tr></thead><tbody>';
   rows.forEach(r=>{ h+='<tr>'+t.cols.map(c=>{
+    if(c.type==='tasks'){
+      const tarefas=Array.isArray(r.tarefas)?r.tarefas:[];
+      if(!tarefas.length) return '<td>—</td>';
+      const done=tarefas.filter(tf=>tf.concluida).length;
+      return `<td>${done}/${tarefas.length} concluída(s)</td>`;
+    }
     let v=r[c.key]||''; if(c.type==='date'&&v) v=fmtDate(v);
     if(key==='cronograma'&&c.key==='dep'&&v){
       const bloq=marcoBloqueadoPor(rows,r);
@@ -1733,6 +1839,12 @@ function docTableRowsPlan(key,rows){
   const preenchidas=(rows||[]).filter(r=>Object.values(r).some(v=>v));
   const body=preenchidas.map(r=>{
     const tds=t.cols.map(c=>{
+      if(c.type==='tasks'){
+        const tarefas=Array.isArray(r.tarefas)?r.tarefas:[];
+        if(!tarefas.length) return '<td>&nbsp;</td>';
+        const done=tarefas.filter(tf=>tf.concluida).length;
+        return '<td>'+done+'/'+tarefas.length+' concluída(s)</td>';
+      }
       let v=r[c.key]||''; if(c.type==='date'&&v)v=fmtDate(v);
       if(key==='cronograma'&&c.key==='dep'&&v){
         const bloq=marcoBloqueadoPor(preenchidas,r);
