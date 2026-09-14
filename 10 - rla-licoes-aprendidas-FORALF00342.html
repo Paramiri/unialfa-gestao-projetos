@@ -607,7 +607,7 @@ window.unialfaHistorico = {
         <h1>Registro de Lições Aprendidas — RLA</h1>
         <p>Aprendizado organizacional · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=55#passo-9" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=56#passo-9" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00342</b></div>
@@ -970,6 +970,64 @@ function mensagemErroSalvar(e, acao){
   if(e && e.status) return 'Não foi possível '+acao+' (erro '+e.status+'). Atualize a página; se o problema continuar, contate o suporte.';
   return 'Não foi possível '+acao+'. Atualize a página e tente novamente.';
 }
+
+/* ---------- edição simultânea: aviso preventivo (Fase 2) ---------- */
+const LOCK_TTL_MS = 10*60*1000; // lock considerado expirado após 10 min sem renovação
+const LOCK_HEARTBEAT_MS = 60*1000;
+let lockHeartbeatTimer = null;
+let lockOwnedKey = null; // só fica preenchido quando NÓS somos donos do lock (nunca o de outra pessoa)
+function meuNomeEdicao(){ return (window.currentProfile && window.currentProfile.nome) || (window.currentUser && window.currentUser.email) || 'Alguém'; }
+function meuEmailEdicao(){ return window.currentUser ? window.currentUser.email : null; }
+function mostrarAvisoConflito(who, atIso){
+  let el=document.getElementById('lockBanner');
+  if(!el){
+    el=document.createElement('div');
+    el.id='lockBanner';
+    el.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#FEF3C7;border-bottom:2px solid #F5E1B8;color:#92400E;padding:10px 20px;font-size:12.5px;font-weight:600;text-align:center';
+    document.body.insertBefore(el, document.body.firstChild);
+  }
+  const hora=new Date(atIso).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  el.innerHTML='⚠ <b>'+esc(who)+'</b> está editando este registro desde '+hora+'. Combine com essa pessoa antes de salvar, para evitar conflito.';
+  el.style.display='block';
+}
+function esconderAvisoConflito(){
+  const el=document.getElementById('lockBanner');
+  if(el) el.style.display='none';
+}
+async function lockTick(key){
+  try{
+    const r=await window.storage.get('lock:'+key);
+    const meuEmail=meuEmailEdicao();
+    if(r&&r.value){
+      const l=JSON.parse(r.value);
+      const idade=Date.now()-new Date(l.at).getTime();
+      if(idade<LOCK_TTL_MS && l.email && l.email!==meuEmail){
+        mostrarAvisoConflito(l.nome||l.email, l.at);
+        lockOwnedKey=null; // lock é de outra pessoa - não escrevemos por cima nem tentamos apagar depois
+        return;
+      }
+    }
+    esconderAvisoConflito();
+    await window.storage.set('lock:'+key, JSON.stringify({nome:meuNomeEdicao(), email:meuEmail, at:new Date().toISOString()}));
+    lockOwnedKey=key; // só marcamos como nosso depois de escrever com sucesso
+  }catch(e){}
+}
+function iniciarLock(key){
+  pararLock();
+  lockTick(key);
+  lockHeartbeatTimer=setInterval(()=>lockTick(key), LOCK_HEARTBEAT_MS);
+}
+function pararLock(){
+  clearInterval(lockHeartbeatTimer);
+  lockHeartbeatTimer=null;
+  lockOwnedKey=null;
+  esconderAvisoConflito();
+}
+async function liberarLock(){
+  const key=lockOwnedKey;
+  pararLock();
+  if(key){ try{ await window.storage.delete('lock:'+key); }catch(e){} }
+}
 function fmtDate(iso){if(!iso)return '—';const p=iso.split('-');return `${p[2]}/${p[1]}/${p[0]}`;}
 function fmtStamp(ms){const dt=new Date(ms);return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
 function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
@@ -1129,6 +1187,7 @@ async function editCurrent(){
   editId=r.id;
   editBaseUpdatedAt=null;
   try{ const fresh=await window.storage.get(KEY_PREFIX+r.id); if(fresh) editBaseUpdatedAt=fresh.updatedAt; }catch(e){}
+  iniciarLock(KEY_PREFIX+r.id);
   SIMPLE_FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=r[id]||''; });
   fillLicoes(r.licoes||{});
   document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
@@ -1187,6 +1246,7 @@ function clearForm(){
 
 /* ---- views / list ---- */
 function showView(v){
+  if(v!=='new') liberarLock();
   document.getElementById('view-new').style.display=v==='new'?'block':'none';
   document.getElementById('view-list').style.display=v==='list'?'block':'none';
   document.getElementById('tab-new').setAttribute('aria-selected',v==='new');
