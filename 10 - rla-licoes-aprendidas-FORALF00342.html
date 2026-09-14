@@ -607,7 +607,7 @@ window.unialfaHistorico = {
         <h1>Registro de Lições Aprendidas — RLA</h1>
         <p>Aprendizado organizacional · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=54#passo-9" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=55#passo-9" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00342</b></div>
@@ -805,15 +805,20 @@ window.unialfaHistorico = {
   }
   window.storage = {
     get: async function(key){
-      var r = await reqComRenovacao('GET', base + '?key=eq.' + encodeURIComponent(key) + '&select=value');
+      var r = await reqComRenovacao('GET', base + '?key=eq.' + encodeURIComponent(key) + '&select=value,updated_at');
       if(!r.ok) return null;
       var rows = await r.json();
-      return rows.length ? { value: rows[0].value } : null;
+      return rows.length ? { value: rows[0].value, updatedAt: rows[0].updated_at } : null;
     },
-    set: async function(key, value){
+    set: async function(key, value, expectedUpdatedAt){
       var r;
+      var newUpdatedAt = new Date().toISOString();
       try{
-        r = await reqComRenovacao('POST', base + '?on_conflict=key', { 'Prefer': 'resolution=merge-duplicates' }, JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }));
+        if (expectedUpdatedAt) {
+          r = await reqComRenovacao('PATCH', base + '?key=eq.' + encodeURIComponent(key) + '&updated_at=eq.' + encodeURIComponent(expectedUpdatedAt), { 'Prefer': 'return=representation' }, JSON.stringify({ value: value, updated_at: newUpdatedAt }));
+        } else {
+          r = await reqComRenovacao('POST', base + '?on_conflict=key', { 'Prefer': 'resolution=merge-duplicates' }, JSON.stringify({ key: key, value: value, updated_at: newUpdatedAt }));
+        }
       }catch(netErr){
         var eNet = new Error('network'); eNet.kind = 'network'; throw eNet;
       }
@@ -823,7 +828,13 @@ window.unialfaHistorico = {
         try{ eHttp.body = await r.text(); }catch(_){}
         throw eHttp;
       }
-      return true;
+      if (expectedUpdatedAt) {
+        var rows2 = await r.json();
+        if (!rows2.length) {
+          var eConflict = new Error('conflict'); eConflict.kind = 'conflict'; throw eConflict;
+        }
+      }
+      return { updatedAt: newUpdatedAt };
     },
     delete: async function(key){
       var r;
@@ -851,6 +862,7 @@ window.unialfaHistorico = {
 <script>
 const KEY_PREFIX='rla:';
 let cache=[], currentId=null, editId=null;
+let editBaseUpdatedAt=null; // updated_at do registro no momento em que a edição começou (detecção de conflito)
 const REQUIRED=['nomeProjeto','unidade','gerente'];
 const SIMPLE_FIELDS=['nomeProjeto','unidade','gerente','dataElab','q21','q22','q23','q24','q31','q32','q33','q34','q41','q42','q43','q44','q45','q46','q51','q52','q53','q54'];
 
@@ -949,6 +961,7 @@ async function toggleHistorico(){
 function toast(msg,ok=true){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.toggle('ok',ok);t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3200);}
 function mensagemErroSalvar(e, acao){
   acao = acao || 'salvar este registro';
+  if(e && e.kind==='conflict') return 'Este registro foi alterado por outra pessoa enquanto você editava. Para não sobrescrever as mudanças dela, o salvamento foi cancelado — atualize a página para ver a versão mais recente e refaça suas alterações.';
   if(e && e.kind==='network') return 'Sem conexão com a internet. Verifique sua rede e tente novamente.';
   if(e && e.status===401) return 'Sua sessão expirou. Atualize a página e faça login novamente.';
   if(e && e.status===403) return 'Você não tem permissão para '+acao+'.';
@@ -1095,7 +1108,7 @@ async function submitForm(){
       Object.keys(HIST_LABELS).forEach(k=>{camposParaHistorico[k]=rec[k];});
       await unialfaHistorico.registrar(KEY_PREFIX+rec.id, 'RLA - Registro de Lições Aprendidas (FORALF00342)', registroAntigo, camposParaHistorico);
     }
-    const r=await window.storage.set(KEY_PREFIX+rec.id,JSON.stringify(rec));if(!r)throw new Error();
+    const r=await window.storage.set(KEY_PREFIX+rec.id,JSON.stringify(rec), editId?editBaseUpdatedAt:null);if(!r)throw new Error();
     if(editId){
       const idx=cache.findIndex(x=>x.id===rec.id);
       if(idx>-1) cache[idx]=rec; else cache.unshift(rec);
@@ -1114,6 +1127,8 @@ async function editCurrent(){
   const r=cache.find(x=>x.id===currentId); if(!r) return;
   clearForm();
   editId=r.id;
+  editBaseUpdatedAt=null;
+  try{ const fresh=await window.storage.get(KEY_PREFIX+r.id); if(fresh) editBaseUpdatedAt=fresh.updatedAt; }catch(e){}
   SIMPLE_FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=r[id]||''; });
   fillLicoes(r.licoes||{});
   document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
@@ -1166,6 +1181,7 @@ function clearForm(){
   document.getElementById('btnHistorico').style.display='none';
   document.getElementById('historicoPanel').style.display='none';
   editId=null;
+  editBaseUpdatedAt=null;
   updateEditBanner();
 }
 

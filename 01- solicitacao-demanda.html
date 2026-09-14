@@ -828,7 +828,7 @@ window.unialfaAnexos = {
         <h1>Solicitação de Demanda de Projetos</h1>
         <p>Formulário de entrada de demandas · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=54#passo-1" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=55#passo-1" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00339</b></div>
@@ -1081,15 +1081,20 @@ window.unialfaAnexos = {
   }
   window.storage = {
     get: async function(key){
-      var r = await reqComRenovacao('GET', base + '?key=eq.' + encodeURIComponent(key) + '&select=value');
+      var r = await reqComRenovacao('GET', base + '?key=eq.' + encodeURIComponent(key) + '&select=value,updated_at');
       if(!r.ok) return null;
       var rows = await r.json();
-      return rows.length ? { value: rows[0].value } : null;
+      return rows.length ? { value: rows[0].value, updatedAt: rows[0].updated_at } : null;
     },
-    set: async function(key, value){
+    set: async function(key, value, expectedUpdatedAt){
       var r;
+      var newUpdatedAt = new Date().toISOString();
       try{
-        r = await reqComRenovacao('POST', base + '?on_conflict=key', { 'Prefer': 'resolution=merge-duplicates' }, JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }));
+        if (expectedUpdatedAt) {
+          r = await reqComRenovacao('PATCH', base + '?key=eq.' + encodeURIComponent(key) + '&updated_at=eq.' + encodeURIComponent(expectedUpdatedAt), { 'Prefer': 'return=representation' }, JSON.stringify({ value: value, updated_at: newUpdatedAt }));
+        } else {
+          r = await reqComRenovacao('POST', base + '?on_conflict=key', { 'Prefer': 'resolution=merge-duplicates' }, JSON.stringify({ key: key, value: value, updated_at: newUpdatedAt }));
+        }
       }catch(netErr){
         var eNet = new Error('network'); eNet.kind = 'network'; throw eNet;
       }
@@ -1099,7 +1104,13 @@ window.unialfaAnexos = {
         try{ eHttp.body = await r.text(); }catch(_){}
         throw eHttp;
       }
-      return true;
+      if (expectedUpdatedAt) {
+        var rows2 = await r.json();
+        if (!rows2.length) {
+          var eConflict = new Error('conflict'); eConflict.kind = 'conflict'; throw eConflict;
+        }
+      }
+      return { updatedAt: newUpdatedAt };
     },
     delete: async function(key){
       var r;
@@ -1129,6 +1140,7 @@ const KEY_PREFIX = 'demanda:';
 let cache = [];        // loaded records
 let currentId = null;  // id open in drawer
 let editId = null;     // id currently being edited in the form (null = creating new)
+let editBaseUpdatedAt = null; // updated_at do registro no momento em que a edição começou (detecção de conflito)
 let anexosArquivos = [];  // arquivos anexados no registro aberto no formulário: [{nome,caminho,tamanho,enviadoEm}]
 let draftRecordId = null; // id provisório usado para dar caminho aos arquivos antes do primeiro "Registrar solicitação"
 
@@ -1157,7 +1169,12 @@ async function persistAnexosSeEditando(){
   const idx = cache.findIndex(x=>x.id===editId);
   if(idx<0) return;
   cache[idx].anexosArquivos = anexosArquivos.slice();
-  await window.storage.set(KEY_PREFIX+editId, JSON.stringify(cache[idx]));
+  try{
+    const r = await window.storage.set(KEY_PREFIX+editId, JSON.stringify(cache[idx]), editBaseUpdatedAt);
+    if(r && r.updatedAt) editBaseUpdatedAt = r.updatedAt;
+  }catch(e){
+    if(e && e.kind==='conflict') toast('Este registro foi alterado por outra pessoa. Atualize a página antes de continuar anexando arquivos.', false);
+  }
 }
 async function onAnexarArquivo(file){
   if(!file) return;
@@ -1210,6 +1227,7 @@ function toast(msg, ok=true){
 }
 function mensagemErroSalvar(e, acao){
   acao = acao || 'salvar este registro';
+  if(e && e.kind==='conflict') return 'Este registro foi alterado por outra pessoa enquanto você editava. Para não sobrescrever as mudanças dela, o salvamento foi cancelado — atualize a página para ver a versão mais recente e refaça suas alterações.';
   if(e && e.kind==='network') return 'Sem conexão com a internet. Verifique sua rede e tente novamente.';
   if(e && e.status===401) return 'Sua sessão expirou. Atualize a página e faça login novamente.';
   if(e && e.status===403) return 'Você não tem permissão para '+acao+'.';
@@ -1339,7 +1357,7 @@ async function submitForm(){
       const novoSemArquivos = Object.assign({}, rec); delete novoSemArquivos.anexosArquivos;
       await unialfaHistorico.registrar(KEY_PREFIX+rec.id, 'Solicitação de Demanda (FORALF00339)', antigoSemArquivos, novoSemArquivos);
     }
-    const r=await window.storage.set(KEY_PREFIX+rec.id, JSON.stringify(rec));
+    const r=await window.storage.set(KEY_PREFIX+rec.id, JSON.stringify(rec), editId?editBaseUpdatedAt:null);
     if(!r) throw new Error('no result');
     if(editId){
       const idx=cache.findIndex(x=>x.id===rec.id);
@@ -1366,10 +1384,12 @@ async function submitForm(){
   }
 }
 
-function editCurrent(){
+async function editCurrent(){
   if(window.guestInfo){ toast('Sem login, você só pode enviar novas solicitações — não é possível editar registros existentes.', false); return; }
   const r=cache.find(x=>x.id===currentId); if(!r) return;
   editId=r.id;
+  editBaseUpdatedAt=null;
+  try{ const fresh=await window.storage.get(KEY_PREFIX+r.id); if(fresh) editBaseUpdatedAt=fresh.updatedAt; }catch(e){}
   document.getElementById('projeto').value=r.projeto||'';
   document.getElementById('solicitante').value=r.solicitante||'';
   document.getElementById('departamento').value=r.departamento||'';
@@ -1429,6 +1449,7 @@ function clearForm(){
   DRAFT_FIELD_IDS.forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
   document.querySelectorAll('.field.error').forEach(f=>f.classList.remove('error'));
   editId=null;
+  editBaseUpdatedAt=null;
   draftRecordId=null;
   anexosArquivos=[];
   renderAnexosArquivos();

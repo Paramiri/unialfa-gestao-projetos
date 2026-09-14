@@ -111,6 +111,7 @@ body.auth-ready{padding-top:34px}
       <a href="#papeis" data-sec="papeis">Papéis de usuário</a>
       <a href="#gates" data-sec="gates">Gates de aprovação</a>
       <a href="#equipe" data-sec="equipe">Restrição por equipe</a>
+      <a href="#edicao-simultanea" data-sec="edicao-simultanea">Edição simultânea</a>
       <a href="#sem-login" data-sec="sem-login">Acesso sem login</a>
       <a href="#push" data-sec="push">Lembretes no celular</a>
       <div class="grp">Formulários</div>
@@ -207,6 +208,20 @@ body.auth-ready{padding-top:34px}
         </ul>
         <div class="tip"><b>Lista mostra só projetos ativos:</b> o campo "Projeto vinculado" só oferece projetos ainda em andamento — assim que um <a href="#passo-8">TEP</a> é registrado para um projeto, ele some da lista de opções para novos vínculos em todos os formulários (incluindo o Relatório de Situação e o Relatório de Entregas). Um documento que já estava vinculado a esse projeto antes dele encerrar continua mostrando o vínculo normalmente, só que com o status ao lado (ex.: "Nome do Projeto — Concluído").</div>
         <div class="note">Os outros 5 formulários (Solicitação de Demanda, Ata de Reunião, Plano de Comunicação, Relatório de Situação e Relatório de Entregas) não usam esse conceito — qualquer usuário autenticado pode criar/editar registros neles.</div>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="edicao-simultanea">
+        <div class="eyebrow">acesso</div>
+        <h2>Edição simultânea</h2>
+        <p class="lead">Como mais de uma pessoa pode editar o mesmo registro (a equipe de um projeto, ou qualquer usuário nos formulários sem restrição de equipe), o sistema agora avisa quando isso realmente colide — em vez de uma pessoa salvar por cima da outra sem perceber.</p>
+        <p>Ao abrir um registro para editar, o sistema guarda o horário da última alteração conhecida daquele registro. Se, entre esse momento e o clique em salvar, <b>outra pessoa salvar o mesmo registro primeiro</b>, o sistema bloqueia o seu salvamento e mostra o aviso: <i>"Este registro foi alterado por outra pessoa enquanto você editava."</i></p>
+        <ul>
+          <li>Nada é perdido automaticamente: o formulário continua aberto com o que você digitou, exatamente como estava.</li>
+          <li>Para continuar, atualize a página (para carregar a versão mais recente, já com a alteração da outra pessoa) e refaça manualmente as suas mudanças.</li>
+          <li>Vale para os 12 formulários de registro. Nos três relatórios que reúnem todos os projetos numa tela só — Plano de Comunicação, Relatório de Situação e Relatório de Entregas — o aviso aparece se qualquer outra pessoa salvar esse mesmo relatório entre o momento em que você abriu a tela de edição e o seu "Salvar".</li>
+        </ul>
+        <div class="note">Isso não é um bloqueio de "quem chega primeiro trava o registro" — duas pessoas podem abrir o mesmo registro ao mesmo tempo sem problema. O aviso só aparece na hora de salvar, e só para quem salvar por último.</div>
         <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
       </section>
 

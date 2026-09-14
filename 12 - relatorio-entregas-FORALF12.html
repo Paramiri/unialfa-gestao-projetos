@@ -522,7 +522,7 @@ function ensureAuthenticated(){
       <h1>Relatório de Entregas e Benefícios</h1>
       <p>Ficha de programa e projetos vinculados · Escritório de Projetos</p>
     </div>
-    <a class="head-help" href="15 - central-ajuda.html?v=54#relatorio-entregas" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
+    <a class="head-help" href="15 - central-ajuda.html?v=55#relatorio-entregas" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
     <div class="head-badge">FORALF12</div>
   </div>
 
@@ -656,15 +656,20 @@ function ensureAuthenticated(){
   }
   window.storage = {
     get: async function(key){
-      var r = await reqComRenovacao('GET', base + '?key=eq.' + encodeURIComponent(key) + '&select=value');
+      var r = await reqComRenovacao('GET', base + '?key=eq.' + encodeURIComponent(key) + '&select=value,updated_at');
       if(!r.ok) return null;
       var rows = await r.json();
-      return rows.length ? { value: rows[0].value } : null;
+      return rows.length ? { value: rows[0].value, updatedAt: rows[0].updated_at } : null;
     },
-    set: async function(key, value){
+    set: async function(key, value, expectedUpdatedAt){
       var r;
+      var newUpdatedAt = new Date().toISOString();
       try{
-        r = await reqComRenovacao('POST', base + '?on_conflict=key', { 'Prefer': 'resolution=merge-duplicates' }, JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }));
+        if (expectedUpdatedAt) {
+          r = await reqComRenovacao('PATCH', base + '?key=eq.' + encodeURIComponent(key) + '&updated_at=eq.' + encodeURIComponent(expectedUpdatedAt), { 'Prefer': 'return=representation' }, JSON.stringify({ value: value, updated_at: newUpdatedAt }));
+        } else {
+          r = await reqComRenovacao('POST', base + '?on_conflict=key', { 'Prefer': 'resolution=merge-duplicates' }, JSON.stringify({ key: key, value: value, updated_at: newUpdatedAt }));
+        }
       }catch(netErr){
         var eNet = new Error('network'); eNet.kind = 'network'; throw eNet;
       }
@@ -674,7 +679,13 @@ function ensureAuthenticated(){
         try{ eHttp.body = await r.text(); }catch(_){}
         throw eHttp;
       }
-      return true;
+      if (expectedUpdatedAt) {
+        var rows2 = await r.json();
+        if (!rows2.length) {
+          var eConflict = new Error('conflict'); eConflict.kind = 'conflict'; throw eConflict;
+        }
+      }
+      return { updatedAt: newUpdatedAt };
     },
     delete: async function(key){
       var r;
@@ -703,6 +714,7 @@ function ensureAuthenticated(){
 const KEY='relent_data';
 function novoGate2(){return{status:'Pendente de pactuação',data:'',aprovador:''};}
 let data={prog:{cod:'',nome:'',unidade:'',resp:'',just:'',obj:'',impacto:'',alinhamento:'',parceiros:'',restricoes:'',indicadores:[],valores:[]},projetos:[],gate2:novoGate2()};
+let dataBaseUpdatedAt = null; // updated_at do registro no momento do último carregamento (detecção de conflito)
 
 let projetosAprovados=[];
 async function carregarProjetosAprovados(){
@@ -875,6 +887,7 @@ async function toggleProjRowHistorico(i){
 function toast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3000);}
 function mensagemErroSalvar(e, acao){
   acao = acao || 'salvar este registro';
+  if(e && e.kind==='conflict') return 'Este registro foi alterado por outra pessoa enquanto você editava. Para não sobrescrever as mudanças dela, o salvamento foi cancelado — atualize a página para ver a versão mais recente e refaça suas alterações.';
   if(e && e.kind==='network') return 'Sem conexão com a internet. Verifique sua rede e tente novamente.';
   if(e && e.status===401) return 'Sua sessão expirou. Atualize a página e faça login novamente.';
   if(e && e.status===403) return 'Você não tem permissão para '+acao+'.';
@@ -887,8 +900,14 @@ function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;',
 function nl(s){return esc(s).replace(/\n/g,'<br>')}
 
 /* ── storage ── */
-async function loadData(){try{const r=await window.storage.get(KEY);if(r&&r.value)data=JSON.parse(r.value);}catch(e){console.warn(e);}if(!data.gate2)data.gate2=novoGate2();}
-async function saveData(){try{await window.storage.set(KEY,JSON.stringify(data));}catch(e){toast(mensagemErroSalvar(e));}}
+async function loadData(){try{const r=await window.storage.get(KEY);if(r&&r.value)data=JSON.parse(r.value);dataBaseUpdatedAt=r?r.updatedAt:null;}catch(e){console.warn(e);}if(!data.gate2)data.gate2=novoGate2();}
+async function saveData(){
+  try{
+    const r=await window.storage.set(KEY,JSON.stringify(data),dataBaseUpdatedAt);
+    if(r&&r.updatedAt) dataBaseUpdatedAt=r.updatedAt;
+    return true;
+  }catch(e){ toast(mensagemErroSalvar(e)); return false; }
+}
 
 /* ── histórico de versões ── */
 const HIST_PREFIX='relent_hist:';
@@ -1112,7 +1131,8 @@ async function changeGate2Status(){
   }
   document.getElementById('gate2-data').value=data.gate2.data||'';
   document.getElementById('gate2-aprovador').value=data.gate2.aprovador||'';
-  await saveData();
+  const ok=await saveData();
+  if(!ok) return;
   applyGate2Lock();
   toast(novo==='Pactuado'?'Relatório pactuado (Gate 2)':'Pactuação revertida — relatório reaberto para edição');
 }
@@ -1280,7 +1300,8 @@ function limparRascunho(){ try{ localStorage.removeItem(CHAVE_RASCUNHO_RELENT); 
 async function saveAndPreview(){
   data.prog=readProg();
   data.projetos=readProjetos();
-  await saveData();
+  const ok=await saveData();
+  if(!ok) return;
   await saveSnapshot();
   limparRascunho();
   toast('Dados salvos');

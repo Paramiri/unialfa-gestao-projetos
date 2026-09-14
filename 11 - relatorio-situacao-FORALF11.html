@@ -570,7 +570,7 @@ function ensureAuthenticated(){
       <h1>Relatório de Situação de Projetos</h1>
       <p>Escritório de Projetos · Visão geral e por programa/projeto</p>
     </div>
-    <a class="head-help" href="15 - central-ajuda.html?v=54#relatorio-situacao" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
+    <a class="head-help" href="15 - central-ajuda.html?v=55#relatorio-situacao" target="_blank" rel="noopener" title="Ajuda sobre este relatório">?</a>
     <div class="head-meta">
       <div class="head-meta-item"><span>Referência</span><b id="hd-ref">—</b></div>
       <div class="head-meta-item"><span>Responsável</span><b id="hd-resp">—</b></div>
@@ -762,15 +762,20 @@ function ensureAuthenticated(){
   }
   window.storage = {
     get: async function(key){
-      var r = await reqComRenovacao('GET', base + '?key=eq.' + encodeURIComponent(key) + '&select=value');
+      var r = await reqComRenovacao('GET', base + '?key=eq.' + encodeURIComponent(key) + '&select=value,updated_at');
       if(!r.ok) return null;
       var rows = await r.json();
-      return rows.length ? { value: rows[0].value } : null;
+      return rows.length ? { value: rows[0].value, updatedAt: rows[0].updated_at } : null;
     },
-    set: async function(key, value){
+    set: async function(key, value, expectedUpdatedAt){
       var r;
+      var newUpdatedAt = new Date().toISOString();
       try{
-        r = await reqComRenovacao('POST', base + '?on_conflict=key', { 'Prefer': 'resolution=merge-duplicates' }, JSON.stringify({ key: key, value: value, updated_at: new Date().toISOString() }));
+        if (expectedUpdatedAt) {
+          r = await reqComRenovacao('PATCH', base + '?key=eq.' + encodeURIComponent(key) + '&updated_at=eq.' + encodeURIComponent(expectedUpdatedAt), { 'Prefer': 'return=representation' }, JSON.stringify({ value: value, updated_at: newUpdatedAt }));
+        } else {
+          r = await reqComRenovacao('POST', base + '?on_conflict=key', { 'Prefer': 'resolution=merge-duplicates' }, JSON.stringify({ key: key, value: value, updated_at: newUpdatedAt }));
+        }
       }catch(netErr){
         var eNet = new Error('network'); eNet.kind = 'network'; throw eNet;
       }
@@ -780,7 +785,13 @@ function ensureAuthenticated(){
         try{ eHttp.body = await r.text(); }catch(_){}
         throw eHttp;
       }
-      return true;
+      if (expectedUpdatedAt) {
+        var rows2 = await r.json();
+        if (!rows2.length) {
+          var eConflict = new Error('conflict'); eConflict.kind = 'conflict'; throw eConflict;
+        }
+      }
+      return { updatedAt: newUpdatedAt };
     },
     delete: async function(key){
       var r;
@@ -818,6 +829,7 @@ const RESULT_TIPO_OPTS=['Indicador','Entrega','Benefício'];
 const RESULT_TIPO_CLASS={'Indicador':'s-a-iniciar','Entrega':'s-concluido','Benefício':'s-no-prazo'};
 
 let data={ref:'',resp:'',fin:'',entr:'',projetos:[],entraves:[],encaminhamentos:[]};
+let dataBaseUpdatedAt = null; // updated_at do registro no momento do último carregamento (detecção de conflito)
 
 let projetosAprovados=[];
 async function carregarProjetosAprovados(){
@@ -1291,6 +1303,7 @@ async function toggleProjRowHistorico(i){
 function toast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3000);}
 function mensagemErroSalvar(e, acao){
   acao = acao || 'salvar este registro';
+  if(e && e.kind==='conflict') return 'Este registro foi alterado por outra pessoa enquanto você editava. Para não sobrescrever as mudanças dela, o salvamento foi cancelado — atualize a página para ver a versão mais recente e refaça suas alterações.';
   if(e && e.kind==='network') return 'Sem conexão com a internet. Verifique sua rede e tente novamente.';
   if(e && e.status===401) return 'Sua sessão expirou. Atualize a página e faça login novamente.';
   if(e && e.status===403) return 'Você não tem permissão para '+acao+'.';
@@ -1347,7 +1360,7 @@ function showView(v){
 /* ── storage ── */
 function novoId(){ return 'g_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8); }
 async function loadData(){
-  try{const r=await window.storage.get(KEY);if(r&&r.value){data=JSON.parse(r.value);}}catch(e){console.warn(e);}
+  try{const r=await window.storage.get(KEY);if(r&&r.value){data=JSON.parse(r.value);}dataBaseUpdatedAt=r?r.updatedAt:null;}catch(e){console.warn(e);}
   if(!data.entraves) data.entraves=[];
   if(!data.encaminhamentos) data.encaminhamentos=[];
   if(!data.resultados) data.resultados=[];
@@ -1357,7 +1370,11 @@ async function loadData(){
   data.encaminhamentos.forEach(function(it){ if(!it.id) it.id=novoId(); });
 }
 async function saveData(){
-  try{await window.storage.set(KEY,JSON.stringify(data));}catch(e){toast(mensagemErroSalvar(e));}
+  try{
+    const r=await window.storage.set(KEY,JSON.stringify(data),dataBaseUpdatedAt);
+    if(r&&r.updatedAt) dataBaseUpdatedAt=r.updatedAt;
+    return true;
+  }catch(e){ toast(mensagemErroSalvar(e)); return false; }
 }
 
 /* ── histórico de versões ── */
@@ -1953,7 +1970,8 @@ async function saveAndPreview(){
   data.fin=document.getElementById('e-fin').value;
   data.entr=document.getElementById('e-entr').value;
   data.riscosPortfolio=await calcularRiscosPortfolioTAP();
-  await saveData();
+  const ok=await saveData();
+  if(!ok) return;
   await saveSnapshot();
   limparRascunho();
   toast('Dados salvos');
@@ -2023,7 +2041,7 @@ function showImportPreview(rows){
   importedRows._cols={colNome,colPct,colResp,colInicio,colTermino};
 }
 
-function confirmImport(){
+async function confirmImport(){
   const cols=importedRows._cols||{};
   const novos=importedRows.filter(r=>cols.colNome&&r[cols.colNome]).map(r=>{
     const pct=parseInt(r[cols.colPct])||0;
@@ -2031,7 +2049,8 @@ function confirmImport(){
     return{cod:'',nome:r[cols.colNome]||'',programa:'',resp:r[cols.colResp]||'',status,pct:String(pct),inicio:r[cols.colInicio]||'',termino:r[cols.colTermino]||'',atencao:'',destaque:'',marcos:[]};
   });
   data.projetos=[...data.projetos,...novos];
-  saveData();
+  const ok=await saveData();
+  if(!ok) return;
   document.getElementById('import-preview').style.display='none';
   toast(`${novos.length} projetos importados. Ajuste em Editar dados.`);
   showView('painel');
