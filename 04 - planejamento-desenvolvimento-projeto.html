@@ -115,6 +115,10 @@
   table.dyn-t{width:100%; border-collapse:collapse; min-width:760px; table-layout:fixed}
   table.dyn-t#tbl-cronograma{min-width:1180px}
   table.dyn-t#tbl-cronograma td{padding:7px 8px}
+  table.dyn-t#tbl-verificacao{min-width:1150px}
+  table.dyn-t#tbl-verificacao td{padding:7px 8px}
+  table.dyn-t#tbl-analise{min-width:1320px}
+  table.dyn-t#tbl-analise td{padding:7px 8px}
   table.dyn-t th, table.dyn-t td{overflow-wrap:break-word}
   table.dyn-t th{font-size:9px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); padding:9px 10px; background:var(--surface-2); border-bottom:1px solid var(--line); text-align:left; white-space:normal; line-height:1.3}
   table.dyn-t td{padding:4px 6px; border-bottom:1px solid var(--surface)}
@@ -961,42 +965,42 @@ const STAGES=[
   {id:'saidas', tab:'5 · Saídas', title:'Saídas do projeto', sub:'Entregáveis e aceitação', blocks:[
     {kind:'table', key:'saidas', label:'Saídas', cols:[
       {key:'id',label:'ID',type:'text',w:'46px'},
-      {key:'item',label:'Item de saída (entregável)',type:'text',w:'22%',long:true},
-      {key:'requisito',label:'Requisito de entrada (fonte da demanda)',type:'text',w:'20%',long:true},
-      {key:'criterios',label:'Critérios de aceitação',type:'text',w:'20%',long:true},
-      {key:'statusVerif',label:'Status de verificação',type:'select',options:ST_SAIDA_VERIF},
-      {key:'aprovacao',label:'Aprovação final',type:'select',options:ST_APROV},
+      {key:'item',label:'Item de saída (entregável)',type:'text',w:'20%',long:true},
+      {key:'requisito',label:'Requisito de entrada (fonte da demanda)',type:'text',w:'18%',long:true},
+      {key:'criterios',label:'Critérios de aceitação',type:'text',w:'18%',long:true},
+      {key:'statusVerif',label:'Status de verificação',type:'select',w:'12%',options:ST_SAIDA_VERIF},
+      {key:'aprovacao',label:'Aprovação final',type:'select',w:'12%',options:ST_APROV},
     ], seedRows:[{id:'S1'},{id:'S2'},{id:'S3'},{id:'S4'},{id:'S5'},{id:'S6'},{id:'S7'}]},
   ]},
   {id:'verif', tab:'6 · Verificação', title:'Verificação do projeto', sub:'Conformidade das saídas', blocks:[
     {kind:'table', key:'verificacao', label:'Verificação', cols:[
       {key:'id',label:'ID',type:'text',w:'50px'},
-      {key:'requisito',label:'Requisito de entrada',type:'text',w:'15%',long:true},
-      {key:'saida',label:'Item de saída correspondente',type:'text',w:'15%',long:true},
-      {key:'metodo',label:'Método de verificação',type:'text',w:'15%',long:true},
-      {key:'resultado',label:'Resultado (C/NC)',type:'select',options:RES_CNC},
-      {key:'evidencia',label:'Evidência documental',type:'text',w:'13%',long:true},
+      {key:'requisito',label:'Requisito de entrada',type:'text',w:'17%',long:true},
+      {key:'saida',label:'Item de saída correspondente',type:'text',w:'17%',long:true},
+      {key:'metodo',label:'Método de verificação',type:'text',w:'16%',long:true},
+      {key:'resultado',label:'Resultado (C/NC)',type:'select',w:'11%',options:RES_CNC},
+      {key:'evidencia',label:'Evidência documental',type:'text',w:'14%',long:true},
       {key:'resp',label:'Responsável',type:'text',w:'12%',long:true},
     ], seedRows:[{id:'VR1'},{id:'VR2'},{id:'VR3'},{id:'VR4'},{id:'VR5'},{id:'VR6'},{id:'VR7'}]},
   ]},
   {id:'valid', tab:'7 · Validação', title:'Validação do projeto', sub:'Uso pretendido', blocks:[
     {kind:'table', key:'validacao', label:'Validação', cols:[
       {key:'id',label:'ID',type:'text',w:'50px'},
-      {key:'requisito',label:'Requisito do usuário / uso pretendido',type:'text',w:'22%',long:true},
-      {key:'metodo',label:'Método de validação (teste prático)',type:'text',w:'18%',long:true},
-      {key:'criterio',label:'Critério de sucesso',type:'text',w:'18%',long:true},
-      {key:'resultado',label:'Resultado',type:'select',options:RES_AV},
+      {key:'requisito',label:'Requisito do usuário / uso pretendido',type:'text',w:'20%',long:true},
+      {key:'metodo',label:'Método de validação (teste prático)',type:'text',w:'16%',long:true},
+      {key:'criterio',label:'Critério de sucesso',type:'text',w:'16%',long:true},
+      {key:'resultado',label:'Resultado',type:'select',w:'13%',options:RES_AV},
       {key:'evidencia',label:'Evidência (relatório/foto/vídeo)',type:'text',w:'16%',long:true},
     ], seedRows:[{id:'V1'},{id:'V2'},{id:'V3'},{id:'V4'},{id:'V5'},{id:'V6'},{id:'V7'}]},
   ]},
   {id:'analise', tab:'8 · Análise crítica', title:'Análise crítica do projeto', sub:'Pontos de controle', blocks:[
     {kind:'table', key:'analise', label:'Análise crítica', cols:[
-      {key:'etapa',label:'Etapa do projeto',type:'text',w:'11%',long:true},
-      {key:'dataAnalise',label:'Data da análise',type:'date',w:'15%'},
-      {key:'participantes',label:'Participantes (áreas)',type:'text',w:'12%',long:true},
-      {key:'pontos',label:'Pontos analisados (status)',type:'text',w:'15%',long:true},
-      {key:'problemas',label:'Problemas/riscos identificados',type:'text',w:'15%',long:true},
-      {key:'acoes',label:'Ações necessárias / decisões',type:'text',w:'15%',long:true},
+      {key:'etapa',label:'Etapa do projeto',type:'text',w:'10%',long:true},
+      {key:'dataAnalise',label:'Data da análise',type:'date',w:'11%'},
+      {key:'participantes',label:'Participantes (áreas)',type:'text',w:'13%',long:true},
+      {key:'pontos',label:'Pontos analisados (status)',type:'text',w:'16%',long:true},
+      {key:'problemas',label:'Problemas/riscos identificados',type:'text',w:'16%',long:true},
+      {key:'acoes',label:'Ações necessárias / decisões',type:'text',w:'16%',long:true},
       {key:'respPrazo',label:'Responsável e prazo',type:'text',w:'12%',long:true},
     ], seedRows:[{etapa:'Planejamento'},{etapa:'Pós-verificação'},{etapa:'Pós-validação'},{etapa:'Finalização'}]},
   ]},
