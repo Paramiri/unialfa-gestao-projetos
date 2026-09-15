@@ -315,6 +315,12 @@ body.auth-ready{padding-top:34px}
           expires_at: Date.now() + (parseInt(params.get('expires_in')||'3600',10)*1000),
         });
         if (params.get('provider_token')) { localStorage.setItem('unialfa_provider_token', params.get('provider_token')); }
+        var voltarPara = localStorage.getItem('unialfa_login_return_to');
+        localStorage.removeItem('unialfa_login_return_to');
+        if (voltarPara && voltarPara.split('#')[0] !== location.href.split('#')[0]) {
+          location.replace(voltarPara + location.hash);
+          return true;
+        }
         history.replaceState(null, '', location.pathname + location.search);
         return true;
       }
@@ -494,6 +500,7 @@ var unialfaAuthUI = {
     var msg = document.getElementById('authMsg');
     if(!email || email.indexOf('@')<0){ msg.textContent='Digite um e-mail válido.'; msg.className='auth-msg err'; msg.style.display='block'; return; }
     msg.style.display='none';
+    localStorage.setItem('unialfa_login_return_to', location.href);
     var ok = await unialfaAuth.sendMagicLink(email);
     if(ok){
       document.getElementById('authStep1').style.display='none';
@@ -503,7 +510,7 @@ var unialfaAuthUI = {
       msg.textContent='Não foi possível enviar o link. Tente novamente.'; msg.className='auth-msg err'; msg.style.display='block';
     }
   },
-  signInWithAzure: function(){ location.href = unialfaAuth.AUTH_BASE + '/authorize?provider=azure&scopes=openid%20email%20profile%20User.Read'; },
+  signInWithAzure: function(){ localStorage.setItem('unialfa_login_return_to', location.href); location.href = unialfaAuth.AUTH_BASE + '/authorize?provider=azure&scopes=openid%20email%20profile%20User.Read'; },
   reset: function(){
     document.getElementById('authStep1').style.display='block';
     document.getElementById('authStep2').style.display='none';

@@ -41,6 +41,12 @@ body.auth-ready{padding-top:34px}
         expires_at: Date.now() + (parseInt(params.get('expires_in')||'3600',10)*1000),
       }));
       if (params.get('provider_token')) { localStorage.setItem('unialfa_provider_token', params.get('provider_token')); }
+      var voltarPara = localStorage.getItem('unialfa_login_return_to');
+      localStorage.removeItem('unialfa_login_return_to');
+      if (voltarPara && voltarPara.split('#')[0] !== location.href.split('#')[0]) {
+        location.replace(voltarPara + location.hash);
+        return;
+      }
       history.replaceState(null, '', location.pathname + location.search);
       document.addEventListener('DOMContentLoaded', function(){
         var b = document.createElement('div');
