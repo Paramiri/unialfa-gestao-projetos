@@ -134,6 +134,7 @@ body.auth-ready{padding-top:34px}
       <a href="#administracao" data-sec="administracao">Administração</a>
       <a href="#backup" data-sec="backup">Backup automatizado</a>
       <a href="#painel-executivo" data-sec="painel-executivo">Painel Executivo</a>
+      <a href="#painel-prazos" data-sec="painel-prazos">Painel de Prazos</a>
       <a href="#ficha-projeto" data-sec="ficha-projeto">Ficha do Projeto</a>
       <a href="#relatorio-resultados" data-sec="relatorio-resultados">Relatório de Resultados</a>
       <div class="grp">Ajuda</div>
@@ -517,6 +518,28 @@ body.auth-ready{padding-top:34px}
         </ul>
         <div class="tip">Por reunir dados de vários formulários numa única tela, o carregamento faz uma consulta para cada um dos 10 formulários de registro — pode levar alguns segundos a mais. Use o botão <b>Atualizar</b> para recarregar os números mais recentes.</div>
         <div class="tip"><b>Não reportado:</b> na coluna Situação, significa que o projeto ainda não tem uma linha própria no Relatório de Situação — não é um erro, apenas indica que ninguém preencheu o acompanhamento daquele projeto ainda.</div>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="painel-prazos">
+        <div class="eyebrow">gestão</div>
+        <h2>Painel de Prazos <span class="tag eq">acesso por papel</span></h2>
+        <p class="lead">Página pensada para ficar aberta numa TV ou monitor da sala de projetos, atualizando sozinha a cada 2 minutos, com o cronograma (marcos do <a href="#passo-4">Planejamento e Desenvolvimento</a>) de todos os projetos ainda ativos — projetos já encerrados via TEP não entram. Por padrão só o Admin vê esta página, mas o Admin pode liberar outros papéis em <a href="#administracao">Administração &gt; Configurações</a>, igual ao Painel Executivo.</p>
+        <ul>
+          <li><b>Três indicadores no topo:</b> total de marcos atrasados no portfólio (sem Conclusão real, com o Término previsto já vencido), total de marcos vencendo em até 5 dias, e % de marcos concluídos somando todos os projetos ativos.</li>
+          <li><b>Um cartão por projeto ativo</b> com Planejamento registrado, ordenado com os projetos com mais marcos atrasados primeiro: nome, gerente, barra de % concluído, e a lista dos marcos atrasados (vermelho) e vencendo em breve (âmbar), cada um com o responsável do cronograma e há quantos dias está atrasado ou em quantos dias vence. Um projeto sem nenhum marco atrasado ou vencendo mostra "Tudo em dia".</li>
+        </ul>
+        <div class="tip">Este painel só mostra os dados — quem efetivamente recebe um aviso por e-mail/push quando um prazo se aproxima é o mecanismo automático descrito a seguir, que roda sozinho todo dia sem precisar desta tela aberta.</div>
+        <h3 style="font-size:14px;margin:22px 0 8px">Aviso automático de prazo (e-mail e push)</h3>
+        <p>Complementando o Painel de Prazos, um mecanismo roda sozinho uma vez por dia e avisa por e-mail — e por push, para quem tiver ativado — quando um marco do cronograma está chegando ou já passou do prazo, sem Conclusão real preenchida:</p>
+        <ul>
+          <li>5 dias antes do Término previsto.</li>
+          <li>2 dias antes.</li>
+          <li>No dia do vencimento.</li>
+          <li>Atrasado — repete a cada 7 dias enquanto o marco continuar sem Conclusão real, para não lembrar todo dia da mesma pendência.</li>
+        </ul>
+        <p>Quem recebe cada aviso: a conta vinculada no campo <b>Responsável (conta)</b> do cronograma (<a href="#passo-4">Passo 4</a>, aba Cronograma), quando preenchido, mais toda conta com papel Gerente de Projetos que estiver na <a href="#equipe">equipe daquele projeto</a> — não o campo de texto livre "Gerente" do cadastro do projeto. Se nenhum dos dois existir para aquele marco, ninguém recebe o aviso automático, mas o indicador visual no Painel de Prazos continua aparecendo normalmente.</p>
+        <div class="tip"><b>Responsável (conta) não substitui o texto livre "Responsável":</b> é um segundo campo, um seletor com as contas que fazem parte da equipe do projeto selecionado. O texto livre "Responsável" continua existindo do lado, sem nenhuma mudança — o campo novo serve só para o sistema saber para qual conta mandar o aviso automático. Preenchê-lo é opcional.</div>
         <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
       </section>
 

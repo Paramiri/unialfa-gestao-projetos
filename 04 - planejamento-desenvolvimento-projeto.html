@@ -703,7 +703,7 @@ window.unialfaHistorico = {
         <h1>Planejamento e Desenvolvimento de Projeto</h1>
         <p>Dossiê de ciclo de vida do projeto · Gerência de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=60#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=61#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00325</b></div>
@@ -949,6 +949,7 @@ const STAGES=[
       {key:'seq',label:'Nº',type:'auto',w:'3%'},
       {key:'marco',label:'Marco / Entrega',type:'text',w:'15%',long:true},
       {key:'resp',label:'Responsável',type:'text',w:'12%',long:true},
+      {key:'respConta',label:'Responsável (conta)',type:'teamSelect',w:'12%'},
       {key:'ini',label:'Início previsto',type:'date',w:'12%'},
       {key:'fim',label:'Término previsto',type:'date',w:'12%'},
       {key:'concl',label:'Conclusão real',type:'date',w:'12%'},
@@ -1044,7 +1045,7 @@ async function onProjetoSelect(preencherCampos=true){
   document.getElementById('btnHistorico').style.display = id ? 'inline' : 'none';
   document.getElementById('historicoPanel').style.display='none'; historicoAberto=false;
   const p=projetosAprovados.find(x=>x.id===id);
-  if(!p){ info.style.display='none'; document.getElementById('equipeAviso').style.display='none'; atualizarBotaoEquipe(true); document.getElementById('iaSugestaoBloco').style.display='none'; return; }
+  if(!p){ info.style.display='none'; document.getElementById('equipeAviso').style.display='none'; atualizarBotaoEquipe(true); document.getElementById('iaSugestaoBloco').style.display='none'; window.__equipeAtualEmails=[]; refreshRespContaOptions(); return; }
   document.getElementById('pi-unidade').textContent=p.unidade||'—';
   document.getElementById('pi-gerente').textContent=p.gerente||'—';
   document.getElementById('pi-status').textContent='Aprovado';
@@ -1052,6 +1053,9 @@ async function onProjetoSelect(preencherCampos=true){
   const souMembro = await unialfaEquipe.souMembro(id);
   document.getElementById('equipeAviso').style.display = souMembro ? 'none' : 'block';
   atualizarBotaoEquipe(souMembro);
+  const membrosEquipe = await unialfaEquipe.listar(id);
+  window.__equipeAtualEmails = membrosEquipe.map(m=>m.usuario_email).filter(Boolean);
+  refreshRespContaOptions();
   document.getElementById('iaSugestaoBloco').style.display = (souMembro && window.__iaAssistentePermitido) ? 'block' : 'none';
   document.getElementById('iaStatus').style.display='none';
   document.getElementById('iaFontes').classList.remove('show');
@@ -1068,6 +1072,17 @@ function atualizarBotaoEquipe(souMembro){
   btn.disabled = !souMembro;
   btn.style.opacity = souMembro ? '1' : '.5';
   btn.style.cursor = souMembro ? 'pointer' : 'not-allowed';
+}
+/* Reconstroi as opcoes dos selects "Responsavel (conta)" ja renderizados no cronograma,
+   preservando o valor atual mesmo que a pessoa ja nao esteja mais na equipe (senao a troca de
+   projeto ou uma equipe alterada depois apagaria silenciosamente o vinculo salvo). */
+function refreshRespContaOptions(){
+  document.querySelectorAll('#tbl-cronograma [data-k="respConta"]').forEach(sel=>{
+    const cur=sel.value;
+    const emails=(window.__equipeAtualEmails||[]).slice();
+    if(cur && !emails.includes(cur)) emails.push(cur);
+    sel.innerHTML='<option value="">—</option>'+emails.map(o=>`<option ${o===cur?'selected':''}>${esc(o)}</option>`).join('');
+  });
 }
 async function toggleHistorico(){
   const id=document.getElementById('projetoSelect').value; if(!id) return;
@@ -1550,6 +1565,11 @@ function cellInput(c, v){
   if(c.type==='select'){
     return `<select data-k="${c.key}"><option value="">—</option>${c.options.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`;
   }
+  if(c.type==='teamSelect'){
+    const emails=(window.__equipeAtualEmails||[]).slice();
+    if(v && !emails.includes(v)) emails.push(v);
+    return `<select data-k="${c.key}"><option value="">—</option>${emails.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+  }
   if(c.long){
     return `<textarea data-k="${c.key}" rows="1" oninput="autoGrow(this)">${esc(v)}</textarea>`;
   }
@@ -1563,10 +1583,12 @@ function autoGrow(el){
 function regrowTextareas(root){
   (root||document).querySelectorAll('table.dyn-t textarea').forEach(autoGrow);
 }
+function novoId(){ return 'm_'+Date.now()+'_'+Math.random().toString(36).slice(2,8); }
 function addRow(key, vals){
   const t=TABLE_DEFS[key];
   const tb=document.querySelector(`#tbl-${key} tbody`);
   const tr=document.createElement('tr');
+  if(key==='cronograma'){ tr.dataset.marcoId=(vals&&vals.id)?vals.id:novoId(); }
   let cells=t.cols.map(c=>{
     if(c.type==='auto') return `<td class="dyn-seq"></td>`;
     if(c.type==='tasks') return `<td><button type="button" class="tarefas-toggle" onclick="toggleTarefas(this)"></button></td>`;
@@ -1642,6 +1664,7 @@ function readTable(key){
     const obj={}; let any=false;
     tr.querySelectorAll('input,select,textarea').forEach(inp=>{ const val=(inp.value||'').trim(); obj[inp.dataset.k]=val; if(val) any=true; });
     if(tr._tarefas && tr._tarefas.length) obj.tarefas=tr._tarefas.map(tf=>({nome:tf.nome, concluida:!!tf.concluida}));
+    if(key==='cronograma' && tr.dataset.marcoId) obj.id=tr.dataset.marcoId;
     if(any) rows.push(obj);
   });
   if(t && t.mainKey){

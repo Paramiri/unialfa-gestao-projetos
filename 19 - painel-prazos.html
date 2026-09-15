@@ -1,0 +1,505 @@
+<!-- Painel de Prazos (à vista) / UNIALFA -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --red:#B91D2E; --red-deep:#8E1322; --ink:#1A1A1A; --muted:#6A6A70;
+    --paper:#FFFFFF; --surface:#F6F6F7; --surface-2:#FAFAFB;
+    --line:#E4E4E7; --line-strong:#D4D4D8;
+    --ok:#1B7F4B; --ok-soft:#E6F4EC; --warn:#B45309; --warn-soft:#FBF1E3; --bad:#9F1239; --bad-soft:#FBE7EC; --blue:#1D4ED8; --blue-soft:#EAF0FE;
+    --radius:10px; --shadow:0 1px 2px rgba(20,20,20,.04), 0 8px 28px rgba(20,20,20,.06);
+    --font:'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:var(--font); color:var(--ink); background:var(--surface); -webkit-font-smoothing:antialiased; line-height:1.5;}
+  .wrap{max-width:1280px; margin:0 auto; padding:28px 20px 64px}
+  .doc-head{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);}
+  .doc-band{background:var(--red); color:#fff; padding:18px 24px; display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+  .doc-logo{font-weight:800; font-size:22px; letter-spacing:.04em; line-height:1; padding-right:18px; border-right:2px solid rgba(255,255,255,.35);}
+  .doc-logo small{display:block; font-weight:600; font-size:10px; letter-spacing:.22em; margin-top:5px; opacity:.85}
+  .doc-title{flex:1; min-width:220px}
+  .doc-title h1{margin:0; font-size:17px; font-weight:700; letter-spacing:.06em; text-transform:uppercase}
+  .doc-title p{margin:3px 0 0; font-size:12px; font-weight:500; opacity:.9; letter-spacing:.02em}
+  .doc-help{flex:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;text-decoration:none;border:1.5px solid rgba(255,255,255,.4)}
+  .doc-help:hover{background:rgba(255,255,255,.32)}
+
+  .sec-title{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:6px}
+  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red)}
+  .kpi.ok::before{background:var(--ok)}
+  .kpi.warn::before{background:var(--warn)}
+  .kpi.blue::before{background:var(--blue)}
+  .kpi.bad::before{background:var(--bad)}
+  .kpi-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .kpi-value{font-size:34px;font-weight:900;line-height:1;color:var(--ink)}
+  .kpi-sub{font-size:11px;color:var(--muted);margin-top:6px;font-weight:500}
+
+  .s-badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+  .s-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+  .s-ok{background:var(--ok-soft);color:var(--ok)}
+  .s-bad{background:var(--bad-soft);color:var(--bad)}
+  .s-warn{background:var(--warn-soft);color:var(--warn)}
+  .s-neutral{background:var(--surface-2);color:var(--muted);border:1px solid var(--line-strong)}
+
+  .card{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;}
+  .empty{padding:40px 24px; text-align:center; color:var(--muted); font-size:13px;}
+  .denied{padding:48px 24px; text-align:center;}
+  .denied h2{font-size:16px; margin:0 0 8px}
+  .denied p{color:var(--muted); font-size:13px; margin:0}
+  .refresh-bar{display:flex;align-items:center;justify-content:space-between;margin:26px 0 10px;gap:12px;flex-wrap:wrap}
+  .btn{appearance:none; font-family:var(--font); font-weight:700; font-size:12.5px; border-radius:8px; padding:9px 16px; cursor:pointer; border:1px solid var(--line-strong); background:var(--paper); color:var(--ink);}
+  .btn:hover{border-color:var(--ink)}
+  .loading{padding:40px 24px;text-align:center;color:var(--muted);font-size:13px}
+
+  .proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+  .proj-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+  .proj-card.tem-atraso{border-color:var(--bad);box-shadow:0 0 0 1px var(--bad), var(--shadow)}
+  .proj-card.tem-alerta{border-color:var(--warn)}
+  .proj-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .proj-nome{font-size:14.5px;font-weight:800;line-height:1.3}
+  .proj-gerente{font-size:11px;color:var(--muted);margin-top:2px}
+  .proj-pct{font-size:20px;font-weight:900}
+  .bar-track{height:7px;border-radius:999px;background:var(--surface-2);overflow:hidden;border:1px solid var(--line)}
+  .bar-fill{height:100%;background:var(--ok);border-radius:999px}
+  .marco-row{font-size:12px;padding:6px 8px;border-radius:7px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .marco-row.atrasado{background:var(--bad-soft);color:var(--bad)}
+  .marco-row.alerta{background:var(--warn-soft);color:var(--warn)}
+  .marco-row .m-nome{font-weight:700}
+  .marco-row .m-dias{white-space:nowrap;font-weight:700;font-size:11px}
+  .tudo-em-dia{font-size:12px;color:var(--ok);font-weight:700;display:flex;align-items:center;gap:6px}
+
+  @media (max-width:720px){.kpi-row{grid-template-columns:1fr}.proj-grid{grid-template-columns:1fr}}
+</style>
+
+<!-- ==== AUTH GATE (HTML) ==== -->
+<div class="auth-gate" id="authGate" style="display:none">
+  <div class="auth-card">
+    <div class="auth-logo"><img src="icons/logo-alfa.png" alt="ALFA" style="height:40px;display:block"><small>GRUPO JOSÉ ALVES</small></div>
+    <h2>Entrar</h2>
+    <div id="treinoLoginBloco" style="display:none">
+      <p style="font-size:11.5px;color:var(--muted,#6B7280);margin-bottom:8px">Ambiente de treinamento — selecione um papel para entrar:</p>
+      <select id="treinoPapel" style="width:100%;font-family:inherit;font-size:13.5px;border:1px solid var(--line-strong,#D1D5DB);border-radius:8px;padding:10px 12px;margin-bottom:10px;color:var(--ink,#0F0F0F)">
+        <option value="solicitante@treino.unialfa.local">Solicitante</option>
+        <option value="gp@treino.unialfa.local">Gerente de Projetos</option>
+        <option value="gestor@treino.unialfa.local">Gestor Responsável</option>
+        <option value="dono@treino.unialfa.local">Dono do Negócio</option>
+        <option value="altagestao@treino.unialfa.local">Alta Gestão</option>
+        <option value="admin@treino.unialfa.local">PMO / Admin</option>
+      </select>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="unialfaAuthUI.signInTreino()">Entrar</button>
+      <div style="text-align:center;margin:14px 0;color:var(--muted,#6B7280);font-size:11px;font-weight:600">— ou —</div>
+    </div>
+    <script>if(location.href.indexOf('treino')>-1){var _tb=document.getElementById('treinoLoginBloco');if(_tb)_tb.style.display='block';}</script>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="unialfaAuthUI.signInWithAzure()">Entrar com Microsoft - UNIALFA</button>
+    <div style="text-align:center;margin:14px 0;color:var(--muted,#6B7280);font-size:11px;font-weight:600">— ou —</div>
+    <p>Digite seu e-mail para receber um link de acesso — sem senha.</p>
+    <div id="authStep1">
+      <input type="email" id="authEmail" placeholder="seu.nome@email.com.br">
+      <button class="btn btn-primary" onclick="unialfaAuthUI.sendLink()">Enviar link de acesso</button>
+    </div>
+    <div id="authStep2" style="display:none">
+      <p>✓ Link enviado para <b id="authEmailSent"></b>. Verifique seu e-mail e clique no link — esta página atualiza sozinha.</p>
+      <button class="btn btn-ghost btn-sm" onclick="unialfaAuthUI.reset()">Usar outro e-mail</button>
+    </div>
+    <div id="authMsg" class="auth-msg" style="display:none"></div>
+  </div>
+</div>
+
+<style>
+.auth-gate{position:fixed;inset:0;background:rgba(15,15,15,.92);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-card{background:var(--paper,#fff);border-radius:14px;padding:32px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.auth-logo{font-weight:900;font-size:20px;letter-spacing:.04em;color:var(--red,#B91D2E);margin-bottom:18px}
+.auth-logo small{display:block;font-weight:600;font-size:9px;letter-spacing:.2em;color:var(--muted,#6B7280);margin-top:3px}
+.auth-card h2{font-size:17px;font-weight:800;margin-bottom:6px;color:var(--ink,#0F0F0F)}
+.auth-card p{font-size:12.5px;color:var(--muted,#6B7280);margin-bottom:16px;line-height:1.5}
+.auth-card input{width:100%;font-family:inherit;font-size:13.5px;border:1px solid var(--line-strong,#D1D5DB);border-radius:8px;padding:10px 12px;margin-bottom:10px;color:var(--ink,#0F0F0F)}
+.auth-card input:focus{outline:none;border-color:var(--red,#B91D2E);box-shadow:0 0 0 3px rgba(185,29,46,.12)}
+.auth-card .btn{width:100%;justify-content:center; appearance:none; font-family:var(--font); font-weight:700; font-size:13px; letter-spacing:.02em; border-radius:8px; padding:11px 22px; cursor:pointer; border:1px solid transparent; display:inline-flex; align-items:center; gap:8px;}
+.btn-primary{background:var(--red); color:#fff}
+.btn-primary:hover{background:var(--red-deep)}
+.btn-ghost{background:var(--paper); color:var(--ink); border-color:var(--line-strong)}
+.btn-ghost:hover{border-color:var(--ink)}
+.btn-sm{padding:7px 14px; font-size:12px}
+.auth-msg{margin-top:10px;font-size:12px;font-weight:600;padding:8px 10px;border-radius:7px}
+.auth-msg.err{background:#FEE2E2;color:#DC2626}
+.auth-msg.ok{background:#D1FAE5;color:#059669}
+.auth-topbar{position:fixed;top:0;left:0;right:0;background:var(--ink,#0F0F0F);color:#fff;font-size:11.5px;padding:8px 18px;display:flex;align-items:center;gap:10px;z-index:150;font-family:var(--font)}
+.auth-topbar b{font-weight:700}
+.auth-topbar .papel-tag{background:var(--red,#B91D2E);padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.auth-topbar .sair{margin-left:auto;background:none;border:none;color:#fff;opacity:.7;cursor:pointer;font-size:11px;text-decoration:underline;font-family:inherit}
+.auth-topbar .sair:hover{opacity:1}
+body.auth-ready{padding-top:34px}
+</style>
+
+<script>
+/* ---- Autenticacao (magic link) ---- */
+(function(){
+  var IS_TREINO = location.href.indexOf('treino')>-1;
+  var SUPABASE_URL = IS_TREINO ? 'https://uuxvdulunrwppbmofyux.supabase.co' : 'https://fiarntunpqteopwjkhjg.supabase.co';
+  var SUPABASE_ANON_KEY = IS_TREINO ? 'sb_publishable_c2t1YzuGTrNvg5770BYOvg_04hR9NrE' : 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+  var AUTH_BASE = SUPABASE_URL + '/auth/v1';
+  var REST_BASE = SUPABASE_URL + '/rest/v1';
+  var SESSION_KEY = 'unialfa_session';
+
+  function saveSession(s){ localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
+  function getSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)); }catch(e){ return null; } }
+  function clearSession(){ localStorage.removeItem(SESSION_KEY); }
+
+  function captureRedirect(){
+    if (location.hash && location.hash.indexOf('access_token') > -1) {
+      var params = new URLSearchParams(location.hash.slice(1));
+      if (params.get('access_token')) {
+        saveSession({
+          access_token: params.get('access_token'),
+          refresh_token: params.get('refresh_token'),
+          expires_at: Date.now() + (parseInt(params.get('expires_in')||'3600',10)*1000),
+        });
+        if (params.get('provider_token')) { localStorage.setItem('unialfa_provider_token', params.get('provider_token')); }
+        history.replaceState(null, '', location.pathname + location.search);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async function sendMagicLink(email){
+    var r = await fetch(AUTH_BASE + '/otp', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, create_user: true }),
+    });
+    return r.ok;
+  }
+
+  async function fetchUser(){
+    var s = getSession();
+    if(!s || !s.access_token) return null;
+    if (s.expires_at && Date.now() > s.expires_at) { clearSession(); return null; }
+    var r = await fetch(AUTH_BASE + '/user', { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + s.access_token } });
+    if(!r.ok) { clearSession(); return null; }
+    return await r.json();
+  }
+
+  function authHeaders(extra){
+    var s = getSession();
+    var token = (s && s.access_token) ? s.access_token : SUPABASE_ANON_KEY;
+    var h = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+    if (extra) for (var k in extra) h[k]=extra[k];
+    return h;
+  }
+
+  async function fetchProfile(userId){
+    var r = await fetch(REST_BASE + '/perfis?id=eq.' + userId + '&select=*', { headers: authHeaders() });
+    if(!r.ok) return null;
+    var rows = await r.json();
+    return rows[0] || null;
+  }
+
+  async function ensureProfile(user){
+    var p = await fetchProfile(user.id);
+    var meta = user.user_metadata || {};
+    var nome = meta.name || [meta.given_name, meta.family_name].filter(Boolean).join(' ') || null;
+    if(p){
+      if(nome && !p.nome){
+        await fetch(REST_BASE + '/perfis?id=eq.' + user.id, {
+          method: 'PATCH', headers: authHeaders({ 'Prefer': 'return=minimal' }),
+          body: JSON.stringify({ nome: nome }),
+        });
+        p.nome = nome;
+      }
+      return p;
+    }
+    var pendente = null;
+    try{
+      var rPend = await fetch(REST_BASE + '/perfis_pendentes?email=eq.' + encodeURIComponent(user.email) + '&select=*', { headers: authHeaders() });
+      if(rPend.ok){ var linhas = await rPend.json(); pendente = linhas[0] || null; }
+    }catch(e){}
+    await fetch(REST_BASE + '/perfis', {
+      method: 'POST', headers: authHeaders({ 'Prefer': 'return=minimal' }),
+      body: JSON.stringify({
+        id: user.id, email: user.email,
+        nome: (pendente && pendente.nome) || nome,
+        telefone: pendente ? pendente.telefone : null,
+        papel: (pendente && pendente.papel) || 'solicitante',
+      }),
+    });
+    if(pendente){
+      await fetch(REST_BASE + '/perfis_pendentes?email=eq.' + encodeURIComponent(user.email), { method: 'DELETE', headers: authHeaders() });
+    }
+    return await fetchProfile(user.id);
+  }
+
+  var PAPEL_LABEL = {
+    solicitante: 'Solicitante', gerente_projetos: 'Gerente de Projetos', gestor_responsavel: 'Gestor Responsável',
+    dono_negocio: 'Dono do Negócio', alta_gestao: 'Alta Gestão', admin: 'PMO / Admin',
+  };
+
+  async function tentarNomeViaGraph(profile){
+    var token = localStorage.getItem('unialfa_provider_token');
+    if(!token) return profile;
+    localStorage.removeItem('unialfa_provider_token');
+    if(!profile || profile.nome) return profile;
+    try{
+      var r = await fetch('https://graph.microsoft.com/v1.0/me', { headers: { 'Authorization': 'Bearer ' + token } });
+      if(!r.ok) return profile;
+      var me = await r.json();
+      var nome = me.displayName || [me.givenName, me.surname].filter(Boolean).join(' ');
+      if(nome){
+        await fetch(REST_BASE + '/perfis?id=eq.' + profile.id, {
+          method:'PATCH', headers: authHeaders({'Prefer':'return=minimal'}),
+          body: JSON.stringify({ nome: nome })
+        });
+        profile.nome = nome;
+      }
+    }catch(e){ console.warn('Nao foi possivel buscar nome via Microsoft Graph', e); }
+    return profile;
+  }
+
+  window.unialfaAuth = {
+    ANON_KEY: SUPABASE_ANON_KEY,
+    REST_BASE: REST_BASE,
+    AUTH_BASE: AUTH_BASE,
+    getSession: getSession, clearSession: clearSession, captureRedirect: captureRedirect,
+    sendMagicLink: sendMagicLink, fetchUser: fetchUser, authHeaders: authHeaders,
+    fetchProfile: fetchProfile, ensureProfile: ensureProfile, tentarNomeViaGraph: tentarNomeViaGraph,
+    papelLabel: function(p){ return PAPEL_LABEL[p]||p; },
+    signOut: function(){ clearSession(); location.reload(); },
+  };
+})();
+
+var unialfaAuthUI = {
+  sendLink: async function(){
+    var email = document.getElementById('authEmail').value.trim();
+    var msg = document.getElementById('authMsg');
+    if(!email || email.indexOf('@')<0){ msg.textContent='Digite um e-mail válido.'; msg.className='auth-msg err'; msg.style.display='block'; return; }
+    msg.style.display='none';
+    var ok = await unialfaAuth.sendMagicLink(email);
+    if(ok){
+      document.getElementById('authStep1').style.display='none';
+      document.getElementById('authStep2').style.display='block';
+      document.getElementById('authEmailSent').textContent=email;
+    } else {
+      msg.textContent='Não foi possível enviar o link. Tente novamente.'; msg.className='auth-msg err'; msg.style.display='block';
+    }
+  },
+  signInWithAzure: function(){ location.href = unialfaAuth.AUTH_BASE + '/authorize?provider=azure&scopes=openid%20email%20profile%20User.Read'; },
+  reset: function(){
+    document.getElementById('authStep1').style.display='block';
+    document.getElementById('authStep2').style.display='none';
+    document.getElementById('authEmail').value='';
+  },
+  signInTreino: async function(){
+    var email = document.getElementById('treinoPapel').value;
+    var senha = 'Treino@2026';
+    var msg = document.getElementById('authMsg');
+    msg.style.display='none';
+    try{
+      var r = await fetch(unialfaAuth.AUTH_BASE + '/token?grant_type=password', { method:'POST', headers:{'Content-Type':'application/json','apikey':unialfaAuth.ANON_KEY}, body: JSON.stringify({email:email, password:senha}) });
+      var data = await r.json();
+      if(!r.ok || !data.access_token){ msg.textContent='E-mail ou senha inválidos.'; msg.className='auth-msg err'; msg.style.display='block'; return; }
+      localStorage.setItem('unialfa_session', JSON.stringify({ access_token:data.access_token, refresh_token:data.refresh_token, expires_at: Date.now() + (parseInt(data.expires_in||'3600',10)*1000) }));
+      location.reload();
+    }catch(e){ msg.textContent='Não foi possível entrar. Tente novamente.'; msg.className='auth-msg err'; msg.style.display='block'; }
+  },
+};
+
+window.currentUser = null;
+window.currentProfile = null;
+
+function ensureAuthenticated(){
+  return new Promise(function(resolve){
+    async function trySetup(){
+      var user = await unialfaAuth.fetchUser();
+      if(!user) return null;
+      var profile = await unialfaAuth.ensureProfile(user);
+      profile = await unialfaAuth.tentarNomeViaGraph(profile);
+      window.currentUser = user; window.currentProfile = profile;
+      var gate = document.getElementById('authGate');
+      if(gate) gate.style.display='none';
+      document.body.classList.add('auth-ready');
+      if(!document.querySelector('.auth-topbar')){
+        var bar = document.createElement('div');
+        bar.className='auth-topbar';
+        bar.innerHTML = '<span>Conectado como <b>'+ (user.email||'') +'</b></span><span class="papel-tag">'+unialfaAuth.papelLabel(profile?profile.papel:'solicitante')+'</span><button class="sair" onclick="unialfaAuth.signOut()">Sair</button>';
+        document.body.prepend(bar);
+      }
+      return {user:user, profile:profile};
+    }
+    (async function(){
+      unialfaAuth.captureRedirect();
+      var result = await trySetup();
+      if(result){ resolve(result); return; }
+      var gate = document.getElementById('authGate');
+      if(gate) gate.style.display='flex';
+      var iv = setInterval(async function(){
+        var r = await trySetup();
+        if(r){ clearInterval(iv); resolve(r); }
+      }, 3000);
+    })();
+  });
+}
+</script>
+
+<div class="wrap">
+  <div class="doc-head">
+    <div class="doc-band">
+      <div class="doc-logo"><img src="icons/logo-alfa.png" alt="ALFA" style="height:38px;display:block;background:#fff;border-radius:6px;padding:3px 8px"><small>GRUPO JOSÉ ALVES</small></div>
+      <div class="doc-title">
+        <h1>Painel de Prazos</h1>
+        <p>Cronograma dos projetos em andamento · Escritório de Projetos</p>
+      </div>
+      <a class="doc-help" href="15 - central-ajuda.html?v=61#painel-prazos" target="_blank" rel="noopener" title="Ajuda sobre este painel">?</a>
+    </div>
+  </div>
+
+  <div id="deniedBox" style="display:none" class="card"><div class="denied">
+    <h2>Acesso restrito</h2>
+    <p id="deniedMsg"></p>
+  </div></div>
+
+  <div id="painelBox" style="display:none">
+    <div class="refresh-bar">
+      <div style="font-size:11px;color:var(--muted)">Atualiza sozinho a cada 2 minutos — pode ficar aberto numa TV/monitor da sala de projetos. Última atualização: <b id="ultimaAtualizacao">—</b></div>
+      <button class="btn" onclick="carregarPainel()">↻ Atualizar agora</button>
+    </div>
+
+    <div id="loadingBox" class="loading">Carregando cronogramas de todos os projetos…</div>
+
+    <div id="conteudo" style="display:none">
+      <div class="kpi-row">
+        <div class="kpi bad">
+          <div class="kpi-label">Marcos atrasados</div>
+          <div class="kpi-value" id="kpi-atrasados">—</div>
+          <div class="kpi-sub">sem Conclusão real, prazo já vencido</div>
+        </div>
+        <div class="kpi warn">
+          <div class="kpi-label">Vencendo em até 5 dias</div>
+          <div class="kpi-value" id="kpi-vencendo">—</div>
+          <div class="kpi-sub">ainda no prazo, mas perto do vencimento</div>
+        </div>
+        <div class="kpi ok">
+          <div class="kpi-label">% concluído no portfólio</div>
+          <div class="kpi-value" id="kpi-pct">—</div>
+          <div class="kpi-sub">marcos com Conclusão real preenchida, todos os projetos ativos</div>
+        </div>
+      </div>
+
+      <div class="sec-title">Projetos ativos</div>
+      <div id="semProjetos" class="card empty" style="display:none">Nenhum projeto ativo com Planejamento e Desenvolvimento registrado ainda.</div>
+      <div class="proj-grid" id="projGrid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+function hojeDataBR(){
+  return new Date(Date.now() - 3*3600*1000).toISOString().slice(0,10);
+}
+function diasEntre(dataA, dataB){
+  var a = Date.parse(dataA+'T00:00:00Z'), b = Date.parse(dataB+'T00:00:00Z');
+  return Math.round((a-b)/86400000);
+}
+function fmtDataBR(d){
+  return new Date(d+'T00:00:00Z').toLocaleDateString('pt-BR', {timeZone:'UTC'});
+}
+
+async function carregarPainel(){
+  var hoje = hojeDataBR();
+  var teps = await fetch(unialfaAuth.REST_BASE + '/kv_store?tipo=eq.tep&select=value', { headers: unialfaAuth.authHeaders() }).then(r=>r.ok?r.json():[]);
+  var projetosEncerrados = new Set();
+  teps.forEach(function(t){ try{ var v=JSON.parse(t.value); if(v.projetoId) projetosEncerrados.add(v.projetoId); }catch(e){} });
+
+  var planos = await fetch(unialfaAuth.REST_BASE + '/kv_store?tipo=eq.plan&select=value', { headers: unialfaAuth.authHeaders() }).then(r=>r.ok?r.json():[]);
+
+  var projetos = [];
+  var totalAtrasados=0, totalVencendo=0, totalMarcos=0, totalConcluidos=0;
+
+  planos.forEach(function(row){
+    var rec; try{ rec=JSON.parse(row.value); }catch(e){ return; }
+    if(!rec.projetoId || projetosEncerrados.has(rec.projetoId)) return;
+    var marcos=(rec.cronograma||[]).filter(function(m){ return m.marco && m.marco.trim(); });
+    if(!marcos.length) return;
+
+    var atrasados=[], vencendo=[], concluidos=0;
+    marcos.forEach(function(m){
+      if(m.concl){ concluidos++; return; }
+      if(!m.fim) return;
+      var dias=diasEntre(m.fim, hoje);
+      if(dias<0) atrasados.push({marco:m.marco, resp:m.resp, dias:dias, fim:m.fim});
+      else if(dias<=5) vencendo.push({marco:m.marco, resp:m.resp, dias:dias, fim:m.fim});
+    });
+    atrasados.sort(function(a,b){ return a.dias-b.dias; });
+    vencendo.sort(function(a,b){ return a.dias-b.dias; });
+
+    totalMarcos+=marcos.length; totalConcluidos+=concluidos;
+    totalAtrasados+=atrasados.length; totalVencendo+=vencendo.length;
+
+    projetos.push({
+      nome: rec.nomeProjeto || 'Projeto sem nome',
+      gerente: rec.gestor || '—',
+      pct: marcos.length ? Math.round(concluidos/marcos.length*100) : 0,
+      atrasados: atrasados, vencendo: vencendo,
+    });
+  });
+
+  projetos.sort(function(a,b){
+    if(a.atrasados.length!==b.atrasados.length) return b.atrasados.length-a.atrasados.length;
+    if(a.vencendo.length!==b.vencendo.length) return b.vencendo.length-a.vencendo.length;
+    return a.nome.localeCompare(b.nome,'pt-BR');
+  });
+
+  document.getElementById('kpi-atrasados').textContent = totalAtrasados;
+  document.getElementById('kpi-vencendo').textContent = totalVencendo;
+  document.getElementById('kpi-pct').textContent = totalMarcos ? Math.round(totalConcluidos/totalMarcos*100)+'%' : '—';
+
+  var grid=document.getElementById('projGrid');
+  document.getElementById('semProjetos').style.display = projetos.length ? 'none' : 'block';
+  grid.innerHTML = projetos.map(function(p){
+    var cls = p.atrasados.length ? 'tem-atraso' : (p.vencendo.length ? 'tem-alerta' : '');
+    var linhas = p.atrasados.slice(0,4).map(function(m){
+      return '<div class="marco-row atrasado"><span class="m-nome">'+esc(m.marco)+(m.resp?' <span style="font-weight:400;opacity:.85">— '+esc(m.resp)+'</span>':'')+'</span><span class="m-dias">'+Math.abs(m.dias)+'d atrasado</span></div>';
+    }).join('') + p.vencendo.slice(0,4).map(function(m){
+      return '<div class="marco-row alerta"><span class="m-nome">'+esc(m.marco)+(m.resp?' <span style="font-weight:400;opacity:.85">— '+esc(m.resp)+'</span>':'')+'</span><span class="m-dias">'+(m.dias===0?'vence hoje':'vence em '+m.dias+'d')+'</span></div>';
+    }).join('');
+    if(!linhas) linhas = '<div class="tudo-em-dia">✓ Tudo em dia</div>';
+    var extra = (p.atrasados.length>4?'<div class="kpi-sub">+ '+(p.atrasados.length-4)+' atrasado(s)</div>':'') + (p.vencendo.length>4?'<div class="kpi-sub">+ '+(p.vencendo.length-4)+' vencendo em breve</div>':'');
+    return '<div class="proj-card '+cls+'">'
+      + '<div class="proj-head"><div><div class="proj-nome">'+esc(p.nome)+'</div><div class="proj-gerente">Gerente: '+esc(p.gerente)+'</div></div><div class="proj-pct">'+p.pct+'%</div></div>'
+      + '<div class="bar-track"><div class="bar-fill" style="width:'+p.pct+'%"></div></div>'
+      + linhas + extra
+      + '</div>';
+  }).join('');
+
+  document.getElementById('ultimaAtualizacao').textContent = new Date().toLocaleTimeString('pt-BR');
+  document.getElementById('loadingBox').style.display='none';
+  document.getElementById('conteudo').style.display='block';
+}
+
+async function papelPermitido(chave){
+  if(window.currentProfile && window.currentProfile.papel==='admin') return true;
+  try{
+    const r = await fetch(unialfaAuth.REST_BASE+'/configuracoes?chave=eq.'+chave+'&select=valor', { headers: unialfaAuth.authHeaders() });
+    const rows = r.ok ? await r.json() : [];
+    const permitidos = (rows[0] && Array.isArray(rows[0].valor)) ? rows[0].valor : [];
+    return window.currentProfile ? permitidos.includes(window.currentProfile.papel) : false;
+  }catch(e){ return false; }
+}
+
+(async()=>{
+  await ensureAuthenticated();
+  if(!(await papelPermitido('papeis_painel_prazos'))){
+    document.getElementById('deniedMsg').textContent = 'Esta página não está liberada para o seu papel atual ("'+unialfaAuth.papelLabel(window.currentProfile?window.currentProfile.papel:'solicitante')+'"). Solicite a um administrador para ajustar quem pode ver esta página em Administração > Configurações.';
+    document.getElementById('deniedBox').style.display = 'block';
+    return;
+  }
+  document.getElementById('painelBox').style.display = 'block';
+  await carregarPainel();
+  setInterval(carregarPainel, 120000);
+})();
+</script>
