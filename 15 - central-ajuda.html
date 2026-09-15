@@ -111,6 +111,7 @@ body.auth-ready{padding-top:34px}
       <a href="#papeis" data-sec="papeis">Papéis de usuário</a>
       <a href="#gates" data-sec="gates">Gates de aprovação</a>
       <a href="#equipe" data-sec="equipe">Restrição por equipe</a>
+      <a href="#editar-excluir" data-sec="editar-excluir">Quem pode editar/excluir</a>
       <a href="#edicao-simultanea" data-sec="edicao-simultanea">Edição simultânea</a>
       <a href="#sem-login" data-sec="sem-login">Acesso sem login</a>
       <a href="#push" data-sec="push">Lembretes no celular</a>
@@ -208,6 +209,20 @@ body.auth-ready{padding-top:34px}
         </ul>
         <div class="tip"><b>Lista mostra só projetos ativos:</b> o campo "Projeto vinculado" só oferece projetos ainda em andamento — assim que um <a href="#passo-8">TEP</a> é registrado para um projeto, ele some da lista de opções para novos vínculos em todos os formulários (incluindo o Relatório de Situação e o Relatório de Entregas). Um documento que já estava vinculado a esse projeto antes dele encerrar continua mostrando o vínculo normalmente, só que com o status ao lado (ex.: "Nome do Projeto — Concluído").</div>
         <div class="note">Os outros 5 formulários (Solicitação de Demanda, Ata de Reunião, Plano de Comunicação, Relatório de Situação e Relatório de Entregas) não usam esse conceito — qualquer usuário autenticado pode criar/editar registros neles.</div>
+        <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
+      </section>
+
+      <section class="sec" id="editar-excluir">
+        <div class="eyebrow">acesso</div>
+        <h2>Quem pode editar ou excluir um registro</h2>
+        <p class="lead">Além da restrição por equipe (quem pode <b>criar</b> um registro vinculado a um projeto), o sistema também restringe quem pode <b>editar</b> ou <b>excluir</b> um registro depois de criado — nos 9 formulários que têm essa ação: Solicitação de Demanda, Canvas, TAP, Planejamento e Desenvolvimento, EAP, SMP, Ata de Reunião, TEP e RLA.</p>
+        <ul>
+          <li><b>Editar:</b> apenas quem criou o registro, quem tem o papel <b>Gerente de Projetos</b>, ou o <b>Admin</b>.</li>
+          <li><b>Excluir:</b> apenas quem tem o papel <b>Gerente de Projetos</b>, ou o <b>Admin</b>.</li>
+        </ul>
+        <div class="note">O papel Gerente de Projetos é um atributo global da conta (definido em Administração &gt; Usuários), não um vínculo específico a um projeto — qualquer conta com esse papel pode editar/excluir registros de qualquer projeto, não só dos que participa.</div>
+        <p>Os botões "Editar dados" e "Excluir" ficam ocultos para quem não tem permissão, em vez de aparecerem e barrarem a ação só no clique.</p>
+        <div class="tip">Não se aplica ao Plano de Comunicação de Projeto nem aos Relatórios de Situação/Entregas — são documentos únicos por projeto, sem o conceito de "registro individual criado por alguém".</div>
         <a class="back-top" href="#sbNav">↑ voltar ao menu</a>
       </section>
 

@@ -287,6 +287,14 @@ Bul "Relatorio de Situacao de Projetos"
 Bul "Relatorio de Entregas e Beneficios"
 P "O Relatorio de Situacao e o Relatorio de Entregas tem, cada um, um campo opcional `"Projeto vinculado (Gate 1)`" em cada projeto listado - diferente do conceito desta secao, ele nao aplica nenhuma restricao de edicao por equipe. Serve apenas para ligar aquele item ao historico compartilhado do projeto (a mesma trilha de auditoria usada pelos 7 formularios com restricao por equipe), visivel pelo botao `"Ver historico`". Deixar sem selecionar mantem o comportamento anterior: qualquer usuario autenticado continua podendo criar/editar esses registros livremente."
 
+H2 "5.4 Quem pode editar ou excluir um registro ja criado"
+P "Alem da restricao por equipe (quem pode criar um registro vinculado a um projeto), o sistema tambem restringe quem pode editar ou excluir um registro depois de criado, nos 9 formularios que tem essa acao: Solicitacao de Demanda, Canvas de Projeto, TAP, Planejamento e Desenvolvimento, EAP, SMP, Ata de Reuniao, TEP e RLA."
+Bul "Editar: apenas quem criou o registro, quem tem o papel Gerente de Projetos, ou o Admin."
+Bul "Excluir: apenas quem tem o papel Gerente de Projetos, ou o Admin."
+Bul "O papel Gerente de Projetos e um atributo global da conta (Administracao > Usuarios), nao um vinculo especifico a um projeto - qualquer conta com esse papel pode editar/excluir registros de qualquer projeto, nao so dos que participa. Nao existe hoje um vinculo estruturado de `"GP responsavel por este projeto`" separado do papel da conta."
+Bul "Os botoes `"Editar dados`" e `"Excluir`" ficam ocultos para quem nao tem permissao, em vez de aparecerem e barrarem a acao so no clique."
+Bul "Nao se aplica ao Plano de Comunicacao de Projeto (secao 3.7 ja cobre a edicao desse formulario separadamente) nem ao Relatorio de Situacao/Relatorio de Entregas, que sao documentos unicos por projeto sem o conceito de `"registro individual criado por alguem`"."
+
 HR
 
 # ---- 6: tabela resumo ----

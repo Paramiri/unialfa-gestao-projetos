@@ -828,7 +828,7 @@ window.unialfaAnexos = {
         <h1>Solicitação de Demanda de Projetos</h1>
         <p>Formulário de entrada de demandas · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=58#passo-1" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=59#passo-1" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00339</b></div>
@@ -1238,6 +1238,17 @@ function mensagemErroSalvar(e, acao){
   return 'Não foi possível '+acao+'. Atualize a página e tente novamente.';
 }
 
+/* ---------- controle de acesso: quem pode editar/excluir este registro ---------- */
+function possoEditar(r){
+  if(!window.currentProfile) return false;
+  const papel=window.currentProfile.papel;
+  if(papel==='admin'||papel==='gerente_projetos') return true;
+  return !!(window.currentUser && r && r.criadoPorEmail && window.currentUser.email===r.criadoPorEmail);
+}
+function possoExcluir(){
+  return !!(window.currentProfile && (window.currentProfile.papel==='admin'||window.currentProfile.papel==='gerente_projetos'));
+}
+
 /* ---------- edição simultânea: aviso preventivo (Fase 2) ---------- */
 const LOCK_TTL_MS = 10*60*1000; // lock considerado expirado após 10 min sem renovação
 const LOCK_HEARTBEAT_MS = 60*1000;
@@ -1502,6 +1513,7 @@ async function submitForm(){
 async function editCurrent(){
   if(window.guestInfo){ toast('Sem login, você só pode enviar novas solicitações — não é possível editar registros existentes.', false); return; }
   const r=cache.find(x=>x.id===currentId); if(!r) return;
+  if(!possoEditar(r)){ toast('Você não tem permissão para editar este registro — apenas quem criou, o Gerente de Projetos ou o Admin.', false); return; }
   editId=r.id;
   editBaseUpdatedAt=null;
   try{ const fresh=await window.storage.get(KEY_PREFIX+r.id); if(fresh) editBaseUpdatedAt=fresh.updatedAt; }catch(e){}
@@ -1625,8 +1637,8 @@ function openDrawer(id){
   document.getElementById('d-status').disabled = !souAdmin;
   document.getElementById('gate1-aviso').style.display = souAdmin ? 'none' : 'block';
   const semLoginAtivo = !!window.guestInfo;
-  document.getElementById('btnEditarDados').style.display = semLoginAtivo ? 'none' : 'inline-flex';
-  document.getElementById('btnExcluir').style.display = semLoginAtivo ? 'none' : 'inline-flex';
+  document.getElementById('btnEditarDados').style.display = (semLoginAtivo || !possoEditar(r)) ? 'none' : 'inline-flex';
+  document.getElementById('btnExcluir').style.display = (semLoginAtivo || !possoExcluir()) ? 'none' : 'inline-flex';
   const rows=[
     ['Solicitante',r.solicitante + (r.semLogin?' (enviado sem login)':'')],
     ...(r.semLogin ? [['E-mail informado (sem login)', r.guestEmail||'—']] : []),
@@ -1706,6 +1718,7 @@ async function changeStatus(){
 async function deleteCurrent(){
   if(window.guestInfo){ toast('Sem login, você só pode enviar novas solicitações — não é possível excluir registros existentes.', false); return; }
   const r=cache.find(x=>x.id===currentId); if(!r) return;
+  if(!possoExcluir()){ toast('Apenas o Gerente de Projetos ou o Admin pode excluir registros.', false); return; }
   if(!confirm('Excluir a demanda '+r.protocolo+'? Esta ação não pode ser desfeita.')) return;
   try{
     await window.storage.delete(KEY_PREFIX+r.id);

@@ -703,7 +703,7 @@ window.unialfaHistorico = {
         <h1>Planejamento e Desenvolvimento de Projeto</h1>
         <p>Dossiê de ciclo de vida do projeto · Gerência de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=58#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=59#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00325</b></div>
@@ -794,8 +794,8 @@ window.unialfaHistorico = {
     </div>
     <button class="btn btn-ghost btn-sm" onclick="imprimirPlanejamento()">🖨️ Imprimir</button>
     <button class="btn btn-ghost btn-sm" onclick="exportarPlanejamentoWord()">⬇ Exportar Word</button>
-    <button class="btn btn-ghost btn-sm" onclick="editCurrent()">Editar dados</button>
-    <button class="btn btn-danger btn-sm" onclick="deleteCurrent()">Excluir</button>
+    <button class="btn btn-ghost btn-sm" id="btnEditarDados" onclick="editCurrent()">Editar dados</button>
+    <button class="btn btn-danger btn-sm" id="btnExcluir" onclick="deleteCurrent()">Excluir</button>
   </div>
 </aside>
 
@@ -1087,6 +1087,17 @@ function mensagemErroSalvar(e, acao){
   if(e && e.status>=500) return 'O servidor está indisponível no momento. Tente novamente em alguns instantes.';
   if(e && e.status) return 'Não foi possível '+acao+' (erro '+e.status+'). Atualize a página; se o problema continuar, contate o suporte.';
   return 'Não foi possível '+acao+'. Atualize a página e tente novamente.';
+}
+
+/* ---------- controle de acesso: quem pode editar/excluir este registro ---------- */
+function possoEditar(r){
+  if(!window.currentProfile) return false;
+  const papel=window.currentProfile.papel;
+  if(papel==='admin'||papel==='gerente_projetos') return true;
+  return !!(window.currentUser && r && r.criadoPorEmail && window.currentUser.email===r.criadoPorEmail);
+}
+function possoExcluir(){
+  return !!(window.currentProfile && (window.currentProfile.papel==='admin'||window.currentProfile.papel==='gerente_projetos'));
 }
 
 /* ---------- edição simultânea: aviso preventivo (Fase 2) ---------- */
@@ -1854,6 +1865,7 @@ async function submitForm(){
 }
 async function editCurrent(){
   const r=cache.find(x=>x.id===currentId); if(!r) return;
+  if(!possoEditar(r)){ toast('Você não tem permissão para editar este registro — apenas quem criou, o Gerente de Projetos ou o Admin.', false); return; }
   editId=r.id;
   editBaseUpdatedAt=null;
   try{ const fresh=await window.storage.get(KEY_PREFIX+r.id); if(fresh) editBaseUpdatedAt=fresh.updatedAt; }catch(e){}
@@ -1955,6 +1967,8 @@ function openDrawer(id){
   document.getElementById('d-proj').textContent=r.nomeProjeto;
   document.getElementById('d-proto').textContent=r.protocolo+' · elaborado em '+fmtDate(r.data);
   document.getElementById('d-status').value=r.status;
+  document.getElementById('btnEditarDados').style.display = possoEditar(r) ? 'inline-flex' : 'none';
+  document.getElementById('btnExcluir').style.display = possoExcluir() ? 'inline-flex' : 'none';
   let html='<div class="grp">Identificação</div>';
   IDFIELDS.filter(f=>f.key!=='nomeProjeto').forEach(f=>{
     let v=r[f.key]; if(f.type==='date') v=fmtDate(v);
@@ -2006,6 +2020,7 @@ async function changeStatus(){
 }
 async function deleteCurrent(){
   const r=cache.find(x=>x.id===currentId); if(!r) return;
+  if(!possoExcluir()){ toast('Apenas o Gerente de Projetos ou o Admin pode excluir registros.', false); return; }
   if(!confirm('Excluir o dossiê '+r.protocolo+'? Esta ação não pode ser desfeita.')) return;
   try{ await window.storage.delete(KEY_PREFIX+r.id); cache=cache.filter(x=>x.id!==currentId); document.getElementById('count').textContent=cache.length; closeDrawer(); renderList(); toast('Dossiê excluído'); }
   catch(e){ toast(mensagemErroSalvar(e,'excluir este registro'), false); }
