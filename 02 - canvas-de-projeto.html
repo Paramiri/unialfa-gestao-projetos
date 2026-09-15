@@ -641,7 +641,7 @@ window.unialfaEquipe = {
         <h1>Canvas de Projeto</h1>
         <p>Planejamento do projeto em uma página · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=59#passo-2" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=60#passo-2" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00344</b></div>
@@ -860,8 +860,8 @@ window.unialfaEquipe = {
         <option value="Reprovado">Reprovado</option>
       </select>
     </div>
-    <button class="btn btn-ghost btn-sm" onclick="imprimirCanvas()">🖨️ Imprimir</button>
-    <button class="btn btn-ghost btn-sm" onclick="exportarCanvasWord()">⬇ Exportar Word</button>
+    <button class="btn btn-ghost btn-sm" id="btnImprimir" onclick="imprimirCanvas()">🖨️ Imprimir</button>
+    <button class="btn btn-ghost btn-sm" id="btnExportar" onclick="exportarCanvasWord()">⬇ Exportar Word</button>
     <button class="btn btn-ghost btn-sm" id="btnEditarDados" onclick="editCurrent()">Editar dados</button>
     <button class="btn btn-danger btn-sm" id="btnExcluir" onclick="deleteCurrent()">Excluir</button>
   </div>
@@ -1348,13 +1348,16 @@ function renderList(){
   html+='</tbody></table>'; body.innerHTML=html;
 }
 
-function openDrawer(id){
+async function openDrawer(id){
   const r=cache.find(x=>x.id===id); if(!r) return; currentId=id;
   document.getElementById('d-proj').textContent=r.nomeProjeto;
   document.getElementById('d-proto').textContent=r.protocolo+' · elaborado em '+fmtDate(r.dataElab);
   document.getElementById('d-status').value=r.status;
   document.getElementById('btnEditarDados').style.display = possoEditar(r) ? 'inline-flex' : 'none';
   document.getElementById('btnExcluir').style.display = possoExcluir() ? 'inline-flex' : 'none';
+  const souEquipe = await unialfaEquipe.souMembro(r.projetoId);
+  document.getElementById('btnImprimir').style.display = souEquipe ? 'inline-flex' : 'none';
+  document.getElementById('btnExportar').style.display = souEquipe ? 'inline-flex' : 'none';
   let html='';
   for(const [grp,key,lab] of DETAIL){
     if(grp) html+=`<div class="grp">${grp}</div>`;
@@ -1468,8 +1471,9 @@ function buildCanvasDocumentoHtml(r){
     +'<div class="doc-gen">Documento gerado pelo Sistema de Gestao de Projetos UNIALFA em '+hoje+' &mdash; Status: '+esc(r.status)+'</div>'
     +'</body></html>';
 }
-function imprimirCanvas(){
+async function imprimirCanvas(){
   const r=cache.find(x=>x.id===currentId); if(!r){toast('Selecione um canvas para imprimir',false);return;}
+  if(!(await unialfaEquipe.souMembro(r.projetoId))){ toast('Apenas a equipe do projeto pode imprimir este registro.', false); return; }
   const html=buildCanvasDocumentoHtml(r);
   const iframe=document.createElement('iframe');
   iframe.style.position='fixed'; iframe.style.right='0'; iframe.style.bottom='0';
@@ -1482,8 +1486,9 @@ function imprimirCanvas(){
     setTimeout(function(){document.body.removeChild(iframe);},1000);
   };
 }
-function exportarCanvasWord(){
+async function exportarCanvasWord(){
   const r=cache.find(x=>x.id===currentId); if(!r){toast('Selecione um canvas para exportar',false);return;}
+  if(!(await unialfaEquipe.souMembro(r.projetoId))){ toast('Apenas a equipe do projeto pode exportar este registro.', false); return; }
   const html=buildCanvasDocumentoHtml(r);
   const wordHtml=html.replace('<!doctype html><html>',"<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>");
   const blob=new Blob([wordHtml],{type:'application/msword'});

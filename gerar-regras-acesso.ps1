@@ -277,6 +277,7 @@ P "Ao selecionar um projeto no campo `"Projeto vinculado`":"
 Bul "Se a pessoa nao for da equipe daquele projeto (e nao for Admin), aparece um aviso na tela e o botao de enviar/registrar fica desabilitado."
 Bul "Mesmo que o botao seja habilitado por algum outro meio, o envio e bloqueado no momento de salvar, com a mensagem `"Voce nao faz parte da equipe deste projeto.`""
 Bul "A equipe de cada projeto e definida pelo Admin, na pagina de Administracao, aba Equipes."
+Bul "A mesma restricao vale para os botoes Imprimir e Exportar Word de um registro ja salvo, nesses 7 formularios (detalhado na secao 5.5)."
 
 H2 "5.3 Formularios sem essa restricao"
 P "Os demais formularios nao usam o conceito de equipe por projeto - qualquer usuario autenticado pode criar/editar/excluir registros neles, sujeito apenas as regras de papel e (quando aplicavel) as regras especificas ja descritas nas secoes 2 e 4:"
@@ -295,6 +296,13 @@ Bul "O papel Gerente de Projetos e um atributo global da conta (Administracao > 
 Bul "Os botoes `"Editar dados`" e `"Excluir`" ficam ocultos para quem nao tem permissao, em vez de aparecerem e barrarem a acao so no clique."
 Bul "Nao se aplica ao Plano de Comunicacao de Projeto (secao 3.7 ja cobre a edicao desse formulario separadamente) nem ao Relatorio de Situacao/Relatorio de Entregas, que sao documentos unicos por projeto sem o conceito de `"registro individual criado por alguem`"."
 P "Desde 15/09/2026, essa regra tambem e aplicada diretamente no banco de dados (politicas de RLS na tabela kv_store), nao so no JavaScript do navegador - alguem tentando editar ou excluir um registro sem permissao direto pela API, contornando a tela do sistema, tambem e bloqueado. Fica documentado no arquivo `supabase/migrations/20260915143738_kv_store_row_level_access_control.sql` do repositorio. Duas coisas ficaram de fora dessa camada de banco, so continuam no JavaScript: a decisao especifica de quem aprova o Gate 1/Gate 2 (mais restrita que a regra geral de edicao) e as regras dos 3 relatorios de chave unica (secao 3.7 e o Gate 2 do Relatorio de Entregas)."
+
+H2 "5.5 Quem pode imprimir ou exportar um registro"
+P "Nos mesmos 7 formularios com restricao por equipe (secao 5.1), os botoes Imprimir e Exportar Word de um registro ja salvo tambem passam a exigir fazer parte da equipe daquele projeto, ou ser Admin."
+Bul "Diferente da regra de editar/excluir (secao 5.4), aqui nao ha excecao para o papel Gerente de Projetos - precisa realmente estar na equipe do projeto (ou ser Admin) para imprimir ou exportar um registro."
+Bul "Os botoes `"Imprimir`" e `"Exportar Word`" ficam ocultos para quem nao faz parte da equipe, da mesma forma que os botoes de editar/excluir."
+Bul "Nao se aplica aos outros 5 formularios sem restricao por equipe (secao 5.3) nem aos relatorios agregados - continuam sem restricao de impressao/exportacao por equipe."
+P "Essa regra e aplicada apenas no JavaScript do navegador, nao no banco de dados - diferente da trava de editar/excluir (secao 5.4), que desde 15/09/2026 tambem e reforcada por politicas de RLS na tabela kv_store."
 
 HR
 

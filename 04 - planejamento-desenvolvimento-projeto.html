@@ -703,7 +703,7 @@ window.unialfaHistorico = {
         <h1>Planejamento e Desenvolvimento de Projeto</h1>
         <p>Dossiê de ciclo de vida do projeto · Gerência de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=59#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=60#passo-4" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00325</b></div>
@@ -792,8 +792,8 @@ window.unialfaHistorico = {
         <option value="Cancelado">Cancelado</option>
       </select>
     </div>
-    <button class="btn btn-ghost btn-sm" onclick="imprimirPlanejamento()">🖨️ Imprimir</button>
-    <button class="btn btn-ghost btn-sm" onclick="exportarPlanejamentoWord()">⬇ Exportar Word</button>
+    <button class="btn btn-ghost btn-sm" id="btnImprimir" onclick="imprimirPlanejamento()">🖨️ Imprimir</button>
+    <button class="btn btn-ghost btn-sm" id="btnExportar" onclick="exportarPlanejamentoWord()">⬇ Exportar Word</button>
     <button class="btn btn-ghost btn-sm" id="btnEditarDados" onclick="editCurrent()">Editar dados</button>
     <button class="btn btn-danger btn-sm" id="btnExcluir" onclick="deleteCurrent()">Excluir</button>
   </div>
@@ -1962,13 +1962,16 @@ function renderList(){
   html+='</tbody></table>'; body.innerHTML=html;
 }
 
-function openDrawer(id){
+async function openDrawer(id){
   const r=cache.find(x=>x.id===id); if(!r) return; currentId=id;
   document.getElementById('d-proj').textContent=r.nomeProjeto;
   document.getElementById('d-proto').textContent=r.protocolo+' · elaborado em '+fmtDate(r.data);
   document.getElementById('d-status').value=r.status;
   document.getElementById('btnEditarDados').style.display = possoEditar(r) ? 'inline-flex' : 'none';
   document.getElementById('btnExcluir').style.display = possoExcluir() ? 'inline-flex' : 'none';
+  const souEquipe = await unialfaEquipe.souMembro(r.projetoId);
+  document.getElementById('btnImprimir').style.display = souEquipe ? 'inline-flex' : 'none';
+  document.getElementById('btnExportar').style.display = souEquipe ? 'inline-flex' : 'none';
   let html='<div class="grp">Identificação</div>';
   IDFIELDS.filter(f=>f.key!=='nomeProjeto').forEach(f=>{
     let v=r[f.key]; if(f.type==='date') v=fmtDate(v);
@@ -2121,6 +2124,7 @@ function buildPlanejamentoDocumentoHtml(r){
 }
 async function imprimirPlanejamento(){
   const r=cache.find(x=>x.id===currentId); if(!r){toast('Selecione um dossiê para imprimir',false);return;}
+  if(!(await unialfaEquipe.souMembro(r.projetoId))){ toast('Apenas a equipe do projeto pode imprimir este registro.', false); return; }
   const html=await buildPlanejamentoDocumentoHtml(r);
   const iframe=document.createElement('iframe');
   iframe.style.position='fixed'; iframe.style.right='0'; iframe.style.bottom='0';
@@ -2135,6 +2139,7 @@ async function imprimirPlanejamento(){
 }
 async function exportarPlanejamentoWord(){
   const r=cache.find(x=>x.id===currentId); if(!r){toast('Selecione um dossiê para exportar',false);return;}
+  if(!(await unialfaEquipe.souMembro(r.projetoId))){ toast('Apenas a equipe do projeto pode exportar este registro.', false); return; }
   const html=await buildPlanejamentoDocumentoHtml(r);
   const wordHtml=html.replace('<!doctype html><html>',"<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>");
   const blob=new Blob([wordHtml],{type:'application/msword'});

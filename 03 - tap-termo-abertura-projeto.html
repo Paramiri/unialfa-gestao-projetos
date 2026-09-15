@@ -734,7 +734,7 @@ window.unialfaEquipe = {
         <h1>Termo de Abertura de Projeto — TAP</h1>
         <p>Autorização formal e diretrizes iniciais do projeto · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=59#passo-3" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=60#passo-3" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Código</span><b>FORALF00338</b></div>
@@ -969,8 +969,8 @@ window.unialfaEquipe = {
         <option value="Reprovado">Reprovado</option>
       </select>
     </div>
-    <button class="btn btn-ghost btn-sm" onclick="imprimirTap()">🖨️ Imprimir</button>
-    <button class="btn btn-ghost btn-sm" onclick="exportarTapWord()">⬇ Exportar Word</button>
+    <button class="btn btn-ghost btn-sm" id="btnImprimir" onclick="imprimirTap()">🖨️ Imprimir</button>
+    <button class="btn btn-ghost btn-sm" id="btnExportar" onclick="exportarTapWord()">⬇ Exportar Word</button>
     <button class="btn btn-ghost btn-sm" id="btnEditarDados" onclick="editCurrent()">Editar dados</button>
     <button class="btn btn-danger btn-sm" id="btnExcluir" onclick="deleteCurrent()">Excluir</button>
   </div>
@@ -2116,6 +2116,9 @@ async function openDrawer(id){
   document.getElementById('gate2-aviso').style.display = souAdmin ? 'none' : 'block';
   document.getElementById('btnEditarDados').style.display = possoEditar(r) ? 'inline-flex' : 'none';
   document.getElementById('btnExcluir').style.display = possoExcluir() ? 'inline-flex' : 'none';
+  const souEquipe = await unialfaEquipe.souMembro(r.projetoId);
+  document.getElementById('btnImprimir').style.display = souEquipe ? 'inline-flex' : 'none';
+  document.getElementById('btnExportar').style.display = souEquipe ? 'inline-flex' : 'none';
   let html='';
   for(const it of DETAIL){
     if(it.grp) html+=`<div class="grp">${it.grp}</div>`;
@@ -2282,6 +2285,7 @@ async function buildTapDocumentoHtml(r){
 }
 async function imprimirTap(){
   const r=cache.find(x=>x.id===currentId); if(!r){toast('Selecione um TAP para imprimir',false);return;}
+  if(!(await unialfaEquipe.souMembro(r.projetoId))){ toast('Apenas a equipe do projeto pode imprimir este registro.', false); return; }
   const html=await buildTapDocumentoHtml(r);
   const iframe=document.createElement('iframe');
   iframe.style.position='fixed'; iframe.style.right='0'; iframe.style.bottom='0';
@@ -2296,6 +2300,7 @@ async function imprimirTap(){
 }
 async function exportarTapWord(){
   const r=cache.find(x=>x.id===currentId); if(!r){toast('Selecione um TAP para exportar',false);return;}
+  if(!(await unialfaEquipe.souMembro(r.projetoId))){ toast('Apenas a equipe do projeto pode exportar este registro.', false); return; }
   const html=await buildTapDocumentoHtml(r);
   const wordHtml=html.replace('<!doctype html><html>',"<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>");
   const blob=new Blob([wordHtml],{type:'application/msword'});
