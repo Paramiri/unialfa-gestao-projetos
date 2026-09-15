@@ -545,13 +545,11 @@ window.unialfaProjeto = {
   },
   async sincronizarSeMudou(projetoId, formularioOrigem, camposAntigos, camposNovos){
     if(!projetoId) return;
-    var labels = {nome:'Nome do projeto', unidade:'Unidade', gerente:'Gerente de projeto'};
     for(var campo in camposNovos){
       var novo = (camposNovos[campo]||'').trim();
       var antigo = (camposAntigos[campo]||'').trim();
       if(novo && novo !== antigo){
-        var ok = confirm('O campo "'+(labels[campo]||campo)+'" mudou de "'+(antigo||'—')+'" para "'+novo+'".\n\nAtualizar no projeto compartilhado? (isso reflete em todos os formulários vinculados a este projeto)');
-        if(ok){ await this.atualizarCampo(projetoId, campo, novo, antigo, formularioOrigem); }
+        await this.atualizarCampo(projetoId, campo, novo, antigo, formularioOrigem);
       }
     }
   },
