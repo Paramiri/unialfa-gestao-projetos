@@ -25,10 +25,10 @@
 // "04 - planejamento-desenvolvimento-projeto.html"; marcos antigos sem esse id usam um
 // identificador de fallback baseado em posicao, best-effort).
 //
-// Cada e-mail inclui um link para a Ficha do Projeto correspondente
-// (18 - ficha-projeto.html?id=<projetoId>) — endereco de treino ou producao decidido
-// pela mesma ref do Supabase de destino (SITE_BASE, abaixo), ja que a function nao tem
-// acesso a location do navegador.
+// Cada e-mail termina indicando a Gerencia de Projetos como alternativa de contato, caso
+// a pessoa prefira ajustar o prazo diretamente em vez de seguir só pelo aviso automatico —
+// o nome do Gerente vem do campo "Gerente do projeto" (rec.gestor) do proprio Planejamento,
+// nao e fixo.
 //
 // Segredos necessarios: nenhum novo — reaproveita SUPABASE_URL e
 // SUPABASE_SERVICE_ROLE_KEY (injetados automaticamente pelo runtime das Edge Functions)
@@ -40,14 +40,6 @@
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-// Endereco do site (nao vem de SUPABASE_URL, que e o backend) — usado só para montar o
-// link da Ficha do Projeto no e-mail de aviso. Mesma distincao treino/producao usada em
-// todo o front-end (IS_TREINO), aqui decidida pela ref do projeto Supabase de destino.
-const IS_TREINO = SUPABASE_URL?.includes("uuxvdulunrwppbmofyux") ?? false;
-const SITE_BASE = IS_TREINO
-  ? "https://paramiri.github.io/unialfa-gestao-projetos-treino/"
-  : "https://gestaoprojetos.alfa.br/";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -101,6 +93,7 @@ type PlanoRec = {
   nomeProjeto?: string;
   protocolo?: string;
   projetoId?: string;
+  gestor?: string;
   cronograma?: Marco[];
 };
 
@@ -225,14 +218,13 @@ Deno.serve(async (req: Request) => {
         const subject = `Prazo do marco "${marco.marco}" ${
           bucket === "atrasado" ? "atrasado" : "se aproximando"
         } — ${rec.nomeProjeto || rec.protocolo || ""}`;
-        const linkFicha = encodeURI(`${SITE_BASE}18 - ficha-projeto.html?id=${rec.projetoId}`);
         const html =
           `<p>O marco <b>${marcoNome}</b> do cronograma do projeto <b>${projetoNome}</b>` +
           (rec.protocolo ? ` (${esc(rec.protocolo)})` : "") +
           ` ${situacao}.</p>` +
           (marco.resp ? `<p><b>Responsável (cronograma):</b> ${esc(marco.resp)}</p>` : "") +
           `<p>Avaliação automática do Painel de Prazos.</p>` +
-          `<p><a href="${linkFicha}">Abrir a Ficha do Projeto</a></p>`;
+          `<p><b>Procurar a Gerência de Projetos${rec.gestor ? ` - Gerente - ${esc(rec.gestor)}` : ""}. Se houver necessidade de ajuste.</b></p>`;
 
         try {
           const r = await fetch(`${SUPABASE_URL}/functions/v1/send-notification`, {
