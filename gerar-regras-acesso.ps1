@@ -294,6 +294,7 @@ Bul "Excluir: apenas quem tem o papel Gerente de Projetos, ou o Admin."
 Bul "O papel Gerente de Projetos e um atributo global da conta (Administracao > Usuarios), nao um vinculo especifico a um projeto - qualquer conta com esse papel pode editar/excluir registros de qualquer projeto, nao so dos que participa. Nao existe hoje um vinculo estruturado de `"GP responsavel por este projeto`" separado do papel da conta."
 Bul "Os botoes `"Editar dados`" e `"Excluir`" ficam ocultos para quem nao tem permissao, em vez de aparecerem e barrarem a acao so no clique."
 Bul "Nao se aplica ao Plano de Comunicacao de Projeto (secao 3.7 ja cobre a edicao desse formulario separadamente) nem ao Relatorio de Situacao/Relatorio de Entregas, que sao documentos unicos por projeto sem o conceito de `"registro individual criado por alguem`"."
+P "Desde 15/09/2026, essa regra tambem e aplicada diretamente no banco de dados (politicas de RLS na tabela kv_store), nao so no JavaScript do navegador - alguem tentando editar ou excluir um registro sem permissao direto pela API, contornando a tela do sistema, tambem e bloqueado. Fica documentado no arquivo `supabase/migrations/20260915143738_kv_store_row_level_access_control.sql` do repositorio. Duas coisas ficaram de fora dessa camada de banco, so continuam no JavaScript: a decisao especifica de quem aprova o Gate 1/Gate 2 (mais restrita que a regra geral de edicao) e as regras dos 3 relatorios de chave unica (secao 3.7 e o Gate 2 do Relatorio de Entregas)."
 
 HR
 
