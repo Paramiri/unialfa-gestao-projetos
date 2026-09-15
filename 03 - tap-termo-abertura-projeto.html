@@ -1090,6 +1090,7 @@ const TABLES={
     {key:'mitigacao',label:'Mitigação',type:'text',w:'12%',long:true},
     {key:'status',label:'Status',type:'select',options:RISCO_STATUS,w:'14%'},
     {key:'resp',label:'Responsável',type:'text',w:'11%',long:true},
+    {key:'respConta',label:'Responsável (conta)',type:'teamSelect',w:'11%'},
     {key:'revisao',label:'Última revisão',type:'date',w:'15%'},
   ]},
   cronograma:{cols:[
@@ -1167,7 +1168,7 @@ async function onProjetoSelect(preencherCampos=true){
   document.getElementById('historicoPanel').style.display='none'; historicoAberto=false;
   renderCronogramaPlan(id);
   const p=projetosAprovados.find(x=>x.id===id);
-  if(!p){ info.style.display='none'; document.getElementById('equipeAviso').style.display='none'; atualizarBotaoEquipe(true); carregarSugestoesRiscos(null); document.getElementById('iaSugestaoBloco').style.display='none'; return; }
+  if(!p){ info.style.display='none'; document.getElementById('equipeAviso').style.display='none'; atualizarBotaoEquipe(true); carregarSugestoesRiscos(null); document.getElementById('iaSugestaoBloco').style.display='none'; window.__equipeAtualEmails=[]; refreshRespContaOptions(); return; }
   document.getElementById('pi-unidade').textContent=p.unidade||'—';
   document.getElementById('pi-gerente').textContent=p.gerente||'—';
   document.getElementById('pi-status').textContent='Aprovado';
@@ -1176,6 +1177,9 @@ async function onProjetoSelect(preencherCampos=true){
   const souMembro = await unialfaEquipe.souMembro(id);
   document.getElementById('equipeAviso').style.display = souMembro ? 'none' : 'block';
   atualizarBotaoEquipe(souMembro);
+  const membrosEquipe = await unialfaEquipe.listar(id);
+  window.__equipeAtualEmails = membrosEquipe.map(m=>m.usuario_email).filter(Boolean);
+  refreshRespContaOptions();
   document.getElementById('iaSugestaoBloco').style.display = (souMembro && window.__iaAssistentePermitido) ? 'block' : 'none';
   document.getElementById('iaStatus').style.display='none';
   document.getElementById('iaFontes').classList.remove('show');
@@ -1252,6 +1256,16 @@ function atualizarBotaoEquipe(souMembro){
   btn.disabled = !souMembro;
   btn.style.opacity = souMembro ? '1' : '.5';
   btn.style.cursor = souMembro ? 'pointer' : 'not-allowed';
+}
+/* Reconstroi as opcoes dos selects "Responsavel (conta)" ja renderizados no registro de riscos,
+   preservando o valor atual mesmo que a pessoa ja nao esteja mais na equipe. */
+function refreshRespContaOptions(){
+  document.querySelectorAll('#tbl-riscos [data-k="respConta"]').forEach(sel=>{
+    const cur=sel.value;
+    const emails=(window.__equipeAtualEmails||[]).slice();
+    if(cur && !emails.includes(cur)) emails.push(cur);
+    sel.innerHTML='<option value="">—</option>'+emails.map(o=>`<option ${o===cur?'selected':''}>${esc(o)}</option>`).join('');
+  });
 }
 async function carregarDadosDaSolicitacao(solicitacaoId){
   if(!solicitacaoId) return;
@@ -1439,15 +1453,24 @@ function mountTable(name, host){
   host.appendChild(wrap);
   addRow(name);
 }
+function novoId(){ return 'i_'+Date.now()+'_'+Math.random().toString(36).slice(2,8); }
 function addRow(name, vals){
   const cfg=TABLES[name];
   const tb=document.querySelector(`#tbl-${name} tbody`);
   const tr=document.createElement('tr');
+  if(name==='riscos'){ tr.dataset.itemId=(vals&&vals.id)?vals.id:novoId(); }
   let cells='';
   cfg.cols.forEach(c=>{
     const v=vals?(vals[c.key]||''):'';
     if(c.type==='computed'){
       cells+=`<td class="risk-sev"></td>`;
+      return;
+    }
+    if(c.type==='teamSelect'){
+      const emails=(window.__equipeAtualEmails||[]).slice();
+      if(v && !emails.includes(v)) emails.push(v);
+      const opts='<option value="">—</option>'+emails.map(o=>`<option value="${esc(o)}"${o===v?' selected':''}>${esc(o)}</option>`).join('');
+      cells+=`<td><select data-k="${c.key}">${opts}</select></td>`;
       return;
     }
     if(c.type==='select'){
@@ -1597,6 +1620,7 @@ function readTable(name){
       obj[inp.dataset.k]=val;
       if(val && inp.tagName!=='SELECT') any=true;
     });
+    if(name==='riscos' && tr.dataset.itemId) obj.id=tr.dataset.itemId;
     if(any) rows.push(obj);
   });
   return rows;

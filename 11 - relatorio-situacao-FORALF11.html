@@ -1481,18 +1481,41 @@ async function showView(v){
 
 /* ── storage ── */
 function novoId(){ return 'g_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8); }
+// Identidade estável (id) para comparar o mesmo item entre versões salvas (Relatório de Resultados) e para mesclar
+// edições concorrentes por item (edição simultânea). Backfill: itens salvos antes dessas mudanças ainda não têm id.
+// Retorna true se gerou algum id novo (ainda não existia no registro).
+function backfillIds(d){
+  if(!d.projetos) d.projetos=[];
+  if(!d.entraves) d.entraves=[];
+  if(!d.encaminhamentos) d.encaminhamentos=[];
+  if(!d.resultados) d.resultados=[];
+  let mudou=false;
+  [d.projetos,d.entraves,d.encaminhamentos,d.resultados].forEach(lista=>{
+    lista.forEach(function(it){ if(!it.id){ it.id=novoId(); mudou=true; } });
+  });
+  return mudou;
+}
+/* backfillIds() gera ids ALEATÓRIOS a cada chamada para o que ainda não tem id — por isso, se um
+   registro sem ids nunca for persistido, cada um dos três pontos que buscam o registro direto do
+   servidor (loadData, entrarModoEdicao, saveData) geraria um conjunto DIFERENTE de ids para os
+   MESMOS itens, e mesclarLista() (que casa itens pelo id) trataria isso como itens diferentes —
+   duplicando tudo em vez de mesclar (bug real encontrado e corrigido em 16/09/2026, junto com o
+   colapso de listas que motivou o backfill em primeiro lugar). Por isso, a primeira vez que um
+   registro sem ids é aberto, os ids gerados são gravados de volta no servidor na hora (silencioso,
+   melhor esforço) — a partir daí os três pontos sempre veem os mesmos ids estáveis.
+   `chave` já deve ter algum valor conhecido (ex.: dataBaseUpdatedAt) quando chamado antes de existir
+   uma sessão de edição; se a gravação falhar (conflito, rede), os ids ficam só na memória local desta
+   sessão — sem quebrar nada, só sem a estabilidade entre fetches até a próxima vez que alguém salvar. */
+async function garantirIdsPersistidos(d, updatedAtAtual){
+  if(!backfillIds(d)) return updatedAtAtual;
+  try{
+    const r=await window.storage.set(KEY,JSON.stringify(d),updatedAtAtual);
+    return r&&r.updatedAt?r.updatedAt:updatedAtAtual;
+  }catch(e){ return updatedAtAtual; }
+}
 async function loadData(){
   try{const r=await window.storage.get(KEY);if(r&&r.value){data=JSON.parse(r.value);}dataBaseUpdatedAt=r?r.updatedAt:null;}catch(e){console.warn(e);}
-  if(!data.projetos) data.projetos=[];
-  if(!data.entraves) data.entraves=[];
-  if(!data.encaminhamentos) data.encaminhamentos=[];
-  if(!data.resultados) data.resultados=[];
-  // Identidade estável (id) para comparar o mesmo item entre versões salvas (Relatório de Resultados) e para mesclar
-  // edições concorrentes por item (edição simultânea). Backfill: itens salvos antes desta mudança ainda não têm id.
-  data.projetos.forEach(function(it){ if(!it.id) it.id=novoId(); });
-  data.entraves.forEach(function(it){ if(!it.id) it.id=novoId(); });
-  data.encaminhamentos.forEach(function(it){ if(!it.id) it.id=novoId(); });
-  data.resultados.forEach(function(it){ if(!it.id) it.id=novoId(); });
+  dataBaseUpdatedAt=await garantirIdsPersistidos(data,dataBaseUpdatedAt);
 }
 
 /* ---------- edição simultânea: mesclagem por item (em vez de bloquear o relatório inteiro) ---------- */
@@ -1532,12 +1555,8 @@ async function entrarModoEdicao(){
     const fresh=await window.storage.get(KEY);
     if(fresh&&fresh.value){
       const freshData=JSON.parse(fresh.value);
-      if(!freshData.projetos) freshData.projetos=[];
-      if(!freshData.entraves) freshData.entraves=[];
-      if(!freshData.encaminhamentos) freshData.encaminhamentos=[];
-      if(!freshData.resultados) freshData.resultados=[];
       data=freshData;
-      dataBaseUpdatedAt=fresh.updatedAt;
+      dataBaseUpdatedAt=await garantirIdsPersistidos(data,fresh.updatedAt);
     }
   }catch(e){}
   dataBaseline=snapshotBaseline(data);
@@ -1556,6 +1575,7 @@ async function saveData(){
     }
     const fresh=await window.storage.get(KEY);
     const freshData=(fresh&&fresh.value)?JSON.parse(fresh.value):{ref:'',resp:'',fin:'',entr:'',projetos:[],entraves:[],encaminhamentos:[],resultados:[]};
+    backfillIds(freshData);
     if(camposMudaram(dataBaseline,freshData,RELSIT_HEADER_FIELDS)){
       toast(mensagemErroSalvar({kind:'conflict'}));
       return false;
@@ -1810,8 +1830,11 @@ function renderEditor(){
 function buildGovRow(item,idx,removeFn){
   const row=document.createElement('div');
   row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap';
+  const emailsConta=(window.__todosUsuariosEmails||[]).slice();
+  if(item.respConta && !emailsConta.includes(item.respConta)) emailsConta.push(item.respConta);
   row.innerHTML=`<input style="flex:3;min-width:200px" placeholder="Descrição" value="${esc(item.desc||'')}">
     <input style="flex:1;min-width:130px" placeholder="Responsável" value="${esc(item.resp||'')}">
+    <select style="flex:1;min-width:150px" title="Responsável (conta)"><option value="">Responsável (conta) —</option>${emailsConta.map(e=>`<option ${item.respConta===e?'selected':''}>${esc(e)}</option>`).join('')}</select>
     <input style="flex:1;min-width:110px" placeholder="Prazo dd/mm/aaaa" value="${esc(item.prazo||'')}">
     <select style="flex:1;min-width:120px">${GOV_STATUS_OPTS.map(s=>`<option ${item.status===s?'selected':''}>${s}</option>`).join('')}</select>
     <input style="flex:2;min-width:180px" placeholder="Por quê? (causa)" value="${esc(item.porque||'')}">
@@ -1819,7 +1842,7 @@ function buildGovRow(item,idx,removeFn){
     <button class="btn btn-sm btn-ghost" style="color:var(--bad);flex:none" onclick="${removeFn}(${idx})">×</button>`;
   row.querySelectorAll('input,select').forEach((el,j)=>{
     el.addEventListener('input',()=>{
-      const keys=['desc','resp','prazo','status','porque','resultadoEsperado'];
+      const keys=['desc','resp','respConta','prazo','status','porque','resultadoEsperado'];
       item[keys[j]]=el.value;
     });
   });
@@ -1834,7 +1857,7 @@ function renderEntravesEditor(){
 }
 function addEntrave(){
   if(!data.entraves) data.entraves=[];
-  data.entraves.push({id:novoId(),desc:'',resp:'',prazo:'',status:'Aberto',porque:'',resultadoEsperado:''});
+  data.entraves.push({id:novoId(),desc:'',resp:'',respConta:'',prazo:'',status:'Aberto',porque:'',resultadoEsperado:''});
   renderEntravesEditor();
 }
 function removeEntrave(i){data.entraves.splice(i,1);renderEntravesEditor();}
@@ -1848,7 +1871,7 @@ function renderEncaminhamentosEditor(){
 }
 function addEncaminhamento(){
   if(!data.encaminhamentos) data.encaminhamentos=[];
-  data.encaminhamentos.push({id:novoId(),desc:'',resp:'',prazo:'',status:'Aberto',porque:'',resultadoEsperado:''});
+  data.encaminhamentos.push({id:novoId(),desc:'',resp:'',respConta:'',prazo:'',status:'Aberto',porque:'',resultadoEsperado:''});
   renderEncaminhamentosEditor();
 }
 function removeEncaminhamento(i){data.encaminhamentos.splice(i,1);renderEncaminhamentosEditor();}
@@ -2366,6 +2389,10 @@ async function papelPermitido(chave){
 
 (async()=>{
   await ensureAuthenticated();
+  try{
+    const rUsuarios = await fetch(unialfaAuth.REST_BASE+'/rpc/listar_emails_usuarios', { method:'POST', headers: unialfaAuth.authHeaders(), body: JSON.stringify({}) });
+    window.__todosUsuariosEmails = rUsuarios.ok ? (await rUsuarios.json()).map(u=>u.email).filter(Boolean) : [];
+  }catch(e){ window.__todosUsuariosEmails = []; }
   if(!(await papelPermitido('papeis_relatorio_situacao'))){
     document.getElementById('deniedMsg').textContent = 'Esta página não está liberada para o seu papel atual ("'+unialfaAuth.papelLabel(window.currentProfile?window.currentProfile.papel:'solicitante')+'"). Solicite a um administrador para ajustar quem pode ver esta página em Administração > Configurações.';
     document.getElementById('deniedBox').style.display = 'block';

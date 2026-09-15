@@ -1022,13 +1022,33 @@ function nl(s){return esc(s).replace(/\n/g,'<br>')}
 
 /* ── storage ── */
 function novoId(){ return 'g_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8); }
+// Identidade estável (id) para mesclar edições concorrentes por item (edição simultânea). Backfill:
+// itens salvos antes dessa mudança ainda não têm id. Retorna true se gerou algum id novo.
+function backfillIds(d){
+  if(!d.gate2) d.gate2=novoGate2();
+  if(!d.projetos) d.projetos=[];
+  let mudou=false;
+  d.projetos.forEach(function(it){ if(!it.id){ it.id=novoId(); mudou=true; } });
+  return mudou;
+}
+/* backfillIds() gera ids ALEATÓRIOS a cada chamada para o que ainda não tem id — por isso, se um
+   registro sem ids nunca for persistido, cada um dos três pontos que buscam o registro direto do
+   servidor (loadData, entrarModoEdicao, saveData) geraria um conjunto DIFERENTE de ids para os MESMOS
+   itens, e mesclarLista() (que casa itens pelo id) trataria isso como itens diferentes — duplicando
+   tudo em vez de mesclar (bug real encontrado e corrigido em 16/09/2026, junto com o colapso de listas
+   que motivou o backfill em primeiro lugar). Por isso, a primeira vez que um registro sem ids é aberto,
+   os ids gerados são gravados de volta no servidor na hora (silencioso, melhor esforço) — a partir daí
+   os três pontos sempre veem os mesmos ids estáveis. */
+async function garantirIdsPersistidos(d, updatedAtAtual){
+  if(!backfillIds(d)) return updatedAtAtual;
+  try{
+    const r=await window.storage.set(KEY,JSON.stringify(d),updatedAtAtual);
+    return r&&r.updatedAt?r.updatedAt:updatedAtAtual;
+  }catch(e){ return updatedAtAtual; }
+}
 async function loadData(){
   try{const r=await window.storage.get(KEY);if(r&&r.value)data=JSON.parse(r.value);dataBaseUpdatedAt=r?r.updatedAt:null;}catch(e){console.warn(e);}
-  if(!data.gate2)data.gate2=novoGate2();
-  if(!data.projetos)data.projetos=[];
-  // Identidade estável (id) para mesclar edições concorrentes por item (edição simultânea).
-  // Backfill: itens salvos antes desta mudança ainda não têm id.
-  data.projetos.forEach(function(it){ if(!it.id) it.id=novoId(); });
+  dataBaseUpdatedAt=await garantirIdsPersistidos(data,dataBaseUpdatedAt);
 }
 
 /* ---------- edição simultânea: mesclagem por item (em vez de bloquear o relatório inteiro) ---------- */
@@ -1064,10 +1084,8 @@ async function entrarModoEdicao(){
     const fresh=await window.storage.get(KEY);
     if(fresh&&fresh.value){
       const freshData=JSON.parse(fresh.value);
-      if(!freshData.gate2) freshData.gate2=novoGate2();
-      if(!freshData.projetos) freshData.projetos=[];
       data=freshData;
-      dataBaseUpdatedAt=fresh.updatedAt;
+      dataBaseUpdatedAt=await garantirIdsPersistidos(data,fresh.updatedAt);
     }
   }catch(e){}
   dataBaseline=snapshotBaseline(data);
@@ -1086,6 +1104,7 @@ async function saveData(){
     }
     const fresh=await window.storage.get(KEY);
     const freshData=(fresh&&fresh.value)?JSON.parse(fresh.value):{prog:{},gate2:novoGate2(),projetos:[]};
+    backfillIds(freshData);
     if(camposMudaram(dataBaseline,freshData,RELENT_HEADER_FIELDS)){
       toast(mensagemErroSalvar({kind:'conflict'}));
       return false;

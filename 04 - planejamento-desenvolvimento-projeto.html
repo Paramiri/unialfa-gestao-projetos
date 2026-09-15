@@ -970,6 +970,7 @@ const STAGES=[
       {key:'descricao',label:'Descrição detalhada',type:'text',w:'24%',long:true},
       {key:'fonte',label:'Fonte / documento de origem',type:'text',w:'18%',long:true},
       {key:'resp',label:'Responsável',type:'text',w:'14%',long:true},
+      {key:'respConta',label:'Responsável (conta)',type:'teamSelect',w:'12%'},
       {key:'status',label:'Status',type:'select',options:ST_ENTRADA},
     ], seedRows:[
       {id:'E1',categoria:'Requisitos Funcionais',status:'Pendente'},
@@ -1082,7 +1083,7 @@ function atualizarBotaoEquipe(souMembro){
    preservando o valor atual mesmo que a pessoa ja nao esteja mais na equipe (senao a troca de
    projeto ou uma equipe alterada depois apagaria silenciosamente o vinculo salvo). */
 function refreshRespContaOptions(){
-  document.querySelectorAll('#tbl-cronograma [data-k="respConta"]').forEach(sel=>{
+  document.querySelectorAll('#tbl-cronograma [data-k="respConta"], #tbl-entradas [data-k="respConta"]').forEach(sel=>{
     const cur=sel.value;
     const emails=(window.__equipeAtualEmails||[]).slice();
     if(cur && !emails.includes(cur)) emails.push(cur);
@@ -1594,6 +1595,7 @@ function addRow(key, vals){
   const tb=document.querySelector(`#tbl-${key} tbody`);
   const tr=document.createElement('tr');
   if(key==='cronograma'){ tr.dataset.marcoId=(vals&&vals.id)?vals.id:novoId(); }
+  if(key==='entradas'){ tr.dataset.itemId=(vals&&vals._itemId)?vals._itemId:novoId(); }
   let cells=t.cols.map(c=>{
     if(c.type==='auto') return `<td class="dyn-seq"></td>`;
     if(c.type==='tasks') return `<td><button type="button" class="tarefas-toggle" onclick="toggleTarefas(this)"></button></td>`;
@@ -1670,6 +1672,7 @@ function readTable(key){
     tr.querySelectorAll('input,select,textarea').forEach(inp=>{ const val=(inp.value||'').trim(); obj[inp.dataset.k]=val; if(val) any=true; });
     if(tr._tarefas && tr._tarefas.length) obj.tarefas=tr._tarefas.map(tf=>({nome:tf.nome, concluida:!!tf.concluida}));
     if(key==='cronograma' && tr.dataset.marcoId) obj.id=tr.dataset.marcoId;
+    if(key==='entradas' && tr.dataset.itemId) obj._itemId=tr.dataset.itemId;
     if(any) rows.push(obj);
   });
   if(t && t.mainKey){
