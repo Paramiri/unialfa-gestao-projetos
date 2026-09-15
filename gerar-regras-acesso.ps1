@@ -238,6 +238,12 @@ Bul "Mesma logica de permissao das demais listas de papeis deste capitulo: uma l
 Bul "Diferente das secoes 3.5 a 3.10, esta nao tem um interruptor mestre `"desligado por padrao`" que bloqueia todo mundo - o campo `"Habilitar backup automatizado`" e, ele mesmo, um dos parametros salvos, nao uma trava de acesso a tela: quem tem o papel liberado sempre ve e edita a tela, ligado ou desligado."
 Bul "Esta tela define apenas os parametros - quem efetivamente executa a copia dos dados e uma rotina agendada fora do sistema (GitHub Actions), sem acesso direto ao sistema nem papel de usuario."
 
+H2 "3.12 Meu Painel e o campo Responsavel (conta)"
+P "`"Meu Painel`" e uma pagina de `"Gestao`" sem nenhuma restricao por papel: qualquer usuario autenticado, de qualquer papel, pode abri-la e ve apenas o que esta atribuido a propria conta (marcos e tarefas do cronograma, riscos do TAP, entradas do Planejamento, entraves e encaminhamentos do Relatorio de Situacao), com um botao para concluir cada item direto da lista. Diferente das cinco paginas da secao 3.4, nao ha lista de papeis para configurar aqui - o controle de acesso e so o login, igual a Ficha do Projeto."
+Bul "Em Riscos (TAP) e Entradas (Planejamento), o seletor `"Responsavel (conta)`" continua restrito a quem faz parte da equipe do projeto selecionado (mesma fonte de dados da restricao por equipe, secao 5) - ninguem de fora da equipe aparece na lista."
+Bul "Em Entraves e Encaminhamentos (Relatorio de Situacao), o seletor lista todas as contas do sistema, nao so uma equipe - esse relatorio nao tem um projeto vinculado unico ao qual amarrar uma equipe. Para viabilizar essa lista, uma funcao no banco de dados (`listar_emails_usuarios`, SECURITY DEFINER) devolve o e-mail de todas as contas cadastradas para qualquer usuario autenticado - uma excecao deliberada e estreita a regra geral de `perfis` (secao abaixo), que devolve so o e-mail, nunca nome, telefone ou papel de outra pessoa."
+P "Controle de acesso (Row Level Security no Supabase): a politica `perfis_select` normalmente so libera a propria linha de `perfis` para quem nao e Admin ((auth.uid() = id) OR is_admin()) - por isso um SELECT direto na tabela nao serve para montar a lista de Entraves/Encaminhamentos acima. A funcao `listar_emails_usuarios` contorna essa politica de proposito (SECURITY DEFINER), mas devolve deliberadamente so a coluna e-mail, preservando a mesma protecao de privacidade (nome/telefone/papel de outros usuarios) que ja existia antes."
+
 HR
 
 # ---- 4 ----
