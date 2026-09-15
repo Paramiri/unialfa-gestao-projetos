@@ -423,7 +423,7 @@ window.unialfaHistorico = {
         <h1>Administração de Usuários</h1>
         <p>Controle de acesso · Papéis e permissões · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=61#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=62#administracao" target="_blank" rel="noopener" title="Ajuda sobre a Administração">?</a>
     </div>
   </div>
 
@@ -729,7 +729,7 @@ async function carregarUsuarios(){
       <td><select onchange="alterarPapelPendente('${esc(u.email)}', this.value, this)">
         ${PAPEIS.map(p=>`<option value="${p}" ${p===u.papel?'selected':''}>${unialfaAuth.papelLabel(p)}</option>`).join('')}
       </select></td>
-      <td><button class="btn-remove" onclick="removerPendente('${esc(u.email)}')">Remover</button></td>
+      <td><button class="btn" style="margin-right:6px" onclick="criarContaAgoraPendente('${esc(u.email)}')">Criar conta agora</button><button class="btn-remove" onclick="removerPendente('${esc(u.email)}')">Remover</button></td>
     </tr>`;
   });
   html+='</tbody></table>';
@@ -915,21 +915,38 @@ async function adicionarUsuario(){
   const btn=document.querySelector('#userAddRow .btn');
   btn.disabled=true;
   try{
-    const r=await fetch(unialfaAuth.REST_BASE+'/perfis_pendentes', {
-      method:'POST', headers: unialfaAuth.authHeaders({'Prefer':'return=minimal'}),
-      body: JSON.stringify({ email: email, nome: nome||null, telefone: telefone||null, papel: papel, criado_por: window.currentUser.id })
-    });
-    if(!r.ok) throw new Error();
-    toast('Pré-cadastro criado — os dados se aplicam no primeiro login de '+email);
+    const ok = await criarContaAgora(email, nome, telefone, papel);
+    if(!ok) return;
     document.getElementById('novoNome').value='';
     document.getElementById('novoTelefone').value='';
     document.getElementById('novoEmail').value='';
     document.getElementById('novoPapel').value='solicitante';
-    await carregarUsuarios();
-  }catch(e){
-    toast('Não foi possível criar o pré-cadastro', false);
   }finally{
     btn.disabled=false;
+  }
+}
+/* Cria a conta de verdade na hora (Supabase Auth Admin API, via Edge Function
+   criar-usuario-admin) em vez do pré-cadastro antigo em perfis_pendentes — assim a
+   pessoa já pode ser adicionada à equipe de um projeto sem esperar o primeiro login. */
+function criarContaAgoraPendente(email){
+  const u = usuariosPendentes.find(p=>p.email===email);
+  if(!u){ toast('Pré-cadastro não encontrado — atualize a página', false); return; }
+  criarContaAgora(u.email, u.nome, u.telefone, u.papel);
+}
+async function criarContaAgora(email, nome, telefone, papel){
+  try{
+    const r = await fetch(unialfaAuth.REST_BASE.replace('/rest/v1','/functions/v1') + '/criar-usuario-admin', {
+      method:'POST', headers: unialfaAuth.authHeaders(),
+      body: JSON.stringify({ email, nome: nome||null, telefone: telefone||null, papel })
+    });
+    const data = await r.json().catch(()=>({}));
+    if(!r.ok){ toast(data.error || 'Não foi possível criar a conta', false); return false; }
+    toast('Conta criada para '+email+' — já pode ser adicionada a uma equipe.');
+    await carregarUsuarios();
+    return true;
+  }catch(e){
+    toast('Não foi possível criar a conta', false);
+    return false;
   }
 }
 
