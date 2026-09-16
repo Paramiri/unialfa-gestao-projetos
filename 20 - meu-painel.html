@@ -580,7 +580,7 @@ async function carregarMeuPainel(){
   }
 
   document.getElementById('meusProjetos').innerHTML = meusProjetosInfo.length
-    ? meusProjetosInfo.map(p=>'<a class="proj-chip" href="18 - ficha-projeto.html?id='+esc(p.id)+'"><span class="dot"></span>'+esc(p.nome)+'</a>').join('')
+    ? meusProjetosInfo.map(p=>'<a class="proj-chip" href="18 - ficha-projeto.html?id='+esc(p.id)+'&origem=meu-painel"><span class="dot"></span>'+esc(p.nome)+'</a>').join('')
     : '<div class="card empty">Você ainda não está na equipe de nenhum projeto ativo.</div>';
 
   document.getElementById('cnt-marcos').textContent=marcos.length;

@@ -410,13 +410,13 @@ function ensureAuthenticated(){
   <div id="deniedBox" style="display:none" class="card"><div class="denied">
     <h2>Projeto não encontrado</h2>
     <p id="deniedMsg">O projeto informado na URL não existe ou foi removido.</p>
-    <div style="margin-top:16px"><a class="btn" href="18 - ficha-projeto.html">← Escolher outro projeto</a></div>
+    <div style="margin-top:16px"><a class="btn" id="deniedVoltarBtn" href="18 - ficha-projeto.html">← Escolher outro projeto</a></div>
   </div></div>
 
   <div id="fichaBox" style="display:none">
     <div class="refresh-bar">
-      <a class="btn" href="16 - painel-executivo.html">← Painel Executivo</a>
-      <a class="btn" href="18 - ficha-projeto.html">Trocar projeto</a>
+      <a class="btn" id="voltarBtn" href="16 - painel-executivo.html">← Painel Executivo</a>
+      <a class="btn" id="trocarBtn" href="18 - ficha-projeto.html">Trocar projeto</a>
     </div>
 
     <div id="loadingBox" class="loading">Carregando dados do projeto…</div>
@@ -877,14 +877,36 @@ async function carregarPicker(){
   }).join('');
 }
 
+// Botão "voltar" precisa saber de onde a Ficha do Projeto foi aberta (Meu Painel ou
+// Painel Executivo, os dois pontos de entrada hoje) — sem isso ele sempre mandava para
+// o Painel Executivo, mesmo vindo do Meu Painel. O parâmetro ?origem= é repassado nos
+// links de "Trocar projeto"/"Escolher outro projeto" para sobreviver a uma troca de
+// projeto sem perder o destino correto do "voltar".
+var ORIGENS = {
+  'meu-painel': { href: '20 - meu-painel.html', label: '← Meu Painel' },
+  'painel-executivo': { href: '16 - painel-executivo.html', label: '← Painel Executivo' }
+};
+function origemAtual(){
+  var params = new URLSearchParams(location.search);
+  var o = params.get('origem');
+  return ORIGENS[o] ? o : 'painel-executivo';
+}
+function sufixoOrigem(){
+  return '&origem=' + encodeURIComponent(origemAtual());
+}
 function abrirProjetoSelecionado(){
   var id = document.getElementById('pickerSelect').value;
   if(!id) return;
-  location.href = '18 - ficha-projeto.html?id=' + encodeURIComponent(id);
+  location.href = '18 - ficha-projeto.html?id=' + encodeURIComponent(id) + sufixoOrigem();
 }
 
 (async()=>{
   await ensureAuthenticated();
+  var origem = ORIGENS[origemAtual()];
+  document.getElementById('voltarBtn').href = origem.href;
+  document.getElementById('voltarBtn').textContent = origem.label;
+  document.getElementById('trocarBtn').href = '18 - ficha-projeto.html?origem=' + encodeURIComponent(origemAtual());
+  document.getElementById('deniedVoltarBtn').href = '18 - ficha-projeto.html?origem=' + encodeURIComponent(origemAtual());
   var params = new URLSearchParams(location.search);
   var id = params.get('id');
   if(id){

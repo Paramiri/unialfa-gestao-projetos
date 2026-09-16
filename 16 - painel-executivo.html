@@ -912,7 +912,7 @@ function renderVisaoPorProjeto(projetos, relsit, registrosPorForm){
     var saudeHtml = '<span class="s-badge s-'+saude.nivel+'">'+esc(saude.label)+'</span>';
 
     return '<tr>'
-      + '<td><a href="18 - ficha-projeto.html?id='+esc(p.id)+'" style="color:var(--ink);text-decoration:none"><b style="text-decoration:underline">'+esc(p.nome)+'</b></a><div class="kpi-sub" style="margin-top:2px">'+esc(p.unidade||'—')+'</div></td>'
+      + '<td><a href="18 - ficha-projeto.html?id='+esc(p.id)+'&origem=painel-executivo" style="color:var(--ink);text-decoration:none"><b style="text-decoration:underline">'+esc(p.nome)+'</b></a><div class="kpi-sub" style="margin-top:2px">'+esc(p.unidade||'—')+'</div></td>'
       + '<td>'+esc(p.gerente||'—')+'</td>'
       + '<td><span class="s-badge '+projetoStatusClass(p.status)+'">'+esc(p.status||'—')+'</span></td>'
       + '<td>'+sitHtml+'</td>'
