@@ -29,6 +29,13 @@
   .section-h{display:flex; align-items:center; gap:12px; padding:18px 24px 14px; border-bottom:1px solid var(--line); background:var(--surface-2);}
   .section-h h2{margin:0; font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase}
   .section-h p{margin:0 0 0 auto; font-size:11px; color:var(--muted); font-weight:500}
+  .config-index{padding:16px 24px; border-bottom:1px solid var(--line); background:var(--surface-2); display:flex; flex-wrap:wrap; gap:6px 18px;}
+  .config-index a{font-size:12px; font-weight:700; color:var(--red); text-decoration:none; white-space:nowrap;}
+  .config-index a:hover{text-decoration:underline}
+  .config-sec-title{padding:18px 24px 4px; background:var(--surface-2); scroll-margin-top:12px;}
+  .config-sec-title:not(:first-child){border-top:1px solid var(--line)}
+  .config-sec-title h3{margin:0; font-size:11.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:8px}
+  .config-sec-title .num{display:inline-flex; align-items:center; justify-content:center; width:19px; height:19px; border-radius:50%; background:var(--red); color:#fff; font-size:10px; font-weight:800; flex:none}
 
   table{width:100%; border-collapse:collapse; font-size:13px;}
   th{text-align:left; font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding:10px 14px; border-bottom:1px solid var(--line); background:var(--surface-2);}
@@ -469,6 +476,15 @@ window.unialfaHistorico = {
 
   <div class="card" id="config-card" style="display:none">
     <div class="section-h"><h2>Configurações do sistema</h2><p>Flags gerais, alteráveis só por Admin</p></div>
+    <div class="config-index">
+      <a href="#cfg-sem-login">1. Acesso sem login</a>
+      <a href="#cfg-paginas-gestao">2. Visualização das páginas de Gestão</a>
+      <a href="#cfg-doc-compartilhado">3. Edição de documentos compartilhados</a>
+      <a href="#cfg-ia">4. Assistentes de Inteligência Artificial</a>
+      <a href="#cfg-backup">5. Backup automatizado</a>
+      <a href="#cfg-metas">6. Metas do Relatório de Resultados</a>
+    </div>
+    <div class="config-sec-title" id="cfg-sem-login"><h3><span class="num">1</span>Acesso sem login</h3></div>
     <div style="padding:20px 24px; display:flex; align-items:center; gap:14px; justify-content:space-between; flex-wrap:wrap">
       <div>
         <b style="display:block; font-size:13px; margin-bottom:4px">Permitir enviar Solicitação de Demanda sem login</b>
@@ -487,7 +503,8 @@ window.unialfaHistorico = {
         <input type="checkbox" id="toggleAtaSemLogin" onchange="alterarConfigSemLogin('permitir_ata_sem_login', 'toggleAtaSemLogin', this.checked)" style="width:38px; height:20px; cursor:pointer">
       </label>
     </div>
-    <div style="padding:20px 24px; border-top:1px solid var(--line)">
+    <div class="config-sec-title" id="cfg-paginas-gestao"><h3><span class="num">2</span>Visualização das páginas de Gestão</h3></div>
+    <div style="padding:20px 24px">
       <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode ver o Painel Executivo</b>
       <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">Marque os papéis que podem abrir esta página. PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
       <div class="papeis-grupo" id="papeisPainelExecutivo" data-chave="papeis_painel_executivo"></div>
@@ -517,12 +534,14 @@ window.unialfaHistorico = {
       <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">Marque os papéis que podem abrir esta página. PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
       <div class="papeis-grupo" id="papeisRelatorioEntregas" data-chave="papeis_relatorio_entregas"></div>
     </div>
-    <div style="padding:20px 24px; border-top:1px solid var(--line)">
+    <div class="config-sec-title" id="cfg-doc-compartilhado"><h3><span class="num">3</span>Edição de documentos compartilhados</h3></div>
+    <div style="padding:20px 24px">
       <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode editar o Plano de Comunicação de Projeto</b>
       <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">A visualização e impressão continuam abertas a qualquer usuário autenticado — isto controla só quem pode usar "Editar dados". PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
       <div class="papeis-grupo" id="papeisPlanoComunicacao" data-chave="papeis_plano_comunicacao_editar"></div>
     </div>
-    <div style="padding:20px 24px; display:flex; align-items:center; gap:14px; justify-content:space-between; flex-wrap:wrap; border-top:1px solid var(--line)">
+    <div class="config-sec-title" id="cfg-ia"><h3><span class="num">4</span>Assistentes de Inteligência Artificial</h3></div>
+    <div style="padding:20px 24px; display:flex; align-items:center; gap:14px; justify-content:space-between; flex-wrap:wrap">
       <div>
         <b style="display:block; font-size:13px; margin-bottom:4px">Habilitar importação de transcrição por IA (Ata de Reunião)</b>
         <span style="font-size:12px; color:var(--muted)">Quando ativado, aparece na Ata de Reunião a opção de colar a transcrição de uma reunião para a IA sugerir pauta, participantes, resumo, encaminhamentos e entraves. Cada análise tem um custo real de API — mantenha desativado se não for usar.</span>
@@ -579,7 +598,8 @@ window.unialfaHistorico = {
       <div class="papeis-grupo" id="papeisImportarDocDemanda" data-chave="papeis_importar_documento_demanda"></div>
     </div>
 
-    <div style="padding:20px 24px; display:flex; align-items:center; gap:14px; justify-content:space-between; flex-wrap:wrap; border-top:1px solid var(--line)">
+    <div class="config-sec-title" id="cfg-backup"><h3><span class="num">5</span>Backup automatizado</h3></div>
+    <div style="padding:20px 24px; display:flex; align-items:center; gap:14px; justify-content:space-between; flex-wrap:wrap">
       <div>
         <b style="display:block; font-size:13px; margin-bottom:4px">Habilitar backup automatizado</b>
         <span style="font-size:12px; color:var(--muted)">Liga a rotina agendada (fora do sistema, via GitHub Actions) que copia o banco de dados, os arquivos anexados e o código-fonte para o destino configurado abaixo. Este interruptor e os campos abaixo só definem os parâmetros — a rotina em si é implantada separadamente.</span>
@@ -634,8 +654,9 @@ window.unialfaHistorico = {
       <b style="display:block; font-size:12.5px; margin-bottom:4px">Última execução da rotina</b>
       <span id="backupStatusExecucao" style="font-size:12.5px; color:var(--muted)">Carregando…</span>
     </div>
-    <div style="padding:20px 24px; border-top:1px solid var(--line)">
-      <b style="display:block; font-size:13px; margin-bottom:4px">Metas dos indicadores estratégicos (Relatório de Resultados)</b>
+    <div class="config-sec-title" id="cfg-metas"><h3><span class="num">6</span>Metas do Relatório de Resultados</h3></div>
+    <div style="padding:20px 24px">
+      <b style="display:block; font-size:13px; margin-bottom:4px">Metas dos indicadores estratégicos</b>
       <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:12px">Define a meta de cada indicador da página Relatório de Resultados. Enquanto uma meta ficar vazia, o cartão correspondente mostra "Meta não definida" em vez de um selo de status.</span>
       <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:14px 20px">
         <div>
