@@ -26,9 +26,15 @@
 // "04 - planejamento-desenvolvimento-projeto.html"; marcos antigos sem esse id usam um
 // identificador de fallback baseado em posicao, best-effort).
 //
-// Cada e-mail termina indicando a Gerencia de Projetos como alternativa de contato, caso
-// a pessoa prefira ajustar o prazo diretamente em vez de seguir só pelo aviso automatico —
-// o nome do Gerente vem do campo "Gerente do projeto" (rec.gestor) do proprio Planejamento,
+// Cada e-mail traz um link direto para o Meu Painel (20 - meu-painel.html) — a mesma tela
+// mostra os itens de quem estiver logado, entao o link e generico, sem parametro por pessoa;
+// quem abrir precisa logar com a propria conta para ver o que esta atribuido a ela. A URL
+// muda com o ambiente (producao vs treino) verificando se SUPABASE_URL contem o ref de
+// producao, mesmo padrao ja usado em reset-treino/index.ts (PRODUCAO_REF).
+//
+// Cada e-mail tambem termina indicando a Gerencia de Projetos como alternativa de contato,
+// caso a pessoa prefira ajustar o prazo diretamente em vez de seguir só pelo aviso automatico
+// — o nome do Gerente vem do campo "Gerente do projeto" (rec.gestor) do proprio Planejamento,
 // nao e fixo.
 //
 // Segredos necessarios: nenhum novo — reaproveita SUPABASE_URL e
@@ -41,6 +47,11 @@
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const PRODUCAO_REF = "fiarntunpqteopwjkhjg";
+const SITE_URL = SUPABASE_URL && SUPABASE_URL.includes(PRODUCAO_REF)
+  ? "https://gestaoprojetos.alfa.br"
+  : "https://paramiri.github.io/unialfa-gestao-projetos-treino";
+const MEU_PAINEL_URL = `${SITE_URL}/20%20-%20meu-painel.html`;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -231,6 +242,7 @@ Deno.serve(async (req: Request) => {
           ` ${situacao}.</p>` +
           (marco.resp ? `<p><b>Responsável (cronograma):</b> ${esc(marco.resp)}</p>` : "") +
           `<p>Avaliação automática do Painel de Prazos.</p>` +
+          `<p><a href="${MEU_PAINEL_URL}">Abrir o Meu Painel</a> para ver e concluir este e os demais itens atribuídos a você.</p>` +
           `<p><b>Procurar a Gerência de Projetos${rec.gestor ? ` - Gerente - ${esc(rec.gestor)}` : ""}. Se houver necessidade de ajuste.</b></p>`;
 
         try {
