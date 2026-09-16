@@ -113,7 +113,7 @@ table.list tbody tr:hover{background:var(--surface-2)}
 .empty p{margin:0;font-size:13px}
 .overlay{position:fixed;inset:0;background:rgba(20,20,22,.45);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
 .overlay.show{opacity:1;pointer-events:auto}
-.drawer{position:fixed;top:50%;left:50%;width:min(980px,94vw);max-height:88vh;background:var(--paper);box-shadow:0 24px 70px rgba(0,0,0,.28);border-radius:14px;transform:translate(-50%,-50%) scale(.97);opacity:0;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .2s;z-index:45;display:flex;flex-direction:column;pointer-events:none;overflow:hidden}
+.drawer{position:fixed;top:50%;left:50%;width:min(1160px,94vw);max-height:88vh;background:var(--paper);box-shadow:0 24px 70px rgba(0,0,0,.28);border-radius:14px;transform:translate(-50%,-50%) scale(.97);opacity:0;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .2s;z-index:45;display:flex;flex-direction:column;pointer-events:none;overflow:hidden}
 .drawer.show{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
 .drawer-top{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:12px}
 .drawer-top h2{margin:0;font-size:16px;font-weight:700}
@@ -124,7 +124,8 @@ table.list tbody tr:hover{background:var(--surface-2)}
 .dl .grp{margin:18px 0 6px;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
 .dl .row{padding:12px 0;border-bottom:1px solid var(--surface)}
 .dl dt{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
-.dl dd{margin:0;font-size:13.5px;white-space:pre-wrap;word-break:break-word}
+.dl dd{margin:0;font-size:13.5px;white-space:pre-wrap;word-break:break-word;max-width:860px}
+.dl dd:has(.ro-wrap){max-width:none}
 .ro-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:7px;margin-top:4px}
 table.ro-t{width:100%;border-collapse:collapse;font-size:12px;min-width:300px}
 table.ro-t th{text-align:left;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:7px 9px;background:var(--surface-2);border-bottom:1px solid var(--line);white-space:nowrap}

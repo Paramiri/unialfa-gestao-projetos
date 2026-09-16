@@ -218,7 +218,7 @@
   }
   .overlay.show{opacity:1; pointer-events:auto}
   .drawer{
-    position:fixed; top:50%; left:50%; width:min(980px,94vw); max-height:88vh; background:var(--paper);
+    position:fixed; top:50%; left:50%; width:min(1140px,94vw); max-height:88vh; background:var(--paper);
     box-shadow:0 24px 70px rgba(0,0,0,.28); border-radius:14px; transform:translate(-50%,-50%) scale(.97); opacity:0;
     transition:transform .22s cubic-bezier(.2,.8,.2,1), opacity .2s;
     z-index:45; display:flex; flex-direction:column; pointer-events:none; overflow:hidden;
@@ -233,7 +233,7 @@
   .dl{margin:0}
   .dl .row{padding:14px 0; border-bottom:1px solid var(--surface)}
   .dl dt{font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:5px}
-  .dl dd{margin:0; font-size:13.5px; white-space:pre-wrap; word-break:break-word}
+  .dl dd{margin:0; font-size:13.5px; white-space:pre-wrap; word-break:break-word; max-width:860px}
   .drawer-foot{padding:16px 24px; border-top:1px solid var(--line); background:var(--surface-2); display:flex; align-items:center; gap:10px; flex-wrap:wrap}
   .drawer-foot label{font-size:11px; color:var(--muted)}
   .status-row{display:flex; align-items:center; gap:8px; margin-right:auto}
