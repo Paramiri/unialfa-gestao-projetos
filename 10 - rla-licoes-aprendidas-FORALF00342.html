@@ -14,7 +14,7 @@
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font);color:var(--ink);background:var(--surface);-webkit-font-smoothing:antialiased;line-height:1.5}
-.wrap{max-width:980px;margin:0 auto;padding:28px 20px 64px}
+.wrap{max-width:1160px;margin:0 auto;padding:28px 20px 64px}
 .doc-head{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
 .doc-band{background:var(--red);color:#fff;padding:18px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .doc-logo{font-weight:800;font-size:22px;letter-spacing:.04em;line-height:1;padding-right:18px;border-right:2px solid rgba(255,255,255,.35)}
@@ -41,6 +41,7 @@ body{margin:0;font-family:var(--font);color:var(--ink);background:var(--surface)
 .grid{padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:16px 20px}
 .field{display:flex;flex-direction:column;gap:6px}
 .field.full{grid-column:1/-1}
+  .field.full textarea{max-width:860px}
 label{font-size:12px;font-weight:700;letter-spacing:.02em;color:var(--ink)}
 label .req{color:var(--red);margin-left:2px}
 label .ref{color:var(--muted);font-weight:600;margin-right:5px;font-size:11px}
