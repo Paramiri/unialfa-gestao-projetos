@@ -10,7 +10,8 @@
 //   - atrasado (repete a cada 7 dias enquanto continuar sem Conclusao real)
 //
 // Destinatarios de cada aviso:
-//   - o e-mail vinculado no campo "Responsavel (conta)" do marco (respConta), se preenchido;
+//   - os e-mails vinculados no campo "Responsavel (conta)" do marco (respConta —
+//     pode ter mais de uma pessoa), se preenchido;
 //   - + toda conta com papel 'gerente_projetos' que estiver na equipe daquele projeto
 //     (projeto_equipe + perfis.papel — nao usa o campo de texto livre "Gerente do projeto").
 // Se nenhum dos dois existir, o marco fica sem destinatario e nenhum e-mail e enviado
@@ -77,6 +78,12 @@ function diasEntre(dataA: string, dataB: string): number {
   const a = Date.parse(dataA + "T00:00:00Z");
   const b = Date.parse(dataB + "T00:00:00Z");
   return Math.round((a - b) / 86400000);
+}
+// Responsável (conta) pode ter mais de uma pessoa, guardado como string separada
+// por vírgula (mesmo formato usado nos formulários) — um e-mail só, sem vírgula,
+// continua funcionando normalmente (formato anterior, sem precisar migrar dado).
+function parseRespConta(v?: string): string[] {
+  return String(v || "").split(",").map((s) => s.trim()).filter(Boolean);
 }
 
 type Marco = {
@@ -200,7 +207,7 @@ Deno.serve(async (req: Request) => {
         if (!deveAvisar) continue;
 
         const destinatarios = new Set<string>();
-        if (marco.respConta) destinatarios.add(marco.respConta);
+        for (const email of parseRespConta(marco.respConta)) destinatarios.add(email);
         for (const email of gpsPorProjeto.get(rec.projetoId) || []) destinatarios.add(email);
         if (!destinatarios.size) continue; // nada a enviar, mas nao marca como avisado
 

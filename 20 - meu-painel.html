@@ -502,6 +502,16 @@ async function concluirGov(lista, itemId){
   }catch(e){ toast('Não foi possível concluir — tente atualizar a página'); }
 }
 
+/* Responsável (conta) agora pode ter mais de uma pessoa, guardado como string
+   separada por vírgula (não array) para continuar compatível com os registros
+   antigos de um e-mail só, sem precisar de nenhuma migração de dado. */
+function parseRespConta(v){
+  if(Array.isArray(v)) return v.filter(Boolean);
+  return String(v||'').split(',').map(s=>s.trim()).filter(Boolean);
+}
+function souAtribuido(respConta, meuEmail){
+  return parseRespConta(respConta).some(e=>e.toLowerCase()===meuEmail);
+}
 async function carregarMeuPainel(){
   const meuEmail=(window.currentUser.email||'').toLowerCase();
   const headers=unialfaAuth.authHeaders();
@@ -532,18 +542,18 @@ async function carregarMeuPainel(){
     if(!rec.projetoId || projetosEncerrados.has(rec.projetoId)) return;
     (rec.cronograma||[]).forEach(m=>{
       if(!m.marco) return;
-      const souAtribuido = (m.respConta||'').toLowerCase()===meuEmail;
-      if(souAtribuido && !m.concl && m.id){
+      const atribuido = souAtribuido(m.respConta, meuEmail);
+      if(atribuido && !m.concl && m.id){
         marcos.push({planoKey:row.key, marcoId:m.id, marco:m.marco, projetoNome:rec.nomeProjeto, fim:m.fim, resp:m.resp});
       }
-      if(souAtribuido && Array.isArray(m.tarefas)){
+      if(atribuido && Array.isArray(m.tarefas)){
         m.tarefas.forEach(t=>{
           if(!t.concluida) tarefas.push({planoKey:row.key, marcoId:m.id, marco:m.marco, projetoNome:rec.nomeProjeto, nome:t.nome});
         });
       }
     });
     (rec.entradas||[]).forEach(it=>{
-      if((it.respConta||'').toLowerCase()===meuEmail && it.status!=='OK' && it.status!=='Não aplicável' && it._itemId){
+      if(souAtribuido(it.respConta, meuEmail) && it.status!=='OK' && it.status!=='Não aplicável' && it._itemId){
         entradas.push({planoKey:row.key, itemId:it._itemId, descricao:it.descricao||it.categoria, projetoNome:rec.nomeProjeto, status:it.status});
       }
     });
@@ -554,7 +564,7 @@ async function carregarMeuPainel(){
     let rec; try{ rec=JSON.parse(row.value); }catch(e){ return; }
     if(!rec.projetoId || projetosEncerrados.has(rec.projetoId)) return;
     (rec.riscos||[]).forEach(r=>{
-      if((r.respConta||'').toLowerCase()===meuEmail && r.status!=='Encerrado' && r.id){
+      if(souAtribuido(r.respConta, meuEmail) && r.status!=='Encerrado' && r.id){
         riscos.push({tapKey:row.key, riscoId:r.id, risco:r.risco, projetoNome:rec.nomeProjeto, status:r.status});
       }
     });
@@ -564,8 +574,8 @@ async function carregarMeuPainel(){
   if(relsitRow[0]){
     let rec; try{ rec=JSON.parse(relsitRow[0].value); }catch(e){ rec=null; }
     if(rec){
-      (rec.entraves||[]).forEach(it=>{ if((it.respConta||'').toLowerCase()===meuEmail && it.status==='Aberto' && it.id) entraves.push(it); });
-      (rec.encaminhamentos||[]).forEach(it=>{ if((it.respConta||'').toLowerCase()===meuEmail && it.status==='Aberto' && it.id) encaminhamentos.push(it); });
+      (rec.entraves||[]).forEach(it=>{ if(souAtribuido(it.respConta, meuEmail) && it.status==='Aberto' && it.id) entraves.push(it); });
+      (rec.encaminhamentos||[]).forEach(it=>{ if(souAtribuido(it.respConta, meuEmail) && it.status==='Aberto' && it.id) encaminhamentos.push(it); });
     }
   }
 

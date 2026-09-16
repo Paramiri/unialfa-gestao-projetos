@@ -123,6 +123,14 @@
   table.dyn-t th, table.dyn-t td{overflow-wrap:break-word}
   table.dyn-t th{font-size:9px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); padding:9px 10px; background:var(--surface-2); border-bottom:1px solid var(--line); text-align:left; white-space:normal; line-height:1.3}
   table.dyn-t td{padding:4px 6px; border-bottom:1px solid var(--surface)}
+  .multisel-wrap{position:relative; display:inline-block; width:100%}
+  .multisel-btn{width:100%; text-align:left; font-family:inherit; font-size:12px; border:1px solid var(--line-strong); border-radius:6px; padding:6px 7px; background:var(--paper); cursor:pointer; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .multisel-btn:hover{border-color:var(--ink)}
+  .multisel-btn.vazio{color:var(--muted)}
+  .multisel-panel{position:fixed; z-index:500; background:var(--paper); border:1px solid var(--line-strong); border-radius:8px; box-shadow:0 8px 28px rgba(20,20,20,.18); padding:8px; max-height:260px; overflow-y:auto}
+  .multisel-panel label{display:flex; align-items:center; gap:7px; font-size:12.5px; padding:5px 6px; border-radius:5px; cursor:pointer; white-space:nowrap}
+  .multisel-panel label:hover{background:var(--surface-2)}
+  .multisel-panel input{cursor:pointer; margin:0}
   table.dyn-t tbody tr:last-child td{border-bottom:none}
   table.dyn-t input, table.dyn-t select{border:1px solid transparent; border-radius:6px; padding:8px; font-size:12.5px; background:var(--surface-2); min-width:95px; width:100%; box-sizing:border-box}
   #tbl-cronograma input[data-k="dep"]{min-width:48px; padding-left:6px; padding-right:6px}
@@ -956,7 +964,7 @@ const STAGES=[
       {key:'seq',label:'Nº',type:'auto',w:'3%'},
       {key:'marco',label:'Marco / Entrega',type:'text',w:'15%',long:true},
       {key:'resp',label:'Responsável',type:'text',w:'12%',long:true},
-      {key:'respConta',label:'Responsável (conta)',type:'teamSelect',w:'12%'},
+      {key:'respConta',label:'Responsável (conta)',type:'teamMultiSelect',w:'12%'},
       {key:'ini',label:'Início previsto',type:'date',w:'12%'},
       {key:'fim',label:'Término previsto',type:'date',w:'12%'},
       {key:'concl',label:'Conclusão real',type:'date',w:'12%'},
@@ -972,7 +980,7 @@ const STAGES=[
       {key:'descricao',label:'Descrição detalhada',type:'text',w:'24%',long:true},
       {key:'fonte',label:'Fonte / documento de origem',type:'text',w:'18%',long:true},
       {key:'resp',label:'Responsável',type:'text',w:'14%',long:true},
-      {key:'respConta',label:'Responsável (conta)',type:'teamSelect',w:'12%'},
+      {key:'respConta',label:'Responsável (conta)',type:'teamMultiSelect',w:'12%'},
       {key:'status',label:'Status',type:'select',options:ST_ENTRADA},
     ], seedRows:[
       {id:'E1',categoria:'Requisitos Funcionais',status:'Pendente'},
@@ -1085,12 +1093,10 @@ function atualizarBotaoEquipe(souMembro){
    preservando o valor atual mesmo que a pessoa ja nao esteja mais na equipe (senao a troca de
    projeto ou uma equipe alterada depois apagaria silenciosamente o vinculo salvo). */
 function refreshRespContaOptions(){
-  document.querySelectorAll('#tbl-cronograma [data-k="respConta"], #tbl-entradas [data-k="respConta"]').forEach(sel=>{
-    const cur=sel.value;
-    const emails=(window.__equipeAtualEmails||[]).slice();
-    if(cur && !emails.includes(cur)) emails.push(cur);
-    sel.innerHTML='<option value="">—</option>'+emails.map(o=>`<option ${o===cur?'selected':''}>${esc(o)}</option>`).join('');
-  });
+  /* Responsável (conta) virou um botão + painel (abrirMultiSel), que já lê
+     window.__equipeAtualEmails na hora de abrir — não precisa mais recarregar
+     opções antecipadamente. Mantida como no-op para não quebrar as chamadas
+     existentes em onProjetoSelect. */
 }
 async function toggleHistorico(){
   const id=document.getElementById('projetoSelect').value; if(!id) return;
@@ -1569,14 +1575,74 @@ function mountTable(t){
   if(t.seedRows) t.seedRows.forEach(r=>addRow(t.key, r));
   else { const n=t.seed||1; for(let i=0;i<n;i++) addRow(t.key); }
 }
+/* ---------- Responsável (conta) com múltiplas pessoas ----------
+   Guardado como string separada por vírgula (não array) para não exigir migração
+   de dado nem mudar o jeito que readTable() já varre input/select/textarea por
+   data-k — quem lê (Meu Painel, Gestão de Atividades, aviso automático de prazo)
+   usa parseRespConta() para separar em lista. Um e-mail só, sem vírgula, continua
+   funcionando normalmente (formato anterior). */
+function parseRespConta(v){
+  if(Array.isArray(v)) return v.filter(Boolean);
+  return String(v||'').split(',').map(s=>s.trim()).filter(Boolean);
+}
+function resumoMultiSel(sel){
+  if(!sel.length) return '—';
+  if(sel.length===1) return sel[0];
+  return sel[0]+' +'+(sel.length-1);
+}
+function multiSelHtml(fld, selecionados, fonte){
+  const resumo=resumoMultiSel(selecionados);
+  return `<span class="multisel-wrap">`
+    +`<input type="hidden" data-fld="${fld}" data-k="${fld}" value="${esc(selecionados.join(', '))}">`
+    +`<button type="button" class="multisel-btn${selecionados.length?'':' vazio'}" title="Responsável (conta)" data-fonte="${fonte}" onclick="abrirMultiSel(this)">${esc(resumo)}</button>`
+    +`</span>`;
+}
+function fecharMultiSel(){
+  if(window.__multiSelPanel){ window.__multiSelPanel.remove(); window.__multiSelPanel=null; }
+  document.removeEventListener('mousedown', fecharMultiSelFora, true);
+  window.__multiSelBtnAberto=null;
+}
+function fecharMultiSelFora(ev){
+  if(window.__multiSelPanel && !window.__multiSelPanel.contains(ev.target) && ev.target!==window.__multiSelBtnAberto){ fecharMultiSel(); }
+}
+function abrirMultiSel(btn){
+  const jaAberto=window.__multiSelBtnAberto===btn;
+  fecharMultiSel();
+  if(jaAberto) return;
+  const wrap=btn.closest('.multisel-wrap');
+  const hidden=wrap.querySelector('input[type=hidden]');
+  const fonte=btn.dataset.fonte;
+  const opcoes=(fonte==='todos'?(window.__todosUsuariosEmails||[]):(window.__equipeAtualEmails||[])).slice();
+  const selecionados=parseRespConta(hidden.value);
+  selecionados.forEach(e=>{ if(!opcoes.includes(e)) opcoes.push(e); });
+  const panel=document.createElement('div');
+  panel.className='multisel-panel';
+  panel.innerHTML = opcoes.length ? opcoes.map(o=>`<label><input type="checkbox" value="${esc(o)}" ${selecionados.includes(o)?'checked':''}>${esc(o)}</label>`).join('') : '<div style="padding:6px;color:var(--muted);font-size:12px">Nenhuma conta disponível</div>';
+  document.body.appendChild(panel);
+  const r=btn.getBoundingClientRect();
+  const pw=Math.max(r.width,220);
+  panel.style.minWidth=pw+'px';
+  let left=r.left; if(left+pw>window.innerWidth-8) left=window.innerWidth-8-pw;
+  panel.style.left=Math.max(8,left)+'px';
+  let top=r.bottom+4; if(top+240>window.innerHeight) top=Math.max(8,r.top-244);
+  panel.style.top=top+'px';
+  panel.addEventListener('change', ()=>{
+    const sel=Array.from(panel.querySelectorAll('input:checked')).map(c=>c.value);
+    hidden.value=sel.join(', ');
+    hidden.dispatchEvent(new Event('input',{bubbles:true}));
+    btn.textContent=resumoMultiSel(sel);
+    btn.classList.toggle('vazio', !sel.length);
+  });
+  window.__multiSelPanel=panel;
+  window.__multiSelBtnAberto=btn;
+  setTimeout(()=>document.addEventListener('mousedown', fecharMultiSelFora, true), 0);
+}
 function cellInput(c, v){
   if(c.type==='select'){
     return `<select data-k="${c.key}"><option value="">—</option>${c.options.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`;
   }
-  if(c.type==='teamSelect'){
-    const emails=(window.__equipeAtualEmails||[]).slice();
-    if(v && !emails.includes(v)) emails.push(v);
-    return `<select data-k="${c.key}"><option value="">—</option>${emails.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+  if(c.type==='teamMultiSelect'){
+    return multiSelHtml(c.key, parseRespConta(v), 'equipe');
   }
   if(c.long){
     return `<textarea data-k="${c.key}" rows="1" oninput="autoGrow(this)">${esc(v)}</textarea>`;

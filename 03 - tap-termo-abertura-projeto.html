@@ -112,6 +112,14 @@
   table.dyn-t select{border:1px solid transparent; border-radius:6px; padding:8px 6px; font-size:12.5px; background:var(--surface-2); font-family:var(--font); color:var(--ink); width:100%; box-sizing:border-box}
   table.dyn-t select:focus{background:#fff; border-color:var(--red); box-shadow:none}
   table.dyn-t textarea{border:1px solid transparent; border-radius:6px; padding:8px 8px; font-size:12.5px; background:var(--surface-2); width:100%; box-sizing:border-box; font-family:var(--font); color:var(--ink); resize:none; overflow:hidden; display:block; line-height:1.4; min-height:34px}
+  .multisel-wrap{position:relative; display:inline-block; width:100%}
+  .multisel-btn{width:100%; text-align:left; font-family:inherit; font-size:12px; border:1px solid transparent; border-radius:6px; padding:8px 7px; background:var(--surface-2); cursor:pointer; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; box-sizing:border-box}
+  .multisel-btn:hover{background:#fff; border-color:var(--red)}
+  .multisel-btn.vazio{color:var(--muted)}
+  .multisel-panel{position:fixed; z-index:500; background:var(--paper); border:1px solid var(--line-strong); border-radius:8px; box-shadow:0 8px 28px rgba(20,20,20,.18); padding:8px; max-height:260px; overflow-y:auto}
+  .multisel-panel label{display:flex; align-items:center; gap:7px; font-size:12.5px; padding:5px 6px; border-radius:5px; cursor:pointer; white-space:nowrap}
+  .multisel-panel label:hover{background:var(--surface-2)}
+  .multisel-panel input{cursor:pointer; margin:0}
   table.dyn-t textarea:focus{background:#fff; border-color:var(--red); box-shadow:none; outline:none}
   .risk-status{display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px}
   .risk-status.aberto{background:var(--bad-soft); color:var(--bad)}
@@ -1092,7 +1100,7 @@ const TABLES={
     {key:'mitigacao',label:'Mitigação',type:'text',w:'12%',long:true},
     {key:'status',label:'Status',type:'select',options:RISCO_STATUS,w:'14%'},
     {key:'resp',label:'Responsável',type:'text',w:'11%',long:true},
-    {key:'respConta',label:'Responsável (conta)',type:'teamSelect',w:'11%'},
+    {key:'respConta',label:'Responsável (conta)',type:'teamMultiSelect',w:'11%'},
     {key:'revisao',label:'Última revisão',type:'date',w:'15%'},
   ]},
   cronograma:{cols:[
@@ -1262,12 +1270,10 @@ function atualizarBotaoEquipe(souMembro){
 /* Reconstroi as opcoes dos selects "Responsavel (conta)" ja renderizados no registro de riscos,
    preservando o valor atual mesmo que a pessoa ja nao esteja mais na equipe. */
 function refreshRespContaOptions(){
-  document.querySelectorAll('#tbl-riscos [data-k="respConta"]').forEach(sel=>{
-    const cur=sel.value;
-    const emails=(window.__equipeAtualEmails||[]).slice();
-    if(cur && !emails.includes(cur)) emails.push(cur);
-    sel.innerHTML='<option value="">—</option>'+emails.map(o=>`<option ${o===cur?'selected':''}>${esc(o)}</option>`).join('');
-  });
+  /* Responsável (conta) virou um botão + painel (abrirMultiSel), que já lê
+     window.__equipeAtualEmails na hora de abrir — não precisa mais recarregar
+     opções antecipadamente. Mantida como no-op para não quebrar as chamadas
+     existentes em onProjetoSelect. */
 }
 async function carregarDadosDaSolicitacao(solicitacaoId){
   if(!solicitacaoId) return;
@@ -1456,6 +1462,68 @@ function mountTable(name, host){
   addRow(name);
 }
 function novoId(){ return 'i_'+Date.now()+'_'+Math.random().toString(36).slice(2,8); }
+/* ---------- Responsável (conta) com múltiplas pessoas ----------
+   Guardado como string separada por vírgula (não array) para não exigir migração
+   de dado nem mudar o jeito que readTable() já varre input/select/textarea por
+   data-k — quem lê (Meu Painel, Gestão de Atividades, aviso automático de prazo)
+   usa parseRespConta() para separar em lista. Um e-mail só, sem vírgula, continua
+   funcionando normalmente (formato anterior). */
+function parseRespConta(v){
+  if(Array.isArray(v)) return v.filter(Boolean);
+  return String(v||'').split(',').map(s=>s.trim()).filter(Boolean);
+}
+function resumoMultiSel(sel){
+  if(!sel.length) return '—';
+  if(sel.length===1) return sel[0];
+  return sel[0]+' +'+(sel.length-1);
+}
+function multiSelHtml(fld, selecionados, fonte){
+  const resumo=resumoMultiSel(selecionados);
+  return `<span class="multisel-wrap">`
+    +`<input type="hidden" data-fld="${fld}" data-k="${fld}" value="${esc(selecionados.join(', '))}">`
+    +`<button type="button" class="multisel-btn${selecionados.length?'':' vazio'}" title="Responsável (conta)" data-fonte="${fonte}" onclick="abrirMultiSel(this)">${esc(resumo)}</button>`
+    +`</span>`;
+}
+function fecharMultiSel(){
+  if(window.__multiSelPanel){ window.__multiSelPanel.remove(); window.__multiSelPanel=null; }
+  document.removeEventListener('mousedown', fecharMultiSelFora, true);
+  window.__multiSelBtnAberto=null;
+}
+function fecharMultiSelFora(ev){
+  if(window.__multiSelPanel && !window.__multiSelPanel.contains(ev.target) && ev.target!==window.__multiSelBtnAberto){ fecharMultiSel(); }
+}
+function abrirMultiSel(btn){
+  const jaAberto=window.__multiSelBtnAberto===btn;
+  fecharMultiSel();
+  if(jaAberto) return;
+  const wrap=btn.closest('.multisel-wrap');
+  const hidden=wrap.querySelector('input[type=hidden]');
+  const fonte=btn.dataset.fonte;
+  const opcoes=(fonte==='todos'?(window.__todosUsuariosEmails||[]):(window.__equipeAtualEmails||[])).slice();
+  const selecionados=parseRespConta(hidden.value);
+  selecionados.forEach(e=>{ if(!opcoes.includes(e)) opcoes.push(e); });
+  const panel=document.createElement('div');
+  panel.className='multisel-panel';
+  panel.innerHTML = opcoes.length ? opcoes.map(o=>`<label><input type="checkbox" value="${esc(o)}" ${selecionados.includes(o)?'checked':''}>${esc(o)}</label>`).join('') : '<div style="padding:6px;color:var(--muted);font-size:12px">Nenhuma conta disponível</div>';
+  document.body.appendChild(panel);
+  const r=btn.getBoundingClientRect();
+  const pw=Math.max(r.width,220);
+  panel.style.minWidth=pw+'px';
+  let left=r.left; if(left+pw>window.innerWidth-8) left=window.innerWidth-8-pw;
+  panel.style.left=Math.max(8,left)+'px';
+  let top=r.bottom+4; if(top+240>window.innerHeight) top=Math.max(8,r.top-244);
+  panel.style.top=top+'px';
+  panel.addEventListener('change', ()=>{
+    const sel=Array.from(panel.querySelectorAll('input:checked')).map(c=>c.value);
+    hidden.value=sel.join(', ');
+    hidden.dispatchEvent(new Event('input',{bubbles:true}));
+    btn.textContent=resumoMultiSel(sel);
+    btn.classList.toggle('vazio', !sel.length);
+  });
+  window.__multiSelPanel=panel;
+  window.__multiSelBtnAberto=btn;
+  setTimeout(()=>document.addEventListener('mousedown', fecharMultiSelFora, true), 0);
+}
 function addRow(name, vals){
   const cfg=TABLES[name];
   const tb=document.querySelector(`#tbl-${name} tbody`);
@@ -1468,11 +1536,8 @@ function addRow(name, vals){
       cells+=`<td class="risk-sev"></td>`;
       return;
     }
-    if(c.type==='teamSelect'){
-      const emails=(window.__equipeAtualEmails||[]).slice();
-      if(v && !emails.includes(v)) emails.push(v);
-      const opts='<option value="">—</option>'+emails.map(o=>`<option value="${esc(o)}"${o===v?' selected':''}>${esc(o)}</option>`).join('');
-      cells+=`<td><select data-k="${c.key}">${opts}</select></td>`;
+    if(c.type==='teamMultiSelect'){
+      cells+=`<td>${multiSelHtml(c.key, parseRespConta(v), 'equipe')}</td>`;
       return;
     }
     if(c.type==='select'){
@@ -1620,7 +1685,7 @@ function readTable(name){
     tr.querySelectorAll('input,select,textarea').forEach(inp=>{
       const val=inp.value.trim();
       obj[inp.dataset.k]=val;
-      if(val && inp.tagName!=='SELECT') any=true;
+      if(val && inp.tagName!=='SELECT' && inp.type!=='hidden') any=true;
     });
     if(name==='riscos' && tr.dataset.itemId) obj.id=tr.dataset.itemId;
     if(any) rows.push(obj);

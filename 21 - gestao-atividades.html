@@ -410,6 +410,13 @@ function diasTag(fim){
   return {cls:'', txt:fmtDataBR(fim)};
 }
 
+/* Responsável (conta) pode ter mais de uma pessoa, guardado como string
+   separada por vírgula — mesmo formato usado nos 3 formulários de origem. */
+function parseRespConta(v){
+  if(Array.isArray(v)) return v.filter(Boolean);
+  return String(v||'').split(',').map(s=>s.trim()).filter(Boolean);
+}
+
 function togglePessoa(idx){
   const el = document.getElementById('pessoa-'+idx);
   if(el) el.classList.toggle('aberta');
@@ -472,11 +479,17 @@ async function carregarGestaoAtividades(){
       marcos:[], tarefas:[], riscos:[], entradas:[], gov:[] };
   }
   const porPessoa = new Map();
-  function addItem(email, chave, item){
-    if(!email) return;
-    email = email.toLowerCase();
-    if(!porPessoa.has(email)) porPessoa.set(email, pessoaVazia(email));
-    porPessoa.get(email)[chave].push(item);
+  /* respContaBruto pode ter mais de uma pessoa (string separada por vírgula) —
+     o mesmo item entra no cartão de cada uma. Retorna quantas pessoas receberam
+     o item, para os pontos de chamada decidirem se contam como "sem responsável". */
+  function addItem(respContaBruto, chave, item){
+    const emails = parseRespConta(respContaBruto);
+    emails.forEach(email=>{
+      email = email.toLowerCase();
+      if(!porPessoa.has(email)) porPessoa.set(email, pessoaVazia(email));
+      porPessoa.get(email)[chave].push(item);
+    });
+    return emails.length;
   }
 
   const semResp = { marcos:0, riscos:0, entradas:0, entraves:0, encaminhamentos:0 };
@@ -488,10 +501,9 @@ async function carregarGestaoAtividades(){
       if(!m.marco) return;
       const pendente = !m.concl && m.id;
       if(pendente){
-        if(m.respConta) addItem(m.respConta, 'marcos', {planoKey:row.key, marcoId:m.id, marco:m.marco, projetoNome:rec.nomeProjeto, fim:m.fim, resp:m.resp});
-        else semResp.marcos++;
+        if(!addItem(m.respConta, 'marcos', {planoKey:row.key, marcoId:m.id, marco:m.marco, projetoNome:rec.nomeProjeto, fim:m.fim, resp:m.resp})) semResp.marcos++;
       }
-      if(m.respConta && Array.isArray(m.tarefas)){
+      if(parseRespConta(m.respConta).length && Array.isArray(m.tarefas)){
         m.tarefas.forEach(t=>{
           if(!t.concluida) addItem(m.respConta, 'tarefas', {planoKey:row.key, marcoId:m.id, marco:m.marco, projetoNome:rec.nomeProjeto, nome:t.nome});
         });
@@ -499,8 +511,7 @@ async function carregarGestaoAtividades(){
     });
     (rec.entradas||[]).forEach(it=>{
       if(it.status==='OK' || it.status==='Não aplicável' || !it._itemId) return;
-      if(it.respConta) addItem(it.respConta, 'entradas', {planoKey:row.key, itemId:it._itemId, descricao:it.descricao||it.categoria, projetoNome:rec.nomeProjeto, status:it.status});
-      else semResp.entradas++;
+      if(!addItem(it.respConta, 'entradas', {planoKey:row.key, itemId:it._itemId, descricao:it.descricao||it.categoria, projetoNome:rec.nomeProjeto, status:it.status})) semResp.entradas++;
     });
   });
 
@@ -509,8 +520,7 @@ async function carregarGestaoAtividades(){
     if(!rec.projetoId || projetosEncerrados.has(rec.projetoId)) return;
     (rec.riscos||[]).forEach(r=>{
       if(r.status==='Encerrado' || !r.id) return;
-      if(r.respConta) addItem(r.respConta, 'riscos', {tapKey:row.key, riscoId:r.id, risco:r.risco, projetoNome:rec.nomeProjeto, status:r.status});
-      else semResp.riscos++;
+      if(!addItem(r.respConta, 'riscos', {tapKey:row.key, riscoId:r.id, risco:r.risco, projetoNome:rec.nomeProjeto, status:r.status})) semResp.riscos++;
     });
   });
 
@@ -519,13 +529,11 @@ async function carregarGestaoAtividades(){
     if(rec){
       (rec.entraves||[]).forEach(it=>{
         if(it.status!=='Aberto' || !it.id) return;
-        if(it.respConta) addItem(it.respConta, 'gov', {...it, tipo:'entraves', label:'Entrave'});
-        else semResp.entraves++;
+        if(!addItem(it.respConta, 'gov', {...it, tipo:'entraves', label:'Entrave'})) semResp.entraves++;
       });
       (rec.encaminhamentos||[]).forEach(it=>{
         if(it.status!=='Aberto' || !it.id) return;
-        if(it.respConta) addItem(it.respConta, 'gov', {...it, tipo:'encaminhamentos', label:'Encaminhamento'});
-        else semResp.encaminhamentos++;
+        if(!addItem(it.respConta, 'gov', {...it, tipo:'encaminhamentos', label:'Encaminhamento'})) semResp.encaminhamentos++;
       });
     }
   }
