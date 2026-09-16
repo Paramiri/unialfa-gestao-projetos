@@ -93,6 +93,9 @@
           <a class="nav-item" href="20 - meu-painel.html" target="_blank" rel="noopener">
             <span class="tag">◐</span><span class="lbl">Meu Painel</span>
           </a>
+          <a class="nav-item" href="21 - gestao-atividades.html" target="_blank" rel="noopener">
+            <span class="tag">☰</span><span class="lbl">Gestão de Atividades</span>
+          </a>
           <a class="nav-item" href="16 - painel-executivo.html" target="_blank" rel="noopener">
             <span class="tag">▤</span><span class="lbl">Painel Executivo</span>
           </a>

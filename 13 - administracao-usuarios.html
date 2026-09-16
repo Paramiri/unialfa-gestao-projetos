@@ -498,6 +498,11 @@ window.unialfaHistorico = {
       <div class="papeis-grupo" id="papeisPainelPrazos" data-chave="papeis_painel_prazos"></div>
     </div>
     <div style="padding:20px 24px; border-top:1px solid var(--line)">
+      <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode ver a Gestão de Atividades</b>
+      <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">Marque os papéis que podem abrir esta página. Diferente das demais listas desta aba, aqui a permissão também libera ver nome e papel de todos os usuários (não só a própria tela) — é o que a página usa para agrupar as pendências por pessoa. PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
+      <div class="papeis-grupo" id="papeisGestaoAtividades" data-chave="papeis_gestao_atividades"></div>
+    </div>
+    <div style="padding:20px 24px; border-top:1px solid var(--line)">
       <b style="display:block; font-size:13px; margin-bottom:4px">Quem pode ver o Relatório de Resultados</b>
       <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:10px">Marque os papéis que podem abrir esta página. PMO/Admin sempre tem acesso, mesmo sem estar marcado aqui.</span>
       <div class="papeis-grupo" id="papeisRelatorioResultados" data-chave="papeis_relatorio_resultados"></div>
@@ -968,6 +973,7 @@ function showAba(aba){
     carregarConfigSemLogin('permitir_ata_sem_login', 'toggleAtaSemLogin');
     carregarConfigPapeis('papeis_painel_executivo', 'papeisPainelExecutivo');
     carregarConfigPapeis('papeis_painel_prazos', 'papeisPainelPrazos');
+    carregarConfigPapeis('papeis_gestao_atividades', 'papeisGestaoAtividades');
     carregarConfigPapeis('papeis_relatorio_resultados', 'papeisRelatorioResultados');
     carregarConfigPapeis('papeis_relatorio_situacao', 'papeisRelatorioSituacao');
     carregarConfigPapeis('papeis_relatorio_entregas', 'papeisRelatorioEntregas');
