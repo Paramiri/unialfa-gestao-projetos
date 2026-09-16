@@ -117,8 +117,10 @@
   .multisel-btn:hover{background:#fff; border-color:var(--red)}
   .multisel-btn.vazio{color:var(--muted)}
   .multisel-panel{position:fixed; z-index:500; background:var(--paper); border:1px solid var(--line-strong); border-radius:8px; box-shadow:0 8px 28px rgba(20,20,20,.18); padding:8px; max-height:260px; overflow-y:auto; max-width:min(320px, calc(100vw - 16px)); box-sizing:border-box}
-  .multisel-panel label{display:flex; align-items:center; gap:7px; font-size:12.5px; padding:5px 6px; border-radius:5px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .multisel-panel label{display:flex; align-items:center; gap:7px; font-size:12.5px; padding:5px 6px; border-radius:5px; cursor:pointer}
   .multisel-panel label:hover{background:var(--surface-2)}
+  .multisel-panel label input{flex:none}
+  .multisel-panel label span{flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .multisel-panel input{cursor:pointer; margin:0}
   table.dyn-t textarea:focus{background:#fff; border-color:var(--red); box-shadow:none; outline:none}
   .risk-status{display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px}
@@ -1472,10 +1474,14 @@ function parseRespConta(v){
   if(Array.isArray(v)) return v.filter(Boolean);
   return String(v||'').split(',').map(s=>s.trim()).filter(Boolean);
 }
+function nomeOuEmail(email){
+  const nome=(window.__nomesPorEmail||{})[String(email||'').toLowerCase()];
+  return nome || email;
+}
 function resumoMultiSel(sel){
   if(!sel.length) return '—';
-  if(sel.length===1) return sel[0];
-  return sel[0]+' +'+(sel.length-1);
+  if(sel.length===1) return nomeOuEmail(sel[0]);
+  return nomeOuEmail(sel[0])+' +'+(sel.length-1);
 }
 function multiSelHtml(fld, selecionados, fonte){
   const resumo=resumoMultiSel(selecionados);
@@ -1502,9 +1508,10 @@ function abrirMultiSel(btn){
   const opcoes=(fonte==='todos'?(window.__todosUsuariosEmails||[]):(window.__equipeAtualEmails||[])).slice();
   const selecionados=parseRespConta(hidden.value);
   selecionados.forEach(e=>{ if(!opcoes.includes(e)) opcoes.push(e); });
+  opcoes.sort((a,b)=>nomeOuEmail(a).localeCompare(nomeOuEmail(b),'pt-BR'));
   const panel=document.createElement('div');
   panel.className='multisel-panel';
-  panel.innerHTML = opcoes.length ? opcoes.map(o=>`<label><input type="checkbox" value="${esc(o)}" ${selecionados.includes(o)?'checked':''}>${esc(o)}</label>`).join('') : '<div style="padding:6px;color:var(--muted);font-size:12px">Nenhuma conta disponível</div>';
+  panel.innerHTML = opcoes.length ? opcoes.map(o=>`<label><input type="checkbox" value="${esc(o)}" ${selecionados.includes(o)?'checked':''}><span>${esc(nomeOuEmail(o))}</span></label>`).join('') : '<div style="padding:6px;color:var(--muted);font-size:12px">Nenhuma conta disponível</div>';
   document.body.appendChild(panel);
   panel.style.minWidth=Math.min(220, window.innerWidth-16)+'px';
   const r=btn.getBoundingClientRect();
@@ -2501,7 +2508,16 @@ async function sugerirPreenchimentoIA(){
   btn.disabled=false;
 }
 
-(async()=>{ await ensureAuthenticated(); await loadAll(); renderList(); await carregarProjetosAprovados(); window.__iaAssistentePermitido = await assistenteIAPermitido(); restaurarRascunhoSeExistir(); })();
+(async()=>{
+  await ensureAuthenticated();
+  try{
+    const rUsuarios = await fetch(unialfaAuth.REST_BASE+'/rpc/listar_emails_usuarios', { method:'POST', headers: unialfaAuth.authHeaders(), body: JSON.stringify({}) });
+    const usuarios = rUsuarios.ok ? await rUsuarios.json() : [];
+    window.__nomesPorEmail = {};
+    usuarios.forEach(u=>{ if(u.email) window.__nomesPorEmail[u.email.toLowerCase()] = u.nome || null; });
+  }catch(e){ window.__nomesPorEmail = {}; }
+  await loadAll(); renderList(); await carregarProjetosAprovados(); window.__iaAssistentePermitido = await assistenteIAPermitido(); restaurarRascunhoSeExistir();
+})();
 document.getElementById('view-new').addEventListener('input', salvarRascunho);
 document.getElementById('view-new').addEventListener('change', salvarRascunho);
 </script>
