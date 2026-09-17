@@ -225,7 +225,7 @@ P "Ferramenta de Gestao de Projetos - UNIALFA" 15 $false $false $colInk "left" 2
 P "Guia passo a passo: do mapa de diretrizes e da Solicitacao de Demanda a geracao dos Relatorios de Situacao e de Entregas e Beneficios - incluindo login, papeis de usuario, gates de aprovacao, restricao por equipe e o Validador de Projetos." 12 $false $true $colMuted "left" 30
 P "UNIALFA - Gerencia de Projetos" 11 $false $false $colMuted "left" 2
 P "Grupo Jose Alves" 11 $false $false $colMuted "left" 2
-P "Versao 2.89 - 17 de setembro de 2026 (substitui a versao 2.88 de 17/09/2026)" 11 $false $false $colMuted "left" 2
+P "Versao 2.90 - 17 de setembro de 2026 (substitui a versao 2.89 de 17/09/2026)" 11 $false $false $colMuted "left" 2
 
 $sel.InsertBreak(7) | Out-Null
 
@@ -339,6 +339,7 @@ P "Esta e a versao 2.86 do manual. Em relacao a versao 2.85 (17/09/2026), o avis
 P "Esta e a versao 2.87 do manual. Em relacao a versao 2.86 (17/09/2026), os dias das duas regras do aviso automatico (secao 6.4.3) - janelas do aviso de prazo, repeticao do atrasado, limite e repeticao do aviso de silencio - deixaram de ser fixos no codigo e passaram a ser configuraveis em Administracao > Configuracoes (secao 6.3), num novo bloco `Regras de aviso automatico de prazo e execucao`, no mesmo padrao ja usado pelas metas do Relatorio de Resultados."
 P "Esta e a versao 2.88 do manual. Em relacao a versao 2.87 (17/09/2026), a Gestao de Atividades (secao 6.4.5) passou a agrupar Marcos, Tarefas, Riscos (TAP) e Entradas (Planejamento) por projeto dentro do cartao de cada pessoa, em vez de listar os itens soltos: cada grupo de projeto mostra a contagem de itens e, em Marcos, quantos estao atrasados, com os grupos de Marcos ordenados pelo mais critico primeiro; cada marco tambem passou a indicar explicitamente o campo da data (`Termino previsto`). Pessoas com pelo menos um item atrasado agora abrem automaticamente ao carregar a pagina."
 P "Esta e a versao 2.89 do manual. Em relacao a versao 2.88 (17/09/2026), o campo Anexos da aba Viabilidade no Planejamento e Desenvolvimento de Projeto (Passo 4) deixou de ser so um texto livre e ganhou upload real de arquivo (.txt/.docx/.pdf, ate 15 MB), no mesmo padrao ja usado pela Solicitacao de Demanda (Passo 1) e pela SMP (Passo 7) - com lista de arquivos enviados, download e remocao. O texto livre antigo continua disponivel, renomeado para `Links de documentos`."
+P "Esta e a versao 2.90 do manual. Em relacao a versao 2.89 (17/09/2026), a Ficha do Projeto (secao 6.4.1) ganhou a secao `Anexos do projeto`, reunindo num so lugar todo arquivo enviado nos 3 pontos do sistema que aceitam upload real - Solicitacao de Demanda, SMP e a aba Viabilidade do Planejamento - com a origem de cada arquivo e um botao para baixar direto, sem precisar abrir cada formulario separadamente."
 P "O manual nao substitui as Diretrizes para a Gestao de Projetos da UNIALFA (documento institucional que define o framework D01 a D07) nem o documento Regras de Acesso e Permissoes (que detalha cada regra de controle de acesso); ele e o guia operacional de como usar cada ferramenta na pratica."
 
 H2 "1.2 Visao geral da ferramenta"
@@ -843,6 +844,7 @@ Bul "Custos: Estimado (TAP) x Realizado: drill-down do cartao de Orcamento acima
 Bul "Entregas da EAP: status automatico: lista cada Entrega (nivel 2) da EAP (Passo 5) deste projeto com um selo de status - `Concluida`, `Atrasada`, `No prazo` ou `Sem cronograma vinculado` - calculado automaticamente casando pelo nome com o cronograma do Planejamento, sem nenhum campo novo para preencher. Um resumo no topo mostra o percentual de entregas concluidas do projeto."
 Bul "Situacao atual: a linha desse projeto no Relatorio de Situacao - status, % concluido, datas previstas, marcos, custos realizados e os campos `Merece destaque`/`Merece atencao`, quando preenchidos."
 Bul "Progresso do ciclo de vida: quantos registros existem em cada um dos 9 formularios (Demanda a RLA) para esse projeto, com o status de cada um e um link para abrir o formulario correspondente."
+Bul "Anexos do projeto: reune, num so lugar, todo arquivo enviado nos 3 pontos do sistema que aceitam upload real - Solicitacao de Demanda (Passo 1), SMP (Passo 7) e a aba Viabilidade do Planejamento (Passo 4) - cada um com a origem (formulario, e o protocolo quando ha mais de uma SMP) e um botao `Baixar`. Nao e preciso abrir cada formulario separadamente para achar um documento anexado."
 Bul "Cronograma (Planejamento) e custos planejados (TAP): o cronograma de entregas macro do Planejamento e Desenvolvimento de Projeto e o custo total estimado do TAP desse projeto, para comparar com os custos realizados do Relatorio de Situacao."
 Bul "Equipe do projeto: mesma lista de Administracao > Equipes (secao 6.2), com o papel de cada membro vindo do cadastro global de usuarios."
 Bul "Historico de alteracoes: o mesmo `Ver historico` ja disponivel em cada formulario vinculado a esse projeto."
