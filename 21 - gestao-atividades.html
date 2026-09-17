@@ -73,6 +73,7 @@
   .projeto-grupo:first-child{margin-top:0}
   .projeto-grupo-titulo{display:flex;align-items:baseline;gap:6px;font-size:11.5px;font-weight:700;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;margin-bottom:2px}
   .projeto-grupo-count{font-size:10.5px;font-weight:600;color:var(--muted)}
+  .projeto-grupo-atraso{font-size:10.5px;font-weight:700;color:var(--bad);margin-left:auto}
   .projeto-grupo .item-row{padding-left:10px}
   .projeto-grupo .item-row:first-child{border-top:none}
 
@@ -439,46 +440,88 @@ async function papelPermitido(chave){
   }catch(e){ return false; }
 }
 
-function grupoPessoa(pessoa, chave, titulo, tipo){
-  const lista = pessoa[chave];
-  if(!lista.length) return '';
-  if(tipo==='marco'){
-    const porProjeto = new Map();
-    lista.forEach(it=>{
-      const nome = it.projetoNome || '—';
-      if(!porProjeto.has(nome)) porProjeto.set(nome, []);
-      porProjeto.get(nome).push(it);
+/* Agrupa uma lista de itens (cada um com projetoNome) em blocos por projeto.
+   Quando temData=true, considera it.fim para: contar atrasados por projeto,
+   ordenar os projetos com mais atrasados / prazo mais próximo primeiro, e
+   ordenar os itens dentro do projeto por data. Sem temData, ordena os
+   projetos por nome e mantém a ordem original dos itens. */
+function blocosPorProjeto(lista, renderItemFn, temData){
+  const porProjeto = new Map();
+  lista.forEach(it=>{
+    const nome = it.projetoNome || '—';
+    if(!porProjeto.has(nome)) porProjeto.set(nome, []);
+    porProjeto.get(nome).push(it);
+  });
+  let nomes = [...porProjeto.keys()];
+  const meta = new Map();
+  if(temData){
+    nomes.forEach(nome=>{
+      let atrasados=0, menorFim=null;
+      porProjeto.get(nome).forEach(it=>{
+        if(it.fim){
+          if(diasEntre(it.fim, hojeDataBR())<0) atrasados++;
+          if(!menorFim || it.fim<menorFim) menorFim=it.fim;
+        }
+      });
+      meta.set(nome, {atrasados, menorFim});
     });
-    const blocos = [...porProjeto.keys()].sort((a,b)=>a.localeCompare(b,'pt-BR')).map(nome=>{
-      const itens = porProjeto.get(nome).slice().sort((a,b)=>{
+    nomes.sort((a,b)=>{
+      const ma=meta.get(a), mb=meta.get(b);
+      if(ma.atrasados!==mb.atrasados) return mb.atrasados-ma.atrasados;
+      if(ma.menorFim && mb.menorFim && ma.menorFim!==mb.menorFim) return ma.menorFim.localeCompare(mb.menorFim);
+      if(ma.menorFim && !mb.menorFim) return -1;
+      if(!ma.menorFim && mb.menorFim) return 1;
+      return a.localeCompare(b,'pt-BR');
+    });
+  } else {
+    nomes.sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  }
+  return nomes.map(nome=>{
+    const itens = porProjeto.get(nome).slice();
+    if(temData){
+      itens.sort((a,b)=>{
         if(!a.fim && !b.fim) return 0;
         if(!a.fim) return 1;
         if(!b.fim) return -1;
         return a.fim.localeCompare(b.fim);
       });
-      const linhasProjeto = itens.map(it=>{
-        const tag=diasTag(it.fim);
-        const dataTxt = it.fim ? ('Término previsto: '+fmtDataBR(it.fim)) : 'Sem término previsto definido';
-        return '<div class="item-row"><div class="item-main"><div class="item-title">'+esc(it.marco)+'</div><div class="item-sub">'+esc(dataTxt)+'</div></div>'+(tag.txt?('<span class="item-dias '+tag.cls+'">'+esc(tag.txt)+'</span>'):'')+'</div>';
-      }).join('');
-      return '<div class="projeto-grupo"><div class="projeto-grupo-titulo">'+esc(nome)+' <span class="projeto-grupo-count">('+itens.length+')</span></div>'+linhasProjeto+'</div>';
-    }).join('');
-    return '<div class="detalhe-grupo"><div class="detalhe-grupo-titulo">'+esc(titulo)+' ('+lista.length+')</div>'+blocos+'</div>';
-  }
-  const linhas = lista.map(it=>{
-    if(tipo==='tarefa'){
-      return '<div class="item-row"><div class="item-main"><div class="item-title">'+esc(it.nome)+'</div><div class="item-sub">'+esc(it.marco)+' · '+esc(it.projetoNome)+'</div></div></div>';
     }
-    if(tipo==='risco'){
-      return '<div class="item-row"><div class="item-main"><div class="item-title">'+esc(it.risco)+'</div><div class="item-sub">'+esc(it.projetoNome)+' · '+esc(it.status)+'</div></div></div>';
-    }
-    if(tipo==='entrada'){
-      return '<div class="item-row"><div class="item-main"><div class="item-title">'+esc(it.descricao||'—')+'</div><div class="item-sub">'+esc(it.projetoNome)+' · '+esc(it.status)+'</div></div></div>';
-    }
-    const tag = it.prazo ? diasTag(it.prazo) : {cls:'',txt:''};
-    return '<div class="item-row"><div class="item-main"><div class="item-title">'+esc(it.label)+': '+esc(it.desc||'—')+'</div><div class="item-sub">'+(it.prazo?('Prazo '+esc(it.prazo)):'Sem prazo definido')+'</div></div>'+(tag.txt?'<span class="item-dias '+tag.cls+'">'+esc(tag.txt)+'</span>':'')+'</div>';
+    const atrasados = temData ? meta.get(nome).atrasados : 0;
+    const contagem = '<span class="projeto-grupo-count">('+itens.length+')</span>'
+      + (atrasados?(' <span class="projeto-grupo-atraso">'+atrasados+' atrasado'+(atrasados>1?'s':'')+'</span>'):'');
+    return '<div class="projeto-grupo"><div class="projeto-grupo-titulo">'+esc(nome)+' '+contagem+'</div>'+itens.map(renderItemFn).join('')+'</div>';
   }).join('');
-  return '<div class="detalhe-grupo"><div class="detalhe-grupo-titulo">'+esc(titulo)+' ('+lista.length+')</div>'+linhas+'</div>';
+}
+
+function grupoPessoa(pessoa, chave, titulo, tipo){
+  const lista = pessoa[chave];
+  if(!lista.length) return '';
+  let blocos;
+  if(tipo==='marco'){
+    blocos = blocosPorProjeto(lista, it=>{
+      const tag=diasTag(it.fim);
+      const dataTxt = it.fim ? ('Término previsto: '+fmtDataBR(it.fim)) : 'Sem término previsto definido';
+      return '<div class="item-row"><div class="item-main"><div class="item-title">'+esc(it.marco)+'</div><div class="item-sub">'+esc(dataTxt)+'</div></div>'+(tag.txt?('<span class="item-dias '+tag.cls+'">'+esc(tag.txt)+'</span>'):'')+'</div>';
+    }, true);
+  } else if(tipo==='tarefa'){
+    blocos = blocosPorProjeto(lista, it=>{
+      return '<div class="item-row"><div class="item-main"><div class="item-title">'+esc(it.nome)+'</div><div class="item-sub">Marco: '+esc(it.marco)+'</div></div></div>';
+    }, false);
+  } else if(tipo==='risco'){
+    blocos = blocosPorProjeto(lista, it=>{
+      return '<div class="item-row"><div class="item-main"><div class="item-title">'+esc(it.risco)+'</div><div class="item-sub">Status: '+esc(it.status)+'</div></div></div>';
+    }, false);
+  } else if(tipo==='entrada'){
+    blocos = blocosPorProjeto(lista, it=>{
+      return '<div class="item-row"><div class="item-main"><div class="item-title">'+esc(it.descricao||'—')+'</div><div class="item-sub">Status: '+esc(it.status)+'</div></div></div>';
+    }, false);
+  } else {
+    blocos = lista.map(it=>{
+      const tag = it.prazo ? diasTag(it.prazo) : {cls:'',txt:''};
+      return '<div class="item-row"><div class="item-main"><div class="item-title">'+esc(it.label)+': '+esc(it.desc||'—')+'</div><div class="item-sub">'+(it.prazo?('Prazo '+esc(it.prazo)):'Sem prazo definido')+'</div></div>'+(tag.txt?'<span class="item-dias '+tag.cls+'">'+esc(tag.txt)+'</span>':'')+'</div>';
+    }).join('');
+  }
+  return '<div class="detalhe-grupo"><div class="detalhe-grupo-titulo">'+esc(titulo)+' ('+lista.length+')</div>'+blocos+'</div>';
 }
 
 async function carregarGestaoAtividades(){
@@ -603,7 +646,7 @@ async function carregarGestaoAtividades(){
       grupoPessoa(p,'entradas','Entradas (Planejamento)','entrada'),
       grupoPessoa(p,'gov','Entraves e encaminhamentos','gov'),
     ].join('');
-    return '<div class="pessoa" id="pessoa-'+idx+'">'
+    return '<div class="pessoa'+(atrasadosPessoa?' aberta':'')+'" id="pessoa-'+idx+'">'
       + '<div class="pessoa-head" onclick="togglePessoa('+idx+')">'
       + '<div class="pessoa-main"><div class="pessoa-nome">'+esc(p.nome||p.email)+'</div><div class="pessoa-email">'+esc(p.email)+'</div></div>'
       + (p.papel?('<span class="pessoa-papel">'+esc(unialfaAuth.papelLabel(p.papel))+'</span>'):'')
