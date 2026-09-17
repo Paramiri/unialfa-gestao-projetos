@@ -1,13 +1,24 @@
 // Edge Function: verificar-prazos-cronograma
 // Roda 1x por dia via pg_cron (ver supabase/migrations/<data>_prazos_cronograma_cron.sql),
 // sem depender de ninguem abrir o sistema. Varre o cronograma (marcos) de cada projeto
-// ainda ativo (Planejamento e Desenvolvimento, chave `plan:` no kv_store) e dispara aviso
-// por e-mail/push (reaproveitando a function send-notification) para os marcos que estao
-// entrando na janela do prazo, sem Conclusao real preenchida:
+// ainda ativo (Planejamento e Desenvolvimento, chave `plan:` no kv_store) e dispara dois
+// tipos de aviso por e-mail/push (reaproveitando a function send-notification), sem
+// Conclusao real preenchida:
+//
+// 1) Aviso de prazo (existente):
 //   - 5 dias antes do Termino previsto (faixa de 3 a 5 dias, tolerante a uma execucao perdida)
 //   - 2 dias antes (faixa de 1 a 2 dias)
 //   - no dia do vencimento
 //   - atrasado (repete a cada 7 dias enquanto continuar sem Conclusao real)
+//
+// 2) Aviso de silencio (novo — fecha o ciclo do campo Execucao, ver 04/20/19): marco cujo
+//   Inicio previsto ja chegou e que esta ha 5 dias ou mais sem nenhuma mudanca no campo
+//   Execucao (comparando com execStatusAtualizadoEm, ou com o proprio Inicio previsto se o
+//   campo nunca foi preenchido) — repete a cada 5 dias enquanto continuar parado. Existe
+//   porque o aviso de prazo acima so olha a data final: um marco com o Termino previsto
+//   ainda longe (ex.: 44 dias) podia ficar semanas parado, sem Execucao preenchida, sem
+//   ninguem ser avisado. Nao dispara no mesmo dia em que o aviso de prazo ja foi enviado
+//   para o mesmo marco, para nao mandar dois e-mails de uma vez.
 //
 // Destinatarios de cada aviso:
 //   - os e-mails vinculados no campo "Responsavel (conta)" do marco (respConta —
@@ -105,6 +116,8 @@ type Marco = {
   ini?: string;
   fim?: string;
   concl?: string;
+  execStatus?: string;
+  execStatusAtualizadoEm?: string;
 };
 type PlanoRec = {
   id?: string;
@@ -190,14 +203,16 @@ Deno.serve(async (req: Request) => {
         const marco = marcos[idx];
         if (!marco.marco || !marco.fim || marco.concl) continue;
         resultado.avaliados++;
-        const dias = diasEntre(marco.fim, hoje);
-        const bucket = bucketParaDias(dias);
-        if (!bucket) continue;
 
         const marcoId = marco.id || `noid_${planoIdSuffix}_${idx}`;
-        const alertaKey = `alertaprazo:${marcoId}`;
 
-        let jaAvisado: { buckets?: Partial<Record<Bucket, string>> } = {};
+        const destinatarios = new Set<string>();
+        for (const email of parseRespConta(marco.respConta)) destinatarios.add(email);
+        for (const email of gpsPorProjeto.get(rec.projetoId) || []) destinatarios.add(email);
+        if (!destinatarios.size) continue; // nada a enviar, mas nao marca como avisado
+
+        const alertaKey = `alertaprazo:${marcoId}`;
+        let jaAvisado: { buckets?: Partial<Record<Bucket, string>> & { silencio?: string } } = {};
         try {
           const existentes = await restGet(
             `kv_store?key=eq.${encodeURIComponent(alertaKey)}&select=value`
@@ -207,70 +222,115 @@ Deno.serve(async (req: Request) => {
           // sem registro anterior — segue como se nunca tivesse avisado
         }
         const buckets = jaAvisado.buckets || {};
-        const ultimoEnvioBucket = buckets[bucket];
-
-        let deveAvisar: boolean;
-        if (bucket === "atrasado") {
-          deveAvisar = !ultimoEnvioBucket || diasEntre(hoje, ultimoEnvioBucket.slice(0, 10)) >= 7;
-        } else {
-          deveAvisar = !ultimoEnvioBucket;
-        }
-        if (!deveAvisar) continue;
-
-        const destinatarios = new Set<string>();
-        for (const email of parseRespConta(marco.respConta)) destinatarios.add(email);
-        for (const email of gpsPorProjeto.get(rec.projetoId) || []) destinatarios.add(email);
-        if (!destinatarios.size) continue; // nada a enviar, mas nao marca como avisado
+        let mudouBuckets = false;
 
         const projetoNome = esc(rec.nomeProjeto || "Projeto sem nome");
         const marcoNome = esc(marco.marco);
-        const dataFim = new Date(marco.fim + "T00:00:00Z").toLocaleDateString("pt-BR", {
-          timeZone: "UTC",
-        });
-        const situacao =
-          bucket === "atrasado"
-            ? `está <b>atrasado</b> — término previsto era ${dataFim}`
-            : bucket === "nodia"
-            ? `vence <b>hoje</b> (${dataFim})`
-            : `vence em <b>${dias} dia${dias === 1 ? "" : "s"}</b> (${dataFim})`;
-        const subject = `Prazo do marco "${marco.marco}" ${
-          bucket === "atrasado" ? "atrasado" : "se aproximando"
-        } — ${rec.nomeProjeto || rec.protocolo || ""}`;
-        const html =
-          `<p>O marco <b>${marcoNome}</b> do cronograma do projeto <b>${projetoNome}</b>` +
-          (rec.protocolo ? ` (${esc(rec.protocolo)})` : "") +
-          ` ${situacao}.</p>` +
-          (marco.resp ? `<p><b>Responsável (cronograma):</b> ${esc(marco.resp)}</p>` : "") +
-          `<p>Avaliação automática do Painel de Prazos.</p>` +
-          `<p><a href="${MEU_PAINEL_URL}">Abrir o Meu Painel</a> para ver e concluir este e os demais itens atribuídos a você.</p>` +
+        const respHtml = marco.resp ? `<p><b>Responsável (cronograma):</b> ${esc(marco.resp)}</p>` : "";
+        const rodapeGerente =
           `<p><b>Procurar a Gerência de Projetos${rec.gestor ? ` - Gerente - ${esc(rec.gestor)}` : ""}. Se houver necessidade de ajuste.</b></p>`;
 
-        try {
-          const r = await fetch(`${SUPABASE_URL}/functions/v1/send-notification`, {
-            method: "POST",
-            headers: svcHeaders(),
-            body: JSON.stringify({ to: Array.from(destinatarios), subject, html }),
-          });
-          if (!r.ok) throw new Error(await r.text());
-          resultado.avisosEnviados++;
-        } catch (e) {
-          resultado.erros.push(`Falha ao notificar marco ${marcoId}: ${String(e)}`);
-          continue; // não marca como avisado — tenta de novo na próxima execução
+        // --- 1) Aviso de prazo ---
+        let avisouPrazoAgora = false;
+        const dias = diasEntre(marco.fim, hoje);
+        const bucket = bucketParaDias(dias);
+        if (bucket) {
+          const ultimoEnvioBucket = buckets[bucket];
+          const deveAvisar =
+            bucket === "atrasado"
+              ? !ultimoEnvioBucket || diasEntre(hoje, ultimoEnvioBucket.slice(0, 10)) >= 7
+              : !ultimoEnvioBucket;
+          if (deveAvisar) {
+            const dataFim = new Date(marco.fim + "T00:00:00Z").toLocaleDateString("pt-BR", {
+              timeZone: "UTC",
+            });
+            const situacao =
+              bucket === "atrasado"
+                ? `está <b>atrasado</b> — término previsto era ${dataFim}`
+                : bucket === "nodia"
+                ? `vence <b>hoje</b> (${dataFim})`
+                : `vence em <b>${dias} dia${dias === 1 ? "" : "s"}</b> (${dataFim})`;
+            const subject = `Prazo do marco "${marco.marco}" ${
+              bucket === "atrasado" ? "atrasado" : "se aproximando"
+            } — ${rec.nomeProjeto || rec.protocolo || ""}`;
+            const html =
+              `<p>O marco <b>${marcoNome}</b> do cronograma do projeto <b>${projetoNome}</b>` +
+              (rec.protocolo ? ` (${esc(rec.protocolo)})` : "") +
+              ` ${situacao}.</p>` +
+              respHtml +
+              `<p>Avaliação automática do Painel de Prazos.</p>` +
+              `<p><a href="${MEU_PAINEL_URL}">Abrir o Meu Painel</a> para ver e concluir este e os demais itens atribuídos a você.</p>` +
+              rodapeGerente;
+            try {
+              const r = await fetch(`${SUPABASE_URL}/functions/v1/send-notification`, {
+                method: "POST",
+                headers: svcHeaders(),
+                body: JSON.stringify({ to: Array.from(destinatarios), subject, html }),
+              });
+              if (!r.ok) throw new Error(await r.text());
+              buckets[bucket] = new Date().toISOString();
+              mudouBuckets = true;
+              avisouPrazoAgora = true;
+              resultado.avisosEnviados++;
+            } catch (e) {
+              resultado.erros.push(`Falha ao notificar marco ${marcoId} (prazo): ${String(e)}`);
+            }
+          }
         }
 
-        buckets[bucket] = new Date().toISOString();
-        try {
-          await fetch(`${SUPABASE_URL}/rest/v1/kv_store?on_conflict=key`, {
-            method: "POST",
-            headers: svcHeaders({ Prefer: "resolution=merge-duplicates" }),
-            body: JSON.stringify({
-              key: alertaKey,
-              value: JSON.stringify({ buckets }),
-              updated_at: new Date().toISOString(),
-            }),
-          });
-        } catch (e) {
-          resultado.erros.push(`Falha ao gravar controle de aviso ${marcoId}: ${String(e)}`);
+        // --- 2) Aviso de silêncio (Execução parada há 5+ dias, marco já iniciado) ---
+        if (!avisouPrazoAgora && marco.ini && diasEntre(hoje, marco.ini) >= 0) {
+          const referencia = marco.execStatusAtualizadoEm
+            ? marco.execStatusAtualizadoEm.slice(0, 10)
+            : marco.ini;
+          const diasSemAtualizar = diasEntre(hoje, referencia);
+          if (diasSemAtualizar >= 5) {
+            const ultimoSilencio = buckets.silencio;
+            const deveAvisarSilencio =
+              !ultimoSilencio || diasEntre(hoje, ultimoSilencio.slice(0, 10)) >= 5;
+            if (deveAvisarSilencio) {
+              const subject = `Marco "${marco.marco}" sem atualização de execução — ${
+                rec.nomeProjeto || rec.protocolo || ""
+              }`;
+              const html =
+                `<p>O marco <b>${marcoNome}</b> do cronograma do projeto <b>${projetoNome}</b>` +
+                (rec.protocolo ? ` (${esc(rec.protocolo)})` : "") +
+                ` já começou e está sem nenhuma atualização de <b>Execução</b> há <b>${diasSemAtualizar} dias</b>.</p>` +
+                respHtml +
+                `<p>Avaliação automática do Painel de Prazos.</p>` +
+                `<p><a href="${MEU_PAINEL_URL}">Abrir o Meu Painel</a> para informar o status de execução deste e dos demais itens atribuídos a você.</p>` +
+                rodapeGerente;
+              try {
+                const r = await fetch(`${SUPABASE_URL}/functions/v1/send-notification`, {
+                  method: "POST",
+                  headers: svcHeaders(),
+                  body: JSON.stringify({ to: Array.from(destinatarios), subject, html }),
+                });
+                if (!r.ok) throw new Error(await r.text());
+                buckets.silencio = new Date().toISOString();
+                mudouBuckets = true;
+                resultado.avisosEnviados++;
+              } catch (e) {
+                resultado.erros.push(`Falha ao notificar marco ${marcoId} (silêncio): ${String(e)}`);
+              }
+            }
+          }
+        }
+
+        if (mudouBuckets) {
+          try {
+            await fetch(`${SUPABASE_URL}/rest/v1/kv_store?on_conflict=key`, {
+              method: "POST",
+              headers: svcHeaders({ Prefer: "resolution=merge-duplicates" }),
+              body: JSON.stringify({
+                key: alertaKey,
+                value: JSON.stringify({ buckets }),
+                updated_at: new Date().toISOString(),
+              }),
+            });
+          } catch (e) {
+            resultado.erros.push(`Falha ao gravar controle de aviso ${marcoId}: ${String(e)}`);
+          }
         }
       }
     }
