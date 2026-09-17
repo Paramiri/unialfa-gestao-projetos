@@ -45,11 +45,28 @@
 // "04 - planejamento-desenvolvimento-projeto.html"; marcos antigos sem esse id usam um
 // identificador de fallback baseado em posicao, best-effort).
 //
-// Cada e-mail traz um link direto para o Meu Painel (20 - meu-painel.html) — a mesma tela
-// mostra os itens de quem estiver logado, entao o link e generico, sem parametro por pessoa;
-// quem abrir precisa logar com a propria conta para ver o que esta atribuido a ela. A URL
-// muda com o ambiente (producao vs treino) verificando se SUPABASE_URL contem o ref de
-// producao, mesmo padrao ja usado em reset-treino/index.ts (PRODUCAO_REF).
+// Tecnicas de engajamento aplicadas nos dois e-mails (17/09/2026), depois de revisar o
+// layout inicial (so estrutura visual, sem essas tecnicas):
+//   - Saudacao pessoal ("Ola, {primeiro nome}") — por isso agora o envio e feito uma vez por
+//     destinatario (enviarParaCadaDestinatario), nao um unico envio com todos no "to"; de
+//     passagem, tambem para de expor o e-mail de um destinatario aos outros.
+//   - Link direto para o marco especifico dentro do Meu Painel (?marco=<id>, ver
+//     meuPainelUrlMarco e a leitura do parametro em 20 - meu-painel.html), nao so a tela
+//     generica — reduz a ficcao entre clicar no e-mail e agir.
+//   - Numero grande em destaque (dias atrasado / dias para o prazo / dias sem atualizar) antes
+//     de qualquer frase, para o dado mais acionavel ser lido em menos de 1 segundo.
+//   - Tom que escalona por severidade: lembrete tranquilo quando falta tempo (antes5), mais
+//     direto no vencimento (antes2/nodia), e no atrasado/segunda cobranca de silencio soma o
+//     framing de visibilidade (accountability) — o status ja esta sendo visto pela Gerencia de
+//     Projetos no Painel de Prazos, nao e so um pedido isolado.
+//   - Preheader (texto escondido que a caixa de entrada mostra ao lado do assunto, ver
+//     `preheader` em emailTemplate) — sem isso a pre-visualizacao pegava a barra "UNIALFA...",
+//     que nao diz nada.
+//   - Microcopy do botao ligada ao resultado esperado ("Regularizar agora", "Atualizar
+//     execucao agora"), nao a navegacao ("Abrir o Meu Painel").
+//
+// A URL do Meu Painel muda com o ambiente (producao vs treino) verificando se SUPABASE_URL
+// contem o ref de producao, mesmo padrao ja usado em reset-treino/index.ts (PRODUCAO_REF).
 //
 // Cada e-mail tambem termina indicando a Gerencia de Projetos como alternativa de contato,
 // caso a pessoa prefira ajustar o prazo diretamente em vez de seguir só pelo aviso automatico
@@ -71,6 +88,12 @@ const SITE_URL = SUPABASE_URL && SUPABASE_URL.includes(PRODUCAO_REF)
   ? "https://gestaoprojetos.alfa.br"
   : "https://paramiri.github.io/unialfa-gestao-projetos-treino";
 const MEU_PAINEL_URL = `${SITE_URL}/20%20-%20meu-painel.html`;
+// Link direto para o marco especifico (nao so o Meu Painel generico) — quem abre ja chega no
+// item certo, destacado (ver 20 - meu-painel.html, leitura do parametro ?marco=). Reduz a
+// fricção entre clicar no e-mail e agir: sem isso, a pessoa precisava achar o item na lista.
+function meuPainelUrlMarco(marcoId: string): string {
+  return `${MEU_PAINEL_URL}?marco=${encodeURIComponent(marcoId)}`;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -113,10 +136,14 @@ const EMAIL_CORES: Record<EmailBadgeTipo, { bg: string; fg: string }> = {
   slate: { bg: "#EEF1F4", fg: "#475569" },
 };
 function emailTemplate(opts: {
+  preheader?: string;
+  saudacao?: string;
   badgeTexto: string;
   badgeTipo: EmailBadgeTipo;
   titulo: string;
   subtitulo?: string;
+  statNumero?: string;
+  statLabel?: string;
   corpo?: string;
   linhas?: { label: string; valor: string }[];
   ctaTexto?: string;
@@ -131,15 +158,30 @@ function emailTemplate(opts: {
     )
     .join("");
   return (
+    // Preheader: texto que a caixa de entrada mostra ao lado do assunto (Gmail/Apple Mail) —
+    // sem isso, ela pega o primeiro texto visível do e-mail (a barra "UNIALFA..."), que nao diz
+    // nada. Escondido visualmente, nao aparece ao abrir o e-mail.
+    (opts.preheader
+      ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#F3F4F6;opacity:0">${opts.preheader}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>`
+      : "") +
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F3F4F6;padding:24px 0"><tr><td>` +
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;background:#FFFFFF;border-radius:10px;overflow:hidden;border:1px solid #E4E4E7;font-family:Arial,Helvetica,sans-serif">` +
     `<tr><td style="background:#B91D2E;padding:16px 24px"><span style="color:#FFFFFF;font-size:12.5px;font-weight:800;letter-spacing:.05em">UNIALFA · GESTÃO DE PROJETOS</span></td></tr>` +
     `<tr><td style="padding:26px 24px 8px">` +
+    (opts.saudacao ? `<p style="margin:0 0 14px;font-size:13px;color:#52525B">${opts.saudacao}</p>` : "") +
     `<span style="display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 11px;border-radius:20px;margin-bottom:14px;background:${c.bg};color:${c.fg}">${opts.badgeTexto}</span>` +
     `<p style="margin:0 0 4px;font-size:19px;color:#1A1A1A;font-weight:700">${opts.titulo}</p>` +
     (opts.subtitulo
       ? `<p style="margin:0 0 18px;font-size:12.5px;color:#8A8E94">${opts.subtitulo}</p>`
       : `<div style="height:10px;line-height:10px">&nbsp;</div>`) +
+    // Numero grande: o dado mais acionavel (ha quantos dias) lido em menos de 1 segundo, antes
+    // de qualquer frase — hierarquia visual em vez de so texto corrido.
+    (opts.statNumero
+      ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px"><tr><td align="center" style="padding:14px 0;background:${c.bg};border-radius:8px">` +
+        `<div style="font-size:38px;font-weight:800;color:${c.fg};line-height:1">${opts.statNumero}</div>` +
+        `<div style="font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:${c.fg};margin-top:4px">${opts.statLabel}</div>` +
+        `</td></tr></table>`
+      : "") +
     (opts.corpo ? `<p style="margin:0 0 20px;font-size:13.5px;color:#3F3F46;line-height:1.6">${opts.corpo}</p>` : "") +
     (linhasHtml
       ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FAFAFB;border:1px solid #E4E4E7;border-radius:8px;margin:0 0 22px">${linhasHtml}</table>`
@@ -210,6 +252,32 @@ function bucketParaDias(dias: number, dAntes2: number, dAntes1: number): Bucket 
   return null;
 }
 
+// Envia uma copia do e-mail para cada destinatario, em vez de um so envio com todos no
+// mesmo "to" — permite personalizar a saudacao por pessoa (buildHtml recebe o e-mail de
+// quem vai receber) e, de passagem, para de expor o e-mail de um destinatario aos outros.
+async function enviarParaCadaDestinatario(
+  destinatarios: Set<string>,
+  subject: string,
+  buildHtml: (destinatario: string) => string
+): Promise<{ enviouAlgum: boolean; erros: string[] }> {
+  let enviouAlgum = false;
+  const erros: string[] = [];
+  for (const destinatario of destinatarios) {
+    try {
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/send-notification`, {
+        method: "POST",
+        headers: svcHeaders(),
+        body: JSON.stringify({ to: [destinatario], subject, html: buildHtml(destinatario) }),
+      });
+      if (!r.ok) throw new Error(await r.text());
+      enviouAlgum = true;
+    } catch (e) {
+      erros.push(`${destinatario}: ${String(e)}`);
+    }
+  }
+  return { enviouAlgum, erros };
+}
+
 async function restGet(path: string) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: svcHeaders() });
   if (!r.ok) throw new Error(`GET ${path} -> ${r.status}: ${await r.text()}`);
@@ -258,11 +326,20 @@ Deno.serve(async (req: Request) => {
     );
     const projetosEncerrados = new Set(teps.map((t) => t.projeto_id).filter(Boolean));
 
-    // Contas com papel Gerente de Projetos, e a equipe de cada projeto — para resolver o
-    // segundo destinatario (GP da equipe do projeto) sem uma consulta por projeto.
-    const gps: { id: string; email: string }[] = await restGet(
-      "perfis?papel=eq.gerente_projetos&select=id,email"
-    );
+    // Nome de cada conta (para a saudacao pessoal do e-mail — "Ola, {primeiro nome}") e papel
+    // Gerente de Projetos (para resolver o segundo destinatario, GP da equipe do projeto, sem
+    // uma consulta por projeto) — uma unica leitura de perfis para as duas coisas.
+    const todosPerfis: { id: string; email: string; nome: string | null; papel: string | null }[] =
+      await restGet("perfis?select=id,email,nome,papel");
+    const nomePorEmail = new Map<string, string>();
+    for (const p of todosPerfis) {
+      if (p.email && p.nome) nomePorEmail.set(p.email.toLowerCase(), p.nome);
+    }
+    function saudacaoPara(email: string): string {
+      const nome = nomePorEmail.get(email.toLowerCase());
+      return nome ? `Olá, ${esc(nome.split(" ")[0])}.` : "Olá.";
+    }
+    const gps = todosPerfis.filter((p) => p.papel === "gerente_projetos");
     const idsGP = new Set(gps.map((g) => g.id));
     const equipe: { projeto_id: string; usuario_id: string; usuario_email: string }[] =
       await restGet("projeto_equipe?select=projeto_id,usuario_id,usuario_email");
@@ -342,43 +419,67 @@ Deno.serve(async (req: Request) => {
             const dataFim = new Date(marco.fim + "T00:00:00Z").toLocaleDateString("pt-BR", {
               timeZone: "UTC",
             });
-            const situacao =
-              bucket === "atrasado"
-                ? `está <b>atrasado</b> — término previsto era ${dataFim}`
-                : bucket === "nodia"
-                ? `vence <b>hoje</b> (${dataFim})`
-                : `vence em <b>${dias} dia${dias === 1 ? "" : "s"}</b> (${dataFim})`;
-            const subject = `Prazo do marco "${marco.marco}" ${
-              bucket === "atrasado" ? "atrasado" : "se aproximando"
-            } — ${rec.nomeProjeto || rec.protocolo || ""}`;
-            const html = emailTemplate({
-              badgeTexto: bucket === "atrasado" ? "Atrasado" : bucket === "nodia" ? "Vence hoje" : "Vencendo",
-              badgeTipo: bucket === "atrasado" ? "bad" : "warn",
-              titulo: marcoNome,
-              subtitulo: subtituloProjeto,
-              corpo: `Este marco ${situacao}.`,
-              linhas: [
-                ...linhasComuns,
-                { label: "Situação", valor: bucket === "atrasado" ? "Atrasado" : bucket === "nodia" ? "Vence hoje" : `Vence em ${dias} dia${dias === 1 ? "" : "s"}` },
-              ],
-              ctaTexto: "Abrir o Meu Painel",
-              ctaUrl: MEU_PAINEL_URL,
-              rodape: rodapeComum,
-            });
-            try {
-              const r = await fetch(`${SUPABASE_URL}/functions/v1/send-notification`, {
-                method: "POST",
-                headers: svcHeaders(),
-                body: JSON.stringify({ to: Array.from(destinatarios), subject, html }),
-              });
-              if (!r.ok) throw new Error(await r.text());
+            const diasAbs = Math.abs(dias);
+            const projNomeRaw = rec.nomeProjeto || rec.protocolo || "um projeto";
+            // Tom escalona por severidade: lembrete tranquilo quando falta tempo, direto no dia,
+            // e no atrasado soma o framing de visibilidade (accountability) — o status ja esta
+            // sendo visto pela Gerencia de Projetos, nao e so um pedido, e uma pendencia exposta.
+            let badgeTexto: string, statNumero: string, statLabel: string, corpoBase: string, ctaTexto: string, subject: string, preheader: string;
+            if (bucket === "atrasado") {
+              badgeTexto = "Atrasado";
+              statNumero = String(diasAbs);
+              statLabel = diasAbs === 1 ? "dia atrasado" : "dias atrasado";
+              corpoBase = `Este marco passou do término previsto (${dataFim}) e já aparece como <b>atrasado</b> no Painel de Prazos, visível para a Gerência de Projetos.`;
+              ctaTexto = "Regularizar agora";
+              subject = `⚠ Atrasado: marco "${marco.marco}" — ${projNomeRaw}`;
+              preheader = `${statNumero} ${statLabel} em ${projNomeRaw}. Um ajuste rápido evita que a pendência continue se acumulando.`;
+            } else if (bucket === "nodia") {
+              badgeTexto = "Vence hoje";
+              statNumero = "HOJE";
+              statLabel = "é o prazo";
+              corpoBase = `O término previsto deste marco é <b>hoje</b> (${dataFim}). Se já concluiu, marque agora; se ainda está em andamento, um status atualizado evita virar atraso amanhã.`;
+              ctaTexto = "Concluir ou atualizar agora";
+              subject = `Hoje é o prazo do marco "${marco.marco}" — ${projNomeRaw}`;
+              preheader = `O prazo deste marco em ${projNomeRaw} é hoje — só leva um minuto para atualizar.`;
+            } else {
+              badgeTexto = "Vencendo";
+              statNumero = String(dias);
+              statLabel = dias === 1 ? "dia para o prazo" : "dias para o prazo";
+              corpoBase =
+                bucket === "antes2"
+                  ? `Faltam poucos dias para o término previsto (${dataFim}). Vale conferir se ainda dá tempo ou se o prazo precisa ser revisto.`
+                  : `Ainda dá tempo — um lembrete antecipado para manter a execução em dia até o término previsto (${dataFim}).`;
+              ctaTexto = "Atualizar execução agora";
+              subject = `${bucket === "antes2" ? "Faltam" : "Lembrete: faltam"} ${dias} dia${dias === 1 ? "" : "s"} — marco "${marco.marco}" — ${projNomeRaw}`;
+              preheader = `${dias} dia${dias === 1 ? "" : "s"} até o prazo em ${projNomeRaw}.`;
+            }
+            const { enviouAlgum, erros } = await enviarParaCadaDestinatario(
+              destinatarios,
+              subject,
+              (destinatario) =>
+                emailTemplate({
+                  preheader,
+                  saudacao: saudacaoPara(destinatario),
+                  badgeTexto,
+                  badgeTipo: bucket === "atrasado" ? "bad" : "warn",
+                  titulo: marcoNome,
+                  subtitulo: subtituloProjeto,
+                  statNumero,
+                  statLabel,
+                  corpo: corpoBase,
+                  linhas: linhasComuns,
+                  ctaTexto,
+                  ctaUrl: meuPainelUrlMarco(marcoId),
+                  rodape: rodapeComum,
+                })
+            );
+            if (enviouAlgum) {
               buckets[bucket] = new Date().toISOString();
               mudouBuckets = true;
               avisouPrazoAgora = true;
               resultado.avisosEnviados++;
-            } catch (e) {
-              resultado.erros.push(`Falha ao notificar marco ${marcoId} (prazo): ${String(e)}`);
             }
+            erros.forEach((e) => resultado.erros.push(`Falha ao notificar marco ${marcoId} (prazo): ${e}`));
           }
         }
 
@@ -394,33 +495,42 @@ Deno.serve(async (req: Request) => {
               !ultimoSilencio ||
               diasEntre(hoje, ultimoSilencio.slice(0, 10)) >= diasSilencioRepeticao;
             if (deveAvisarSilencio) {
-              const subject = `Marco "${marco.marco}" sem atualização de execução — ${
-                rec.nomeProjeto || rec.protocolo || ""
-              }`;
-              const html = emailTemplate({
-                badgeTexto: "Sem atualização",
-                badgeTipo: "slate",
-                titulo: marcoNome,
-                subtitulo: subtituloProjeto,
-                corpo: `Este marco já começou e está sem nenhuma atualização de <b>Execução</b> há <b>${diasSemAtualizar} dias</b>.`,
-                linhas: [...linhasComuns, { label: "Sem atualizar há", valor: `${diasSemAtualizar} dias` }],
-                ctaTexto: "Informar status no Meu Painel",
-                ctaUrl: MEU_PAINEL_URL,
-                rodape: rodapeComum,
-              });
-              try {
-                const r = await fetch(`${SUPABASE_URL}/functions/v1/send-notification`, {
-                  method: "POST",
-                  headers: svcHeaders(),
-                  body: JSON.stringify({ to: Array.from(destinatarios), subject, html }),
-                });
-                if (!r.ok) throw new Error(await r.text());
+              const projNomeRaw = rec.nomeProjeto || rec.protocolo || "um projeto";
+              // Repeticao (buckets.silencio ja tinha um valor) = ja avisamos antes e continua
+              // parado — tom mais direto que o primeiro aviso, mesma logica de escalonar por
+              // severidade usada no aviso de prazo acima.
+              const jaAvisadoAntes = !!ultimoSilencio;
+              const subject = `${jaAvisadoAntes ? "Ainda sem novidade" : "Sem atualização"}: marco "${marco.marco}" — ${projNomeRaw}`;
+              const preheader = `${diasSemAtualizar} dias sem atualização de Execução em ${projNomeRaw} — um clique resolve.`;
+              const corpoBase = jaAvisadoAntes
+                ? `Este marco continua sem nenhuma atualização de <b>Execução</b> — já são <b>${diasSemAtualizar} dias</b>. Ninguém sinalizou estar trabalhando nele, e isso já apareceu antes no Painel de Prazos.`
+                : `Este marco já começou e está sem nenhuma atualização de <b>Execução</b> há <b>${diasSemAtualizar} dias</b>. Um status rápido evita que ele apareça como parado para o resto da equipe.`;
+              const { enviouAlgum, erros } = await enviarParaCadaDestinatario(
+                destinatarios,
+                subject,
+                (destinatario) =>
+                  emailTemplate({
+                    preheader,
+                    saudacao: saudacaoPara(destinatario),
+                    badgeTexto: jaAvisadoAntes ? "Ainda sem novidade" : "Sem atualização",
+                    badgeTipo: "slate",
+                    titulo: marcoNome,
+                    subtitulo: subtituloProjeto,
+                    statNumero: String(diasSemAtualizar),
+                    statLabel: diasSemAtualizar === 1 ? "dia sem atualizar" : "dias sem atualizar",
+                    corpo: corpoBase,
+                    linhas: linhasComuns,
+                    ctaTexto: "Atualizar status agora",
+                    ctaUrl: meuPainelUrlMarco(marcoId),
+                    rodape: rodapeComum,
+                  })
+              );
+              if (enviouAlgum) {
                 buckets.silencio = new Date().toISOString();
                 mudouBuckets = true;
                 resultado.avisosEnviados++;
-              } catch (e) {
-                resultado.erros.push(`Falha ao notificar marco ${marcoId} (silêncio): ${String(e)}`);
               }
+              erros.forEach((e) => resultado.erros.push(`Falha ao notificar marco ${marcoId} (silêncio): ${e}`));
             }
           }
         }

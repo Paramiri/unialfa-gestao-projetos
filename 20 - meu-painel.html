@@ -51,6 +51,8 @@
   .item-title{font-size:13px;font-weight:700}
   .item-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
   .item-tag{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 7px;border-radius:999px;background:var(--blue-soft);color:var(--blue);margin-right:6px}
+  .item-destaque{animation:item-destaque-pulse 1.6s ease-in-out 2; outline:2px solid var(--red); outline-offset:-2px; border-radius:8px}
+  @keyframes item-destaque-pulse{0%,100%{background:transparent}50%{background:var(--warn-soft, #FBF1E3)}}
   .item-dias{white-space:nowrap;font-size:11px;font-weight:700}
   .item-dias.atrasado{color:var(--bad)}
   .item-dias.alerta{color:var(--warn)}
@@ -629,7 +631,7 @@ async function carregarMeuPainel(){
   document.getElementById('cnt-marcos').textContent=marcos.length;
   document.getElementById('card-marcos').innerHTML = marcos.length ? marcos.map(m=>{
     const tag=diasTag(m.fim);
-    return '<div class="item-row '+tag.cls+'" data-plano-key="'+esc(m.planoKey)+'"><div class="item-main"><div class="item-title">'+esc(m.marco)+'</div><div class="item-sub">'+esc(m.projetoNome)+'</div></div>'
+    return '<div class="item-row '+tag.cls+'" data-plano-key="'+esc(m.planoKey)+'" data-marco-id="'+esc(m.marcoId)+'"><div class="item-main"><div class="item-title">'+esc(m.marco)+'</div><div class="item-sub">'+esc(m.projetoNome)+'</div></div>'
       +'<span class="item-dias '+tag.cls+'">'+esc(tag.txt)+'</span>'
       +execSelectHtml(m.marcoId, m.execStatus, m.execAtualizadoEm)
       +'<button class="btn btn-ok btn-sm" onclick="concluirMarco(\''+m.planoKey+'\',\''+m.marcoId+'\')">Concluir</button></div>';
@@ -662,6 +664,22 @@ async function carregarMeuPainel(){
 
   document.getElementById('loadingBox').style.display='none';
   document.getElementById('conteudo').style.display='block';
+  destacarItemDaUrl();
+}
+
+/* Link direto de um item (hoje so marcos, vindo do e-mail de aviso automatico de prazo/
+   silencio — ver verificar-prazos-cronograma, meuPainelUrlMarco) - em vez de a pessoa ter que
+   achar o item na lista, a tela ja rola ate ele e destaca por alguns segundos. Chamado de novo
+   a cada carregarMeuPainel() (inclusive apos o botao Atualizar), para o destaque nao sumir se
+   a lista for recarregada com o parametro ainda na URL. */
+function destacarItemDaUrl(){
+  const marcoId = new URLSearchParams(location.search).get('marco');
+  if(!marcoId) return;
+  const el = document.querySelector('[data-marco-id="'+CSS.escape(marcoId)+'"]');
+  if(!el) return;
+  el.scrollIntoView({behavior:'smooth', block:'center'});
+  el.classList.add('item-destaque');
+  setTimeout(()=>el.classList.remove('item-destaque'), 4000);
 }
 
 (async()=>{
