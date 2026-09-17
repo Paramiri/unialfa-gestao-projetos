@@ -117,7 +117,7 @@ textarea{resize:vertical;min-height:68px}
 .dyn-mini input:focus{background:#fff;border-color:var(--red);box-shadow:none;outline:none}
 .row-x{appearance:none;border:none;background:transparent;color:var(--muted);font-size:17px;cursor:pointer;width:26px;height:26px;border-radius:5px;line-height:1;display:flex;align-items:center;justify-content:center}
 .row-x:hover{background:var(--bad-soft);color:var(--bad)}
-.dyn-foot{margin-bottom:8px}
+.dyn-foot{margin-top:8px}
 
 /* actions */
 .action-bar{display:flex;gap:10px;align-items:center;padding:14px 20px;border-top:1px solid var(--line);background:var(--surface-2);flex-wrap:wrap}
@@ -632,15 +632,15 @@ function ensureAuthenticated(){
       <!-- Indicadores do programa -->
       <div style="padding:0 20px 8px">
         <div class="sec-title" style="margin-top:4px">Indicadores associados ao programa</div>
-        <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addRow('ind-prog',['indicador','valor','meta'])">+ Indicador</button></div>
         <div id="dyn-ind-prog-wrap"><table class="dyn-mini" id="tbl-ind-prog"><thead><tr><th>Indicador</th><th>Valor atual</th><th>Meta</th><th style="width:36px"></th></tr></thead><tbody id="tbody-ind-prog"></tbody></table></div>
+        <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addRow('ind-prog',['indicador','valor','meta'])">+ Indicador</button></div>
       </div>
 
       <!-- Valores estimados do programa -->
       <div style="padding:0 20px 20px">
         <div class="sec-title" style="margin-top:12px">Valores estimados — programa</div>
-        <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addRow('val-prog',['tipo','a1','a2','a3'])">+ Linha</button></div>
         <div id="dyn-val-prog-wrap"><table class="dyn-mini" id="tbl-val-prog"><thead><tr><th>Tipo de despesa</th><th>2025</th><th>2026</th><th>2027</th><th style="width:36px"></th></tr></thead><tbody id="tbody-val-prog"></tbody></table></div>
+        <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addRow('val-prog',['tipo','a1','a2','a3'])">+ Linha</button></div>
       </div>
     </div>
 
@@ -1468,18 +1468,18 @@ function buildProjEditor(pr,i){
     </div>
     <div style="padding:0 20px 8px">
       <div class="sec-title" style="margin-top:4px">Principais entregas</div>
-      <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addEntrega(${i})">+ Entrega</button></div>
       <table class="dyn-mini" id="tbl-ent-${i}"><thead><tr><th>Entrega</th><th>Qtde / %</th><th>Data limite</th><th style="width:32px"></th></tr></thead><tbody id="tbody-ent-${i}"></tbody></table>
+      <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addEntrega(${i})">+ Entrega</button></div>
     </div>
     <div style="padding:0 20px 8px">
       <div class="sec-title" style="margin-top:8px">Indicadores do projeto</div>
-      <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addIndPr(${i})">+ Indicador</button> <button type="button" class="btn btn-ghost btn-sm" id="importTapBtn-${i}" style="display:${pr.projetoId?'inline-flex':'none'}" onclick="importarIndicadoresTAP(${i})">↓ Importar do TAP</button></div>
       <table class="dyn-mini" id="tbl-ind-pr-${i}"><thead><tr><th>Indicador</th><th>Valor atual</th><th>Meta</th><th style="width:32px"></th></tr></thead><tbody id="tbody-ind-pr-${i}"></tbody></table>
+      <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addIndPr(${i})">+ Indicador</button> <button type="button" class="btn btn-ghost btn-sm" id="importTapBtn-${i}" style="display:${pr.projetoId?'inline-flex':'none'}" onclick="importarIndicadoresTAP(${i})">↓ Importar do TAP</button></div>
     </div>
     <div style="padding:0 20px 20px">
       <div class="sec-title" style="margin-top:8px">Valores estimados do projeto</div>
-      <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addValPr(${i})">+ Linha</button></div>
       <table class="dyn-mini" id="tbl-val-pr-${i}"><thead><tr><th>Tipo</th><th>2025</th><th>2026</th><th>2027</th><th style="width:32px"></th></tr></thead><tbody id="tbody-val-pr-${i}"></tbody></table>
+      <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addValPr(${i})">+ Linha</button></div>
     </div>`;
   setTimeout(()=>{
     rebuildTable(`ent-${i}`,['entrega','qtde','data'],pr.entregas||[{entrega:'',qtde:'',data:''}]);
