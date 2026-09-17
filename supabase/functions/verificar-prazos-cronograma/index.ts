@@ -252,6 +252,21 @@ function bucketParaDias(dias: number, dAntes2: number, dAntes1: number): Bucket 
   return null;
 }
 
+// Limite de taxa do Resend (plano atual): enviar rapido demais em sequencia derruba varios
+// envios de uma vez com RateLimitError. Desde que o envio passou a ser um por destinatario
+// (para personalizar a saudacao — ver enviarParaCadaDestinatario abaixo), uma execucao com
+// muitos marcos pendentes de uma vez (ex.: primeira ativacao, ou o dia em que o cron tinha
+// parado de rodar) facilmente ultrapassa 2 envios/segundo. Um intervalo minimo global entre
+// CADA envio (nao so entre destinatarios do mesmo marco) resolve na raiz, em vez de tentar de
+// novo depois de tomar o rate limit — descoberto em producao em 17/09/2026 (21 de 33 avisos
+// enviados, 12 falharam por RateLimitError antes desta correcao).
+let ultimoEnvioEmailTs = 0;
+async function aguardarRateLimit(minIntervaloMs = 600) {
+  const espera = ultimoEnvioEmailTs + minIntervaloMs - Date.now();
+  if (espera > 0) await new Promise((r) => setTimeout(r, espera));
+  ultimoEnvioEmailTs = Date.now();
+}
+
 // Envia uma copia do e-mail para cada destinatario, em vez de um so envio com todos no
 // mesmo "to" — permite personalizar a saudacao por pessoa (buildHtml recebe o e-mail de
 // quem vai receber) e, de passagem, para de expor o e-mail de um destinatario aos outros.
@@ -264,6 +279,7 @@ async function enviarParaCadaDestinatario(
   const erros: string[] = [];
   for (const destinatario of destinatarios) {
     try {
+      await aguardarRateLimit();
       const r = await fetch(`${SUPABASE_URL}/functions/v1/send-notification`, {
         method: "POST",
         headers: svcHeaders(),
