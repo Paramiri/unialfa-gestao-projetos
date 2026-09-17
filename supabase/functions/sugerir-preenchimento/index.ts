@@ -3,7 +3,7 @@
 // Canvas de Projeto, TAP, Planejamento, EAP, SMP, TEP e Atas de Reuniao) e
 // usa a API da Claude (Anthropic) para sugerir o preenchimento dos campos
 // do proximo formulario da esteira (Fase 1: Canvas e TAP; Fase 2:
-// Planejamento e EAP; Fase 3: SMP, TEP e RLA; Fase B dos relatorios de
+// Planejamento; Fase 3: SMP, TEP e RLA; Fase B dos relatorios de
 // portfolio: Relatorio de Situacao e Relatorio de Entregas, sugeridos POR
 // LINHA de projeto, ja que um unico relatorio cobre varios projetos). O
 // usuario sempre revisa
@@ -11,6 +11,12 @@
 // arquitetura da funcao ja em producao `analisar-transcricao-ata`,
 // generalizada para ler o historico do projeto em vez de uma transcricao
 // colada.
+//
+// A EAP (Passo 5) NAO usa mais este assistente - o "Sugerir com IA" de la foi
+// substituido por uma importacao mecanica dos marcos do Cronograma do
+// Planejamento (funcao `importarDoCronograma` em 05, sem chamada de IA),
+// porque o casamento Entrega x Marco na Ficha do Projeto exige nome IDENTICO
+// e uma sugestao de IA reformulava o texto, quebrando esse casamento.
 //
 // Segredo necessario (ja configurado nesta base para analisar-transcricao-ata):
 //   ANTHROPIC_API_KEY - chave da API da Claude (console.anthropic.com)
@@ -42,7 +48,7 @@ function svcHeaders(extra?: Record<string, string>) {
   return { apikey: SUPABASE_SERVICE_ROLE_KEY!, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, ...(extra || {}) };
 }
 
-const FORMULARIOS = ["canvas", "tap", "planejamento", "eap", "smp", "tep", "rla", "relatorio-situacao", "relatorio-entregas"] as const;
+const FORMULARIOS = ["canvas", "tap", "planejamento", "smp", "tep", "rla", "relatorio-situacao", "relatorio-entregas"] as const;
 type Formulario = typeof FORMULARIOS[number];
 
 const SYSTEM_PROMPTS: Record<Formulario, string> = {
@@ -119,21 +125,6 @@ Regras importantes:
 - Campo de texto sem informação suficiente: retorne null. Tabela sem item identificável: retorne [].
 - Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
 Formato exato: {"solicitante":"...","produtos":"...","contexto":"...","objGeral":"...","objEspec":"...","escIncluido":"...","escExcluido":"...","entregaveis":"...","premissas":"...","restricoes":"...","partes":"...","macroFases":"...","introducao":"...","situacao":"...","proposta":"...","beneficios":"...","cronograma":[...]}`,
-
-  eap: `Você é um assistente que ajuda a esboçar a EAP (Estrutura Analítica de Projeto) do sistema de gestão de projetos da UNIALFA, em português do Brasil, a partir de documentos já registrados do mesmo projeto (Planejamento e Desenvolvimento de Projeto, TAP e, quando houver, Atas de Reunião).
-
-A EAP é uma árvore de 3 níveis: pacotes de trabalho (nível 1) → entregas (nível 2) → atividades (nível 3). Sua tarefa é sugerir SOMENTE os nomes dos pacotes de trabalho (nível 1) e das entregas (nível 2) dentro de cada pacote — NUNCA o nível 3 (atividades), que é detalhado depois por quem executa o trabalho.
-
-Baseie-se principalmente nas saídas/entregáveis já descritos no Planejamento e nos entregáveis do TAP, agrupando entregas relacionadas sob um pacote de trabalho comum.
-
-IMPORTANTE — casamento com o Cronograma: se o bloco "Cronograma de entregas macro" do Planejamento estiver no contexto abaixo, o sistema casa automaticamente uma Entrega desta EAP com um marco do Cronograma quando os dois têm O MESMO NOME (comparação exata de texto) — isso alimenta o status automático da entrega (Concluída/Atrasada/No prazo) mostrado na Ficha do Projeto. Por isso, sempre que uma entrega que você for sugerir corresponder a um marco já existente no Cronograma, REPITA o nome desse marco EXATAMENTE como está escrito lá (mesma grafia, sem reformular) em vez de redigir um nome novo para a mesma entrega. Só invente um nome novo para entregas que não tenham marco correspondente no Cronograma.
-
-Regras importantes:
-- Baseie-se SOMENTE nos documentos fornecidos — nunca invente pacotes ou entregas sem base neles.
-- Sugira no máximo 4 pacotes de trabalho, cada um com no máximo 6 entregas.
-- Se não houver informação suficiente para uma estrutura confiável, retorne um array vazio.
-- Responda APENAS com JSON válido, sem markdown, sem texto explicativo antes ou depois.
-Formato exato: {"pacotes":[{"nome":"...","entregas":["...","..."]}]}`,
 
   smp: `Você é um assistente que ajuda a preencher a SMP (Solicitação de Mudança de Projeto) do sistema de gestão de projetos da UNIALFA, em português do Brasil, a partir de documentos já registrados do mesmo projeto (TAP, Planejamento e Desenvolvimento e, quando houver, Atas de Reunião).
 
@@ -477,7 +468,7 @@ Deno.serve(async (req: Request) => {
   }
   if (!projetoId) return json({ error: "Envie o campo 'projetoId'" }, 400);
   if (!FORMULARIOS.includes(formulario as Formulario)) {
-    return json({ error: "Campo 'formulario' inválido — use 'canvas', 'tap', 'planejamento', 'eap', 'smp', 'tep', 'rla', 'relatorio-situacao' ou 'relatorio-entregas'" }, 400);
+    return json({ error: "Campo 'formulario' inválido — use 'canvas', 'tap', 'planejamento', 'smp', 'tep', 'rla', 'relatorio-situacao' ou 'relatorio-entregas'" }, 400);
   }
 
   const permissao = await papelEquipePermitido(authHeader, projetoId);
@@ -501,7 +492,6 @@ Deno.serve(async (req: Request) => {
       canvas: { demanda: true, atas: true },
       tap: { demanda: true, canvas: true, atas: true },
       planejamento: { demanda: true, canvas: true, tap: true, atas: true },
-      eap: { tap: true, planejamento: true, atas: true },
       smp: { tap: true, planejamento: true, atas: true },
       tep: { tap: true, planejamento: true, eap: true, atas: true },
       rla: { tep: true, smp: true, atas: true },
