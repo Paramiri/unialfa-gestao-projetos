@@ -101,7 +101,7 @@ table.dyn-t td.dyn-seq{width:34px;text-align:center;color:var(--muted);font-weig
 .row-drag:hover{background:var(--surface-2);color:var(--ink)}
 .row-drag:active{cursor:grabbing}
 table.dyn-t tbody tr.dragging{opacity:.4}
-.dyn-foot{margin-top:10px}
+.dyn-foot{margin-bottom:10px}
 .actions{display:flex;align-items:center;gap:12px;padding:18px 24px;border-top:1px solid var(--line);background:var(--surface-2)}
 .btn{appearance:none;font-family:var(--font);font-weight:700;font-size:13px;border-radius:8px;padding:11px 22px;cursor:pointer;border:1px solid transparent;transition:all .15s;display:inline-flex;align-items:center;gap:8px}
 .btn-primary{background:var(--red);color:#fff}.btn-primary:hover{background:var(--red-deep)}
@@ -1136,9 +1136,9 @@ function toggleUnid(lbl){const cb=lbl.querySelector('input'); setTimeout(()=>lbl
 function mountTable(name){
   const cfg=TABLES[name]; const host=document.getElementById('dyn-'+name);
   const wrap=document.createElement('div');
-  wrap.innerHTML=`<div class="dyn-table-wrap"><table class="dyn-t" id="tbl-${name}">
+  wrap.innerHTML=`<div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addRow('${name}')">+ Adicionar linha</button></div><div class="dyn-table-wrap"><table class="dyn-t" id="tbl-${name}">
     <thead><tr>${cfg.cols.map(c=>`<th${c.w?` style="width:${c.w}"`:''}>${c.label}</th>`).join('')}<th style="width:96px"></th></tr></thead><tbody ondragover="rowDragOver(event)"></tbody>
-  </table></div><div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addRow('${name}')">+ Adicionar linha</button></div>`;
+  </table></div>`;
   host.appendChild(wrap);
   for(let i=0;i<cfg.seed;i++) addRow(name);
 }

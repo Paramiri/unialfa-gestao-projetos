@@ -166,7 +166,7 @@
   .row-drag:hover{background:var(--surface-2); color:var(--ink)}
   .row-drag:active{cursor:grabbing}
   table.dyn-t tbody tr.dragging{opacity:.4}
-  .dyn-foot{display:flex; align-items:center; gap:14px; margin-top:12px}
+  .dyn-foot{display:flex; align-items:center; gap:14px; margin-bottom:12px}
   .tbl-total{margin-left:auto; font-size:12px; color:var(--muted); font-weight:600}
   .tbl-total b{color:var(--ink); font-size:14px; margin-left:4px}
 
@@ -1503,11 +1503,11 @@ function brl(n){ return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL
 function mountTable(name, host){
   const cfg=TABLES[name];
   const wrap=document.createElement('div');
-  wrap.innerHTML=`<div class="dyn-table-wrap"><table class="dyn-t" id="tbl-${name}">
+  wrap.innerHTML=`<div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addRow('${name}')">+ Adicionar linha</button>
+    ${cfg.sum?`<span class="tbl-total">Total estimado:<b id="total-${name}">R$ 0,00</b></span>`:''}</div>
+    <div class="dyn-table-wrap"><table class="dyn-t" id="tbl-${name}">
     <thead><tr>${cfg.cols.map(c=>`<th${c.w?` style="width:${c.w}"`:''}>${c.label}</th>`).join('')}<th style="width:96px"></th></tr></thead>
-    <tbody ondragover="rowDragOver(event)"></tbody></table></div>
-    <div class="dyn-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="addRow('${name}')">+ Adicionar linha</button>
-    ${cfg.sum?`<span class="tbl-total">Total estimado:<b id="total-${name}">R$ 0,00</b></span>`:''}</div>`;
+    <tbody ondragover="rowDragOver(event)"></tbody></table></div>`;
   host.appendChild(wrap);
   addRow(name);
 }
@@ -1653,8 +1653,9 @@ function mountMatrizRiscoToggle(host){
   const matrizHost=document.createElement('div');
   matrizHost.id='matriz-risco';
   matrizHost.style.display='none';
-  host.appendChild(bar);
-  host.appendChild(matrizHost);
+  const tableSection=host.lastChild;
+  host.insertBefore(bar, tableSection);
+  host.insertBefore(matrizHost, tableSection);
   const tableWrap=host.querySelector('.dyn-table-wrap');
   const tableFoot=host.querySelector('.dyn-foot');
   bar.querySelectorAll('.gantt-toggle-btn').forEach(btn=>{
