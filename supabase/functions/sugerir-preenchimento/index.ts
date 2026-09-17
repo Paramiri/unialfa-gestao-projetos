@@ -126,6 +126,8 @@ A EAP é uma árvore de 3 níveis: pacotes de trabalho (nível 1) → entregas (
 
 Baseie-se principalmente nas saídas/entregáveis já descritos no Planejamento e nos entregáveis do TAP, agrupando entregas relacionadas sob um pacote de trabalho comum.
 
+IMPORTANTE — casamento com o Cronograma: se o bloco "Cronograma de entregas macro" do Planejamento estiver no contexto abaixo, o sistema casa automaticamente uma Entrega desta EAP com um marco do Cronograma quando os dois têm O MESMO NOME (comparação exata de texto) — isso alimenta o status automático da entrega (Concluída/Atrasada/No prazo) mostrado na Ficha do Projeto. Por isso, sempre que uma entrega que você for sugerir corresponder a um marco já existente no Cronograma, REPITA o nome desse marco EXATAMENTE como está escrito lá (mesma grafia, sem reformular) em vez de redigir um nome novo para a mesma entrega. Só invente um nome novo para entregas que não tenham marco correspondente no Cronograma.
+
 Regras importantes:
 - Baseie-se SOMENTE nos documentos fornecidos — nunca invente pacotes ou entregas sem base neles.
 - Sugira no máximo 4 pacotes de trabalho, cada um com no máximo 6 entregas.
