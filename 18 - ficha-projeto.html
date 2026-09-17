@@ -411,7 +411,7 @@ function ensureAuthenticated(){
         <h1>Ficha do Projeto</h1>
         <p id="docSub">Visão consolidada de um único projeto</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=74#ficha-projeto" title="Ajuda">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=75#ficha-projeto" title="Ajuda">?</a>
     </div>
   </div>
 
@@ -799,11 +799,17 @@ function renderComparativoCustos(custosRealizados, custosTAP){
   host.innerHTML = '<div class="table-wrap"><table class="custo-comp-t"><thead><tr><th>Categoria</th><th>Estimado (TAP)</th><th>Realizado</th><th>%</th><th>Status</th></tr></thead><tbody>'+rowsHtml+'</tbody></table></div>';
 }
 
+/* Normaliza um nome para casamento por texto: colapsa espacos/quebras de linha num unico
+   espaco antes de comparar - o campo Marco/Entrega do Cronograma (04) aceita quebra de linha,
+   mas o campo Entrega da EAP (05) e uma caixa de uma linha, que corta silenciosamente qualquer
+   quebra de linha do texto ao salvar. Sem essa normalizacao, um marco com quebra de linha no
+   nome nunca bateria com a entrega correspondente. */
+function normNomeEntrega(s){ return (s||'').replace(/\s+/g,' ').trim().toLowerCase(); }
 /* Status automatico de uma Entrega (nivel 2) da EAP, casando pelo nome com o marco correspondente
    no cronograma do Planejamento - mesmo casamento por nome e mesma logica ja usados na propria EAP
    (Passo 5) e no rollup de portfolio do Painel Executivo (secao 6.4). Sem nenhum campo novo. */
 function statusEntregaEAP(nomeEntrega, cronoPorNome){
-  var marco = cronoPorNome ? cronoPorNome[(nomeEntrega||'').trim().toLowerCase()] : null;
+  var marco = cronoPorNome ? cronoPorNome[normNomeEntrega(nomeEntrega)] : null;
   if(!marco) return {cls:'sem-cronograma', label:'Sem cronograma vinculado'};
   if(marco.concl && marco.concl.trim()) return {cls:'concluida', label:'Concluída'};
   var fim = marco.fim ? new Date(marco.fim+'T00:00:00') : null;
@@ -818,7 +824,7 @@ function renderEntregasEAP(eap, plan){
   }
   var cronoPorNome = {};
   (plan && Array.isArray(plan.cronograma) ? plan.cronograma : []).forEach(function(m){
-    var nome=(m.marco||'').trim().toLowerCase();
+    var nome=normNomeEntrega(m.marco);
     if(nome) cronoPorNome[nome]=m;
   });
   var total=0, concluidas=0;

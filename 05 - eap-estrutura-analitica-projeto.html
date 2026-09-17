@@ -638,7 +638,7 @@ window.unialfaHistorico = {
         <h1>Estrutura Analítica de Projeto — EAP</h1>
         <p>Work Breakdown Structure (WBS) · Escritório de Projetos</p>
       </div>
-      <a class="doc-help" href="15 - central-ajuda.html?v=74#passo-5" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
+      <a class="doc-help" href="15 - central-ajuda.html?v=75#passo-5" target="_blank" rel="noopener" title="Ajuda sobre este formulário">?</a>
     </div>
     <div class="doc-meta">
       <div><span>Referência</span><b>EAP / WBS</b></div>
@@ -1094,13 +1094,14 @@ function addN2Block(n1id,val=''){
   div.className='n2-block'; div.id=id;
   div.innerHTML=`<div class="n2-head">
     <span class="n2-badge">N2 · ${n1}.${n}</span>
-    <input type="text" placeholder="Nome da entrega" value="${esc(val)}">
+    <input type="text" placeholder="Nome da entrega">
     <button class="n2-del" onclick="document.getElementById('${id}').remove()">×</button>
   </div>
   <div class="n2-body">
     <div id="n3list_${id}"></div>
     <button class="add-btn add-n3" onclick="addN3Row('${id}')">+ Atividade (nível 3)</button>
   </div>`;
+  div.querySelector('.n2-head input').value=val;
   document.getElementById('n2list_'+n1id).appendChild(div);
   addN3Row(id);
 }
@@ -1143,6 +1144,14 @@ function readForm(){
 function n3Nome(n3){ return typeof n3==='string' ? n3 : (n3&&n3.nome)||''; }
 function n3Prio(n3){ return (n3&&typeof n3==='object'&&n3.prioridade)||''; }
 
+/* Normaliza um nome para casamento por texto: colapsa qualquer sequencia de espacos/quebras de
+   linha num unico espaco, tira espacos nas pontas e ignora maiusculas/minusculas. Necessario
+   porque o campo Marco/Entrega do Cronograma (04) e uma caixa longa que aceita quebra de linha,
+   mas o campo Entrega da EAP e uma caixa de uma linha so - um <input> de uma linha corta
+   silenciosamente qualquer quebra de linha do texto, entao a comparacao exata char-a-char nunca
+   bateria para um marco com quebra de linha no nome. Colapsando os dois lados da mesma forma,
+   o casamento funciona independente de como cada campo formata o mesmo texto. */
+function normNome(s){ return (s||'').replace(/\s+/g,' ').trim().toLowerCase(); }
 /* Busca o cronograma (marcos/entregas) do Planejamento e Desenvolvimento de Projeto para um
    projeto, indexado por nome (trim + minusculo) - mesmo casamento por nome ja usado pelo
    Relatorio de Situacao para juntar seus marcos ao cronograma do Planejamento. Usado para
@@ -1162,7 +1171,7 @@ async function buscarCronogramaPlanPorNome(projetoId){
       const plan=JSON.parse(r.value);
       if(plan.projetoId!==projetoId) continue;
       (Array.isArray(plan.cronograma)?plan.cronograma:[]).forEach(m=>{
-        const nome=(m.marco||'').trim().toLowerCase();
+        const nome=normNome(m.marco);
         if(nome) porNome[nome]=m;
       });
       break;
@@ -1172,7 +1181,7 @@ async function buscarCronogramaPlanPorNome(projetoId){
 }
 function statusEntregaEAP(nomeEntrega, cronoPorNome){
   if(!cronoPorNome) return null;
-  const marco=cronoPorNome[(nomeEntrega||'').trim().toLowerCase()];
+  const marco=cronoPorNome[normNome(nomeEntrega)];
   if(!marco) return {cls:'sem-cronograma', label:'Sem cronograma vinculado'};
   const concluida=!!(marco.concl&&marco.concl.trim());
   if(concluida) return {cls:'concluida', label:'Concluída'};
@@ -1196,7 +1205,7 @@ async function buscarTarefasPlanPorNome(projetoId){
       if(plan.projetoId!==projetoId) continue;
       (Array.isArray(plan.cronograma)?plan.cronograma:[]).forEach(m=>{
         (Array.isArray(m.tarefas)?m.tarefas:[]).forEach(tf=>{
-          const nome=(tf.nome||'').trim().toLowerCase();
+          const nome=normNome(tf.nome);
           if(nome) porNome[nome]=tf;
         });
       });
@@ -1210,7 +1219,7 @@ async function buscarTarefasPlanPorNome(projetoId){
    (ou "Sem tarefa vinculada", quando nao ha correspondencia por nome). */
 function statusAtividadeEAP(nomeAtividade, tarefaPorNome){
   if(!tarefaPorNome) return null;
-  const tf=tarefaPorNome[(nomeAtividade||'').trim().toLowerCase()];
+  const tf=tarefaPorNome[normNome(nomeAtividade)];
   if(!tf) return {cls:'sem-tarefa', label:'Sem tarefa vinculada'};
   return tf.concluida ? {cls:'concluida', label:'Concluída'} : {cls:'pendente', label:'Pendente'};
 }
@@ -1654,7 +1663,7 @@ async function importarDoCronograma(){
   btn.disabled=true;
   try{
     const cronoPorNome=await buscarCronogramaPlanPorNome(projetoId);
-    const nomesMarcos=cronoPorNome ? Object.values(cronoPorNome).map(m=>(m.marco||'').trim()).filter(Boolean) : [];
+    const nomesMarcos=cronoPorNome ? Object.values(cronoPorNome).map(m=>(m.marco||'').replace(/\s+/g,' ').trim()).filter(Boolean) : [];
     if(!nomesMarcos.length){
       toast('Nenhum marco encontrado no Cronograma deste projeto (Planejamento, aba 3 · Cronograma).', false);
       btn.disabled=false; return;
@@ -1668,12 +1677,12 @@ async function importarDoCronograma(){
       n1el=blocks[blocks.length-1];
       n1el.querySelectorAll('.n2-block').forEach(b=>b.remove());
     }
-    const existentes=new Set(Array.from(n1el.querySelectorAll('.n2-block .n2-head input')).map(i=>(i.value||'').trim()).filter(Boolean));
+    const existentes=new Set(Array.from(n1el.querySelectorAll('.n2-block .n2-head input')).map(i=>normNome(i.value)).filter(Boolean));
     let novos=0;
     nomesMarcos.forEach(nome=>{
-      if(existentes.has(nome)) return;
+      if(existentes.has(normNome(nome))) return;
       addN2Block(n1el.id, nome);
-      existentes.add(nome);
+      existentes.add(normNome(nome));
       novos++;
     });
     toast(novos ? `${novos} entrega${novos!==1?'s':''} importada${novos!==1?'s':''} do Cronograma` : 'Os marcos do Cronograma já estavam todos importados');
