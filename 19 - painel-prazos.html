@@ -65,11 +65,14 @@
   .proj-pct{font-size:20px;font-weight:900}
   .bar-track{height:7px;border-radius:999px;background:var(--surface-2);overflow:hidden;border:1px solid var(--line)}
   .bar-fill{height:100%;background:var(--ok);border-radius:999px}
-  .marco-row{font-size:12px;padding:6px 8px;border-radius:7px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .marco-row{font-size:12px;padding:6px 8px;border-radius:7px;display:flex;flex-direction:column;gap:2px}
+  .marco-row>div{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
   .marco-row.atrasado{background:var(--bad-soft);color:var(--bad)}
   .marco-row.alerta{background:var(--warn-soft);color:var(--warn)}
   .marco-row .m-nome{font-weight:700}
   .marco-row .m-dias{white-space:nowrap;font-weight:700;font-size:11px}
+  .marco-row .m-exec{font-size:10px;font-weight:500;opacity:.85}
+  .marco-row .m-exec.sem-status{font-weight:700;opacity:1}
   .tudo-em-dia{font-size:12px;color:var(--ok);font-weight:700;display:flex;align-items:center;gap:6px}
 
   @media (max-width:720px){.kpi-row{grid-template-columns:1fr}.proj-grid{grid-template-columns:1fr}}
@@ -415,6 +418,23 @@ function diasEntre(dataA, dataB){
 function fmtDataBR(d){
   return new Date(d+'T00:00:00Z').toLocaleDateString('pt-BR', {timeZone:'UTC'});
 }
+/* Autorrelato de execução (execStatus/execStatusAtualizadoEm, gravado no marco do
+   Planejamento — ver 04 e 20-meu-painel.html): mostra aqui, ao lado de cada marco
+   atrasado/vencendo, se a pessoa sinalizou estar trabalhando nisso e há quanto tempo —
+   sem isso, este painel só mostrava o prazo, nunca se havia execução de fato acontecendo. */
+function fmtQuando(iso){
+  if(!iso) return '';
+  var d=new Date(iso);
+  if(isNaN(d)) return '';
+  var dias=Math.floor((Date.now()-d.getTime())/86400000);
+  if(dias<=0) return 'hoje';
+  if(dias===1) return 'há 1 dia';
+  return 'há '+dias+' dias';
+}
+function execBadge(execStatus, execAtualizadoEm){
+  if(!execStatus) return '<span class="m-exec sem-status">sem atualização de execução</span>';
+  return '<span class="m-exec">'+esc(execStatus)+' · atualizado '+esc(fmtQuando(execAtualizadoEm))+'</span>';
+}
 
 async function carregarPainel(){
   var hoje = hojeDataBR();
@@ -438,8 +458,8 @@ async function carregarPainel(){
       if(m.concl){ concluidos++; return; }
       if(!m.fim) return;
       var dias=diasEntre(m.fim, hoje);
-      if(dias<0) atrasados.push({marco:m.marco, resp:m.resp, dias:dias, fim:m.fim});
-      else if(dias<=5) vencendo.push({marco:m.marco, resp:m.resp, dias:dias, fim:m.fim});
+      if(dias<0) atrasados.push({marco:m.marco, resp:m.resp, dias:dias, fim:m.fim, execStatus:m.execStatus, execAtualizadoEm:m.execStatusAtualizadoEm});
+      else if(dias<=5) vencendo.push({marco:m.marco, resp:m.resp, dias:dias, fim:m.fim, execStatus:m.execStatus, execAtualizadoEm:m.execStatusAtualizadoEm});
     });
     atrasados.sort(function(a,b){ return a.dias-b.dias; });
     vencendo.sort(function(a,b){ return a.dias-b.dias; });
@@ -470,9 +490,9 @@ async function carregarPainel(){
   grid.innerHTML = projetos.map(function(p){
     var cls = p.atrasados.length ? 'tem-atraso' : (p.vencendo.length ? 'tem-alerta' : '');
     var linhas = p.atrasados.slice(0,4).map(function(m){
-      return '<div class="marco-row atrasado"><span class="m-nome">'+esc(m.marco)+(m.resp?' <span style="font-weight:400;opacity:.85">— '+esc(m.resp)+'</span>':'')+'</span><span class="m-dias">'+Math.abs(m.dias)+'d atrasado</span></div>';
+      return '<div class="marco-row atrasado"><div><span class="m-nome">'+esc(m.marco)+(m.resp?' <span style="font-weight:400;opacity:.85">— '+esc(m.resp)+'</span>':'')+'</span><span class="m-dias">'+Math.abs(m.dias)+'d atrasado</span></div>'+execBadge(m.execStatus,m.execAtualizadoEm)+'</div>';
     }).join('') + p.vencendo.slice(0,4).map(function(m){
-      return '<div class="marco-row alerta"><span class="m-nome">'+esc(m.marco)+(m.resp?' <span style="font-weight:400;opacity:.85">— '+esc(m.resp)+'</span>':'')+'</span><span class="m-dias">'+(m.dias===0?'vence hoje':'vence em '+m.dias+'d')+'</span></div>';
+      return '<div class="marco-row alerta"><div><span class="m-nome">'+esc(m.marco)+(m.resp?' <span style="font-weight:400;opacity:.85">— '+esc(m.resp)+'</span>':'')+'</span><span class="m-dias">'+(m.dias===0?'vence hoje':'vence em '+m.dias+'d')+'</span></div>'+execBadge(m.execStatus,m.execAtualizadoEm)+'</div>';
     }).join('');
     if(!linhas) linhas = '<div class="tudo-em-dia">✓ Tudo em dia</div>';
     var extra = (p.atrasados.length>4?'<div class="kpi-sub">+ '+(p.atrasados.length-4)+' atrasado(s)</div>':'') + (p.vencendo.length>4?'<div class="kpi-sub">+ '+(p.vencendo.length-4)+' vencendo em breve</div>':'');

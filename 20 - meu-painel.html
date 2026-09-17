@@ -54,6 +54,10 @@
   .item-dias{white-space:nowrap;font-size:11px;font-weight:700}
   .item-dias.atrasado{color:var(--bad)}
   .item-dias.alerta{color:var(--warn)}
+  .item-exec{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none}
+  .item-exec select{font-size:11px;padding:5px 6px;border-radius:6px;border:1px solid var(--line-strong);background:var(--surface-2);max-width:130px}
+  .item-exec-quando{font-size:9.5px;color:var(--muted);white-space:nowrap}
+  .item-exec-quando.sem-status{color:var(--warn);font-weight:600}
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:8px;font-size:12.5px;font-weight:600;z-index:999;box-shadow:var(--shadow)}
 
   @media (max-width:720px){.item-row{flex-wrap:wrap}}
@@ -448,6 +452,45 @@ async function aplicarMudancaSegura(key, aplicarFn, tentativas){
   return false;
 }
 
+/* Execução (autorrelato): mesmo par de campos execStatus/execStatusAtualizadoEm usado no
+   marco do Planejamento (04) — atualizar aqui grava direto no mesmo registro compartilhado,
+   igual ao botão Concluir. Dá ao PMO um sinal de execução real (Painel de Prazos), não só
+   "pendente"/"concluído". */
+const EXEC_STATUS_OPCOES=['A iniciar','Em andamento','Atrasado','Concluído'];
+function fmtRelativo(iso){
+  if(!iso) return '';
+  const d=new Date(iso);
+  if(isNaN(d)) return '';
+  const dias=Math.floor((Date.now()-d.getTime())/86400000);
+  if(dias<=0) return 'hoje';
+  if(dias===1) return 'há 1 dia';
+  return 'há '+dias+' dias';
+}
+function execSelectHtml(marcoId, status, atualizadoEm){
+  const opts=EXEC_STATUS_OPCOES.map(o=>`<option ${o===status?'selected':''}>${o}</option>`).join('');
+  const quando = atualizadoEm ? 'atualizado '+esc(fmtRelativo(atualizadoEm)) : 'sem atualização';
+  return '<div class="item-exec">'
+    +'<select onchange="atualizarExecucaoMarco(this,\''+marcoId+'\')"><option value="" '+(status?'':'selected')+'>Execução —</option>'+opts+'</select>'
+    +'<span class="item-exec-quando'+(atualizadoEm?'':' sem-status')+'">'+quando+'</span>'
+    +'</div>';
+}
+async function atualizarExecucaoMarco(sel, marcoId){
+  const planoKey = sel.closest('.item-row').dataset.planoKey;
+  const novoStatus = sel.value;
+  try{
+    await aplicarMudancaSegura(planoKey, rec=>{
+      const m=(rec.cronograma||[]).find(x=>x.id===marcoId);
+      if(m){
+        m.execStatus = novoStatus; m.execStatusAtualizadoEm = novoStatus ? new Date().toISOString() : '';
+        // "Concluído" aqui é o mesmo estado da Conclusão real — evita ficar com os dois
+        // campos dizendo coisas diferentes (autorrelato concluído x marco ainda pendente).
+        if(novoStatus==='Concluído' && !m.concl) m.concl = hojeDataBR();
+      }
+    });
+    toast('Execução atualizada');
+    carregarMeuPainel();
+  }catch(e){ toast('Não foi possível atualizar — tente atualizar a página'); }
+}
 async function concluirMarco(planoKey, marcoId){
   try{
     await aplicarMudancaSegura(planoKey, rec=>{
@@ -544,7 +587,7 @@ async function carregarMeuPainel(){
       if(!m.marco) return;
       const atribuido = souAtribuido(m.respConta, meuEmail);
       if(atribuido && !m.concl && m.id){
-        marcos.push({planoKey:row.key, marcoId:m.id, marco:m.marco, projetoNome:rec.nomeProjeto, fim:m.fim, resp:m.resp});
+        marcos.push({planoKey:row.key, marcoId:m.id, marco:m.marco, projetoNome:rec.nomeProjeto, fim:m.fim, resp:m.resp, execStatus:m.execStatus, execAtualizadoEm:m.execStatusAtualizadoEm});
       }
       if(atribuido && Array.isArray(m.tarefas)){
         m.tarefas.forEach(t=>{
@@ -586,8 +629,9 @@ async function carregarMeuPainel(){
   document.getElementById('cnt-marcos').textContent=marcos.length;
   document.getElementById('card-marcos').innerHTML = marcos.length ? marcos.map(m=>{
     const tag=diasTag(m.fim);
-    return '<div class="item-row '+tag.cls+'"><div class="item-main"><div class="item-title">'+esc(m.marco)+'</div><div class="item-sub">'+esc(m.projetoNome)+'</div></div>'
+    return '<div class="item-row '+tag.cls+'" data-plano-key="'+esc(m.planoKey)+'"><div class="item-main"><div class="item-title">'+esc(m.marco)+'</div><div class="item-sub">'+esc(m.projetoNome)+'</div></div>'
       +'<span class="item-dias '+tag.cls+'">'+esc(tag.txt)+'</span>'
+      +execSelectHtml(m.marcoId, m.execStatus, m.execAtualizadoEm)
       +'<button class="btn btn-ok btn-sm" onclick="concluirMarco(\''+m.planoKey+'\',\''+m.marcoId+'\')">Concluir</button></div>';
   }).join('') : '<div class="empty">Nenhum marco pendente atribuído a você.</div>';
 
