@@ -1696,11 +1696,26 @@ function cellInput(c, v, vals){
   if(c.type==='execStatus'){
     return execStatusHtml(c.key, v, vals && vals[c.key+'AtualizadoEm']);
   }
+  if(c.key==='concl'){
+    // Preencher Conclusão real direto aqui (sem passar pelo seletor Execução) também precisa
+    // deixar Execução coerente — mesmo motivo do sentido inverso (ver marcarExecAtualizado):
+    // os dois campos nao podem ficar discordando (marco concluído, mas Execução parada num
+    // status anterior ou vazia).
+    return `<input data-k="concl" type="date" value="${esc(v)}" onchange="marcarConclusaoAtualizaExec(this)">`;
+  }
   if(c.long){
     return `<textarea data-k="${c.key}" rows="1" oninput="autoGrow(this)">${esc(v)}</textarea>`;
   }
   const t=c.type==='date'?'date':'text';
   return `<input data-k="${c.key}" type="${t}" value="${esc(v)}">`;
+}
+function marcarConclusaoAtualizaExec(inp){
+  if(!inp.value) return;
+  const tr=inp.closest('tr');
+  const sel=tr && tr.querySelector('select[data-k="execStatus"]');
+  if(!sel || sel.value==='Concluído') return;
+  sel.value='Concluído';
+  marcarExecAtualizado(sel);
 }
 function autoGrow(el){
   el.style.height='auto';

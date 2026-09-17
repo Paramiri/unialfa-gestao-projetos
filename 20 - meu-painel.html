@@ -497,7 +497,15 @@ async function concluirMarco(planoKey, marcoId){
   try{
     await aplicarMudancaSegura(planoKey, rec=>{
       const m=(rec.cronograma||[]).find(x=>x.id===marcoId);
-      if(m) m.concl=hojeDataBR();
+      if(m){
+        m.concl=hojeDataBR();
+        // Mesma logica do sentido inverso (selecionar "Concluído" em Execução também grava a
+        // Conclusão real, ver atualizarExecucaoMarco) — concluir por aqui também precisa
+        // deixar o campo Execução coerente, senão os dois ficam discordando (marco concluído,
+        // mas Execução ainda "—" ou parado num status anterior).
+        m.execStatus='Concluído';
+        m.execStatusAtualizadoEm=new Date().toISOString();
+      }
     });
     toast('Marco concluído');
     carregarMeuPainel();
