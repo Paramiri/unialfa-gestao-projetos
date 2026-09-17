@@ -1445,6 +1445,26 @@ function pararAvisoAoVivo(){
   rtChannel = null;
   avisoSalvouAtivo = false;
 }
+/* Reforço do aviso ao vivo (acima): o canal Realtime já deveria pegar uma mudança feita em
+   outro lugar (ex.: um entrave resolvido pelo Meu Painel) mesmo com a aba em segundo plano,
+   mas navegador pode suspender a conexão nesse meio tempo - ao voltar para a aba, confere
+   direto se o updated_at mudou desde o último carregamento, sem depender só do WebSocket ter
+   sobrevivido. Mesmo aviso (faixa vermelha), não recarrega os campos sozinho - evita apagar
+   algo que a pessoa esteja digitando. */
+document.addEventListener('visibilitychange', async ()=>{
+  if(document.visibilityState!=='visible' || !sessaoEdicaoAtiva || !dataBaseUpdatedAt) return;
+  try{
+    const fresh = await window.storage.get(KEY);
+    if(fresh && fresh.updatedAt && fresh.updatedAt!==dataBaseUpdatedAt){
+      let quem='Alguém';
+      try{
+        const l=await window.storage.get('lock:'+KEY);
+        if(l&&l.value){ const p=JSON.parse(l.value); if(p.email!==meuEmailEdicao()) quem=p.nome||p.email||quem; }
+      }catch(e){}
+      mostrarAvisoSalvouAoVivo(quem);
+    }
+  }catch(e){}
+});
 function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function fmtBRL(s){if(!s)return '—';return 'R$ '+String(s).replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
 function fmtRef(ym){if(!ym)return '—';const[y,m]=ym.split('-');const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return meses[parseInt(m)-1]+' / '+y;}

@@ -1247,6 +1247,26 @@ function pararAvisoAoVivo(){
   rtChannel = null;
   avisoSalvouAtivo = false;
 }
+/* Reforço do aviso ao vivo (acima): o canal Realtime já deveria pegar uma mudança feita em
+   outro lugar (ex.: um marco concluído pelo Meu Painel) mesmo com a aba em segundo plano, mas
+   navegador pode suspender a conexão nesse meio tempo - ao voltar para a aba, confere direto
+   se o updated_at mudou desde que a edição começou, sem depender só do WebSocket ter
+   sobrevivido. Mesmo aviso (faixa vermelha), não recarrega os campos sozinho - evita apagar
+   algo que a pessoa esteja digitando. */
+document.addEventListener('visibilitychange', async ()=>{
+  if(document.visibilityState!=='visible' || !editId || !editBaseUpdatedAt) return;
+  try{
+    const fresh = await window.storage.get(KEY_PREFIX+editId);
+    if(fresh && fresh.updatedAt && fresh.updatedAt!==editBaseUpdatedAt){
+      let quem='Alguém';
+      try{
+        const l=await window.storage.get('lock:'+KEY_PREFIX+editId);
+        if(l&&l.value){ const p=JSON.parse(l.value); if(p.email!==meuEmailEdicao()) quem=p.nome||p.email||quem; }
+      }catch(e){}
+      mostrarAvisoSalvouAoVivo(quem);
+    }
+  }catch(e){}
+});
 function toast(msg, ok=true){
   const t=document.getElementById('toast');
   document.getElementById('toast-msg').textContent=msg;

@@ -1468,6 +1468,26 @@ function pararAvisoAoVivo(){
   rtChannel = null;
   avisoSalvouAtivo = false;
 }
+/* Reforço do aviso ao vivo (acima): o canal Realtime já deveria pegar uma mudança feita em
+   outro lugar (ex.: um risco encerrado pelo Meu Painel) mesmo com a aba em segundo plano, mas
+   navegador pode suspender a conexão nesse meio tempo - ao voltar para a aba, confere direto
+   se o updated_at mudou desde que a edição começou, sem depender só do WebSocket ter
+   sobrevivido. Mesmo aviso (faixa vermelha), não recarrega os campos sozinho - evita apagar
+   algo que a pessoa esteja digitando. */
+document.addEventListener('visibilitychange', async ()=>{
+  if(document.visibilityState!=='visible' || !editId || !editBaseUpdatedAt || !currentKey) return;
+  try{
+    const fresh = await window.storage.get(currentKey);
+    if(fresh && fresh.updatedAt && fresh.updatedAt!==editBaseUpdatedAt){
+      let quem='Alguém';
+      try{
+        const l=await window.storage.get('lock:'+currentKey);
+        if(l&&l.value){ const p=JSON.parse(l.value); if(p.email!==meuEmailEdicao()) quem=p.nome||p.email||quem; }
+      }catch(e){}
+      mostrarAvisoSalvouAoVivo(quem);
+    }
+  }catch(e){}
+});
 function fmtDate(iso){ if(!iso) return '—'; const p=String(iso).split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:iso; }
 function fmtStamp(ms){ const dt=new Date(ms); if(!ms||isNaN(dt.getTime())) return '—'; return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
 function badgeClass(s){ if(s==='Aprovado') return 'b-apr'; if(s==='Reprovado') return 'b-rep'; return 'b-pend'; }
