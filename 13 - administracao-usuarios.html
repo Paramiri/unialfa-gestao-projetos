@@ -483,6 +483,7 @@ window.unialfaHistorico = {
       <a href="#cfg-ia">4. Assistentes de Inteligência Artificial</a>
       <a href="#cfg-backup">5. Backup automatizado</a>
       <a href="#cfg-metas">6. Metas do Relatório de Resultados</a>
+      <a href="#cfg-avisos">7. Regras de aviso automático de prazo e execução</a>
     </div>
     <div class="config-sec-title" id="cfg-sem-login"><h3><span class="num">1</span>Acesso sem login</h3></div>
     <div style="padding:20px 24px; display:flex; align-items:center; gap:14px; justify-content:space-between; flex-wrap:wrap">
@@ -677,6 +678,38 @@ window.unialfaHistorico = {
         </div>
       </div>
       <span style="font-size:11px; color:var(--muted); display:block; margin-top:10px">O selo de status (Normal/Atenção/Crítico) compara o realizado com a meta: Normal na meta ou acima, Atenção até 15 pontos percentuais abaixo, Crítico além disso.</span>
+    </div>
+    <div class="config-sec-title" id="cfg-avisos"><h3><span class="num">7</span>Regras de aviso automático de prazo e execução</h3></div>
+    <div style="padding:20px 24px">
+      <b style="display:block; font-size:13px; margin-bottom:4px">Aviso automático de prazo (e-mail e push)</b>
+      <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:12px">Quantos dias antes do Término previsto cada janela do marco começa a avisar, e a cada quantos dias o aviso de atrasado se repete enquanto o marco continuar sem Conclusão real.</span>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px 20px">
+        <div>
+          <label style="font-size:11.5px; font-weight:700; display:block; margin-bottom:5px">Janela mais distante (dias antes)</label>
+          <input type="number" min="1" id="avisoPrazoDiasAntes1" placeholder="ex: 5" onblur="salvarConfigTexto('aviso_prazo_dias_antes1','avisoPrazoDiasAntes1','Regra de aviso salva')" style="width:100%; padding:9px 11px; border:1px solid var(--line-strong,#D1D5DB); border-radius:7px; font-family:inherit; font-size:13px; color:var(--ink,#0F0F0F)">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:700; display:block; margin-bottom:5px">Janela mais próxima (dias antes)</label>
+          <input type="number" min="1" id="avisoPrazoDiasAntes2" placeholder="ex: 2" onblur="salvarConfigTexto('aviso_prazo_dias_antes2','avisoPrazoDiasAntes2','Regra de aviso salva')" style="width:100%; padding:9px 11px; border:1px solid var(--line-strong,#D1D5DB); border-radius:7px; font-family:inherit; font-size:13px; color:var(--ink,#0F0F0F)">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:700; display:block; margin-bottom:5px">Repetir aviso de atrasado a cada (dias)</label>
+          <input type="number" min="1" id="avisoPrazoDiasRepeticaoAtrasado" placeholder="ex: 7" onblur="salvarConfigTexto('aviso_prazo_dias_repeticao_atrasado','avisoPrazoDiasRepeticaoAtrasado','Regra de aviso salva')" style="width:100%; padding:9px 11px; border:1px solid var(--line-strong,#D1D5DB); border-radius:7px; font-family:inherit; font-size:13px; color:var(--ink,#0F0F0F)">
+        </div>
+      </div>
+      <b style="display:block; font-size:13px; margin:20px 0 4px">Aviso automático de silêncio (e-mail e push)</b>
+      <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:12px">A partir de quantos dias sem nenhuma atualização no campo Execução de um marco já iniciado o aviso dispara, e a cada quantos dias ele se repete enquanto continuar parado.</span>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 20px">
+        <div>
+          <label style="font-size:11.5px; font-weight:700; display:block; margin-bottom:5px">Disparar após (dias sem atualizar)</label>
+          <input type="number" min="1" id="avisoSilencioDiasLimite" placeholder="ex: 5" onblur="salvarConfigTexto('aviso_silencio_dias_sem_atualizar','avisoSilencioDiasLimite','Regra de aviso salva')" style="width:100%; padding:9px 11px; border:1px solid var(--line-strong,#D1D5DB); border-radius:7px; font-family:inherit; font-size:13px; color:var(--ink,#0F0F0F)">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:700; display:block; margin-bottom:5px">Repetir a cada (dias)</label>
+          <input type="number" min="1" id="avisoSilencioDiasRepeticao" placeholder="ex: 5" onblur="salvarConfigTexto('aviso_silencio_dias_repeticao','avisoSilencioDiasRepeticao','Regra de aviso salva')" style="width:100%; padding:9px 11px; border:1px solid var(--line-strong,#D1D5DB); border-radius:7px; font-family:inherit; font-size:13px; color:var(--ink,#0F0F0F)">
+        </div>
+      </div>
+      <span style="font-size:11px; color:var(--muted); display:block; margin-top:10px">Os dois avisos rodam sozinhos uma vez por dia (Painel de Prazos) e nunca disparam os dois no mesmo dia para o mesmo marco. Um valor em branco ou inválido faz a regra correspondente usar o padrão de fábrica (5/2/7/5/5 dias) sem deixar de funcionar.</span>
     </div>
   </div>
 
@@ -1020,6 +1053,11 @@ function showAba(aba){
     carregarConfigTexto('meta_orcamento_dentro', 'metaOrcamentoDentro');
     carregarConfigTexto('meta_entraves_resolvidos', 'metaEntravesResolvidos');
     carregarConfigTexto('meta_riscos_sem_risco_alto', 'metaRiscosSemAlto');
+    carregarConfigTexto('aviso_prazo_dias_antes1', 'avisoPrazoDiasAntes1');
+    carregarConfigTexto('aviso_prazo_dias_antes2', 'avisoPrazoDiasAntes2');
+    carregarConfigTexto('aviso_prazo_dias_repeticao_atrasado', 'avisoPrazoDiasRepeticaoAtrasado');
+    carregarConfigTexto('aviso_silencio_dias_sem_atualizar', 'avisoSilencioDiasLimite');
+    carregarConfigTexto('aviso_silencio_dias_repeticao', 'avisoSilencioDiasRepeticao');
   }
 }
 

@@ -6,19 +6,27 @@
 // Conclusao real preenchida:
 //
 // 1) Aviso de prazo (existente):
-//   - 5 dias antes do Termino previsto (faixa de 3 a 5 dias, tolerante a uma execucao perdida)
-//   - 2 dias antes (faixa de 1 a 2 dias)
+//   - N1 dias antes do Termino previsto (padrao 5, faixa entre N2+1 e N1 dias)
+//   - N2 dias antes (padrao 2, faixa de 1 a N2 dias)
 //   - no dia do vencimento
-//   - atrasado (repete a cada 7 dias enquanto continuar sem Conclusao real)
+//   - atrasado (repete a cada N3 dias enquanto continuar sem Conclusao real — padrao 7)
 //
 // 2) Aviso de silencio (novo — fecha o ciclo do campo Execucao, ver 04/20/19): marco cujo
-//   Inicio previsto ja chegou e que esta ha 5 dias ou mais sem nenhuma mudanca no campo
+//   Inicio previsto ja chegou e que esta ha N4 dias ou mais sem nenhuma mudanca no campo
 //   Execucao (comparando com execStatusAtualizadoEm, ou com o proprio Inicio previsto se o
-//   campo nunca foi preenchido) — repete a cada 5 dias enquanto continuar parado. Existe
-//   porque o aviso de prazo acima so olha a data final: um marco com o Termino previsto
-//   ainda longe (ex.: 44 dias) podia ficar semanas parado, sem Execucao preenchida, sem
-//   ninguem ser avisado. Nao dispara no mesmo dia em que o aviso de prazo ja foi enviado
-//   para o mesmo marco, para nao mandar dois e-mails de uma vez.
+//   campo nunca foi preenchido — padrao N4 = 5) — repete a cada N5 dias enquanto continuar
+//   parado (padrao N5 = 5). Existe porque o aviso de prazo acima so olha a data final: um
+//   marco com o Termino previsto ainda longe (ex.: 44 dias) podia ficar semanas parado, sem
+//   Execucao preenchida, sem ninguem ser avisado. Nao dispara no mesmo dia em que o aviso de
+//   prazo ja foi enviado para o mesmo marco, para nao mandar dois e-mails de uma vez.
+//
+// N1..N5 sao parametrizaveis em Administracao > Configuracoes > Regras de aviso automatico
+// (tabela `configuracoes`, chaves aviso_prazo_dias_antes1/antes2/repeticao_atrasado e
+// aviso_silencio_dias_sem_atualizar/repeticao — ver migracao
+// 20260917160000_config_avisos_prazo_execucao.sql). Lidos a cada execucao no inicio da
+// function; se uma chave nao existir ou tiver valor invalido, cai no mesmo padrao que era
+// fixo no codigo antes desta migracao — a function nunca fica sem rodar por configuracao
+// ausente.
 //
 // Destinatarios de cada aviso:
 //   - os e-mails vinculados no campo "Responsavel (conta)" do marco (respConta —
@@ -136,11 +144,15 @@ const BUCKET_LABEL: Record<Bucket, string> = {
   atrasado: "está atrasado",
 };
 
-function bucketParaDias(dias: number): Bucket | null {
+// dAntes2/dAntes1 vêm de Administração > Configurações — normaliza a ordem (min/max) para
+// nunca abrir um buraco na faixa de dias se alguém configurar dAntes2 maior que dAntes1.
+function bucketParaDias(dias: number, dAntes2: number, dAntes1: number): Bucket | null {
   if (dias < 0) return "atrasado";
   if (dias === 0) return "nodia";
-  if (dias >= 1 && dias <= 2) return "antes2";
-  if (dias >= 3 && dias <= 5) return "antes5";
+  const antes2 = Math.min(dAntes2, dAntes1);
+  const antes1 = Math.max(dAntes2, dAntes1);
+  if (dias >= 1 && dias <= antes2) return "antes2";
+  if (dias > antes2 && dias <= antes1) return "antes5";
   return null;
 }
 
@@ -148,6 +160,20 @@ async function restGet(path: string) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: svcHeaders() });
   if (!r.ok) throw new Error(`GET ${path} -> ${r.status}: ${await r.text()}`);
   return r.json();
+}
+
+// Lê um numero configuravel em Administracao > Configuracoes (tabela `configuracoes`),
+// caindo no padrao se a chave nao existir, nao ser numero, ou nao for positiva.
+async function getConfigDias(chave: string, padrao: number): Promise<number> {
+  try {
+    const rows: { valor: unknown }[] = await restGet(
+      `configuracoes?chave=eq.${chave}&select=valor`
+    );
+    const v = rows[0]?.valor;
+    return typeof v === "number" && v > 0 ? v : padrao;
+  } catch {
+    return padrao;
+  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -162,6 +188,16 @@ Deno.serve(async (req: Request) => {
   const resultado = { avaliados: 0, avisosEnviados: 0, erros: [] as string[] };
 
   try {
+    // Dias configuraveis das duas regras de disparo (Administracao > Configuracoes).
+    const [diasAntes1, diasAntes2, diasRepeticaoAtrasado, diasSilencioLimite, diasSilencioRepeticao] =
+      await Promise.all([
+        getConfigDias("aviso_prazo_dias_antes1", 5),
+        getConfigDias("aviso_prazo_dias_antes2", 2),
+        getConfigDias("aviso_prazo_dias_repeticao_atrasado", 7),
+        getConfigDias("aviso_silencio_dias_sem_atualizar", 5),
+        getConfigDias("aviso_silencio_dias_repeticao", 5),
+      ]);
+
     // Projetos ja encerrados (TEP registrado) — ficam de fora.
     const teps: { projeto_id: string | null }[] = await restGet(
       "kv_store?tipo=eq.tep&select=projeto_id"
@@ -233,12 +269,13 @@ Deno.serve(async (req: Request) => {
         // --- 1) Aviso de prazo ---
         let avisouPrazoAgora = false;
         const dias = diasEntre(marco.fim, hoje);
-        const bucket = bucketParaDias(dias);
+        const bucket = bucketParaDias(dias, diasAntes2, diasAntes1);
         if (bucket) {
           const ultimoEnvioBucket = buckets[bucket];
           const deveAvisar =
             bucket === "atrasado"
-              ? !ultimoEnvioBucket || diasEntre(hoje, ultimoEnvioBucket.slice(0, 10)) >= 7
+              ? !ultimoEnvioBucket ||
+                diasEntre(hoje, ultimoEnvioBucket.slice(0, 10)) >= diasRepeticaoAtrasado
               : !ultimoEnvioBucket;
           if (deveAvisar) {
             const dataFim = new Date(marco.fim + "T00:00:00Z").toLocaleDateString("pt-BR", {
@@ -284,10 +321,11 @@ Deno.serve(async (req: Request) => {
             ? marco.execStatusAtualizadoEm.slice(0, 10)
             : marco.ini;
           const diasSemAtualizar = diasEntre(hoje, referencia);
-          if (diasSemAtualizar >= 5) {
+          if (diasSemAtualizar >= diasSilencioLimite) {
             const ultimoSilencio = buckets.silencio;
             const deveAvisarSilencio =
-              !ultimoSilencio || diasEntre(hoje, ultimoSilencio.slice(0, 10)) >= 5;
+              !ultimoSilencio ||
+              diasEntre(hoje, ultimoSilencio.slice(0, 10)) >= diasSilencioRepeticao;
             if (deveAvisarSilencio) {
               const subject = `Marco "${marco.marco}" sem atualização de execução — ${
                 rec.nomeProjeto || rec.protocolo || ""
