@@ -99,6 +99,60 @@ function esc(s: unknown): string {
   );
 }
 
+// Layout compartilhado dos e-mails automaticos (aviso de prazo e de silencio) — tabela com
+// estilo embutido em cada elemento, fonte de sistema (Arial/Helvetica): e-mail nao renderiza
+// CSS moderno nem fontes externas de forma confiavel (Gmail remove <style> do <head>, Outlook
+// classico ignora boa parte do CSS), entao esse e o formato seguro para e-mail transacional.
+// Mesma funcao (duplicada, sem import entre arquivos — convencao ja usada no resto do
+// projeto) tambem existe em cada um dos 6 formularios que disparam notificacao por e-mail.
+type EmailBadgeTipo = "ok" | "bad" | "warn" | "slate";
+const EMAIL_CORES: Record<EmailBadgeTipo, { bg: string; fg: string }> = {
+  ok: { bg: "#E6F4EC", fg: "#1B7F4B" },
+  bad: { bg: "#FBE7EC", fg: "#9F1239" },
+  warn: { bg: "#FBF1E3", fg: "#95530A" },
+  slate: { bg: "#EEF1F4", fg: "#475569" },
+};
+function emailTemplate(opts: {
+  badgeTexto: string;
+  badgeTipo: EmailBadgeTipo;
+  titulo: string;
+  subtitulo?: string;
+  corpo?: string;
+  linhas?: { label: string; valor: string }[];
+  ctaTexto?: string;
+  ctaUrl?: string;
+  rodape?: string;
+}): string {
+  const c = EMAIL_CORES[opts.badgeTipo];
+  const linhasHtml = (opts.linhas || [])
+    .map(
+      (l) =>
+        `<tr><td style="padding:10px 14px;font-size:12.5px;color:#8A8E94;width:40%;border-bottom:1px solid #E4E4E7">${l.label}</td><td style="padding:10px 14px;font-size:12.5px;color:#1A1A1A;font-weight:600;border-bottom:1px solid #E4E4E7">${l.valor}</td></tr>`
+    )
+    .join("");
+  return (
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F3F4F6;padding:24px 0"><tr><td>` +
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;background:#FFFFFF;border-radius:10px;overflow:hidden;border:1px solid #E4E4E7;font-family:Arial,Helvetica,sans-serif">` +
+    `<tr><td style="background:#B91D2E;padding:16px 24px"><span style="color:#FFFFFF;font-size:12.5px;font-weight:800;letter-spacing:.05em">UNIALFA · GESTÃO DE PROJETOS</span></td></tr>` +
+    `<tr><td style="padding:26px 24px 8px">` +
+    `<span style="display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 11px;border-radius:20px;margin-bottom:14px;background:${c.bg};color:${c.fg}">${opts.badgeTexto}</span>` +
+    `<p style="margin:0 0 4px;font-size:19px;color:#1A1A1A;font-weight:700">${opts.titulo}</p>` +
+    (opts.subtitulo
+      ? `<p style="margin:0 0 18px;font-size:12.5px;color:#8A8E94">${opts.subtitulo}</p>`
+      : `<div style="height:10px;line-height:10px">&nbsp;</div>`) +
+    (opts.corpo ? `<p style="margin:0 0 20px;font-size:13.5px;color:#3F3F46;line-height:1.6">${opts.corpo}</p>` : "") +
+    (linhasHtml
+      ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FAFAFB;border:1px solid #E4E4E7;border-radius:8px;margin:0 0 22px">${linhasHtml}</table>`
+      : "") +
+    (opts.ctaUrl
+      ? `<a href="${opts.ctaUrl}" style="display:inline-block;background:#B91D2E;color:#FFFFFF;font-size:13.5px;font-weight:700;padding:12px 24px;border-radius:8px;text-decoration:none;margin-bottom:22px">${opts.ctaTexto} →</a>`
+      : "") +
+    `</td></tr>` +
+    (opts.rodape ? `<tr><td style="padding:16px 24px;border-top:1px solid #E4E4E7">${opts.rodape}</td></tr>` : "") +
+    `</table></td></tr></table>`
+  );
+}
+
 // "Hoje" em America/Sao_Paulo (UTC-3, sem horario de verao desde 2019) — o cron roda as
 // 11:00 UTC (08:00 BRT), horario bem longe da virada de meia-noite local.
 function hojeDataBR(): string {
@@ -262,9 +316,16 @@ Deno.serve(async (req: Request) => {
 
         const projetoNome = esc(rec.nomeProjeto || "Projeto sem nome");
         const marcoNome = esc(marco.marco);
-        const respHtml = marco.resp ? `<p><b>Responsável (cronograma):</b> ${esc(marco.resp)}</p>` : "";
-        const rodapeGerente =
-          `<p><b>Procurar a Gerência de Projetos${rec.gestor ? ` - Gerente - ${esc(rec.gestor)}` : ""}. Se houver necessidade de ajuste.</b></p>`;
+        const subtituloProjeto = projetoNome + (rec.protocolo ? ` · ${esc(rec.protocolo)}` : "");
+        const rodapeComum =
+          `<p style="margin:0 0 6px;font-size:11.5px;color:#8A8E94;line-height:1.55">Avaliação automática do Painel de Prazos.</p>` +
+          `<p style="margin:0;font-size:11.5px;color:#8A8E94;line-height:1.55">Prefere ajustar direto? Procure a Gerência de Projetos${
+            rec.gestor ? ` — Gerente <b style="color:#52525B">${esc(rec.gestor)}</b>` : ""
+          }.</p>`;
+        const linhasComuns = [
+          { label: "Projeto", valor: projetoNome },
+          ...(marco.resp ? [{ label: "Responsável", valor: esc(marco.resp) }] : []),
+        ];
 
         // --- 1) Aviso de prazo ---
         let avisouPrazoAgora = false;
@@ -290,14 +351,20 @@ Deno.serve(async (req: Request) => {
             const subject = `Prazo do marco "${marco.marco}" ${
               bucket === "atrasado" ? "atrasado" : "se aproximando"
             } — ${rec.nomeProjeto || rec.protocolo || ""}`;
-            const html =
-              `<p>O marco <b>${marcoNome}</b> do cronograma do projeto <b>${projetoNome}</b>` +
-              (rec.protocolo ? ` (${esc(rec.protocolo)})` : "") +
-              ` ${situacao}.</p>` +
-              respHtml +
-              `<p>Avaliação automática do Painel de Prazos.</p>` +
-              `<p><a href="${MEU_PAINEL_URL}">Abrir o Meu Painel</a> para ver e concluir este e os demais itens atribuídos a você.</p>` +
-              rodapeGerente;
+            const html = emailTemplate({
+              badgeTexto: bucket === "atrasado" ? "Atrasado" : bucket === "nodia" ? "Vence hoje" : "Vencendo",
+              badgeTipo: bucket === "atrasado" ? "bad" : "warn",
+              titulo: marcoNome,
+              subtitulo: subtituloProjeto,
+              corpo: `Este marco ${situacao}.`,
+              linhas: [
+                ...linhasComuns,
+                { label: "Situação", valor: bucket === "atrasado" ? "Atrasado" : bucket === "nodia" ? "Vence hoje" : `Vence em ${dias} dia${dias === 1 ? "" : "s"}` },
+              ],
+              ctaTexto: "Abrir o Meu Painel",
+              ctaUrl: MEU_PAINEL_URL,
+              rodape: rodapeComum,
+            });
             try {
               const r = await fetch(`${SUPABASE_URL}/functions/v1/send-notification`, {
                 method: "POST",
@@ -330,14 +397,17 @@ Deno.serve(async (req: Request) => {
               const subject = `Marco "${marco.marco}" sem atualização de execução — ${
                 rec.nomeProjeto || rec.protocolo || ""
               }`;
-              const html =
-                `<p>O marco <b>${marcoNome}</b> do cronograma do projeto <b>${projetoNome}</b>` +
-                (rec.protocolo ? ` (${esc(rec.protocolo)})` : "") +
-                ` já começou e está sem nenhuma atualização de <b>Execução</b> há <b>${diasSemAtualizar} dias</b>.</p>` +
-                respHtml +
-                `<p>Avaliação automática do Painel de Prazos.</p>` +
-                `<p><a href="${MEU_PAINEL_URL}">Abrir o Meu Painel</a> para informar o status de execução deste e dos demais itens atribuídos a você.</p>` +
-                rodapeGerente;
+              const html = emailTemplate({
+                badgeTexto: "Sem atualização",
+                badgeTipo: "slate",
+                titulo: marcoNome,
+                subtitulo: subtituloProjeto,
+                corpo: `Este marco já começou e está sem nenhuma atualização de <b>Execução</b> há <b>${diasSemAtualizar} dias</b>.`,
+                linhas: [...linhasComuns, { label: "Sem atualizar há", valor: `${diasSemAtualizar} dias` }],
+                ctaTexto: "Informar status no Meu Painel",
+                ctaUrl: MEU_PAINEL_URL,
+                rodape: rodapeComum,
+              });
               try {
                 const r = await fetch(`${SUPABASE_URL}/functions/v1/send-notification`, {
                   method: "POST",
