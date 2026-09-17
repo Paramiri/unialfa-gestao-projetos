@@ -74,6 +74,10 @@
 
   .dyn{padding:18px 24px 22px}
   .dyn>label.blocklabel{display:block; margin-bottom:10px; font-size:12px; font-weight:700}
+  .anexos-subhead{display:flex; align-items:center; gap:12px; margin-top:6px; padding:16px 24px 12px; border-top:1px solid var(--line)}
+  .anexos-subhead-badge{padding:0 9px; height:26px; min-width:26px; border-radius:7px; background:var(--red); color:#fff; font-weight:800; font-size:11px; display:flex; align-items:center; justify-content:center; flex:none}
+  .anexos-subhead-title{font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase}
+  .anexos-subhead-sub{margin-left:auto; font-size:11px; color:var(--muted); font-weight:500}
   .anexos-lista{display:flex; flex-direction:column; gap:6px; margin-top:6px}
   .anexo-item{display:flex; align-items:center; gap:10px; padding:8px 12px; border:1px solid var(--line-strong); border-radius:8px; font-size:12.5px}
   .anexo-nome{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
@@ -1003,8 +1007,8 @@ const STAGES=[
     {kind:'field', key:'impNeg', label:'Impactos esperados — negativos', type:'textarea'},
     {kind:'field', key:'plano', label:'Plano de implementação', type:'textarea'},
     {kind:'field', key:'conclusao', label:'Conclusão e recomendação', type:'textarea'},
-    {kind:'anexos', key:'viaAnexosArquivos', label:'Arquivos anexados'},
-    {kind:'field', key:'viaAnexos', label:'Links de documentos', type:'textarea'},
+    {kind:'anexos', key:'viaAnexosArquivos', label:'Arquivos anexados', num:'2.1', subTitle:'Anexos', subEyebrow:'Documentos de apoio'},
+    {kind:'field', key:'viaAnexos', label:'Links de documentos', type:'textarea', hint:'Cole links (Drive, SharePoint, etc.) para documentos que não serão enviados como arquivo. Um por linha.', placeholder:'https://...'},
   ]},
   {id:'crono', tab:'3 · Cronograma', title:'Cronograma', sub:'Marcos e prazos', blocks:[
     {kind:'table', key:'cronograma', label:'Marcos do projeto', mainKey:'marco', seed:3, cols:[
@@ -1325,7 +1329,7 @@ function fieldHTML(f){
   const req=f.req?'<span class="req">*</span>':'';
   const hint=f.hint?`<div class="hint">${f.hint}</div>`:'';
   let ctrl;
-  if(f.type==='textarea') ctrl=`<textarea id="${f.key}"></textarea>`;
+  if(f.type==='textarea') ctrl=`<textarea id="${f.key}"${f.placeholder?` placeholder="${esc(f.placeholder)}"`:''}></textarea>`;
   else if(f.type==='select'){
     ctrl=`<select id="${f.key}"><option value="">Selecione…</option>${(f.options||[]).map(o=>`<option>${o}</option>`).join('')}</select>`;
   } else ctrl=`<input id="${f.key}" type="${f.type==='date'?'date':'text'}">`;
@@ -1352,6 +1356,11 @@ function buildStages(){
       else if(b.kind==='group'){
         flush();
         inner+=`<div class="field-group"><div class="fg-title">${b.label}</div>${b.fields.map(f=>fieldHTML({...f, full:true})).join('')}</div>`;
+      }
+      else if(b.kind==='anexos'){
+        flush();
+        inner+=`<div class="anexos-subhead"><span class="anexos-subhead-badge">${b.num||''}</span><span class="anexos-subhead-title">${(b.subTitle||b.label).toUpperCase()}</span>${b.subEyebrow?`<span class="anexos-subhead-sub">${b.subEyebrow}</span>`:''}</div>`;
+        inner+=`<div class="dyn" id="dyn-${b.key}"><label class="blocklabel">${b.label}</label></div>`;
       }
       else { flush(); inner+=`<div class="dyn" id="dyn-${b.key}"><label class="blocklabel">${b.label}</label></div>`; }
     });
