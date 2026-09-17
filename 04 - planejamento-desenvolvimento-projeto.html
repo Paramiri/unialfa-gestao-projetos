@@ -74,6 +74,10 @@
 
   .dyn{padding:18px 24px 22px}
   .dyn>label.blocklabel{display:block; margin-bottom:10px; font-size:12px; font-weight:700}
+  .anexos-lista{display:flex; flex-direction:column; gap:6px; margin-top:6px}
+  .anexo-item{display:flex; align-items:center; gap:10px; padding:8px 12px; border:1px solid var(--line-strong); border-radius:8px; font-size:12.5px}
+  .anexo-nome{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .anexo-tam{color:var(--muted); font-size:11.5px; flex:none}
   .dyn-table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px}
   .gantt-toggle{display:flex; gap:6px; margin:10px 0 8px}
   .gantt-toggle-btn{appearance:none; font-family:var(--font); font-weight:700; font-size:11.5px; border-radius:999px; padding:6px 14px; cursor:pointer; border:1px solid var(--line-strong,#D4D4D8); background:var(--paper,#fff); color:var(--muted)}
@@ -905,11 +909,47 @@ window.unialfaHistorico = {
     },
   };
 })();
+
+/* ---- Anexos reais (upload de arquivo) da Viabilidade, via Supabase Storage ---- */
+window.unialfaAnexos = {
+  bucket: 'anexos-planejamento',
+  async upload(recordId, file){
+    var nomeSeguro = file.name.replace(/[^\w.\-]+/g, '_');
+    var caminho = recordId + '/' + Date.now() + '_' + Math.random().toString(36).slice(2,8) + '_' + nomeSeguro;
+    var r = await fetch(unialfaAuth.STORAGE_BASE + '/object/' + this.bucket + '/' + caminho, {
+      method: 'POST',
+      headers: unialfaAuth.authHeaders({ 'Content-Type': file.type || 'application/octet-stream' }),
+      body: file,
+    });
+    if(!r.ok) throw new Error('Falha ao enviar arquivo (HTTP '+r.status+')');
+    return { nome: file.name, caminho: caminho, tamanho: file.size, enviadoEm: Date.now() };
+  },
+  async remover(caminho){
+    var r = await fetch(unialfaAuth.STORAGE_BASE + '/object/' + this.bucket + '/' + caminho, {
+      method: 'DELETE', headers: unialfaAuth.authHeaders(), body: '{}',
+    });
+    return r.ok;
+  },
+  async baixar(caminho, nomeArquivo){
+    var r = await fetch(unialfaAuth.STORAGE_BASE + '/object/authenticated/' + this.bucket + '/' + caminho, {
+      headers: unialfaAuth.authHeaders(),
+    });
+    if(!r.ok) throw new Error('Falha ao baixar arquivo (HTTP '+r.status+')');
+    var blob = await r.blob();
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = nomeArquivo || 'arquivo';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  },
+};
 </script>
 <script>
 const KEY_PREFIX='plan:';
 let cache=[]; let currentId=null; let editId=null;
 let editBaseUpdatedAt=null; // updated_at do registro no momento em que a edição começou (detecção de conflito)
+let viaAnexosArquivos=[];   // arquivos anexados na Viabilidade do dossiê aberto no formulário: [{nome,caminho,tamanho,enviadoEm}]
+let draftPlanoId=null;      // id provisório usado para dar caminho aos arquivos antes do primeiro "Registrar dossiê"
 
 const UNIDADES=['Superintendência Reitoria','Ouvidoria','CPA','Comitê da Qualidade','Diretoria Educação Executiva','Diretoria de Escola Business','Diretoria de Escola de Direito','Diretoria de Operações EAD','Diretoria de Marketing e Vendas','Coord. Curso Lato Sensu','Coord. Pós-Graduação Stricto Sensu','Coord. Curso Graduação, Técnico e Ensino Médio','Coord. Curso Graduação','Coord. Operações Acadêmicas EAD','Coord. Gestão de Polos','Corpo Docente','Corpo Docente (PJ)','Marketing','Vendas','Relacionamento','Planej. e Operações','RH','Secretaria Geral','Asseg. Qualidade','Segurança','ADM e Infraestrutura','GPTI','Controladoria','Gerência de Controladoria'];
 const ST_ENTRADA=['Pendente','Em andamento','OK','Não aplicável'];
@@ -962,7 +1002,8 @@ const STAGES=[
     {kind:'field', key:'impNeg', label:'Impactos esperados — negativos', type:'textarea'},
     {kind:'field', key:'plano', label:'Plano de implementação', type:'textarea'},
     {kind:'field', key:'conclusao', label:'Conclusão e recomendação', type:'textarea'},
-    {kind:'field', key:'viaAnexos', label:'Anexos', type:'textarea'},
+    {kind:'anexos', key:'viaAnexosArquivos', label:'Arquivos anexados'},
+    {kind:'field', key:'viaAnexos', label:'Links de documentos', type:'textarea'},
   ]},
   {id:'crono', tab:'3 · Cronograma', title:'Cronograma', sub:'Marcos e prazos', blocks:[
     {kind:'table', key:'cronograma', label:'Marcos do projeto', mainKey:'marco', seed:3, cols:[
@@ -1323,6 +1364,103 @@ function buildStages(){
   // mount tables
   Object.values(TABLE_DEFS).forEach(t=>mountTable(t));
   mountGanttToggle('cronograma', document.getElementById('dyn-cronograma'));
+  mountAnexosViabilidade();
+}
+/* Upload de arquivo real (Supabase Storage) na Viabilidade, no mesmo padrão da
+   Solicitação de Demanda (01) e da SMP (06) — ver window.unialfaAnexos. */
+function mountAnexosViabilidade(){
+  const host=document.getElementById('dyn-viaAnexosArquivos');
+  if(!host) return;
+  host.insertAdjacentHTML('beforeend', `
+    <div class="hint">Envie os documentos de apoio diretamente (.txt, .docx, .pdf — até 15 MB cada). Ficam guardados junto com o dossiê e podem ser baixados por quem acessar o registro.</div>
+    <div style="display:flex; align-items:center; gap:10px; margin:8px 0 10px">
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer; margin:0">
+        📎 Anexar arquivo
+        <input type="file" id="viaAnexoArquivoInput" accept=".txt,.docx,.pdf" style="display:none" onchange="onAnexarArquivoViabilidade(this.files[0])">
+      </label>
+      <span id="viaAnexoArquivoStatus" style="font-size:12px; color:var(--muted)"></span>
+    </div>
+    <div id="viaAnexosArquivosList"></div>`);
+  renderViaAnexosArquivos();
+}
+function formatarTamanhoArquivo(bytes){
+  if(bytes < 1024) return bytes + ' B';
+  if(bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+function getPlanoIdParaUpload(){
+  if(editId) return editId;
+  if(!draftPlanoId) draftPlanoId = 'd_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  return draftPlanoId;
+}
+function renderViaAnexosArquivos(){
+  const host=document.getElementById('viaAnexosArquivosList');
+  if(!host) return;
+  if(!viaAnexosArquivos.length){ host.innerHTML=''; return; }
+  host.innerHTML = '<div class="anexos-lista">' + viaAnexosArquivos.map((a,i)=>
+    '<div class="anexo-item"><span class="anexo-nome" title="'+esc(a.nome)+'">📄 '+esc(a.nome)+'</span>'+
+    '<span class="anexo-tam">'+formatarTamanhoArquivo(a.tamanho)+'</span>'+
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="baixarAnexoArquivoViabilidade('+i+')">⬇ Baixar</button>'+
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="removerAnexoArquivoViabilidade('+i+')">🗑 Remover</button></div>'
+  ).join('') + '</div>';
+}
+async function persistViaAnexosSeEditando(){
+  if(!editId) return;
+  const idx=cache.findIndex(x=>x.id===editId);
+  if(idx<0) return;
+  cache[idx].viaAnexosArquivos = viaAnexosArquivos.slice();
+  try{
+    const r = await window.storage.set(KEY_PREFIX+editId, JSON.stringify(cache[idx]), editBaseUpdatedAt);
+    if(r && r.updatedAt) editBaseUpdatedAt = r.updatedAt;
+  }catch(e){
+    if(e && e.kind==='conflict') toast('Este registro foi alterado por outra pessoa. Atualize a página antes de continuar anexando arquivos.', false);
+  }
+}
+async function onAnexarArquivoViabilidade(file){
+  if(!file) return;
+  const statusEl=document.getElementById('viaAnexoArquivoStatus');
+  const inputEl=document.getElementById('viaAnexoArquivoInput');
+  if(file.size > 15*1024*1024){
+    statusEl.textContent='⚠ Arquivo muito grande (máximo 15 MB)';
+    inputEl.value=''; return;
+  }
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  if(['txt','docx','pdf'].indexOf(ext)===-1){
+    statusEl.textContent='⚠ Formato não suportado. Use .txt, .docx ou .pdf';
+    inputEl.value=''; return;
+  }
+  statusEl.textContent='Enviando '+file.name+'…';
+  try{
+    const recordId=getPlanoIdParaUpload();
+    const meta=await window.unialfaAnexos.upload(recordId, file);
+    viaAnexosArquivos.push(meta);
+    renderViaAnexosArquivos();
+    await persistViaAnexosSeEditando();
+    statusEl.textContent='✓ '+file.name+' anexado';
+  }catch(err){
+    statusEl.textContent='⚠ Não foi possível enviar o arquivo. Tente novamente.';
+  }
+  inputEl.value='';
+}
+async function baixarAnexoArquivoViabilidade(i){
+  const a=viaAnexosArquivos[i]; if(!a) return;
+  try{ await window.unialfaAnexos.baixar(a.caminho, a.nome); }
+  catch(err){ toast('Não foi possível baixar o arquivo', false); }
+}
+async function removerAnexoArquivoViabilidade(i){
+  const a=viaAnexosArquivos[i]; if(!a) return;
+  if(!confirm('Remover o arquivo "'+a.nome+'"?')) return;
+  const ok=await window.unialfaAnexos.remover(a.caminho);
+  if(!ok){ toast('Não foi possível remover o arquivo. Tente novamente.', false); return; }
+  viaAnexosArquivos.splice(i,1);
+  renderViaAnexosArquivos();
+  await persistViaAnexosSeEditando();
+}
+async function baixarAnexoViabilidadeDrawer(i){
+  const r=cache.find(x=>x.id===currentId); if(!r || !r.viaAnexosArquivos) return;
+  const a=r.viaAnexosArquivos[i]; if(!a) return;
+  try{ await window.unialfaAnexos.baixar(a.caminho, a.nome); }
+  catch(err){ toast('Não foi possível baixar o arquivo', false); }
 }
 /* Alterna entre a tabela de marcos e uma visualização em linha do tempo (Gantt), somente leitura.
    A edição continua sempre pela tabela — o Gantt é um resumo visual, recalculado a partir dela. */
@@ -2008,7 +2146,7 @@ function validate(){
 const HIST_LABELS = {
   nomeProjeto:'Nome do projeto', negocio:'Negócio', unidade:'Unidade', gestor:'Gestor do projeto', solicitante:'Solicitante do projeto', data:'Data de elaboração',
   produtos:'Produtos impactados', geografico:'Escopo geográfico', contexto:'Contexto e problemática', objGeral:'Objetivo geral', objEspec:'Objetivos específicos', escIncluido:'Escopo incluído', escExcluido:'Escopo excluído', entregaveis:'Entregáveis', premissas:'Premissas', restricoes:'Restrições', partes:'Partes interessadas', macroFases:'Macro fases do projeto',
-  introducao:'Introdução', situacao:'Situação atual', proposta:'Proposta de mudança', beneficios:'Benefícios do projeto', impPos:'Impactos esperados — positivos', impNeg:'Impactos esperados — negativos', plano:'Plano de implementação', conclusao:'Conclusão e recomendação', viaAnexos:'Anexos',
+  introducao:'Introdução', situacao:'Situação atual', proposta:'Proposta de mudança', beneficios:'Benefícios do projeto', impPos:'Impactos esperados — positivos', impNeg:'Impactos esperados — negativos', plano:'Plano de implementação', conclusao:'Conclusão e recomendação', viaAnexos:'Links de documentos',
 };
 
 async function submitForm(){
@@ -2026,6 +2164,7 @@ async function submitForm(){
   }
   FIELD_KEYS.forEach(id=>{ const el=document.getElementById(id); if(el) rec[id]=(el.value||'').trim(); });
   Object.keys(TABLE_DEFS).forEach(k=>{ rec[k]=readTable(k); });
+  rec.viaAnexosArquivos=viaAnexosArquivos.slice();
   rec.projetoId=projetoId;
   try{
     await unialfaProjeto.sincronizarSeMudou(projetoId, 'Planejamento e Desenvolvimento de Projeto (FORALF00325)', camposAntigos, { nome: rec.nomeProjeto, unidade: rec.unidade, gerente: rec.gestor });
@@ -2059,6 +2198,8 @@ async function editCurrent(){
   iniciarLock(KEY_PREFIX+r.id);
   iniciarAvisoAoVivo(KEY_PREFIX+r.id);
   FIELD_KEYS.forEach(id=>{ const el=document.getElementById(id); if(el) el.value = r[id]||''; });
+  viaAnexosArquivos=(r.viaAnexosArquivos||[]).slice();
+  renderViaAnexosArquivos();
   Object.values(TABLE_DEFS).forEach(t=>{
     document.querySelector(`#tbl-${t.key} tbody`).innerHTML='';
     const rows=r[t.key]||[];
@@ -2086,7 +2227,7 @@ function salvarRascunho(){
       const dados={}; FIELD_KEYS.forEach(id=>{ const el=document.getElementById(id); if(el) dados[id]=el.value; });
       const tabelas={}; Object.keys(TABLE_DEFS).forEach(k=>{ tabelas[k]=readTable(k); });
       const projetoId=document.getElementById('projetoSelect').value;
-      localStorage.setItem(chaveRascunho(), JSON.stringify({ dados, tabelas, projetoId, salvoEm:Date.now() }));
+      localStorage.setItem(chaveRascunho(), JSON.stringify({ dados, tabelas, projetoId, draftPlanoId, viaAnexosArquivos, salvoEm:Date.now() }));
     }catch(e){}
   }, 800);
 }
@@ -2100,6 +2241,8 @@ function aplicarRascunho(r){
     if(rows && rows.length) rows.forEach(row=>addRow(k,row)); else addRow(k);
   });
   if(r.projetoId){ const sel=document.getElementById('projetoSelect'); if(sel) sel.value=r.projetoId; }
+  if(r.draftPlanoId) draftPlanoId=r.draftPlanoId;
+  if(r.viaAnexosArquivos && r.viaAnexosArquivos.length){ viaAnexosArquivos=r.viaAnexosArquivos; renderViaAnexosArquivos(); }
 }
 function restaurarRascunhoSeExistir(){
   try{
@@ -2125,6 +2268,9 @@ function clearForm(){
   showStage(STAGES[0].id);
   editId=null;
   editBaseUpdatedAt=null;
+  viaAnexosArquivos=[];
+  draftPlanoId=null;
+  renderViaAnexosArquivos();
   updateEditBanner();
 }
 
@@ -2169,6 +2315,15 @@ async function openDrawer(id){
     s.blocks.forEach(b=>{
       if(b.kind==='field'){ html+=`<div class="row"><dt>${b.label}</dt><dd>${esc(r[b.key]||'—')}</dd></div>`; }
       else if(b.kind==='group'){ b.fields.forEach(f=>{ html+=`<div class="row"><dt>${f.label}</dt><dd>${esc(r[f.key]||'—')}</dd></div>`; }); }
+      else if(b.kind==='anexos'){
+        const arquivos=r[b.key]||[];
+        const lista=arquivos.length ? '<div class="anexos-lista">'+arquivos.map((a,i)=>
+          '<div class="anexo-item"><span class="anexo-nome">📄 '+esc(a.nome)+'</span>'+
+          '<span class="anexo-tam">'+formatarTamanhoArquivo(a.tamanho)+'</span>'+
+          '<button type="button" class="btn btn-ghost btn-sm" onclick="baixarAnexoViabilidadeDrawer('+i+')">⬇ Baixar</button></div>'
+        ).join('')+'</div>' : '—';
+        html+=`<div class="row"><dt>${b.label}</dt><dd>${lista}</dd></div>`;
+      }
       else { html+=`<div class="row"><dt>${b.label}</dt>${roTable(b.key, r[b.key])}</div>`; }
     });
   });
@@ -2279,6 +2434,10 @@ function buildPlanejamentoDocumentoHtml(r){
         b.fields.forEach(f=>{
           stagesHtml+='<div class="doc-box"><div class="lbl">'+esc(f.label)+'</div><div class="val">'+(esc(r[f.key])||'&nbsp;')+'</div></div>';
         });
+      } else if(b.kind==='anexos'){
+        const arquivos=r[b.key]||[];
+        const txt=arquivos.map(a=>'Arquivo: '+a.nome+' ('+formatarTamanhoArquivo(a.tamanho)+')').join('\n');
+        stagesHtml+='<div class="doc-box"><div class="lbl">'+esc(b.label)+'</div><div class="val">'+(esc(txt)||'&nbsp;')+'</div></div>';
       } else {
         stagesHtml+='<div class="doc-box"><div class="lbl">'+esc(b.label)+'</div><div class="val">'+docTableRowsPlan(b.key, r[b.key])+'</div></div>';
       }
