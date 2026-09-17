@@ -27,6 +27,13 @@
   .doc-help:hover{background:rgba(255,255,255,.32)}
 
   .sec-title{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+  .sec-toggle{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;user-select:none}
+  .sec-toggle:hover{color:var(--ink)}
+  .sec-chevron{font-size:10px;transition:transform .15s;flex:none}
+  .sec-chevron.aberto{transform:rotate(90deg)}
+  .quicknav{position:sticky;top:34px;z-index:20;display:flex;gap:6px;overflow-x:auto;padding:10px 12px;margin:18px 0 0;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);scrollbar-width:thin}
+  .quicknav button{appearance:none;font-family:var(--font);font-weight:700;font-size:11.5px;color:var(--muted);background:var(--surface-2);border:1px solid var(--line-strong);border-radius:999px;padding:6px 13px;cursor:pointer;white-space:nowrap;flex:none}
+  .quicknav button:hover{color:var(--ink);border-color:var(--ink)}
   .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:6px}
   .kpi{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
   .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red)}
@@ -430,6 +437,18 @@ function ensureAuthenticated(){
     <div id="loadingBox" class="loading">Carregando dados do projeto…</div>
 
     <div id="conteudo" style="display:none">
+      <div class="quicknav" id="quicknav">
+        <button type="button" onclick="irParaSecao('saude')">Saúde</button>
+        <button type="button" onclick="irParaSecao('custos')">Custos</button>
+        <button type="button" onclick="irParaSecao('eap')">Entregas</button>
+        <button type="button" onclick="irParaSecao('situacao')">Situação</button>
+        <button type="button" onclick="irParaSecao('ciclo')">Ciclo de vida</button>
+        <button type="button" onclick="irParaSecao('anexos')">Anexos</button>
+        <button type="button" onclick="irParaSecao('tap')">Cronograma</button>
+        <button type="button" onclick="irParaSecao('equipe')">Equipe</button>
+        <button type="button" onclick="irParaSecao('historico')">Histórico</button>
+      </div>
+
       <div class="card">
         <div class="kv-grid">
           <div><div class="kv-label">Nome do projeto</div><div class="kv-value" id="f-nome">—</div></div>
@@ -441,29 +460,33 @@ function ensureAuthenticated(){
         </div>
       </div>
 
-      <div class="sec-title">Saúde do projeto</div>
+      <div class="sec-title" id="sec-title-saude">Saúde do projeto</div>
       <div class="kpi-row" id="saudeRow"></div>
 
-      <div class="sec-title">Custos: Estimado (TAP) x Realizado</div>
+      <div class="sec-title" id="sec-title-custos">Custos: Estimado (TAP) x Realizado</div>
       <div class="card" id="custosComparativoCard"></div>
 
-      <div class="sec-title">Entregas da EAP: status automático</div>
+      <div class="sec-title" id="sec-title-eap">Entregas da EAP: status automático</div>
       <div class="card" id="eapEntregasCard"></div>
 
-      <div class="sec-title">Situação atual (Relatório de Situação)</div>
+      <div class="sec-title" id="sec-title-situacao">Situação atual (Relatório de Situação)</div>
       <div class="card" id="situacaoCard"></div>
 
-      <div class="sec-title">Progresso do ciclo de vida</div>
-      <div class="card" id="cicloCard"></div>
+      <div class="sec-title sec-toggle" id="sec-title-ciclo" onclick="toggleSecao('ciclo')">
+        <span>Progresso do ciclo de vida</span><span class="sec-chevron" id="chev-ciclo">▸</span>
+      </div>
+      <div class="card" id="cicloCard" style="display:none"></div>
 
-      <div class="sec-title">Anexos do projeto</div>
+      <div class="sec-title" id="sec-title-anexos">Anexos do projeto</div>
       <div class="card" id="anexosCard"></div>
 
-      <div class="sec-title">Cronograma (Planejamento) e custos planejados (TAP)</div>
-      <div class="card" id="tapCard"></div>
+      <div class="sec-title sec-toggle" id="sec-title-tap" onclick="toggleSecao('tap')">
+        <span>Cronograma (Planejamento) e custos planejados (TAP)</span><span class="sec-chevron" id="chev-tap">▸</span>
+      </div>
+      <div class="card" id="tapCard" style="display:none"></div>
 
-      <div class="sec-title">Equipe do projeto</div>
-      <div class="card">
+      <div class="sec-title" id="sec-title-equipe">Equipe do projeto</div>
+      <div class="card" id="equipeCard">
         <div class="table-wrap">
           <table>
             <thead><tr><th>E-mail</th><th>Papel</th></tr></thead>
@@ -472,8 +495,10 @@ function ensureAuthenticated(){
         </div>
       </div>
 
-      <div class="sec-title">Histórico de alterações</div>
-      <div class="card hist-panel" id="historicoCard"></div>
+      <div class="sec-title sec-toggle" id="sec-title-historico" onclick="toggleSecao('historico')">
+        <span>Histórico de alterações</span><span class="sec-chevron" id="chev-historico">▸</span>
+      </div>
+      <div class="card hist-panel" id="historicoCard" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -492,6 +517,28 @@ const FORM_DEFS = [
 ];
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+/* Navegacao rapida (quicknav) + secoes recolhiveis: Progresso do ciclo de vida, Cronograma/TAP e
+   Historico ficam fechadas ao abrir a pagina (sao densas e a maioria das visitas nao precisa
+   delas de cara); as demais ficam sempre abertas. O botao da quicknav expande a secao (se estiver
+   fechada) antes de rolar ate ela, senao a rolagem levaria a um card ainda escondido. */
+var SECAO_CARD_ID = { ciclo:'cicloCard', tap:'tapCard', historico:'historicoCard' };
+function toggleSecao(key){
+  var card = document.getElementById(SECAO_CARD_ID[key]);
+  var chev = document.getElementById('chev-'+key);
+  if(!card) return;
+  var estaFechado = card.style.display === 'none';
+  card.style.display = estaFechado ? '' : 'none';
+  if(chev) chev.classList.toggle('aberto', estaFechado);
+}
+function irParaSecao(key){
+  if(SECAO_CARD_ID[key]){
+    var card = document.getElementById(SECAO_CARD_ID[key]);
+    if(card && card.style.display === 'none') toggleSecao(key);
+  }
+  var alvo = document.getElementById('sec-title-'+key);
+  if(alvo) alvo.scrollIntoView({behavior:'smooth', block:'start'});
+}
 
 function statusClass(status){
   var s = String(status||'');
