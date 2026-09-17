@@ -69,6 +69,13 @@
   .item-dias.atrasado{color:var(--bad)}
   .item-dias.alerta{color:var(--warn)}
 
+  .projeto-grupo{margin-top:14px}
+  .projeto-grupo:first-child{margin-top:0}
+  .projeto-grupo-titulo{display:flex;align-items:baseline;gap:6px;font-size:11.5px;font-weight:700;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;margin-bottom:2px}
+  .projeto-grupo-count{font-size:10.5px;font-weight:600;color:var(--muted)}
+  .projeto-grupo .item-row{padding-left:10px}
+  .projeto-grupo .item-row:first-child{border-top:none}
+
   .semresp-row{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);font-size:12.5px}
   .semresp-row:last-child{border-bottom:none}
   .semresp-cat{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted);flex:none}
@@ -435,11 +442,30 @@ async function papelPermitido(chave){
 function grupoPessoa(pessoa, chave, titulo, tipo){
   const lista = pessoa[chave];
   if(!lista.length) return '';
+  if(tipo==='marco'){
+    const porProjeto = new Map();
+    lista.forEach(it=>{
+      const nome = it.projetoNome || '—';
+      if(!porProjeto.has(nome)) porProjeto.set(nome, []);
+      porProjeto.get(nome).push(it);
+    });
+    const blocos = [...porProjeto.keys()].sort((a,b)=>a.localeCompare(b,'pt-BR')).map(nome=>{
+      const itens = porProjeto.get(nome).slice().sort((a,b)=>{
+        if(!a.fim && !b.fim) return 0;
+        if(!a.fim) return 1;
+        if(!b.fim) return -1;
+        return a.fim.localeCompare(b.fim);
+      });
+      const linhasProjeto = itens.map(it=>{
+        const tag=diasTag(it.fim);
+        const dataTxt = it.fim ? ('Término previsto: '+fmtDataBR(it.fim)) : 'Sem término previsto definido';
+        return '<div class="item-row"><div class="item-main"><div class="item-title">'+esc(it.marco)+'</div><div class="item-sub">'+esc(dataTxt)+'</div></div>'+(tag.txt?('<span class="item-dias '+tag.cls+'">'+esc(tag.txt)+'</span>'):'')+'</div>';
+      }).join('');
+      return '<div class="projeto-grupo"><div class="projeto-grupo-titulo">'+esc(nome)+' <span class="projeto-grupo-count">('+itens.length+')</span></div>'+linhasProjeto+'</div>';
+    }).join('');
+    return '<div class="detalhe-grupo"><div class="detalhe-grupo-titulo">'+esc(titulo)+' ('+lista.length+')</div>'+blocos+'</div>';
+  }
   const linhas = lista.map(it=>{
-    if(tipo==='marco'){
-      const tag=diasTag(it.fim);
-      return '<div class="item-row"><div class="item-main"><div class="item-title">'+esc(it.marco)+'</div><div class="item-sub">'+esc(it.projetoNome)+'</div></div><span class="item-dias '+tag.cls+'">'+esc(tag.txt)+'</span></div>';
-    }
     if(tipo==='tarefa'){
       return '<div class="item-row"><div class="item-main"><div class="item-title">'+esc(it.nome)+'</div><div class="item-sub">'+esc(it.marco)+' · '+esc(it.projetoNome)+'</div></div></div>';
     }
