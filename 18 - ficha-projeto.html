@@ -489,7 +489,7 @@ function ensureAuthenticated(){
       <div class="card" id="equipeCard">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>E-mail</th><th>Papel</th></tr></thead>
+            <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th></tr></thead>
             <tbody id="tbody-equipe"></tbody>
           </table>
         </div>
@@ -671,7 +671,7 @@ function projetoStatusClass(s){
 
 async function renderEquipe(membros){
   var tbody = document.getElementById('tbody-equipe');
-  if(!membros.length){ tbody.innerHTML = '<tr><td colspan="2" class="empty">Nenhum membro cadastrado nesta equipe.</td></tr>'; return; }
+  if(!membros.length){ tbody.innerHTML = '<tr><td colspan="3" class="empty">Nenhum membro cadastrado nesta equipe.</td></tr>'; return; }
   var ids = membros.map(function(m){ return m.usuario_id; }).filter(Boolean);
   var papelPorId = {};
   if(ids.length){
@@ -679,9 +679,16 @@ async function renderEquipe(membros){
     var perfis = r.ok ? await r.json() : [];
     perfis.forEach(function(p){ papelPorId[p.id] = p.papel; });
   }
+  var nomePorEmail = {};
+  try{
+    var rNomes = await fetch(unialfaAuth.REST_BASE+'/rpc/listar_emails_usuarios', { method:'POST', headers: unialfaAuth.authHeaders(), body: JSON.stringify({}) });
+    var usuarios = rNomes.ok ? await rNomes.json() : [];
+    usuarios.forEach(function(u){ if(u.email) nomePorEmail[u.email.toLowerCase()] = u.nome || null; });
+  }catch(e){}
   tbody.innerHTML = membros.map(function(m){
     var papel = papelPorId[m.usuario_id];
-    return '<tr><td>'+esc(m.usuario_email)+'</td><td>'+esc(papel ? unialfaAuth.papelLabel(papel) : '—')+'</td></tr>';
+    var nome = nomePorEmail[String(m.usuario_email||'').toLowerCase()];
+    return '<tr><td>'+esc(nome||'—')+'</td><td>'+esc(m.usuario_email)+'</td><td>'+esc(papel ? unialfaAuth.papelLabel(papel) : '—')+'</td></tr>';
   }).join('');
 }
 
