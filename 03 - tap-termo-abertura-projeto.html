@@ -1784,6 +1784,7 @@ function roTable(name, rows){
     let v=r[c.key]||'';
     if(c.type==='date'&&v) v=fmtDate(v);
     if(c.type==='select'&&v) return `<td><span class="risk-status ${v.toLowerCase()}">${esc(v)}</span></td>`;
+    if(c.type==='teamMultiSelect'&&v) v=parseRespConta(v).map(nomeOuEmail).join(', ');
     if(name==='cronograma'&&c.key==='dep'&&v){
       const bloq=marcoBloqueadoPor(rows,r);
       return `<td>${esc(v)}${bloq?' <span class="risk-status bloqueado">⚠ bloqueado</span>':''}</td>`;
@@ -2362,6 +2363,7 @@ function docTableRowsTap(name,rows){
         return '<td>'+(sev?esc(sev.nivel):'&nbsp;')+'</td>';
       }
       let v=r[c.key]||''; if(c.type==='date'&&v)v=fmtDate(v);
+      if(c.type==='teamMultiSelect'&&v) v=parseRespConta(v).map(nomeOuEmail).join(', ');
       if(name==='cronograma'&&c.key==='dep'&&v){
         const bloq=marcoBloqueadoPor(rows,r);
         return '<td>'+esc(v)+(bloq?' (bloqueado por atraso)':'')+'</td>';
