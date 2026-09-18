@@ -33,18 +33,23 @@ begin
   end if;
 end $$;
 
-select cron.schedule(
-  'verificar-prazos-cronograma-diario',
-  '0 11 * * *',
-  $cron$
-  select net.http_post(
-    url := 'https://fiarntunpqteopwjkhjg.supabase.co/functions/v1/verificar-prazos-cronograma',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'apikey', 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ',
-      'Authorization', 'Bearer sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ'
-    ),
-    body := '{}'::jsonb
+do $$
+declare
+  v_anon_key text := 'sb_publishable_RO-UPexCYhZ0rVZiIYWunA_a7YqodnQ';
+begin
+  perform cron.schedule(
+    'verificar-prazos-cronograma-diario',
+    '0 11 * * *',
+    format($cron$
+    select net.http_post(
+      url := 'https://fiarntunpqteopwjkhjg.supabase.co/functions/v1/verificar-prazos-cronograma',
+      headers := jsonb_build_object(
+        'Content-Type', 'application/json',
+        'apikey', %L,
+        'Authorization', 'Bearer ' || %L
+      ),
+      body := '{}'::jsonb
+    );
+    $cron$, v_anon_key, v_anon_key)
   );
-  $cron$
-);
+end $$;
